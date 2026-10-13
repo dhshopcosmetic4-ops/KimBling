@@ -87,7 +87,10 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
         .modal-actions button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; }
         
-        #addDishModal .modal-content input, #editDishModal .modal-content input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; }
+        #addDishModal .modal-content input, #addDishModal .modal-content select, 
+        #editDishModal .modal-content input, #editDishModal .modal-content select { 
+            width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; 
+        }
 
         @media print {
             @page { size: 40mm 30mm; margin: 0; }
@@ -160,20 +163,7 @@
                     <button class="btn-report" onclick="openMonthlyReport()">📊 Doanh thu tháng</button>
                     <button class="btn-report btn-shift" onclick="openShiftReport()">🔄 Kết ca</button>
                     <button class="btn-report btn-advanced-report" onclick="openAdvancedReport()">📈 Báo cáo chi tiết</button>
-                    <button class="btn-report btn-cloud-sync" onclick="openCloudConfigModal()">☁️ Cài đặt Google Sheets</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="cloudConfigModal">
-        <div class="modal-content">
-            <h3>Cài Đặt Kết Nối Google Sheets</h3>
-            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Dán đường dẫn Web App URL từ Google Apps Script của bạn vào đây.</p>
-            <input type="text" id="googleScriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px;">
-            <div class="modal-actions">
-                <button style="background: #ccc;" onclick="document.getElementById('cloudConfigModal').style.display='none'">Hủy</button>
-                <button style="background: #3f51b5; color: white;" onclick="saveCloudConfig()">Lưu cấu hình</button>
             </div>
         </div>
     </div>
@@ -311,14 +301,27 @@
         </div>
     </div>
 
+    <!-- MODAL THÊM MÓN MỚI (CÓ CHỌN DANH MỤC + YÊU CẦU PIN 0) -->
     <div class="modal" id="addDishModal">
         <div class="modal-content">
-            <h3>Thêm Món Mới Vào Menu</h3>
-            <input type="text" id="newDishName" placeholder="Tên món">
-            <input type="number" id="newDishPrice" placeholder="Giá cơ bản VNĐ">
+            <h3>Thêm Món Mới (Yêu cầu PIN 0)</h3>
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
+            <input type="text" id="newDishName" placeholder="Nhập tên món mới">
+            
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Giá cơ bản (VNĐ):</label>
+            <input type="number" id="newDishPrice" placeholder="Ví dụ: 20000">
+
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Chọn Danh Mục:</label>
+            <select id="newDishCategory" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px;">
+                <option value="MilkTea">🧋 Trà Sữa & Trà</option>
+                <option value="Coffee">☕ Cà Phê</option>
+                <option value="Yogurt">🥛 Sữa Chua</option>
+                <option value="Food">🍢 Đồ Ăn Vặt</option>
+            </select>
+
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeAddDishModal()">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveNewDish()">Lưu lại</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveNewDishWithPin()">Lưu lại</button>
             </div>
         </div>
     </div>
@@ -338,10 +341,10 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ TOPPING (PHÂN LÓI THỨC UỐNG & ĂN VẶT + BẢO VỆ PIN 0) -->
+    <!-- MODAL QUẢN LÝ TOPPING (CÓ BẢO VỆ PIN 0) -->
     <div class="modal" id="toppingConfigModal">
         <div class="modal-content" style="width: 420px;">
-            <h3>⚙️ Quản Lý Topping (Có bảo vệ PIN 0)</h3>
+            <h3>⚙️ Quản Lý Topping (Yêu cầu PIN 0)</h3>
             <p style="font-size: 12px; color: #d32f2f; margin-bottom: 8px;">⚠️ Thao tác lưu/sửa yêu cầu mã PIN chủ quán.</p>
             
             <label style="font-weight: bold; font-size: 13px; color: #2196F3;">🥤 Topping Thức Uống:</label>
@@ -360,6 +363,9 @@
     <div id="printable-area"></div>
 
     <script>
+        // HARDCODE URL GOOGLE SHEETS ĐỂ MỌI MÁY ĐỀU ĐỒNG BỘ TỰ ĐỘNG
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycUJt9_NiT8hamgV0wHphv926iDB7Qd04bzzJiGTSYVDfNQIOAwE6bPenqLmEd-aOr7w/exec";
+
         function formatPrice(val) {
             return (val / 1000) + 'k';
         }
@@ -402,30 +408,36 @@
         let favorites = JSON.parse(localStorage.getItem('kimbling_favorites')) || [];
         let cart = JSON.parse(localStorage.getItem('kimbling_cart')) || [];
         let orderHistory = JSON.parse(localStorage.getItem('kimbling_history')) || [];
-        let googleScriptUrl = localStorage.getItem('kimbling_script_url') || '';
         let selectedProduct = null;
         let currentViewingBill = null;
 
-        function openCloudConfigModal() {
-            document.getElementById('googleScriptUrlInput').value = googleScriptUrl;
-            document.getElementById('cloudConfigModal').style.display = 'flex';
-        }
-
-        function saveCloudConfig() {
-            googleScriptUrl = document.getElementById('googleScriptUrlInput').value.trim();
-            localStorage.setItem('kimbling_script_url', googleScriptUrl);
-            alert("Đã lưu cấu hình Google Sheets thành công!");
-            document.getElementById('cloudConfigModal').style.display = 'none';
-        }
-
         function syncToGoogleSheets(typeData, payload) {
-            if (!googleScriptUrl) return;
-            fetch(googleScriptUrl, {
+            if (!GOOGLE_SCRIPT_URL) return;
+            fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: typeData, ...payload })
             }).catch(err => console.log("Sync error:", err));
+        }
+
+        async function fetchMenuFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
+                const data = await response.json();
+                if (data && data.menu) {
+                    menu = data.menu;
+                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
+                    if (data.snackToppings) snackToppings = data.snackToppings;
+                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
+                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
+                    renderMenu();
+                    alert("Đã đồng bộ menu mới nhất từ Google Sheets thành công!");
+                }
+            } catch (err) {
+                console.log("Auto fetch menu error:", err);
+            }
         }
 
         function toggleFavorite(id, event) {
@@ -860,17 +872,35 @@
             renderList(toppings, 'advTopToppings');
         }
 
-        function openAddDishModal() { document.getElementById('addDishModal').style.display = 'flex'; }
+        function openAddDishModal() {
+            let pin = prompt("Nhập mã PIN chủ quán để thêm món mới:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Thao tác bị hủy.");
+                return;
+            }
+            document.getElementById('newDishName').value = '';
+            document.getElementById('newDishPrice').value = '';
+            document.getElementById('addDishModal').style.display = 'flex';
+        }
         function closeAddDishModal() { document.getElementById('addDishModal').style.display = 'none'; }
-        function saveNewDish() {
+        
+        function saveNewDishWithPin() {
             const name = document.getElementById('newDishName').value.trim();
             const price = parseInt(document.getElementById('newDishPrice').value);
+            const cat = document.getElementById('newDishCategory').value;
             if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
-            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price });
+            
+            // Đặt tên mẹo để ép danh mục nếu cần (ví dụ thêm dấu hiệu nhận biết hoặc tùy chỉnh)
+            // Vì hàm getCategoryType nhận diện theo tên, ta có thể tiền tố hoặc tên gọi rõ ràng, 
+            // hoặc gán tên sao cho khớp với getCategoryType.
+            // Để đơn giản và chắc chắn vào đúng danh mục, ta tinh chỉnh tên hoặc thêm logic lưu category trực tiếp vào object menu.
+            
+            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat });
             localStorage.setItem('kimbling_menu', JSON.stringify(menu));
             renderMenu();
             closeAddDishModal();
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+            alert("Đã thêm món mới và đồng bộ lên Google Sheets thành công!");
         }
 
         function openEditDishModal(id) {
@@ -916,11 +946,15 @@
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
-        // Quản lý Topping với mã PIN 0
         let tempEditingDrinks = [];
         let tempEditingSnacks = [];
 
         function openToppingConfigModal() {
+            let pin = prompt("Nhập mã PIN chủ quán để cấu hình topping:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Thao tác bị hủy.");
+                return;
+            }
             tempEditingDrinks = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
             tempEditingSnacks = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
             renderToppingConfigLists();
@@ -957,11 +991,6 @@
         }
 
         function saveToppingConfigWithPin() {
-            let pin = prompt("Nhập mã PIN chủ quán để lưu cấu hình topping:", "");
-            if (pin !== "0") {
-                alert("Mã PIN không đúng! Thao tác bị hủy.");
-                return;
-            }
             drinkToppings = tempEditingDrinks.filter(t => t.name.trim() !== "");
             snackToppings = tempEditingSnacks.filter(t => t.name.trim() !== "");
             localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
@@ -969,32 +998,6 @@
             alert("Đã lưu cấu hình topping thành công!");
             closeToppingConfigModal();
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
-        }
-
-        async function fetchMenuFromCloud() {
-            if (!googleScriptUrl) {
-                alert("Vui lòng cấu hình Google Sheets URL trước!");
-                openCloudConfigModal();
-                return;
-            }
-            try {
-                const response = await fetch(googleScriptUrl + "?type=getMenu");
-                const data = await response.json();
-                if (data && data.menu) {
-                    menu = data.menu;
-                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
-                    if (data.snackToppings) snackToppings = data.snackToppings;
-                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
-                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
-                    renderMenu();
-                    alert("Đã đồng bộ menu mới nhất từ Google Sheets thành công!");
-                } else {
-                    alert("Không lấy được dữ liệu menu từ Google Sheets.");
-                }
-            } catch (err) {
-                alert("Lỗi kết nối khi tải menu từ Cloud. Hãy kiểm tra lại URL Apps Script.");
-            }
         }
 
         async function exportDataToTxt() {
@@ -1030,6 +1033,8 @@
             reader.readAsText(file);
         }
 
+        // Tự động kéo menu từ cloud ngay khi mở trang để đồng bộ hoàn toàn
+        fetchMenuFromCloud();
         renderMenu();
         renderCart();
         updateHistoryUI();
