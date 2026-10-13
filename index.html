@@ -61,8 +61,6 @@
         .btn-shift:hover { background: #f57c00; }
         .btn-advanced-report { background: #009688; width: 100%; margin-top: 4px; }
         .btn-advanced-report:hover { background: #00796b; }
-        .btn-cloud-sync { background: #3f51b5; width: 100%; margin-top: 4px; }
-        .btn-cloud-sync:hover { background: #303f9f; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 20px; border-radius: 8px; width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -106,16 +104,39 @@
 </head>
 <body>
 
+    <!-- MODAL CHỌN TÀI KHOẢN / CHI NHÁNH KHI MỞ APP -->
+    <div class="modal" id="loginModal" style="display: flex; background: rgba(0,0,0,0.8); z-index: 999;">
+        <div class="modal-content" style="width: 360px; text-align: center;">
+            <h2 style="color: #2196F3; margin-bottom: 5px;">Kim Bling Coffee & Tea</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Vui lòng chọn tài khoản & chi nhánh làm việc:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-bottom: 15px;">
+                <label style="padding: 10px; border: 2px solid #2196F3; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold;">
+                    <input type="radio" name="accountChoice" value="CQ" checked> 👑 Chủ Quán (Bảo mật PIN)
+                </label>
+                <label style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <input type="radio" name="accountChoice" value="M9"> ☕ Nhân viên Chi nhánh M9 CXPL
+                </label>
+                <label style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <input type="radio" name="accountChoice" value="NV2"> 🧋 Nhân viên Cơ sở Khác
+                </label>
+            </div>
+
+            <button class="btn-action" style="width: 100%; padding: 10px; font-size: 16px;" onclick="confirmLoginAccount()">Bắt Đầu Làm Việc</button>
+        </div>
+    </div>
+
     <div class="menu-section">
         <div class="menu-header">
-            <h2>Kim Bling Coffee & Tea</h2>
+            <div>
+                <h2>Kim Bling Coffee & Tea</h2>
+                <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
+            </div>
             <div class="menu-header-actions">
                 <button class="btn-action" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
                 <button class="btn-action" style="background: #3f51b5;" onclick="fetchMenuFromCloud()">☁️ Tải Menu Mới</button>
-                <button class="btn-action btn-secondary" onclick="exportDataToTxt()">Xuất .txt</button>
-                <button class="btn-action btn-secondary" onclick="document.getElementById('importFile').click()">Nhập .txt</button>
-                <input type="file" id="importFile" style="display: none;" accept=".txt" onchange="importDataFromTxt(event)">
+                <button class="btn-action btn-secondary" onclick="switchAccount()">👤 Đổi Account</button>
             </div>
         </div>
 
@@ -138,7 +159,7 @@
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h2>Hóa Đơn Hiện Tại</h2>
-                <button onclick="clearCart()" style="background: #ff5252; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">🗑️ Xóa giỏ</button>
+                <button onclick="clearCartWithPin()" style="background: #ff5252; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">🗑️ Xóa giỏ (PIN)</button>
             </div>
             <div class="cart-list" id="cartList">
                 <p style="color: #777; text-align: center; margin-top: 10px;">Chưa chọn món nào</p>
@@ -168,6 +189,7 @@
         </div>
     </div>
 
+    <!-- CÁC MODAL -->
     <div class="modal" id="optionsModal">
         <div class="modal-content">
             <h3 id="modalDishName">Tên Món</h3>
@@ -301,10 +323,9 @@
         </div>
     </div>
 
-    <!-- MODAL THÊM MÓN MỚI (CÓ CHỌN DANH MỤC + YÊU CẦU PIN 0) -->
     <div class="modal" id="addDishModal">
         <div class="modal-content">
-            <h3>Thêm Món Mới (Yêu cầu PIN 0)</h3>
+            <h3>Thêm Món Mới (Bảo mật PIN)</h3>
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
             <input type="text" id="newDishName" placeholder="Nhập tên món mới">
             
@@ -328,7 +349,7 @@
 
     <div class="modal" id="editDishModal">
         <div class="modal-content">
-            <h3>Sửa Tên & Giá Món (Yêu cầu PIN 0)</h3>
+            <h3>Sửa Tên & Giá Món (Bảo mật PIN)</h3>
             <input type="hidden" id="editDishId">
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
             <input type="text" id="editDishNameInput">
@@ -341,11 +362,10 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ TOPPING (CÓ BẢO VỆ PIN 0) -->
     <div class="modal" id="toppingConfigModal">
         <div class="modal-content" style="width: 420px;">
-            <h3>⚙️ Quản Lý Topping (Yêu cầu PIN 0)</h3>
-            <p style="font-size: 12px; color: #d32f2f; margin-bottom: 8px;">⚠️ Thao tác lưu/sửa yêu cầu mã PIN chủ quán.</p>
+            <h3>⚙️ Quản Lý Topping (Bảo mật PIN)</h3>
+            <p style="font-size: 12px; color: #d32f2f; margin-bottom: 8px;">⚠️ Thao tác yêu cầu xác thực chủ quán.</p>
             
             <label style="font-weight: bold; font-size: 13px; color: #2196F3;">🥤 Topping Thức Uống:</label>
             <div class="topping-config-list" id="drinkToppingConfigList" style="margin-top: 5px; margin-bottom: 15px;"></div>
@@ -363,8 +383,52 @@
     <div id="printable-area"></div>
 
     <script>
-        // HARDCODE URL GOOGLE SHEETS ĐỂ MỌI MÁY ĐỀU ĐỒNG BỘ TỰ ĐỘNG
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycUJt9_NiT8hamgV0wHphv926iDB7Qd04bzzJiGTSYVDfNQIOAwE6bPenqLmEd-aOr7w/exec";
+
+        let currentAccount = localStorage.getItem('kimbling_account') || '';
+
+        function confirmLoginAccount() {
+            const selected = document.querySelector('input[name="accountChoice"]:checked').value;
+            if (selected === 'CQ') {
+                let pin = prompt("Nhập mã PIN chủ quán:", "");
+                if (pin !== "0") {
+                    alert("Mã PIN không đúng!");
+                    return;
+                }
+            }
+            currentAccount = selected;
+            localStorage.setItem('kimbling_account', currentAccount);
+            document.getElementById('loginModal').style.display = 'none';
+            updateAccountBadge();
+        }
+
+        function switchAccount() {
+            document.querySelector(`input[name="accountChoice"][value="${currentAccount}"]`).checked = true;
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function updateAccountBadge() {
+            const badge = document.getElementById('currentAccountBadge');
+            if (currentAccount === 'CQ') {
+                badge.innerText = "👑 Chủ Quán [CQ]";
+                badge.style.background = "#fff3e0";
+                badge.style.color = "#e65100";
+            } else if (currentAccount === 'M9') {
+                badge.innerText = "☕ Chi nhánh M9 CXPL [M9]";
+                badge.style.background = "#e8f5e9";
+                badge.style.color = "#2e7d32";
+            } else {
+                badge.innerText = "🧋 Cơ sở khác [" + currentAccount + "]";
+                badge.style.background = "#e3f2fd";
+                badge.style.color = "#1976D2";
+            }
+        }
+
+        if (!currentAccount) {
+            document.getElementById('loginModal').style.display = 'flex';
+        } else {
+            updateAccountBadge();
+        }
 
         function formatPrice(val) {
             return (val / 1000) + 'k';
@@ -417,7 +481,7 @@
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: typeData, ...payload })
+                body: JSON.stringify({ type: typeData, account: currentAccount, ...payload })
             }).catch(err => console.log("Sync error:", err));
         }
 
@@ -433,7 +497,6 @@
                     localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
                     localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
                     renderMenu();
-                    alert("Đã đồng bộ menu mới nhất từ Google Sheets thành công!");
                 }
             } catch (err) {
                 console.log("Auto fetch menu error:", err);
@@ -482,13 +545,16 @@
             return 'MilkTea';
         }
 
-        function clearCart() {
+        function clearCartWithPin() {
             if (cart.length === 0) return;
-            if (confirm("Bạn có chắc muốn xóa toàn bộ món trong giỏ hàng hiện tại không?")) {
-                cart = [];
-                saveCart();
-                renderCart();
+            let pin = prompt("Nhập mã PIN xác thực:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Không thể xóa giỏ hàng.");
+                return;
             }
+            cart = [];
+            saveCart();
+            renderCart();
         }
 
         function renderMenu() {
@@ -691,7 +757,7 @@
         function viewBillDetail(orderId) {
             currentViewingBill = orderHistory.find(o => o.id === orderId);
             if (!currentViewingBill) return;
-            document.getElementById('detailTime').innerText = "Thời gian: " + currentViewingBill.fullDateStr + " | Bill: #" + (currentViewingBill.billNo || '---');
+            document.getElementById('detailTime').innerText = `[${currentViewingBill.account || 'CQ'}] Thời gian: ` + currentViewingBill.fullDateStr + " | Bill: #" + (currentViewingBill.billNo || '---');
             const itemsListEl = document.getElementById('detailItemsList');
             itemsListEl.innerHTML = '';
             currentViewingBill.items.forEach(item => {
@@ -717,13 +783,13 @@
             let cupGlobalIndex = 1;
             let totalCupsCount = 0;
             orderObj.items.forEach(item => totalCupsCount += item.quantity);
-            const billNoStr = orderObj.billNo ? `#${orderObj.billNo}` : `#${String(orderObj.id).slice(-4)}`;
+            const billNoStr = `[${orderObj.account || 'CQ'}] #${orderObj.billNo || String(orderObj.id).slice(-4)}`;
 
             orderObj.items.forEach(item => {
                 for (let i = 0; i < item.quantity; i++) {
                     stickersHTML += `
                         <div class="print-sticker">
-                            <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING</div>
+                            <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING (${orderObj.account || 'CQ'})</div>
                             <div style="font-size: 7.5px; text-align: center; margin-bottom: 1px;">ĐT: 086.269.5.269</div>
                             <div style="font-weight: bold; font-size: 9px; text-align: center; border-bottom: 1px solid #000; padding-bottom: 1px; margin-bottom: 2px;">
                                 BILL: ${billNoStr} (${cupGlobalIndex}/${totalCupsCount})
@@ -751,6 +817,7 @@
             const newOrder = {
                 id: Date.now(),
                 billNo: orderHistory.length + 1,
+                account: currentAccount,
                 isoDate: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                 fullDateStr: now.toLocaleString('vi-VN'),
@@ -783,7 +850,7 @@
                 totalRevenue += order.total;
                 historyList.innerHTML += `
                     <div class="history-item" onclick="viewBillDetail(${order.id})">
-                        <span>🕒 ${order.time} #${order.billNo || ''} (${order.items.length} món)</span>
+                        <span>🕒 ${order.time} [${order.account || 'CQ'}] #${order.billNo || ''} (${order.items.length} món)</span>
                         <strong style="color: #d32f2f;">${formatPrice(order.total)}</strong>
                     </div>
                 `;
@@ -792,6 +859,10 @@
         }
 
         function openMonthlyReport() {
+            if (currentAccount !== 'CQ') {
+                let pin = prompt("Nhập mã PIN xác thực:", "");
+                if (pin !== "0") { alert("Mã PIN không đúng!"); return; }
+            }
             const now = new Date();
             document.getElementById('reportMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             calculateMonthlyReport();
@@ -810,6 +881,10 @@
         }
 
         function openShiftReport() {
+            if (currentAccount !== 'CQ') {
+                let pin = prompt("Nhập mã PIN xác thực:", "");
+                if (pin !== "0") { alert("Mã PIN không đúng!"); return; }
+            }
             let totalRev = 0;
             orderHistory.forEach(o => totalRev += o.total);
             document.getElementById('shiftOrderCount').innerText = orderHistory.length;
@@ -822,7 +897,7 @@
             orderHistory.forEach(o => totalRev += o.total);
             let reportHTML = `
                 <div class="print-sticker">
-                    <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING</div>
+                    <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING (${currentAccount})</div>
                     <div style="font-size: 7.5px; text-align: center;">BÁO CÁO KẾT CA</div>
                     <div style="border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 8px; text-align: center;">${new Date().toLocaleDateString('vi-VN')}</div>
                     <div style="font-size: 8.5px;">Tổng đơn: <b>${orderHistory.length}</b></div>
@@ -837,6 +912,10 @@
         }
 
         function openAdvancedReport() {
+            if (currentAccount !== 'CQ') {
+                let pin = prompt("Nhập mã PIN xác thực:", "");
+                if (pin !== "0") { alert("Mã PIN không đúng!"); return; }
+            }
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('reportStartDate').value = today;
             document.getElementById('reportEndDate').value = today;
@@ -873,7 +952,7 @@
         }
 
         function openAddDishModal() {
-            let pin = prompt("Nhập mã PIN chủ quán để thêm món mới:", "");
+            let pin = prompt("Nhập mã PIN xác thực:", "");
             if (pin !== "0") {
                 alert("Mã PIN không đúng! Thao tác bị hủy.");
                 return;
@@ -890,11 +969,6 @@
             const cat = document.getElementById('newDishCategory').value;
             if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
             
-            // Đặt tên mẹo để ép danh mục nếu cần (ví dụ thêm dấu hiệu nhận biết hoặc tùy chỉnh)
-            // Vì hàm getCategoryType nhận diện theo tên, ta có thể tiền tố hoặc tên gọi rõ ràng, 
-            // hoặc gán tên sao cho khớp với getCategoryType.
-            // Để đơn giản và chắc chắn vào đúng danh mục, ta tinh chỉnh tên hoặc thêm logic lưu category trực tiếp vào object menu.
-            
             menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat });
             localStorage.setItem('kimbling_menu', JSON.stringify(menu));
             renderMenu();
@@ -904,6 +978,8 @@
         }
 
         function openEditDishModal(id) {
+            let pin = prompt("Nhập mã PIN xác thực:", "");
+            if (pin !== "0") { alert("Mã PIN không đúng!"); return; }
             const item = menu.find(i => i.id === id);
             if (!item) return;
             document.getElementById('editDishId').value = item.id;
@@ -914,7 +990,7 @@
         function closeEditDishModal() { document.getElementById('editDishModal').style.display = 'none'; }
         
         function saveEditedDish() {
-            let pin = prompt("Nhập mã PIN chủ quán để lưu thay đổi:", "");
+            let pin = prompt("Nhập mã PIN xác thực:", "");
             if (pin !== "0") {
                 alert("Mã PIN không đúng! Thao tác bị hủy.");
                 return;
@@ -933,7 +1009,7 @@
         }
 
         function deleteDish(id) {
-            let pin = prompt("Nhập mã PIN chủ quán để xóa món:", "");
+            let pin = prompt("Nhập mã PIN xác thực:", "");
             if (pin !== "0") {
                 alert("Mã PIN không đúng! Thao tác bị hủy.");
                 return;
@@ -950,7 +1026,7 @@
         let tempEditingSnacks = [];
 
         function openToppingConfigModal() {
-            let pin = prompt("Nhập mã PIN chủ quán để cấu hình topping:", "");
+            let pin = prompt("Nhập mã PIN xác thực:", "");
             if (pin !== "0") {
                 alert("Mã PIN không đúng! Thao tác bị hủy.");
                 return;
@@ -1000,40 +1076,6 @@
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
-        async function exportDataToTxt() {
-            const dataStr = JSON.stringify({ menu, drinkToppings, snackToppings, history: orderHistory, favorites }, null, 2);
-            const blob = new Blob([dataStr], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'KimBling_Backup.txt';
-            a.click(); URL.revokeObjectURL(url);
-        }
-
-        function importDataFromTxt(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const data = JSON.parse(evt.target.result);
-                    if (data.menu && data.history) {
-                        menu = data.menu; orderHistory = data.history;
-                        if (data.drinkToppings) drinkToppings = data.drinkToppings;
-                        if (data.snackToppings) snackToppings = data.snackToppings;
-                        if (data.favorites) favorites = data.favorites;
-                        localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                        localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
-                        localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
-                        localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
-                        localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
-                        renderMenu(); updateHistoryUI();
-                        alert("Nhập dữ liệu thành công!");
-                    }
-                } catch (err) { alert("Lỗi định dạng file!"); }
-            };
-            reader.readAsText(file);
-        }
-
-        // Tự động kéo menu từ cloud ngay khi mở trang để đồng bộ hoàn toàn
         fetchMenuFromCloud();
         renderMenu();
         renderCart();
