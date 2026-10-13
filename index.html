@@ -6,7 +6,7 @@
     <title>Kim Bling Coffee & Tea - Quản Lý Bán Hàng</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f4f6f9; }
+        body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
         
         .menu-section { flex: 2; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
         .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -15,8 +15,8 @@
         .btn-action:hover { background: #1976D2; }
         .btn-secondary { background: #607D8B; }
         .btn-secondary:hover { background: #455A64; }
-        .btn-topping-config { background: #607D8B; color: white; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-topping-config:hover { background: #455A64; }
+        .btn-topping-config { background: #ff9800; color: white; border: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-topping-config:hover { background: #f57c00; }
 
         .search-box { margin-bottom: 15px; }
         .search-box input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
@@ -26,8 +26,8 @@
         .menu-item { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
         .menu-item:hover { background: #e3f2fd; border-color: #2196F3; }
         .menu-item.favorite { border: 2px solid #ff9800; background: #fff8e1; }
-        .menu-item h4 { font-size: 16px; margin-bottom: 6px; color: #333; font-weight: bold; }
-        .menu-item p { color: #d32f2f; font-weight: bold; font-size: 15px; }
+        .menu-item h4 { font-size: 15px; margin-bottom: 6px; color: #333; font-weight: bold; }
+        .menu-item p { color: #d32f2f; font-weight: bold; font-size: 14px; }
         
         .menu-item-btns { position: absolute; top: 4px; right: 4px; display: flex; gap: 2px; }
         .btn-dish-action { background: none; border: none; color: #888; font-size: 14px; cursor: pointer; padding: 2px 4px; border-radius: 3px; }
@@ -75,7 +75,7 @@
         .topping-search-box input { width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
         .topping-search-box input:focus { border-color: #2196F3; }
 
-        .option-list { display: flex; flex-direction: column; gap: 4px; font-size: 15px; max-height: 140px; overflow-y: auto; border: 1px solid #f1f1f1; padding: 4px; border-radius: 4px; }
+        .option-list { display: flex; flex-direction: column; gap: 4px; font-size: 15px; max-height: 120px; overflow-y: auto; border: 1px solid #f1f1f1; padding: 4px; border-radius: 4px; }
         .option-list label { font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 3px 0; }
         
         .topping-config-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
@@ -109,6 +109,7 @@
             <div class="menu-header-actions">
                 <button class="btn-action" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
+                <button class="btn-action" style="background: #3f51b5;" onclick="fetchMenuFromCloud()">☁️ Tải Menu Mới</button>
                 <button class="btn-action btn-secondary" onclick="exportDataToTxt()">Xuất .txt</button>
                 <button class="btn-action btn-secondary" onclick="document.getElementById('importFile').click()">Nhập .txt</button>
                 <input type="file" id="importFile" style="display: none;" accept=".txt" onchange="importDataFromTxt(event)">
@@ -324,7 +325,7 @@
 
     <div class="modal" id="editDishModal">
         <div class="modal-content">
-            <h3>Sửa Tên & Giá Món</h3>
+            <h3>Sửa Tên & Giá Món (Yêu cầu PIN 0)</h3>
             <input type="hidden" id="editDishId">
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
             <input type="text" id="editDishNameInput">
@@ -337,14 +338,21 @@
         </div>
     </div>
 
+    <!-- MODAL QUẢN LÝ TOPPING (PHÂN LÓI THỨC UỐNG & ĂN VẶT + BẢO VỆ PIN 0) -->
     <div class="modal" id="toppingConfigModal">
-        <div class="modal-content" style="width: 400px;">
-            <h3>Quản Lý Danh Sách Topping</h3>
-            <div class="topping-config-list" id="toppingConfigList"></div>
-            <button class="btn-action" style="width: 100%; margin-top: 5px; margin-bottom: 10px;" onclick="addToppingConfigRow()">+ Thêm dòng topping</button>
+        <div class="modal-content" style="width: 420px;">
+            <h3>⚙️ Quản Lý Topping (Có bảo vệ PIN 0)</h3>
+            <p style="font-size: 12px; color: #d32f2f; margin-bottom: 8px;">⚠️ Thao tác lưu/sửa yêu cầu mã PIN chủ quán.</p>
+            
+            <label style="font-weight: bold; font-size: 13px; color: #2196F3;">🥤 Topping Thức Uống:</label>
+            <div class="topping-config-list" id="drinkToppingConfigList" style="margin-top: 5px; margin-bottom: 15px;"></div>
+
+            <label style="font-weight: bold; font-size: 13px; color: #ff9800;">🍟 Topping Ăn Vặt:</label>
+            <div class="topping-config-list" id="snackToppingConfigList" style="margin-top: 5px; margin-bottom: 10px;"></div>
+
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeToppingConfigModal()">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveToppingConfig()">Lưu thay đổi</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveToppingConfigWithPin()">Lưu Topping</button>
             </div>
         </div>
     </div>
@@ -384,16 +392,18 @@
         }
 
         const defaultMenu = [{"id": 1, "name": "Matcha Latte", "price": 20000}, {"id": 2, "name": "Matcha Bạc Hà", "price": 24000}, {"id": 3, "name": "Matcha Cà Phê", "price": 24000}, {"id": 4, "name": "Matcha Sốt Trái Cây + Kem", "price": 27000}, {"id": 5, "name": "Matcha Oreo", "price": 27000}, {"id": 6, "name": "Matcha Chuối", "price": 25000}, {"id": 7, "name": "Matcha Socola Oreo", "price": 30000}, {"id": 8, "name": "Trà Sữa Đài Loan Trân Châu", "price": 20000}, {"id": 9, "name": "Trà Sữa Socola", "price": 22000}, {"id": 10, "name": "Trà Sữa Yến Mạch", "price": 25000}, {"id": 11, "name": "Trà Sữa Khoai Môn", "price": 22000}, {"id": 12, "name": "Trà Sữa Matcha", "price": 22000}, {"id": 13, "name": "Trà Sữa Than Tre", "price": 22000}, {"id": 14, "name": "Cà Phê Đá", "price": 16000}, {"id": 15, "name": "Cà Phê Sữa Đá", "price": 19000}, {"id": 16, "name": "Cà Phê Muối", "price": 20000}, {"id": 17, "name": "Bạc Sỉu Đá", "price": 19000}, {"id": 18, "name": "Cà Phê Trứng Sữa", "price": 22000}, {"id": 19, "name": "Cà Phê Bọt Biển", "price": 22000}, {"id": 20, "name": "Cà Phê Đá Pha Máy Nguyên Chất", "price": 18000}, {"id": 21, "name": "Cà Phê Sữa Pha Máy Nguyên Chất", "price": 21000}, {"id": 22, "name": "Cà Phê Sữa Caramel", "price": 21000}, {"id": 23, "name": "Cà Phê Yến Mạch", "price": 25000}, {"id": 24, "name": "Cacao Latte", "price": 20000}, {"id": 25, "name": "Cacao Yến Mạch", "price": 25000}, {"id": 26, "name": "Cacao Phô Mai Sữa", "price": 22000}, {"id": 27, "name": "Cacao Chuối", "price": 27000}, {"id": 28, "name": "Cacao Oreo", "price": 27000}, {"id": 29, "name": "Cacao Bạc Hà", "price": 24000}, {"id": 30, "name": "Hoa Anh Đào Latte Kem", "price": 22000}, {"id": 31, "name": "Hoa Anh Đào Latte Sốt Trái Cây Tùy Chọn + Kem", "price": 27000}, {"id": 32, "name": "Soda Việt Quất + Thạch Trái Cây", "price": 22000}, {"id": 33, "name": "Soda Dâu + Thạch Trái Cây", "price": 22000}, {"id": 34, "name": "Soda Bạc Hà + Thạch Trái Cây", "price": 22000}, {"id": 35, "name": "Soda Đào + Thạch Trái Cây", "price": 22000}, {"id": 36, "name": "Soda Xoài + Thạch Trái Cây", "price": 22000}, {"id": 37, "name": "Soda Ổi + Thạch Trái Cây", "price": 22000}, {"id": 38, "name": "Soda Mãng Cầu + Thạch Trái Cây", "price": 22000}, {"id": 39, "name": "Thái Đỏ Latte Cacao", "price": 22000}, {"id": 40, "name": "Thái Xanh Latte Cacao", "price": 22000}, {"id": 41, "name": "Trà Sữa Thái Đỏ", "price": 22000}, {"id": 42, "name": "Trà Sữa Thái Xanh", "price": 22000}, {"id": 43, "name": "Trà Tắc Thái Xanh", "price": 17000}, {"id": 44, "name": "Trà Tắc Thái Đỏ", "price": 17000}, {"id": 45, "name": "Thái Xanh Cafe", "price": 22000}, {"id": 46, "name": "Thái Đỏ Cafe", "price": 22000}, {"id": 47, "name": "Cafe Mật Ong", "price": 20000}, {"id": 48, "name": "Ly 1 Lít Bí Đao", "price": 20000}, {"id": 49, "name": "Ly 1 Lít Hoa Cúc", "price": 20000}, {"id": 50, "name": "Ly 1 Lít Rong Biển Sương Sáo Hạt Chia", "price": 20000}, {"id": 51, "name": "Milo Dầm", "price": 25000}, {"id": 52, "name": "Khoai Môn Latte", "price": 20000}, {"id": 53, "name": "Khoai Môn Yến Mạch", "price": 25000}, {"id": 54, "name": "Khoai Môn Cafe", "price": 25000}, {"id": 55, "name": "Khoai Môn Matcha Kem", "price": 27000}, {"id": 56, "name": "Khoai Môn Oreo", "price": 27000}, {"id": 57, "name": "Sâm Dứa Sữa", "price": 20000}, {"id": 58, "name": "Sâm Dứa Sữa Cà Phê", "price": 24000}, {"id": 59, "name": "Sâm Dứa Sữa Matcha", "price": 25000}, {"id": 60, "name": "Sữa Tươi Cà Phê", "price": 22000}, {"id": 61, "name": "Sữa Tươi Sương Sáo", "price": 20000}, {"id": 62, "name": "Cà Phê Sữa Chuối", "price": 24000}, {"id": 63, "name": "Sữa Tươi Trân Châu Đường Đen", "price": 22000}, {"id": 64, "name": "Oreo Latte", "price": 22000}, {"id": 65, "name": "Việt Quất Latte", "price": 25000}, {"id": 66, "name": "Dâu Latte", "price": 25000}, {"id": 67, "name": "Đào Latte", "price": 25000}, {"id": 68, "name": "Xoài Latte", "price": 25000}, {"id": 69, "name": "Hồng Trà Tắc", "price": 12000}, {"id": 70, "name": "Hồng Trà Xí Muội", "price": 17000}, {"id": 71, "name": "Hồng Trà Dâu", "price": 17000}, {"id": 72, "name": "Hồng Trà Đào", "price": 17000}, {"id": 73, "name": "Hồng Trà Xoài", "price": 17000}, {"id": 74, "name": "Hồng Trà Dưa Lưới", "price": 17000}, {"id": 75, "name": "Hồng Trà Việt Quất", "price": 17000}, {"id": 76, "name": "Hồng Trà Vải", "price": 17000}, {"id": 77, "name": "Hồng Trà Ổi", "price": 17000}, {"id": 78, "name": "Hồng Trà Mãng Cầu", "price": 17000}, {"id": 79, "name": "Hồng Trà Dâu Tầm", "price": 17000}, {"id": 80, "name": "Hồng Trà Chanh Dây", "price": 17000}, {"id": 81, "name": "Hồng Trà Me", "price": 20000}, {"id": 82, "name": "Sữa Chua Kem", "price": 20000}, {"id": 83, "name": "Sữa Chua Phô Mai", "price": 24000}, {"id": 84, "name": "Sữa Chua Việt Quất (Ly Khổng Lồ 1 Lít)", "price": 27000}, {"id": 85, "name": "Sữa Chua Dâu Tây + Oreo (Ly Khổng Lồ 1 Lít)", "price": 27000}, {"id": 86, "name": "Sữa Chua Cà Phê", "price": 25000}, {"id": 87, "name": "Sữa Chua Matcha", "price": 27000}, {"id": 88, "name": "Sữa Dừa Sương Sáo", "price": 24000}, {"id": 89, "name": "Đá Me Đậu Phộng Hạt Đát", "price": 22000}, {"id": 90, "name": "Hojicha Latte", "price": 20000}, {"id": 91, "name": "Matcha Yến Mạch", "price": 25000}, {"id": 92, "name": "Socola Chuối Oreo", "price": 30000}, {"id": 93, "name": "Sữa Tuyết Việt Quất", "price": 35000}, {"id": 94, "name": "Sữa Tuyết Oreo", "price": 35000}, {"id": 95, "name": "Lipton Latte", "price": 20000}, {"id": 96, "name": "Chân Gà Rút Xương Sốt Thái", "price": 45000}, {"id": 97, "name": "Lạp Xưởng Tươi Nướng (1 cây)", "price": 15000}, {"id": 98, "name": "Sứa Sốt Thái", "price": 60000}, {"id": 99, "name": "Cá Viên 25k", "price": 25000}, {"id": 100, "name": "Cá Viên Chiên Thập Cẩm", "price": 45000}, {"id": 101, "name": "Cá Viên Sốt Phô Mai", "price": 35000}, {"id": 102, "name": "Cá Viên Sốt Mắm Tỏi", "price": 35000}, {"id": 103, "name": "Cá Viên Sốt Trứng Muối", "price": 35000}, {"id": 104, "name": "Tokbokki Sốt Phô Mai", "price": 35000}, {"id": 105, "name": "Tokbokki Sốt Trứng Muối", "price": 35000}, {"id": 106, "name": "Mẹc Bánh Tráng Chấm Chua Cay", "price": 25000}, {"id": 107, "name": "Cơm Chiên Dương Châu", "price": 20000}, {"id": 108, "name": "Gỏi Khô Bò (Đặc sản)", "price": 25000}, {"id": 109, "name": "Mì Sườn Ức Gà Phô Mai Cay", "price": 30000}, {"id": 110, "name": "Mì Tương Đen", "price": 25000}, {"id": 111, "name": "Mì Trộn Indomie", "price": 20000}, {"id": 112, "name": "Mì Trộn Cá Viên", "price": 30000}];
-        const defaultToppings = [{"name": "Trân Châu Trắng", "price": 3000}, {"name": "Trân Châu Caramel", "price": 3000}, {"name": "Thủy Tinh Đào", "price": 3000}, {"name": "Thủy Tinh Dâu", "price": 3000}, {"name": "Thủy Tinh Việt Quất", "price": 3000}, {"name": "Trân Châu Mini", "price": 3000}, {"name": "Hạt Đát", "price": 3000}, {"name": "Thạch Sương Sáo Sợi", "price": 3000}, {"name": "Thạch Dừa", "price": 3000}, {"name": "Thạch Trái Cây", "price": 3000}, {"name": "Kem Machiato", "price": 3000}, {"name": "Bánh Oreo", "price": 5000}, {"name": "Trân Châu Phô Mai Giòn", "price": 5000}, {"name": "Ly Bánh Que", "price": 12000}, {"name": "Ly Kem Phô Mai Trứng Muối", "price": 12000}, {"name": "Bánh Flan", "price": 9000}, {"name": "Bánh Tráng Thêm", "price": 3000}, {"name": "5 Trứng Cút Thêm", "price": 5000}, {"name": "Xoài Thêm", "price": 5000}, {"name": "Sốt Chấm Thêm", "price": 3000}, {"name": "Mì Thêm", "price": 10000}, {"name": "Trứng Gà Luộc Thêm", "price": 5000}, {"name": "Xúc Xích Thêm", "price": 5000}, {"name": "Khô Bò Đen Thêm", "price": 10000}];
+        
+        const defaultDrinkToppings = [{"name": "Trân Châu Trắng", "price": 3000}, {"name": "Trân Châu Caramel", "price": 3000}, {"name": "Thủy Tinh Đào", "price": 3000}, {"name": "Thủy Tinh Dâu", "price": 3000}, {"name": "Thủy Tinh Việt Quất", "price": 3000}, {"name": "Trân Châu Mini", "price": 3000}, {"name": "Hạt Đát", "price": 3000}, {"name": "Thạch Sương Sáo Sợi", "price": 3000}, {"name": "Thạch Dừa", "price": 3000}, {"name": "Thạch Trái Cây", "price": 3000}, {"name": "Kem Machiato", "price": 3000}, {"name": "Bánh Oreo", "price": 5000}, {"name": "Trân Châu Phô Mai Giòn", "price": 5000}, {"name": "Ly Bánh Que", "price": 12000}, {"name": "Ly Kem Phô Mai Trứng Muối", "price": 12000}, {"name": "Bánh Flan", "price": 9000}];
+        const defaultSnackToppings = [{"name": "Bánh Tráng Thêm", "price": 3000}, {"name": "5 Trứng Cút Thêm", "price": 5000}, {"name": "Xoài Thêm", "price": 5000}, {"name": "Sốt Chấm Thêm", "price": 3000}, {"name": "Mì Thêm", "price": 10000}, {"name": "Trứng Gà Luộc Thêm", "price": 5000}, {"name": "Xúc Xích Thêm", "price": 5000}, {"name": "Khô Bò Đen Thêm", "price": 10000}];
 
         let menu = JSON.parse(localStorage.getItem('kimbling_menu')) || defaultMenu;
-        let toppingsList = JSON.parse(localStorage.getItem('kimbling_toppings')) || defaultToppings;
+        let drinkToppings = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
+        let snackToppings = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
         let favorites = JSON.parse(localStorage.getItem('kimbling_favorites')) || [];
         let cart = JSON.parse(localStorage.getItem('kimbling_cart')) || [];
         let orderHistory = JSON.parse(localStorage.getItem('kimbling_history')) || [];
         let googleScriptUrl = localStorage.getItem('kimbling_script_url') || '';
         let selectedProduct = null;
-        let tempEditingToppings = [];
         let currentViewingBill = null;
 
         function openCloudConfigModal() {
@@ -430,7 +440,6 @@
             renderMenu();
         }
 
-        
         let currentCategory = 'All';
 
         function filterCategory(cat, btn) {
@@ -487,11 +496,10 @@
                 return true;
             });
 
-            // Sắp xếp sao yêu thích lên đầu tiên
             filteredMenu.sort((a, b) => {
                 const aFav = favorites.includes(a.id) ? 1 : 0;
                 const bFav = favorites.includes(b.id) ? 1 : 0;
-                return bFav - aFav; // Món yêu thích xếp trước
+                return bFav - aFav;
             });
 
             if (filteredMenu.length === 0) {
@@ -524,20 +532,7 @@
             modalToppingList.innerHTML = '';
             
             const isFood = getCategoryType(selectedProduct.name) === 'Food';
-            
-            // Phân loại danh sách topping dựa trên yêu cầu:
-            // - Đồ ăn vặt: Chỉ hiện từ "Bánh Tráng Thêm" trở xuống (Bánh tráng, trứng cút, xoài, sốt, mì, xúc xích, khô bò...). Ẩn topping nước.
-            // - Đồ uống: Hiển thị các topping nước (Trân châu, thạch, kem, flan...), ẩn các topping đồ ăn.
-            let availableList = toppingsList.filter(top => {
-                const nameN = removeDiacritics(top.name);
-                const isFoodTopping = nameN.includes('banh trang') || nameN.includes('trung') || nameN.includes('xoai') || nameN.includes('sot cham') || nameN.includes('mi them') || nameN.includes('xuc xich') || nameN.includes('kho bo');
-                
-                if (isFood) {
-                    return isFoodTopping;
-                } else {
-                    return !isFoodTopping;
-                }
-            });
+            let availableList = isFood ? snackToppings : drinkToppings;
 
             const filteredToppings = availableList.filter(top => smartMatch(keyword, top.name));
             if (filteredToppings.length === 0) {
@@ -562,11 +557,10 @@
             
             const isFood = getCategoryType(selectedProduct.name) === 'Food';
             
-            // Ẩn/hiện hoàn toàn các tùy chọn Size, Đường, Đá nếu là đồ ăn vặt
             document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('toppingLabelTitle').innerText = isFood ? 'Phần ăn thêm & Gia vị:' : 'Topping thêm:';
+            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị (Đồ ăn vặt):' : '🥤 Topping Thức Uống:';
 
             if (isFood) {
                 document.getElementById('modalDishPrice').innerText = formatPrice(selectedProduct.price);
@@ -592,11 +586,16 @@
         function closeOptionsModal() { document.getElementById('optionsModal').style.display = 'none'; }
 
         function confirmAddToCart() {
-            const size = document.querySelector('input[name="sizeOption"]:checked').value;
-            const sugar = document.querySelector('input[name="sugarOption"]:checked').value;
-            const ice = document.querySelector('input[name="iceOption"]:checked').value;
+            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            let size = "Bình thường", sugar = "", ice = "";
             let itemPrice = selectedProduct.price;
-            if (size === 'Upsize 1 Lít') itemPrice += 10000;
+
+            if (!isFood) {
+                size = document.querySelector('input[name="sizeOption"]:checked').value;
+                sugar = document.querySelector('input[name="sugarOption"]:checked').value;
+                ice = document.querySelector('input[name="iceOption"]:checked').value;
+                if (size === 'Upsize 1 Lít') itemPrice += 10000;
+            }
 
             let toppingNames = [];
             let rawToppings = [];
@@ -606,8 +605,11 @@
                 rawToppings.push(cb.getAttribute('data-name'));
             });
 
-            let optionsText = `Size: ${size} | ${sugar}, ${ice}`;
-            if (toppingNames.length > 0) optionsText += ` | + ${toppingNames.join(', ')}`;
+            let optionsText = isFood ? "" : `Size: ${size} | ${sugar}, ${ice}`;
+            if (toppingNames.length > 0) {
+                optionsText += (optionsText ? " | + " : "+ ") + toppingNames.join(', ');
+            }
+            if (!optionsText) optionsText = "Mặc định";
 
             const existing = cart.find(i => i.id === selectedProduct.id && i.optionsText === optionsText);
             if (existing) {
@@ -866,9 +868,9 @@
             if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
             menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price });
             localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-            syncToGoogleSheets('menu', { items: menu });
             renderMenu();
             closeAddDishModal();
+            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
         function openEditDishModal(id) {
@@ -880,7 +882,13 @@
             document.getElementById('editDishModal').style.display = 'flex';
         }
         function closeEditDishModal() { document.getElementById('editDishModal').style.display = 'none'; }
+        
         function saveEditedDish() {
+            let pin = prompt("Nhập mã PIN chủ quán để lưu thay đổi:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Thao tác bị hủy.");
+                return;
+            }
             const id = parseInt(document.getElementById('editDishId').value);
             const name = document.getElementById('editDishNameInput').value.trim();
             const price = parseInt(document.getElementById('editDishPriceInput').value);
@@ -888,52 +896,109 @@
             if (item) {
                 item.name = name; item.price = price;
                 localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                syncToGoogleSheets('menu', { items: menu });
                 renderMenu();
+                syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
             }
             closeEditDishModal();
         }
 
         function deleteDish(id) {
-            if (confirm("Xóa món này?")) {
-                menu = menu.filter(i => i.id !== id);
-                favorites = favorites.filter(favId => favId !== id);
-                localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
-                syncToGoogleSheets('menu', { items: menu });
-                renderMenu();
+            let pin = prompt("Nhập mã PIN chủ quán để xóa món:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Thao tác bị hủy.");
+                return;
             }
+            menu = menu.filter(i => i.id !== id);
+            favorites = favorites.filter(favId => favId !== id);
+            localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+            localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
+            renderMenu();
+            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
+        // Quản lý Topping với mã PIN 0
+        let tempEditingDrinks = [];
+        let tempEditingSnacks = [];
+
         function openToppingConfigModal() {
-            tempEditingToppings = JSON.parse(JSON.stringify(toppingsList));
-            renderToppingConfigList();
+            tempEditingDrinks = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
+            tempEditingSnacks = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
+            renderToppingConfigLists();
             document.getElementById('toppingConfigModal').style.display = 'flex';
         }
         function closeToppingConfigModal() { document.getElementById('toppingConfigModal').style.display = 'none'; }
-        function renderToppingConfigList() {
-            const listEl = document.getElementById('toppingConfigList');
-            listEl.innerHTML = '';
-            tempEditingToppings.forEach((t, idx) => {
-                listEl.innerHTML += `
+
+        function renderToppingConfigLists() {
+            const drinkListEl = document.getElementById('drinkToppingConfigList');
+            drinkListEl.innerHTML = '';
+            tempEditingDrinks.forEach((t, idx) => {
+                drinkListEl.innerHTML += `
                     <div class="topping-config-item">
-                        <input type="text" value="${t.name}" onchange="tempEditingToppings[${idx}].name=this.value">
-                        <input type="number" value="${t.price}" onchange="tempEditingToppings[${idx}].price=parseInt(this.value)||0">
-                        <button class="btn-del-topping-cfg" onclick="tempEditingToppings.splice(${idx},1); renderToppingConfigList()">Xóa</button>
+                        <input type="text" value="${t.name}" onchange="tempEditingDrinks[${idx}].name=this.value">
+                        <input type="number" value="${t.price}" onchange="tempEditingDrinks[${idx}].price=parseInt(this.value)||0">
+                        <button class="btn-del-topping-cfg" onclick="tempEditingDrinks.splice(${idx},1); renderToppingConfigLists()">Xóa</button>
                     </div>
                 `;
             });
+            drinkListEl.innerHTML += `<button class="btn-action" style="font-size:11px; padding:4px;" onclick="tempEditingDrinks.push({name:'', price:3000}); renderToppingConfigLists()">+ Thêm Topping Nước</button>`;
+
+            const snackListEl = document.getElementById('snackToppingConfigList');
+            snackListEl.innerHTML = '';
+            tempEditingSnacks.forEach((t, idx) => {
+                snackListEl.innerHTML += `
+                    <div class="topping-config-item">
+                        <input type="text" value="${t.name}" onchange="tempEditingSnacks[${idx}].name=this.value">
+                        <input type="number" value="${t.price}" onchange="tempEditingSnacks[${idx}].price=parseInt(this.value)||0">
+                        <button class="btn-del-topping-cfg" onclick="tempEditingSnacks.splice(${idx},1); renderToppingConfigLists()">Xóa</button>
+                    </div>
+                `;
+            });
+            snackListEl.innerHTML += `<button class="btn-action" style="font-size:11px; padding:4px; background:#ff9800;" onclick="tempEditingSnacks.push({name:'', price:3000}); renderToppingConfigLists()">+ Thêm Topping Ăn Vặt</button>`;
         }
-        function addToppingConfigRow() { tempEditingToppings.push({ name: "", price: 3000 }); renderToppingConfigList(); }
-        function saveToppingConfig() {
-            toppingsList = tempEditingToppings.filter(t => t.name !== "");
-            localStorage.setItem('kimbling_toppings', JSON.stringify(toppingsList));
-            alert("Đã lưu topping!");
+
+        function saveToppingConfigWithPin() {
+            let pin = prompt("Nhập mã PIN chủ quán để lưu cấu hình topping:", "");
+            if (pin !== "0") {
+                alert("Mã PIN không đúng! Thao tác bị hủy.");
+                return;
+            }
+            drinkToppings = tempEditingDrinks.filter(t => t.name.trim() !== "");
+            snackToppings = tempEditingSnacks.filter(t => t.name.trim() !== "");
+            localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
+            localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
+            alert("Đã lưu cấu hình topping thành công!");
             closeToppingConfigModal();
+            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+        }
+
+        async function fetchMenuFromCloud() {
+            if (!googleScriptUrl) {
+                alert("Vui lòng cấu hình Google Sheets URL trước!");
+                openCloudConfigModal();
+                return;
+            }
+            try {
+                const response = await fetch(googleScriptUrl + "?type=getMenu");
+                const data = await response.json();
+                if (data && data.menu) {
+                    menu = data.menu;
+                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
+                    if (data.snackToppings) snackToppings = data.snackToppings;
+                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
+                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
+                    renderMenu();
+                    alert("Đã đồng bộ menu mới nhất từ Google Sheets thành công!");
+                } else {
+                    alert("Không lấy được dữ liệu menu từ Google Sheets.");
+                }
+            } catch (err) {
+                alert("Lỗi kết nối khi tải menu từ Cloud. Hãy kiểm tra lại URL Apps Script.");
+            }
         }
 
         async function exportDataToTxt() {
-            const dataStr = JSON.stringify({ menu, toppings: toppingsList, history: orderHistory, favorites }, null, 2);
+            const dataStr = JSON.stringify({ menu, drinkToppings, snackToppings, history: orderHistory, favorites }, null, 2);
             const blob = new Blob([dataStr], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = 'KimBling_Backup.txt';
@@ -949,11 +1014,13 @@
                     const data = JSON.parse(evt.target.result);
                     if (data.menu && data.history) {
                         menu = data.menu; orderHistory = data.history;
-                        if (data.toppings) toppingsList = data.toppings;
+                        if (data.drinkToppings) drinkToppings = data.drinkToppings;
+                        if (data.snackToppings) snackToppings = data.snackToppings;
                         if (data.favorites) favorites = data.favorites;
                         localStorage.setItem('kimbling_menu', JSON.stringify(menu));
                         localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
-                        localStorage.setItem('kimbling_toppings', JSON.stringify(toppingsList));
+                        localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
+                        localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
                         localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
                         renderMenu(); updateHistoryUI();
                         alert("Nhập dữ liệu thành công!");
