@@ -828,13 +828,19 @@
             renderMenu();
         }
 
-        function getCategoryType(itemName) {
-            const n = removeDiacritics(itemName);
-            if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ')) {
+        function getCategoryType(itemName, assignedCat) {
+            if (assignedCat && ['MilkTea', 'Coffee', 'Yogurt', 'Food'].includes(assignedCat)) {
+                return assignedCat;
+            }
+            const n = removeDiacritics(itemName || '');
+            if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ') || n.includes('sua sot') || n.includes('an vat')) {
                 return 'Food';
             }
             if (n.includes('sua chua')) return 'Yogurt';
-            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso')) return 'Coffee';
+            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso') || n.includes('cafe')) return 'Coffee';
+            if (n.includes('tra') || n.includes('matcha') || n.includes('soda') || n.includes('latte') || n.includes('hong tra') || n.includes('sua tuoi') || n.includes('sam dua') || n.includes('lipton')) {
+                return 'MilkTea';
+            }
             return 'MilkTea';
         }
 
@@ -861,7 +867,7 @@
                 if (!matchKey) return false;
 
                 if (currentCategory === 'Favorite') return favorites.includes(item.id);
-                else if (currentCategory !== 'All') return getCategoryType(item.name) === currentCategory;
+                else if (currentCategory !== 'All') return getCategoryType(item.name, item.category) === currentCategory;
                 return true;
             });
 
