@@ -332,19 +332,29 @@
         </div>
     </div>
 
-    <!-- MODAL BẢNG LƯƠNG NHÂN VIÊN -->
+    <!-- MODAL BẢNG LƯƠNG & TRẠNG THÁI NHÂN VIÊN -->
     <div class="modal" id="payrollModal">
-        <div class="modal-content" style="width: 520px;">
-            <h3>💰 Bảng Lương & Giờ Làm Nhân Viên</h3>
+        <div class="modal-content" style="width: 560px;">
+            <h3>💰 Trạng Thái Ca Làm & Bảng Lương Nhân Viên</h3>
+            
+            <!-- Trạng thái nhân viên đang làm và đã tan ca hôm nay -->
+            <div style="margin: 10px 0; background: #e8f5e9; padding: 10px; border-radius: 6px;">
+                <h4 style="font-size: 14px; color: #2e7d32; margin-bottom: 6px;">🟢 Trạng Thái Nhân Viên Hôm Nay</h4>
+                <div id="todayActiveStaffContainer" style="font-size: 13px; color: #333; max-height: 120px; overflow-y: auto;"></div>
+            </div>
+
             <div style="margin: 10px 0; background: #f4f6f9; padding: 10px; border-radius: 6px;">
                 <label style="font-size: 14px; font-weight: bold;">Chọn Tháng Tính Lương:</label>
                 <input type="month" id="payrollMonthInput" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;" onchange="calculatePayroll()">
             </div>
-            <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
+
+            <div id="payrollResultList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
+            
             <div style="background: #fff3e0; padding: 10px; border-radius: 6px; text-align: right;">
                 <span style="font-size: 14px; color: #e65100;">Tổng quỹ lương tháng: </span>
                 <strong id="totalPayrollAmount" style="color: #e65100; font-size: 16px;">0k</strong>
             </div>
+
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ccc;" onclick="document.getElementById('payrollModal').style.display='none'">Đóng</button>
             </div>
@@ -464,7 +474,193 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw93DsQWRKmYZiTOkZ8Nypq8c7V8p0gJaLhjaGzNVNk_8zmMSpcrhdFi0Rx-NuB0WhqXA/exec";
+        const GOOGLE_SCRIPT_URL = "function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var type = data.type;
+    
+    if (type === 'menu') {
+      var sheet = getOrCreateSheet(ss, 'Menu');
+      sheet.clear();
+      sheet.appendRow(['ID', 'Name', 'Price', 'Category']);
+      if (data.menu && Array.isArray(data.menu)) {
+        data.menu.forEach(function(item) {
+          sheet.appendRow([item.id, item.name, item.price, item.category || '']);
+        });
+      }
+      
+      var topSheet = getOrCreateSheet(ss, 'Toppings');
+      topSheet.clear();
+      topSheet.appendRow(['Type', 'Name', 'Price']);
+      if (data.drinkToppings && Array.isArray(data.drinkToppings)) {
+        data.drinkToppings.forEach(function(t) {
+          topSheet.appendRow(['Drink', t.name, t.price]);
+        });
+      }
+      if (data.snackToppings && Array.isArray(data.snackToppings)) {
+        data.snackToppings.forEach(function(t) {
+          topSheet.appendRow(['Snack', t.name, t.price]);
+        });
+      }
+    } 
+    else if (type === 'history') {
+      var sheet = getOrCreateSheet(ss, 'History');
+      if (sheet.getLastRow() === 0) {
+        sheet.appendRow(['ID', 'BillNo', 'Account', 'Date', 'Time', 'Total', 'ItemsCount']);
+      }
+      sheet.appendRow([
+        data.id, 
+        data.billNo || '', 
+        data.account || 'CQ', 
+        data.isoDate || '', 
+        data.time || '', 
+        data.total || 0, 
+        data.items ? data.items.length : 0
+      ]);
+    }
+    else if (type === 'staff') {
+      var sheet = getOrCreateSheet(ss, 'Staff');
+      sheet.clear();
+      sheet.appendRow(['AdminPin', data.adminPin || '0']);
+      sheet.appendRow(['ID', 'Name', 'Pin', 'HourlyRate']);
+      if (data.staffList && Array.isArray(data.staffList)) {
+        data.staffList.forEach(function(st) {
+          sheet.appendRow([st.id, st.name, st.pin, st.hourlyRate || 22000]);
+        });
+      }
+    }
+    else if (type === 'attendance') {
+      var sheet = getOrCreateSheet(ss, 'Attendance');
+      sheet.clear();
+      sheet.appendRow(['ID', 'StaffId', 'StaffName', 'CheckInTime', 'CheckOutTime', 'Hours', 'HourlyRate', 'TotalPay', 'Date']);
+      if (data.attendance && Array.isArray(data.attendance)) {
+        data.attendance.forEach(function(att) {
+          sheet.appendRow([
+            att.id, 
+            att.staffId, 
+            att.staffName, 
+            att.checkInTime, 
+            att.checkOutTime || '', 
+            att.hours || 0, 
+            att.hourlyRate || 22000, 
+            att.totalPay || 0, 
+            att.date || ''
+          ]);
+        });
+      }
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({"status": "success"})).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": err.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var type = e.parameter.type;
+  var result = {};
+  
+  if (type === 'getMenu') {
+    var menuSheet = ss.getSheetByName('Menu');
+    var menu = [];
+    if (menuSheet && menuSheet.getLastRow() > 1) {
+      var rows = menuSheet.getRange(2, 1, menuSheet.getLastRow() - 1, 4).getValues();
+      rows.forEach(function(r) {
+        if (r[0]) menu.push({ id: r[0], name: r[1], price: r[2], category: r[3] });
+      });
+    }
+    
+    var drinkToppings = [];
+    var snackToppings = [];
+    var topSheet = ss.getSheetByName('Toppings');
+    if (topSheet && topSheet.getLastRow() > 1) {
+      var rows = topSheet.getRange(2, 1, topSheet.getLastRow() - 1, 3).getValues();
+      rows.forEach(function(r) {
+        if (r[1]) {
+          if (r[0] === 'Drink') drinkToppings.push({ name: r[1], price: r[2] });
+          else if (r[0] === 'Snack') snackToppings.push({ name: r[1], price: r[2] });
+        }
+      });
+    }
+    result = { menu: menu, drinkToppings: drinkToppings, snackToppings: snackToppings };
+  }
+  else if (type === 'getHistory') {
+    var sheet = ss.getSheetByName('History');
+    var history = [];
+    if (sheet && sheet.getLastRow() > 1) {
+      var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+      rows.forEach(function(r) {
+        if (r[0]) {
+          history.push({
+            id: r[0],
+            billNo: r[1],
+            account: r[2],
+            isoDate: r[3],
+            time: r[4],
+            total: r[5],
+            items: [] // Có thể mở rộng nếu cần lưu chi tiết item trong sheet riêng
+          });
+        }
+      });
+    }
+    result = { history: history };
+  }
+  else if (type === 'getStaff') {
+    var sheet = ss.getSheetByName('Staff');
+    var staffList = [];
+    var adminPin = '0';
+    if (sheet && sheet.getLastRow() > 0) {
+      var adminRow = sheet.getRange(1, 1, 1, 2).getValues()[0];
+      if (adminRow[0] === 'AdminPin') adminPin = String(adminRow[1]);
+      
+      if (sheet.getLastRow() > 2) {
+        var rows = sheet.getRange(3, 1, sheet.getLastRow() - 2, 4).getValues();
+        rows.forEach(function(r) {
+          if (r[0]) {
+            staffList.push({ id: r[0], name: r[1], pin: String(r[2]), hourlyRate: Number(r[3]) || 22000 });
+          }
+        });
+      }
+    }
+    result = { staffList: staffList, adminPin: adminPin };
+  }
+  else if (type === 'getAttendance') {
+    var sheet = ss.getSheetByName('Attendance');
+    var attendance = [];
+    if (sheet && sheet.getLastRow() > 1) {
+      var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
+      rows.forEach(function(r) {
+        if (r[0]) {
+          attendance.push({
+            id: r[0],
+            staffId: r[1],
+            staffName: r[2],
+            checkInTime: r[3],
+            checkOutTime: r[4],
+            hours: r[5],
+            hourlyRate: r[6],
+            totalPay: r[7],
+            date: r[8]
+          });
+        }
+      });
+    }
+    result = { attendance: attendance, activeShifts: [] };
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSheet(ss, name) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  return sheet;
+}
+";
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -472,14 +668,14 @@
             { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
-        let currentActiveShift = JSON.parse(localStorage.getItem('kimbling_active_shift')) || null;
+        let activeShiftsList = JSON.parse(localStorage.getItem('kimbling_active_shifts')) || [];
 
         function syncStaffToCloud() {
             syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
         }
 
-        function syncAttendanceToCloud(record) {
-            syncToGoogleSheets('attendance', record);
+        function syncAttendanceToCloud(records) {
+            syncToGoogleSheets('attendance', { attendance: records, activeShifts: activeShiftsList });
         }
 
         async function fetchStaffFromCloud() {
@@ -506,9 +702,15 @@
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getAttendance");
                 const data = await response.json();
-                if (data && data.attendance && Array.isArray(data.attendance)) {
-                    attendanceList = data.attendance;
-                    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                if (data) {
+                    if (data.attendance && Array.isArray(data.attendance)) {
+                        attendanceList = data.attendance;
+                        localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                    }
+                    if (data.activeShifts && Array.isArray(data.activeShifts)) {
+                        activeShiftsList = data.activeShifts;
+                        localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
+                    }
                 }
             } catch (err) {
                 console.log("Fetch attendance error:", err);
@@ -519,6 +721,17 @@
             let pin = prompt("Nhập mã PIN chủ quán:", "");
             if (pin !== adminPin) {
                 alert("Mã PIN không đúng!");
+                return false;
+            }
+            return true;
+        }
+
+        function verifyStaffPin(staffId) {
+            let staff = staffList.find(s => s.id === staffId);
+            let staffName = staff ? staff.name : staffId;
+            let pin = prompt(`Nhập mã PIN xác thực cho nhân viên ${staffName}:`, "");
+            if (!staff || pin !== staff.pin) {
+                alert("Mã PIN nhân viên không đúng!");
                 return false;
             }
             return true;
@@ -605,7 +818,8 @@
         function updateAttendanceUIState() {
             const attendanceBtn = document.getElementById('attendanceBtn');
             const statusBadge = document.getElementById('attendanceStatusBadge');
-            if (currentActiveShift && currentActiveShift.staffId === currentAccount) {
+            let activeShift = activeShiftsList.find(s => s.staffId === currentAccount);
+            if (activeShift) {
                 attendanceBtn.innerText = "🛑 Tan Ca";
                 attendanceBtn.style.background = "#e74c3c";
                 statusBadge.innerText = "🟢 Đang trong ca";
@@ -623,11 +837,16 @@
         function toggleAttendance() {
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
-            const now = new Date();
+            
+            // Yêu cầu nhập mã PIN nhân viên để Vào Ca / Tan Ca
+            if (!verifyStaffPin(staff.id)) return;
 
-            if (!currentActiveShift || currentActiveShift.staffId !== currentAccount) {
+            const now = new Date();
+            let activeShiftIndex = activeShiftsList.findIndex(s => s.staffId === currentAccount);
+
+            if (activeShiftIndex === -1) {
                 // Vào ca
-                currentActiveShift = {
+                let newShift = {
                     id: Date.now(),
                     staffId: staff.id,
                     staffName: staff.name,
@@ -636,34 +855,38 @@
                     hourlyRate: staff.hourlyRate || 22000,
                     date: now.toISOString().split('T')[0]
                 };
-                localStorage.setItem('kimbling_active_shift', JSON.stringify(currentActiveShift));
+                activeShiftsList.push(newShift);
+                localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
+                syncAttendanceToCloud(attendanceList);
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
                 // Tan ca
-                let checkInDate = new Date(currentActiveShift.checkInIso);
+                let activeShift = activeShiftsList[activeShiftIndex];
+                let checkInDate = new Date(activeShift.checkInIso);
                 let diffMs = now - checkInDate;
                 let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
                 if (hours < 0.01) hours = 0.05; // Tối thiểu hóa
-                let totalPay = Math.round(hours * currentActiveShift.hourlyRate);
+                let totalPay = Math.round(hours * activeShift.hourlyRate);
 
                 let record = {
-                    id: currentActiveShift.id,
-                    staffId: currentActiveShift.staffId,
-                    staffName: currentActiveShift.staffName,
-                    checkInTime: currentActiveShift.checkInTime,
+                    id: activeShift.id,
+                    staffId: activeShift.staffId,
+                    staffName: activeShift.staffName,
+                    checkInTime: activeShift.checkInTime,
                     checkOutTime: now.toLocaleString('vi-VN'),
                     hours: hours,
-                    hourlyRate: currentActiveShift.hourlyRate,
+                    hourlyRate: activeShift.hourlyRate,
                     totalPay: totalPay,
-                    date: currentActiveShift.date
+                    date: activeShift.date
                 };
 
                 attendanceList.push(record);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                syncAttendanceToCloud(record);
+                activeShiftsList.splice(activeShiftIndex, 1);
 
-                currentActiveShift = null;
-                localStorage.removeItem('kimbling_active_shift');
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
+                syncAttendanceToCloud(attendanceList);
+
                 alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
             }
             updateAttendanceUIState();
@@ -816,8 +1039,8 @@
 
         function clearCartWithPin() {
             if (cart.length === 0) return;
-            let pin = prompt("Nhập mã PIN xác thực để xóa giỏ hàng:", "");
             let requiredPin = currentAccount === 'CQ' ? adminPin : (staffList.find(s => s.id === currentAccount)?.pin || '');
+            let pin = prompt("Nhập mã PIN xác thực để xóa giỏ hàng:", "");
             if (pin !== requiredPin) {
                 alert("Mã PIN không đúng!");
                 return;
@@ -1155,7 +1378,13 @@
         }
 
         function openShiftReport() {
-            if (!verifyAdminPin()) return;
+            // Yêu cầu xác thực PIN: Nếu là nhân viên, dùng PIN nhân viên hiện tại; nếu là Chủ Quán, dùng PIN Chủ Quán
+            if (currentAccount === 'CQ') {
+                if (!verifyAdminPin()) return;
+            } else {
+                if (!verifyStaffPin(currentAccount)) return;
+            }
+
             let totalRev = 0;
             orderHistory.forEach(o => totalRev += o.total);
             document.getElementById('shiftOrderCount').innerText = orderHistory.length;
@@ -1220,11 +1449,45 @@
         }
 
         function openPayrollModal() {
-            if (!verifyAdminPin()) return;
+            // Xác thực PIN: Chủ quán dùng adminPin, nhân viên dùng staffPin của chính họ
+            if (currentAccount === 'CQ') {
+                if (!verifyAdminPin()) return;
+            } else {
+                if (!verifyStaffPin(currentAccount)) return;
+            }
+
             const now = new Date();
             document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            renderTodayActiveStaffUI();
             calculatePayroll();
             document.getElementById('payrollModal').style.display = 'flex';
+        }
+
+        function renderTodayActiveStaffUI() {
+            const container = document.getElementById('todayActiveStaffContainer');
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let activeHtml = '<b>🟢 Đang làm việc trực tiếp:</b><br>';
+            let activeToday = activeShiftsList.filter(s => s.date === todayStr);
+            if (activeToday.length === 0) {
+                activeHtml += '<span style="color: #666; font-style: italic;">Không có nhân viên nào đang trong ca.</span><br>';
+            } else {
+                activeToday.forEach(act => {
+                    activeHtml += `- <b>${act.staffName}</b> (Vào ca lúc: ${act.checkInTime}, Lương: ${formatPrice(act.hourlyRate)}/h)<br>`;
+                });
+            }
+
+            activeHtml += '<br><b>🔴 Đã tan ca hôm nay:</b><br>';
+            let completedToday = attendanceList.filter(att => att.date === todayStr);
+            if (completedToday.length === 0) {
+                activeHtml += '<span style="color: #666; font-style: italic;">Chưa có ca nào hoàn thành hôm nay.</span>';
+            } else {
+                completedToday.forEach(com => {
+                    activeHtml += `- <b>${com.staffName}</b> (${com.checkInTime} -> ${com.checkOutTime}) | Thời gian: ${com.hours}h | Lương: <strong style="color:#2e7d32;">${formatPrice(com.totalPay)}</strong><br>`;
+                });
+            }
+
+            container.innerHTML = activeHtml;
         }
 
         function calculatePayroll() {
@@ -1235,13 +1498,13 @@
 
             let staffSummary = {};
             staffList.forEach(s => {
-                staffSummary[s.id] = { name: s.name, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                staffSummary[s.id] = { name: s.name, hourlyRate: s.hourlyRate || 22000, totalHours: 0, totalPay: 0, shiftsCount: 0 };
             });
 
             attendanceList.forEach(att => {
                 if (att.date && att.date.startsWith(val)) {
                     if (!staffSummary[att.staffId]) {
-                        staffSummary[att.staffId] = { name: att.staffName, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                        staffSummary[att.staffId] = { name: att.staffName, hourlyRate: att.hourlyRate || 22000, totalHours: 0, totalPay: 0, shiftsCount: 0 };
                     }
                     staffSummary[att.staffId].totalHours += att.hours || 0;
                     staffSummary[att.staffId].totalPay += att.totalPay || 0;
@@ -1253,19 +1516,17 @@
             let hasData = false;
 
             Object.values(staffSummary).forEach(st => {
-                if (st.shiftsCount > 0) {
-                    hasData = true;
-                    grandTotalPayroll += st.totalPay;
-                    container.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
-                            <div>
-                                <b>${st.name}</b><br>
-                                <span style="font-size: 12px; color: #666;">Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
-                            </div>
-                            <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
+                hasData = true;
+                grandTotalPayroll += st.totalPay;
+                container.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                        <div>
+                            <b>${st.name}</b><br>
+                            <span style="font-size: 12px; color: #666;">Lương: ${formatPrice(st.hourlyRate)}/h | Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
                         </div>
-                    `;
-                }
+                        <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
+                    </div>
+                `;
             });
 
             if (!hasData) {
