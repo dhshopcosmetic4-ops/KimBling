@@ -332,29 +332,19 @@
         </div>
     </div>
 
-    <!-- MODAL BẢNG LƯƠNG & TRẠNG THÁI NHÂN VIÊN -->
+    <!-- MODAL BẢNG LƯƠNG NHÂN VIÊN -->
     <div class="modal" id="payrollModal">
-        <div class="modal-content" style="width: 560px;">
-            <h3>💰 Trạng Thái Ca Làm & Bảng Lương Nhân Viên</h3>
-            
-            <!-- Trạng thái nhân viên đang làm và đã tan ca hôm nay -->
-            <div style="margin: 10px 0; background: #e8f5e9; padding: 10px; border-radius: 6px;">
-                <h4 style="font-size: 14px; color: #2e7d32; margin-bottom: 6px;">🟢 Trạng Thái Nhân Viên Hôm Nay</h4>
-                <div id="todayActiveStaffContainer" style="font-size: 13px; color: #333; max-height: 120px; overflow-y: auto;"></div>
-            </div>
-
+        <div class="modal-content" style="width: 520px;">
+            <h3>💰 Bảng Lương & Giờ Làm Nhân Viên</h3>
             <div style="margin: 10px 0; background: #f4f6f9; padding: 10px; border-radius: 6px;">
                 <label style="font-size: 14px; font-weight: bold;">Chọn Tháng Tính Lương:</label>
                 <input type="month" id="payrollMonthInput" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;" onchange="calculatePayroll()">
             </div>
-
-            <div id="payrollResultList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
-            
+            <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
             <div style="background: #fff3e0; padding: 10px; border-radius: 6px; text-align: right;">
                 <span style="font-size: 14px; color: #e65100;">Tổng quỹ lương tháng: </span>
                 <strong id="totalPayrollAmount" style="color: #e65100; font-size: 16px;">0k</strong>
             </div>
-
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ccc;" onclick="document.getElementById('payrollModal').style.display='none'">Đóng</button>
             </div>
@@ -474,7 +464,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxs_S6zg_HPHrHUK7-lqTxQpwKNHkWs0jjd2YwKrP3RNyQZQbS5gNsKI0yNF706B-voig/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1AXdkdqoYJ7AHspQlSCsYM7FbOWKBgfg2M5GTCVFz7nrFM8dNW9cJEXf715J_7n_x1g/exec";
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -482,14 +472,14 @@
             { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
-        let activeShiftsList = JSON.parse(localStorage.getItem('kimbling_active_shifts')) || [];
+        let currentActiveShift = JSON.parse(localStorage.getItem('kimbling_active_shift')) || null;
 
         function syncStaffToCloud() {
             syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
         }
 
-        function syncAttendanceToCloud(records) {
-            syncToGoogleSheets('attendance', { attendance: records, activeShifts: activeShiftsList });
+        function syncAttendanceToCloud(record) {
+            syncToGoogleSheets('attendance', record);
         }
 
         async function fetchStaffFromCloud() {
@@ -516,15 +506,9 @@
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getAttendance");
                 const data = await response.json();
-                if (data) {
-                    if (data.attendance && Array.isArray(data.attendance)) {
-                        attendanceList = data.attendance;
-                        localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                    }
-                    if (data.activeShifts && Array.isArray(data.activeShifts)) {
-                        activeShiftsList = data.activeShifts;
-                        localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
-                    }
+                if (data && data.attendance && Array.isArray(data.attendance)) {
+                    attendanceList = data.attendance;
+                    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
                 }
             } catch (err) {
                 console.log("Fetch attendance error:", err);
@@ -535,17 +519,6 @@
             let pin = prompt("Nhập mã PIN chủ quán:", "");
             if (pin !== adminPin) {
                 alert("Mã PIN không đúng!");
-                return false;
-            }
-            return true;
-        }
-
-        function verifyStaffPin(staffId) {
-            let staff = staffList.find(s => s.id === staffId);
-            let staffName = staff ? staff.name : staffId;
-            let pin = prompt(`Nhập mã PIN xác thực cho nhân viên ${staffName}:`, "");
-            if (!staff || pin !== staff.pin) {
-                alert("Mã PIN nhân viên không đúng!");
                 return false;
             }
             return true;
@@ -632,8 +605,7 @@
         function updateAttendanceUIState() {
             const attendanceBtn = document.getElementById('attendanceBtn');
             const statusBadge = document.getElementById('attendanceStatusBadge');
-            let activeShift = activeShiftsList.find(s => s.staffId === currentAccount);
-            if (activeShift) {
+            if (currentActiveShift && currentActiveShift.staffId === currentAccount) {
                 attendanceBtn.innerText = "🛑 Tan Ca";
                 attendanceBtn.style.background = "#e74c3c";
                 statusBadge.innerText = "🟢 Đang trong ca";
@@ -651,16 +623,11 @@
         function toggleAttendance() {
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
-            
-            // Yêu cầu nhập mã PIN nhân viên để Vào Ca / Tan Ca
-            if (!verifyStaffPin(staff.id)) return;
-
             const now = new Date();
-            let activeShiftIndex = activeShiftsList.findIndex(s => s.staffId === currentAccount);
 
-            if (activeShiftIndex === -1) {
+            if (!currentActiveShift || currentActiveShift.staffId !== currentAccount) {
                 // Vào ca
-                let newShift = {
+                currentActiveShift = {
                     id: Date.now(),
                     staffId: staff.id,
                     staffName: staff.name,
@@ -669,38 +636,34 @@
                     hourlyRate: staff.hourlyRate || 22000,
                     date: now.toISOString().split('T')[0]
                 };
-                activeShiftsList.push(newShift);
-                localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
-                syncAttendanceToCloud(attendanceList);
+                localStorage.setItem('kimbling_active_shift', JSON.stringify(currentActiveShift));
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
                 // Tan ca
-                let activeShift = activeShiftsList[activeShiftIndex];
-                let checkInDate = new Date(activeShift.checkInIso);
+                let checkInDate = new Date(currentActiveShift.checkInIso);
                 let diffMs = now - checkInDate;
                 let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
                 if (hours < 0.01) hours = 0.05; // Tối thiểu hóa
-                let totalPay = Math.round(hours * activeShift.hourlyRate);
+                let totalPay = Math.round(hours * currentActiveShift.hourlyRate);
 
                 let record = {
-                    id: activeShift.id,
-                    staffId: activeShift.staffId,
-                    staffName: activeShift.staffName,
-                    checkInTime: activeShift.checkInTime,
+                    id: currentActiveShift.id,
+                    staffId: currentActiveShift.staffId,
+                    staffName: currentActiveShift.staffName,
+                    checkInTime: currentActiveShift.checkInTime,
                     checkOutTime: now.toLocaleString('vi-VN'),
                     hours: hours,
-                    hourlyRate: activeShift.hourlyRate,
+                    hourlyRate: currentActiveShift.hourlyRate,
                     totalPay: totalPay,
-                    date: activeShift.date
+                    date: currentActiveShift.date
                 };
 
                 attendanceList.push(record);
-                activeShiftsList.splice(activeShiftIndex, 1);
-
                 localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                localStorage.setItem('kimbling_active_shifts', JSON.stringify(activeShiftsList));
-                syncAttendanceToCloud(attendanceList);
+                syncAttendanceToCloud(record);
 
+                currentActiveShift = null;
+                localStorage.removeItem('kimbling_active_shift');
                 alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
             }
             updateAttendanceUIState();
@@ -853,8 +816,8 @@
 
         function clearCartWithPin() {
             if (cart.length === 0) return;
-            let requiredPin = currentAccount === 'CQ' ? adminPin : (staffList.find(s => s.id === currentAccount)?.pin || '');
             let pin = prompt("Nhập mã PIN xác thực để xóa giỏ hàng:", "");
+            let requiredPin = currentAccount === 'CQ' ? adminPin : (staffList.find(s => s.id === currentAccount)?.pin || '');
             if (pin !== requiredPin) {
                 alert("Mã PIN không đúng!");
                 return;
@@ -1192,13 +1155,7 @@
         }
 
         function openShiftReport() {
-            // Yêu cầu xác thực PIN: Nếu là nhân viên, dùng PIN nhân viên hiện tại; nếu là Chủ Quán, dùng PIN Chủ Quán
-            if (currentAccount === 'CQ') {
-                if (!verifyAdminPin()) return;
-            } else {
-                if (!verifyStaffPin(currentAccount)) return;
-            }
-
+            if (!verifyAdminPin()) return;
             let totalRev = 0;
             orderHistory.forEach(o => totalRev += o.total);
             document.getElementById('shiftOrderCount').innerText = orderHistory.length;
@@ -1263,45 +1220,11 @@
         }
 
         function openPayrollModal() {
-            // Xác thực PIN: Chủ quán dùng adminPin, nhân viên dùng staffPin của chính họ
-            if (currentAccount === 'CQ') {
-                if (!verifyAdminPin()) return;
-            } else {
-                if (!verifyStaffPin(currentAccount)) return;
-            }
-
+            if (!verifyAdminPin()) return;
             const now = new Date();
             document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            renderTodayActiveStaffUI();
             calculatePayroll();
             document.getElementById('payrollModal').style.display = 'flex';
-        }
-
-        function renderTodayActiveStaffUI() {
-            const container = document.getElementById('todayActiveStaffContainer');
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            let activeHtml = '<b>🟢 Đang làm việc trực tiếp:</b><br>';
-            let activeToday = activeShiftsList.filter(s => s.date === todayStr);
-            if (activeToday.length === 0) {
-                activeHtml += '<span style="color: #666; font-style: italic;">Không có nhân viên nào đang trong ca.</span><br>';
-            } else {
-                activeToday.forEach(act => {
-                    activeHtml += `- <b>${act.staffName}</b> (Vào ca lúc: ${act.checkInTime}, Lương: ${formatPrice(act.hourlyRate)}/h)<br>`;
-                });
-            }
-
-            activeHtml += '<br><b>🔴 Đã tan ca hôm nay:</b><br>';
-            let completedToday = attendanceList.filter(att => att.date === todayStr);
-            if (completedToday.length === 0) {
-                activeHtml += '<span style="color: #666; font-style: italic;">Chưa có ca nào hoàn thành hôm nay.</span>';
-            } else {
-                completedToday.forEach(com => {
-                    activeHtml += `- <b>${com.staffName}</b> (${com.checkInTime} -> ${com.checkOutTime}) | Thời gian: ${com.hours}h | Lương: <strong style="color:#2e7d32;">${formatPrice(com.totalPay)}</strong><br>`;
-                });
-            }
-
-            container.innerHTML = activeHtml;
         }
 
         function calculatePayroll() {
@@ -1312,13 +1235,13 @@
 
             let staffSummary = {};
             staffList.forEach(s => {
-                staffSummary[s.id] = { name: s.name, hourlyRate: s.hourlyRate || 22000, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                staffSummary[s.id] = { name: s.name, totalHours: 0, totalPay: 0, shiftsCount: 0 };
             });
 
             attendanceList.forEach(att => {
                 if (att.date && att.date.startsWith(val)) {
                     if (!staffSummary[att.staffId]) {
-                        staffSummary[att.staffId] = { name: att.staffName, hourlyRate: att.hourlyRate || 22000, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                        staffSummary[att.staffId] = { name: att.staffName, totalHours: 0, totalPay: 0, shiftsCount: 0 };
                     }
                     staffSummary[att.staffId].totalHours += att.hours || 0;
                     staffSummary[att.staffId].totalPay += att.totalPay || 0;
@@ -1330,17 +1253,19 @@
             let hasData = false;
 
             Object.values(staffSummary).forEach(st => {
-                hasData = true;
-                grandTotalPayroll += st.totalPay;
-                container.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
-                        <div>
-                            <b>${st.name}</b><br>
-                            <span style="font-size: 12px; color: #666;">Lương: ${formatPrice(st.hourlyRate)}/h | Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
+                if (st.shiftsCount > 0) {
+                    hasData = true;
+                    grandTotalPayroll += st.totalPay;
+                    container.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                            <div>
+                                <b>${st.name}</b><br>
+                                <span style="font-size: 12px; color: #666;">Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
+                            </div>
+                            <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
                         </div>
-                        <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
-                    </div>
-                `;
+                    `;
+                }
             });
 
             if (!hasData) {
