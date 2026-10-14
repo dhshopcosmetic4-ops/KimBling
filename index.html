@@ -605,6 +605,15 @@
         }
 
         function switchAccount() {
+            if (currentAccount && currentAccount !== 'CQ') {
+                let currentActiveShift = getActiveShift();
+                if (currentActiveShift) {
+                    let confirmLeave = confirm("⚠️ CẢNH BÁO: Bạn chưa bấm TAN CA trước khi đổi tài khoản! Bạn có muốn hệ thống tự động TAN CA ngay bây giờ không?");
+                    if (confirmLeave) {
+                        toggleAttendance(); // Thực hiện tan ca tự động
+                    }
+                }
+            }
             renderStaffSelectOptions();
             document.getElementById('loginAdminPinInput').value = '';
             document.getElementById('loginStaffPinInput').value = '';
@@ -711,7 +720,36 @@
         }
 
         function refreshAllData() {
-            fetchStaffFromCloud();
+    
+        function deleteAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
+                attendanceList = attendanceList.filter(a => a.id !== attId);
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                calculatePayroll();
+                alert("Đã xóa log ca làm thành công!");
+            }
+        }
+
+        function editAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            let att = attendanceList.find(a => a.id === attId);
+            if (!att) return;
+            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
+            if (newHoursStr === null) return;
+            let newHours = parseFloat(newHoursStr);
+            if (isNaN(newHours) || newHours <= 0) {
+                alert("Số giờ không hợp lệ!");
+                return;
+            }
+            att.hours = newHours;
+            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+            calculatePayroll();
+            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
+        }
+
+        fetchStaffFromCloud();
             fetchAttendanceFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
@@ -958,6 +996,13 @@
         }
 
         function openOptionsModal(id) {
+            if (currentAccount && currentAccount !== 'CQ') {
+                let activeShift = getActiveShift();
+                if (!activeShift) {
+                    alert("⛔ BẠN CHƯA VÀO CA! Vui lòng bấm nút '⏱️ Vào Ca' ở góc trên bên trái trước khi bắt đầu chọn món và bán hàng.");
+                    return;
+                }
+            }
             selectedProduct = menu.find(item => item.id === id);
             if (!selectedProduct) return;
             document.getElementById('modalDishName').innerText = selectedProduct.name;
@@ -1365,12 +1410,22 @@
                     totalHoursSum += att.hours || 0;
                     totalPaySum += att.totalPay || 0;
                     let rateStr = formatPrice(att.hourlyRate || 22000) + '/h';
+                    let adminActions = '';
+                    if (currentAccount === 'CQ') {
+                        adminActions = `
+                            <div style="margin-top: 4px; display: flex; gap: 4px;">
+                                <button style="background: #2196F3; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;" onclick="editAttendanceRecord(${att.id})">Sửa giờ</button>
+                                <button style="background: #e74c3c; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;" onclick="deleteAttendanceRecord(${att.id})">Xóa</button>
+                            </div>
+                        `;
+                    }
                     container.innerHTML += `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
                             <div>
                                 <b>${att.staffName}</b> [${att.staffId}] — <span style="color: #333; font-weight: bold;">Ngày: ${att.date}</span><br>
                                 <span style="color: #666; font-size: 12px;">🕒 Vào: ${att.checkInTime} ➔ Ra: ${att.checkOutTime || '---'}</span><br>
                                 <span style="color: #009688; font-size: 12px; font-weight: bold;">⏱️ Thời gian: ${att.hours} giờ (${rateStr})</span>
+                                ${adminActions}
                             </div>
                             <div style="text-align: right;">
                                 <strong style="color: #27ae60; font-size: 15px;">${formatPrice(att.totalPay)}</strong>
@@ -1612,6 +1667,35 @@
                 renderStaffList();
                 renderStaffSelectOptions();
             }
+        }
+
+
+        function deleteAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
+                attendanceList = attendanceList.filter(a => a.id !== attId);
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                calculatePayroll();
+                alert("Đã xóa log ca làm thành công!");
+            }
+        }
+
+        function editAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            let att = attendanceList.find(a => a.id === attId);
+            if (!att) return;
+            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
+            if (newHoursStr === null) return;
+            let newHours = parseFloat(newHoursStr);
+            if (isNaN(newHours) || newHours <= 0) {
+                alert("Số giờ không hợp lệ!");
+                return;
+            }
+            att.hours = newHours;
+            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+            calculatePayroll();
+            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
         }
 
         fetchStaffFromCloud();
