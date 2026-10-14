@@ -75,7 +75,8 @@
         .topping-search-box input { width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
         .topping-search-box input:focus { border-color: #2196F3; }
 
-        .option-list { display: flex; flex-direction: column; gap: 4px; font-size: 15px; max-height: 150px; overflow-y: auto; border: 1px solid #f1f1f1; padding: 4px; border-radius: 4px; }
+        .option-list { display: flex; flex-direction: column; gap: 4px; font-size: 15px; max-height: 120px; overflow-y: auto; border: 1px solid #f1f1f1; padding: 4px; border-radius: 4px; }
+        .option-list label { font-weight: normal; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 3px 0; }
         
         .topping-config-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
         .topping-config-item { display: flex; gap: 6px; align-items: center; }
@@ -231,7 +232,7 @@
             </div>
 
             <div class="option-group">
-                <label id="toppingLabelTitle">Topping thêm (Bấm tăng giảm số lượng x2, x3...):</label>
+                <label id="toppingLabelTitle">Topping thêm:</label>
                 <div class="topping-search-box">
                     <input type="text" id="toppingSearchInput" placeholder="🔍 Tìm nhanh (viết tắt, không dấu)..." oninput="renderModalToppings()">
                 </div>
@@ -333,41 +334,17 @@
 
     <!-- MODAL BẢNG LƯƠNG NHÂN VIÊN -->
     <div class="modal" id="payrollModal">
-        <div class="modal-content" style="width: 620px; max-height: 92vh;">
-            <h3 style="color: #3f51b5; margin-bottom: 4px;">👑 Quản Lý Ca Làm & Bảng Lương Chi Tiết</h3>
-            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Theo dõi trạng thái nhân viên trực tiếp và lịch sử chấm công minh bạch.</p>
-            
-            <!-- Trạng thái nhân viên trực tuyến hiện tại -->
-            <div style="background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 6px; padding: 10px; margin-bottom: 12px;">
-                <h4 style="font-size: 14px; color: #2e7d32; margin-bottom: 6px;">🟢 Trạng Thái Nhân Viên Hiện Tại:</h4>
-                <div id="liveStaffStatusContainer" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        <div class="modal-content" style="width: 520px;">
+            <h3>💰 Bảng Lương & Giờ Làm Nhân Viên</h3>
+            <div style="margin: 10px 0; background: #f4f6f9; padding: 10px; border-radius: 6px;">
+                <label style="font-size: 14px; font-weight: bold;">Chọn Tháng Tính Lương:</label>
+                <input type="month" id="payrollMonthInput" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;" onchange="calculatePayroll()">
             </div>
-
-            <!-- Bộ lọc -->
-            <div style="margin-bottom: 10px; background: #f4f6f9; padding: 10px; border-radius: 6px; display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Chọn Tháng:</label>
-                    <input type="month" id="payrollMonthInput" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" onchange="calculatePayroll()">
-                </div>
-                <div style="flex: 1.2;">
-                    <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Lọc Nhân Viên:</label>
-                    <select id="payrollStaffFilter" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" onchange="calculatePayroll()"></select>
-                </div>
+            <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
+            <div style="background: #fff3e0; padding: 10px; border-radius: 6px; text-align: right;">
+                <span style="font-size: 14px; color: #e65100;">Tổng quỹ lương tháng: </span>
+                <strong id="totalPayrollAmount" style="color: #e65100; font-size: 16px;">0k</strong>
             </div>
-
-            <!-- Danh sách log chi tiết ca làm -->
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #444;">📜 Lịch Sử Log Ca Làm & Tiền Lương Từng Ngày:</div>
-            <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 6px; border-radius: 4px; margin-bottom: 10px; background: #fff;"></div>
-            
-            <!-- Tổng kết -->
-            <div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <div id="payrollSummaryStats" style="font-size: 13px; color: #e65100; font-weight: bold;">Tổng số ca: 0 | Tổng giờ: 0h</div>
-                <div style="text-align: right;">
-                    <span style="font-size: 13px; color: #e65100;">Tổng tiền lương: </span>
-                    <strong id="totalPayrollAmount" style="color: #e65100; font-size: 17px;">0k</strong>
-                </div>
-            </div>
-
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ccc;" onclick="document.getElementById('payrollModal').style.display='none'">Đóng</button>
             </div>
@@ -495,18 +472,7 @@
             { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
-        function getActiveShift() {
-            if (!currentAccount) return null;
-            return JSON.parse(localStorage.getItem('kimbling_active_shift_' + currentAccount)) || null;
-        }
-        function saveActiveShift(shiftObj) {
-            if (!currentAccount) return;
-            if (shiftObj) {
-                localStorage.setItem('kimbling_active_shift_' + currentAccount, JSON.stringify(shiftObj));
-            } else {
-                localStorage.removeItem('kimbling_active_shift_' + currentAccount);
-            }
-        }
+        let currentActiveShift = JSON.parse(localStorage.getItem('kimbling_active_shift')) || null;
 
         function syncStaffToCloud() {
             syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
@@ -639,7 +605,6 @@
         function updateAttendanceUIState() {
             const attendanceBtn = document.getElementById('attendanceBtn');
             const statusBadge = document.getElementById('attendanceStatusBadge');
-            let currentActiveShift = getActiveShift();
             if (currentActiveShift && currentActiveShift.staffId === currentAccount) {
                 attendanceBtn.innerText = "🛑 Tan Ca";
                 attendanceBtn.style.background = "#e74c3c";
@@ -659,9 +624,9 @@
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
             const now = new Date();
-            let currentActiveShift = getActiveShift();
 
-            if (!currentActiveShift) {
+            if (!currentActiveShift || currentActiveShift.staffId !== currentAccount) {
+                // Vào ca
                 currentActiveShift = {
                     id: Date.now(),
                     staffId: staff.id,
@@ -671,13 +636,14 @@
                     hourlyRate: staff.hourlyRate || 22000,
                     date: now.toISOString().split('T')[0]
                 };
-                saveActiveShift(currentActiveShift);
+                localStorage.setItem('kimbling_active_shift', JSON.stringify(currentActiveShift));
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
+                // Tan ca
                 let checkInDate = new Date(currentActiveShift.checkInIso);
                 let diffMs = now - checkInDate;
                 let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
-                if (hours < 0.01) hours = 0.05;
+                if (hours < 0.01) hours = 0.05; // Tối thiểu hóa
                 let totalPay = Math.round(hours * currentActiveShift.hourlyRate);
 
                 let record = {
@@ -696,7 +662,8 @@
                 localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
                 syncAttendanceToCloud(record);
 
-                saveActiveShift(null);
+                currentActiveShift = null;
+                localStorage.removeItem('kimbling_active_shift');
                 alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
             }
             updateAttendanceUIState();
@@ -762,7 +729,6 @@
         let orderHistory = JSON.parse(localStorage.getItem('kimbling_history')) || [];
         let selectedProduct = null;
         let currentViewingBill = null;
-        let currentModalToppings = {};
 
         function syncToGoogleSheets(typeData, payload) {
             if (!GOOGLE_SCRIPT_URL) return;
@@ -809,8 +775,11 @@
         function toggleFavorite(id, event) {
             event.stopPropagation();
             const index = favorites.indexOf(id);
-            if (index > -1) favorites.splice(index, 1);
-            else favorites.push(id);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(id);
+            }
             localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
             renderMenu();
         }
@@ -833,8 +802,15 @@
             if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ')) {
                 return 'Food';
             }
-            if (n.includes('sua chua')) return 'Yogurt';
-            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso')) return 'Coffee';
+            if (n.includes('sua chua')) {
+                return 'Yogurt';
+            }
+            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso')) {
+                return 'Coffee';
+            }
+            if (n.includes('tra sua') || n.includes('hong tra') || n.includes('matcha') || n.includes('soda') || n.includes('sam dua') || n.includes('sua tuoi') || n.includes('lipton') || n.includes('1 lit') || n.includes('milo')) {
+                return 'MilkTea';
+            }
             return 'MilkTea';
         }
 
@@ -860,8 +836,11 @@
                 const matchKey = smartMatch(keyword, item.name);
                 if (!matchKey) return false;
 
-                if (currentCategory === 'Favorite') return favorites.includes(item.id);
-                else if (currentCategory !== 'All') return getCategoryType(item.name) === currentCategory;
+                if (currentCategory === 'Favorite') {
+                    return favorites.includes(item.id);
+                } else if (currentCategory !== 'All') {
+                    return getCategoryType(item.name) === currentCategory;
+                }
                 return true;
             });
 
@@ -917,38 +896,13 @@
             }
 
             filteredToppings.forEach((top) => {
-                if (currentModalToppings[top.name] === undefined) {
-                    currentModalToppings[top.name] = 0;
-                }
-                let safeKey = top.name.replace(/[^a-zA-Z0-9]/g, '_');
                 modalToppingList.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f9f9f9;">
-                        <span>${top.name} (+${formatPrice(top.price)})</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <button type="button" style="padding: 2px 8px; background: #ddd; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;" onclick="changeModalToppingQty('${top.name}', -1)">-</button>
-                            <span id="topping-qty-${safeKey}" style="width: 20px; text-align: center; font-weight: bold;">${currentModalToppings[top.name]}</span>
-                            <button type="button" style="padding: 2px 8px; background: #ddd; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;" onclick="changeModalToppingQty('${top.name}', 1)">+</button>
-                        </div>
-                    </div>
+                    <label>
+                        <input type="checkbox" name="toppingOption" value="${top.name} (${formatPrice(top.price)})" data-price="${top.price}" data-name="${top.name}"> 
+                        ${top.name} (+${formatPrice(top.price)})
+                    </label>
                 `;
             });
-        }
-
-        function changeModalToppingQty(toppingName, delta) {
-            if (currentModalToppings[toppingName] === undefined) {
-                currentModalToppings[toppingName] = 0;
-            }
-            currentModalToppings[toppingName] += delta;
-            if (currentModalToppings[toppingName] < 0) {
-                currentModalToppings[toppingName] = 0;
-            }
-
-            let safeKey = toppingName.replace(/[^a-zA-Z0-9]/g, '_');
-            const spanEl = document.getElementById(`topping-qty-${safeKey}`);
-            if (spanEl) {
-                spanEl.innerText = currentModalToppings[toppingName];
-            }
-            updateModalTotal();
         }
 
         function openOptionsModal(id) {
@@ -961,11 +915,7 @@
             document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị (Bấm tăng giảm x2, x3):' : '🥤 Topping Thức Uống (Bấm tăng giảm x2, x3):';
-
-            currentModalToppings = {};
-            let availableList = isFood ? snackToppings : drinkToppings;
-            availableList.forEach(t => { currentModalToppings[t.name] = 0; });
+            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị (Đồ ăn vặt):' : '🥤 Topping Thức Uống:';
 
             if (isFood) {
                 document.getElementById('modalDishPrice').innerText = formatPrice(selectedProduct.price);
@@ -982,26 +932,10 @@
         }
 
         function updateModalTotal() {
-            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            const size = document.querySelector('input[name="sizeOption"]:checked').value;
             let currentPrice = selectedProduct.price;
-
-            if (!isFood) {
-                const size = document.querySelector('input[name="sizeOption"]:checked').value;
-                if (size === 'Upsize 1 Lít') currentPrice += 10000;
-            }
-            
-            let availableList = isFood ? snackToppings : drinkToppings;
-            for (let [topName, qty] of Object.entries(currentModalToppings)) {
-                if (qty > 0) {
-                    let foundTop = availableList.find(t => t.name === topName);
-                    if (foundTop) {
-                        currentPrice += foundTop.price * qty;
-                    }
-                }
-            }
-
-            const sizeText = isFood ? '' : ' (' + (document.querySelector('input[name="sizeOption"]:checked')?.value || 'Bình thường') + ')';
-            document.getElementById('modalDishPrice').innerText = formatPrice(currentPrice) + sizeText;
+            if (size === 'Upsize 1 Lít') currentPrice += 10000;
+            document.getElementById('modalDishPrice').innerText = formatPrice(currentPrice) + ' (' + size + ')';
         }
 
         function closeOptionsModal() { document.getElementById('optionsModal').style.display = 'none'; }
@@ -1020,20 +954,11 @@
 
             let toppingNames = [];
             let rawToppings = [];
-            let availableList = isFood ? snackToppings : drinkToppings;
-
-            for (let [topName, qty] of Object.entries(currentModalToppings)) {
-                if (qty > 0) {
-                    let foundTop = availableList.find(t => t.name === topName);
-                    if (foundTop) {
-                        itemPrice += foundTop.price * qty;
-                        toppingNames.push(qty > 1 ? `${topName} x${qty}` : topName);
-                        for (let i = 0; i < qty; i++) {
-                            rawToppings.push(foundTop.name);
-                        }
-                    }
-                }
-            }
+            document.querySelectorAll('input[name="toppingOption"]:checked').forEach(cb => {
+                itemPrice += parseInt(cb.getAttribute('data-price'));
+                toppingNames.push(cb.value);
+                rawToppings.push(cb.getAttribute('data-name'));
+            });
 
             let optionsText = isFood ? "" : `Size: ${size} | ${sugar}, ${ice}`;
             if (toppingNames.length > 0) {
@@ -1294,89 +1219,59 @@
             renderList(toppings, 'advTopToppings');
         }
 
-        function renderLiveStaffStatus() {
-            const container = document.getElementById('liveStaffStatusContainer');
-            container.innerHTML = '';
-            if (staffList.length === 0) {
-                container.innerHTML = '<span style="font-size: 13px; color: #666;">Chưa có nhân viên nào.</span>';
-                return;
-            }
-            staffList.forEach(st => {
-                let activeShift = JSON.parse(localStorage.getItem('kimbling_active_shift_' + st.id));
-                let isWorking = activeShift !== null;
-                let statusBadgeBg = isWorking ? '#d4edda' : '#f8d7da';
-                let statusTextColor = isWorking ? '#155724' : '#721c24';
-                let statusText = isWorking ? `🟢 Đang làm (Từ ${activeShift.checkInTime.split(' ')[0] === new Date().toLocaleDateString('vi-VN') ? activeShift.checkInTime.split(' ')[1] : activeShift.checkInTime})` : '🔴 Đang Off';
-
-                container.innerHTML += `
-                    <div style="background: ${statusBadgeBg}; color: ${statusTextColor}; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(0,0,0,0.05);">
-                        ${st.name} [${st.id}]: ${statusText}
-                    </div>
-                `;
-            });
-        }
-
-        function renderPayrollStaffFilter() {
-            const filterEl = document.getElementById('payrollStaffFilter');
-            filterEl.innerHTML = '<option value="ALL">-- Tất cả nhân viên --</option>';
-            staffList.forEach(st => {
-                filterEl.innerHTML += `<option value="${st.id}">${st.name} [${st.id}]</option>`;
-            });
-        }
-
         function openPayrollModal() {
             if (!verifyAdminPin()) return;
             const now = new Date();
             document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            renderLiveStaffStatus();
-            renderPayrollStaffFilter();
             calculatePayroll();
             document.getElementById('payrollModal').style.display = 'flex';
         }
 
         function calculatePayroll() {
             const val = document.getElementById('payrollMonthInput').value;
-            const selectedStaffId = document.getElementById('payrollStaffFilter').value;
             if (!val) return;
             const container = document.getElementById('payrollResultList');
             container.innerHTML = '';
 
-            let filteredShifts = attendanceList.filter(att => {
-                if (!att.date || !att.date.startsWith(val)) return false;
-                if (selectedStaffId !== 'ALL' && att.staffId !== selectedStaffId) return false;
-                return true;
+            let staffSummary = {};
+            staffList.forEach(s => {
+                staffSummary[s.id] = { name: s.name, totalHours: 0, totalPay: 0, shiftsCount: 0 };
             });
 
-            // Sắp xếp mới nhất lên đầu
-            filteredShifts.sort((a, b) => new Date(b.id) - new Date(a.id));
+            attendanceList.forEach(att => {
+                if (att.date && att.date.startsWith(val)) {
+                    if (!staffSummary[att.staffId]) {
+                        staffSummary[att.staffId] = { name: att.staffName, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                    }
+                    staffSummary[att.staffId].totalHours += att.hours || 0;
+                    staffSummary[att.staffId].totalPay += att.totalPay || 0;
+                    staffSummary[att.staffId].shiftsCount += 1;
+                }
+            });
 
-            let totalHoursSum = 0;
-            let totalPaySum = 0;
+            let grandTotalPayroll = 0;
+            let hasData = false;
 
-            if (filteredShifts.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #777; font-size: 13px; padding: 15px;">Không có dữ liệu log ca làm trong bộ lọc này</p>';
-            } else {
-                filteredShifts.forEach(att => {
-                    totalHoursSum += att.hours || 0;
-                    totalPaySum += att.totalPay || 0;
-                    let rateStr = formatPrice(att.hourlyRate || 22000) + '/h';
+            Object.values(staffSummary).forEach(st => {
+                if (st.shiftsCount > 0) {
+                    hasData = true;
+                    grandTotalPayroll += st.totalPay;
                     container.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
                             <div>
-                                <b>${att.staffName}</b> [${att.staffId}] — <span style="color: #333; font-weight: bold;">Ngày: ${att.date}</span><br>
-                                <span style="color: #666; font-size: 12px;">🕒 Vào: ${att.checkInTime} ➔ Ra: ${att.checkOutTime || '---'}</span><br>
-                                <span style="color: #009688; font-size: 12px; font-weight: bold;">⏱️ Thời gian: ${att.hours} giờ (${rateStr})</span>
+                                <b>${st.name}</b><br>
+                                <span style="font-size: 12px; color: #666;">Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
                             </div>
-                            <div style="text-align: right;">
-                                <strong style="color: #27ae60; font-size: 15px;">${formatPrice(att.totalPay)}</strong>
-                            </div>
+                            <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
                         </div>
                     `;
-                });
-            }
+                }
+            });
 
-            document.getElementById('payrollSummaryStats').innerText = `Tổng số ca: ${filteredShifts.length} | Tổng giờ: ${totalHoursSum.toFixed(1)}h`;
-            document.getElementById('totalPayrollAmount').innerText = formatPrice(totalPaySum);
+            if (!hasData) {
+                container.innerHTML = '<p style="text-align: center; color: #777; font-size: 14px; padding: 10px;">Chưa có dữ liệu chấm công trong tháng này</p>';
+            }
+            document.getElementById('totalPayrollAmount').innerText = formatPrice(grandTotalPayroll);
         }
 
         function openAddDishModal() {
@@ -1489,6 +1384,7 @@
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
+        // --- QUẢN LÝ NHÂN VIÊN & LƯƠNG GIỜ ---
         function openStaffManagerModal() {
             if (!verifyAdminPin()) return;
             document.getElementById('currentAdminPinInput').value = '';
@@ -1548,7 +1444,9 @@
 
             if (staffList[idx]) {
                 staffList[idx].name = newName;
-                if (newPin) staffList[idx].pin = newPin;
+                if (newPin) {
+                    staffList[idx].pin = newPin;
+                }
                 staffList[idx].hourlyRate = newRate;
                 localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
                 syncStaffToCloud();
