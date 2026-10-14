@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - Quản Lý Bán Hàng</title>
+    <title>Kim Bling Coffee & Tea - Quản Lý Bán Hàng & Lương</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -50,7 +50,7 @@
 
         .history-box { border-top: 2px dashed #ddd; padding-top: 10px; }
         .history-box h3 { font-size: 15px; margin-bottom: 5px; color: #555; display: flex; justify-content: space-between; align-items: center; }
-        .history-list { max-height: 90px; overflow-y: auto; font-size: 14px; color: #666; }
+        .history-list { max-height: 80px; overflow-y: auto; font-size: 14px; color: #666; }
         .history-item { padding: 5px 0; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .history-item:hover { background: #f9f9f9; }
         
@@ -61,6 +61,8 @@
         .btn-shift:hover { background: #f57c00; }
         .btn-advanced-report { background: #009688; width: 100%; margin-top: 4px; }
         .btn-advanced-report:hover { background: #00796b; }
+        .btn-payroll { background: #3f51b5; width: 100%; margin-top: 4px; }
+        .btn-payroll:hover { background: #303f9f; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 20px; border-radius: 8px; width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -104,13 +106,12 @@
 </head>
 <body>
 
-    <!-- MODAL ĐĂNG NHẬP (CHỦ QUÁN HOẶC CHỌN NHÂN VIÊN) -->
+    <!-- MODAL ĐĂNG NHẬP -->
     <div class="modal" id="loginModal" style="display: flex; background: rgba(0,0,0,0.85); z-index: 999;">
         <div class="modal-content" style="width: 360px; text-align: center;">
             <h2 style="color: #2196F3; margin-bottom: 5px;">Kim Bling Coffee & Tea</h2>
             <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Vui lòng chọn hình thức đăng nhập:</p>
             
-            <!-- KHUNG ĐĂNG NHẬP CHỦ QUÁN -->
             <div style="background: #fff3e0; border: 1.5px solid #ffb74d; border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: left;">
                 <label style="font-weight: bold; font-size: 14px; color: #e65100; display: block; margin-bottom: 6px;">👑 Đăng nhập Chủ Quán</label>
                 <input type="password" id="loginAdminPinInput" placeholder="Nhập mã PIN Chủ Quán" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
@@ -119,12 +120,9 @@
 
             <div style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: bold;">HOẶC ĐĂNG NHẬP NHÂN VIÊN / CHI NHÁNH</div>
 
-            <!-- KHUNG ĐĂNG NHẬP NHÂN VIÊN -->
             <div style="background: #e8f5e9; border: 1.5px solid #81c784; border-radius: 8px; padding: 12px; margin-bottom: 10px; text-align: left;">
                 <label style="font-weight: bold; font-size: 14px; color: #2e7d32; display: block; margin-bottom: 6px;">☕ Đăng nhập Nhân viên / Chi nhánh</label>
-                <select id="loginStaffSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
-                    <!-- Render động danh sách nhân viên -->
-                </select>
+                <select id="loginStaffSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;"></select>
                 <input type="password" id="loginStaffPinInput" placeholder="Nhập mã PIN nhân viên" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
                 <button class="btn-action" style="width: 100%; padding: 8px; background: #4CAF50;" onclick="loginAsStaff()">Vào làm việc (Nhân viên)</button>
             </div>
@@ -135,9 +133,13 @@
         <div class="menu-header">
             <div>
                 <h2>Kim Bling Coffee & Tea</h2>
-                <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
+                <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
+                    <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
+                    <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
+                </div>
             </div>
             <div class="menu-header-actions">
+                <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
                 <button class="btn-action" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
@@ -190,6 +192,7 @@
                     <button class="btn-report" onclick="openMonthlyReport()">📊 Doanh thu tháng</button>
                     <button class="btn-report btn-shift" onclick="openShiftReport()">🔄 Kết ca</button>
                     <button class="btn-report btn-advanced-report" onclick="openAdvancedReport()">📈 Báo cáo chi tiết</button>
+                    <button class="btn-report btn-payroll" onclick="openPayrollModal()">💰 Bảng Lương Nhân Viên</button>
                 </div>
             </div>
         </div>
@@ -329,6 +332,25 @@
         </div>
     </div>
 
+    <!-- MODAL BẢNG LƯƠNG NHÂN VIÊN -->
+    <div class="modal" id="payrollModal">
+        <div class="modal-content" style="width: 520px;">
+            <h3>💰 Bảng Lương & Giờ Làm Nhân Viên</h3>
+            <div style="margin: 10px 0; background: #f4f6f9; padding: 10px; border-radius: 6px;">
+                <label style="font-size: 14px; font-weight: bold;">Chọn Tháng Tính Lương:</label>
+                <input type="month" id="payrollMonthInput" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;" onchange="calculatePayroll()">
+            </div>
+            <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 10px;"></div>
+            <div style="background: #fff3e0; padding: 10px; border-radius: 6px; text-align: right;">
+                <span style="font-size: 14px; color: #e65100;">Tổng quỹ lương tháng: </span>
+                <strong id="totalPayrollAmount" style="color: #e65100; font-size: 16px;">0k</strong>
+            </div>
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button style="background: #ccc;" onclick="document.getElementById('payrollModal').style.display='none'">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="addDishModal">
         <div class="modal-content">
             <h3>Thêm Món Mới (Bảo mật PIN)</h3>
@@ -386,10 +408,10 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ NHÂN VIÊN & ĐỔI PIN CHỦ QUÁN (CHỈ CHỦ QUÁN MỚI DÙNG ĐƯỢC) -->
+    <!-- MODAL QUẢN LÝ NHÂN VIÊN & LƯƠNG GIỜ -->
     <div class="modal" id="staffManagerModal">
-        <div class="modal-content" style="width: 450px;">
-            <h3>👥 Quản Lý Nhân Viên & Chi Nhánh</h3>
+        <div class="modal-content" style="width: 480px;">
+            <h3>👥 Quản Lý Nhân Viên & Lương Giờ</h3>
             
             <div style="margin-top: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px;">
                 <h4 style="font-size: 14px; color: #2196F3; margin-bottom: 6px;">🔑 Đổi Mã PIN Chủ Quán</h4>
@@ -399,12 +421,15 @@
             </div>
 
             <div style="margin-top: 12px;">
-                <h4 style="font-size: 14px; color: #ff9800; margin-bottom: 6px;">📋 Danh Sách Nhân Viên & Chi Nhánh</h4>
-                <div id="staffListContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 8px;"></div>
+                <h4 style="font-size: 14px; color: #ff9800; margin-bottom: 6px;">📋 Danh Sách Nhân Viên & Lương Giờ</h4>
+                <div id="staffListContainer" style="max-height: 160px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 8px;"></div>
                 
                 <h4 style="font-size: 13px; color: #333; margin-bottom: 4px;">Thêm Nhân Viên / Chi Nhánh Mới:</h4>
                 <input type="text" id="newStaffName" placeholder="Tên nhân viên / Chi nhánh (vd: M10 Quận 5)" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                <input type="password" id="newStaffPin" placeholder="Mã PIN nhân viên (số)" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+                    <input type="password" id="newStaffPin" placeholder="Mã PIN" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="number" id="newStaffRate" placeholder="Lương/giờ (VNĐ, vd 22000)" style="flex: 1.5; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
                 <button class="btn-action" style="width: 100%; padding: 6px; background: #4CAF50;" onclick="addNewStaff()">+ Thêm Nhân Viên Mới</button>
             </div>
 
@@ -414,17 +439,20 @@
         </div>
     </div>
 
-    <!-- MODAL SỬA NHÂN VIÊN / CHI NHÁNH -->
+    <!-- MODAL SỬA NHÂN VIÊN & LƯƠNG GIỜ -->
     <div class="modal" id="editStaffModal">
         <div class="modal-content" style="width: 380px;">
-            <h3>✏️ Sửa Thông Tin Nhân Viên / Chi Nhánh</h3>
+            <h3>✏️ Sửa Thông Tin Nhân Viên & Lương</h3>
             <input type="hidden" id="editStaffIndex">
             
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px; margin-top: 8px;">Tên nhân viên / Chi nhánh:</label>
             <input type="text" id="editStaffNameInput" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
             
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Mã PIN mới (Để trống nếu không đổi):</label>
-            <input type="password" id="editStaffPinInput" placeholder="Nhập PIN mới nếu muốn đổi" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            <input type="password" id="editStaffPinInput" placeholder="Nhập PIN mới nếu muốn đổi" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Lương theo giờ (VNĐ):</label>
+            <input type="number" id="editStaffRateInput" placeholder="Ví dụ: 22000" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
 
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="document.getElementById('editStaffModal').style.display='none'">Hủy</button>
@@ -436,16 +464,22 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1AXdkdqoYJ7AHspQlSCsYM7FbOWKBgfg2M5GTCVFz7nrFM8dNW9cJEXf715J_7n_x1g/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw93DsQWRKmYZiTOkZ8Nypq8c7V8p0gJaLhjaGzNVNk_8zmMSpcrhdFi0Rx-NuB0WhqXA/exec";
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
         let staffList = JSON.parse(localStorage.getItem('kimbling_staff_list')) || [
-            { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234' }
+            { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
         ];
+        let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
+        let currentActiveShift = JSON.parse(localStorage.getItem('kimbling_active_shift')) || null;
 
         function syncStaffToCloud() {
             syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
+        }
+
+        function syncAttendanceToCloud(record) {
+            syncToGoogleSheets('attendance', record);
         }
 
         async function fetchStaffFromCloud() {
@@ -454,7 +488,7 @@
                 const data = await response.json();
                 if (data) {
                     if (data.staffList && Array.isArray(data.staffList)) {
-                        staffList = data.staffList;
+                        staffList = data.staffList.map(s => ({ ...s, hourlyRate: s.hourlyRate || 22000 }));
                         localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
                     }
                     if (data.adminPin) {
@@ -465,6 +499,19 @@
                 }
             } catch (err) {
                 console.log("Fetch staff error:", err);
+            }
+        }
+
+        async function fetchAttendanceFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getAttendance");
+                const data = await response.json();
+                if (data && data.attendance && Array.isArray(data.attendance)) {
+                    attendanceList = data.attendance;
+                    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                }
+            } catch (err) {
+                console.log("Fetch attendance error:", err);
             }
         }
 
@@ -533,18 +580,93 @@
         function updateAccountBadge() {
             const badge = document.getElementById('currentAccountBadge');
             const staffBtn = document.getElementById('staffManagerBtn');
+            const attendanceBtn = document.getElementById('attendanceBtn');
+            const attendanceStatusBadge = document.getElementById('attendanceStatusBadge');
+
             if (currentAccount === 'CQ') {
                 badge.innerText = "👑 Chủ Quán [CQ]";
                 badge.style.background = "#fff3e0";
                 badge.style.color = "#e65100";
                 if(staffBtn) staffBtn.style.display = 'inline-block';
+                if(attendanceBtn) attendanceBtn.style.display = 'none';
+                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
             } else {
                 let st = staffList.find(s => s.id === currentAccount);
                 badge.innerText = `☕ ${st ? st.name : currentAccount} [${currentAccount}]`;
                 badge.style.background = "#e8f5e9";
                 badge.style.color = "#2e7d32";
                 if(staffBtn) staffBtn.style.display = 'none';
+                if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
+                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
+                updateAttendanceUIState();
             }
+        }
+
+        function updateAttendanceUIState() {
+            const attendanceBtn = document.getElementById('attendanceBtn');
+            const statusBadge = document.getElementById('attendanceStatusBadge');
+            if (currentActiveShift && currentActiveShift.staffId === currentAccount) {
+                attendanceBtn.innerText = "🛑 Tan Ca";
+                attendanceBtn.style.background = "#e74c3c";
+                statusBadge.innerText = "🟢 Đang trong ca";
+                statusBadge.style.background = "#e8f5e9";
+                statusBadge.style.color = "#2e7d32";
+            } else {
+                attendanceBtn.innerText = "⏱️ Vào Ca";
+                attendanceBtn.style.background = "#ff9800";
+                statusBadge.innerText = "🔴 Chưa vào ca";
+                statusBadge.style.background = "#ffebee";
+                statusBadge.style.color = "#c62828";
+            }
+        }
+
+        function toggleAttendance() {
+            const staff = staffList.find(s => s.id === currentAccount);
+            if (!staff) return;
+            const now = new Date();
+
+            if (!currentActiveShift || currentActiveShift.staffId !== currentAccount) {
+                // Vào ca
+                currentActiveShift = {
+                    id: Date.now(),
+                    staffId: staff.id,
+                    staffName: staff.name,
+                    checkInTime: now.toLocaleString('vi-VN'),
+                    checkInIso: now.toISOString(),
+                    hourlyRate: staff.hourlyRate || 22000,
+                    date: now.toISOString().split('T')[0]
+                };
+                localStorage.setItem('kimbling_active_shift', JSON.stringify(currentActiveShift));
+                alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
+            } else {
+                // Tan ca
+                let checkInDate = new Date(currentActiveShift.checkInIso);
+                let diffMs = now - checkInDate;
+                let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+                if (hours < 0.01) hours = 0.05; // Tối thiểu hóa
+                let totalPay = Math.round(hours * currentActiveShift.hourlyRate);
+
+                let record = {
+                    id: currentActiveShift.id,
+                    staffId: currentActiveShift.staffId,
+                    staffName: currentActiveShift.staffName,
+                    checkInTime: currentActiveShift.checkInTime,
+                    checkOutTime: now.toLocaleString('vi-VN'),
+                    hours: hours,
+                    hourlyRate: currentActiveShift.hourlyRate,
+                    totalPay: totalPay,
+                    date: currentActiveShift.date
+                };
+
+                attendanceList.push(record);
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                syncAttendanceToCloud(record);
+
+                currentActiveShift = null;
+                localStorage.removeItem('kimbling_active_shift');
+                alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+            }
+            updateAttendanceUIState();
         }
 
         if (!currentAccount) {
@@ -557,6 +679,7 @@
 
         function refreshAllData() {
             fetchStaffFromCloud();
+            fetchAttendanceFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
             alert("Đã làm mới và đồng bộ dữ liệu thành công!");
@@ -1096,6 +1219,61 @@
             renderList(toppings, 'advTopToppings');
         }
 
+        function openPayrollModal() {
+            if (!verifyAdminPin()) return;
+            const now = new Date();
+            document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            calculatePayroll();
+            document.getElementById('payrollModal').style.display = 'flex';
+        }
+
+        function calculatePayroll() {
+            const val = document.getElementById('payrollMonthInput').value;
+            if (!val) return;
+            const container = document.getElementById('payrollResultList');
+            container.innerHTML = '';
+
+            let staffSummary = {};
+            staffList.forEach(s => {
+                staffSummary[s.id] = { name: s.name, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+            });
+
+            attendanceList.forEach(att => {
+                if (att.date && att.date.startsWith(val)) {
+                    if (!staffSummary[att.staffId]) {
+                        staffSummary[att.staffId] = { name: att.staffName, totalHours: 0, totalPay: 0, shiftsCount: 0 };
+                    }
+                    staffSummary[att.staffId].totalHours += att.hours || 0;
+                    staffSummary[att.staffId].totalPay += att.totalPay || 0;
+                    staffSummary[att.staffId].shiftsCount += 1;
+                }
+            });
+
+            let grandTotalPayroll = 0;
+            let hasData = false;
+
+            Object.values(staffSummary).forEach(st => {
+                if (st.shiftsCount > 0) {
+                    hasData = true;
+                    grandTotalPayroll += st.totalPay;
+                    container.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                            <div>
+                                <b>${st.name}</b><br>
+                                <span style="font-size: 12px; color: #666;">Số ca: ${st.shiftsCount} | Tổng giờ: ${st.totalHours.toFixed(1)}h</span>
+                            </div>
+                            <strong style="color: #27ae60; font-size: 15px;">${formatPrice(st.totalPay)}</strong>
+                        </div>
+                    `;
+                }
+            });
+
+            if (!hasData) {
+                container.innerHTML = '<p style="text-align: center; color: #777; font-size: 14px; padding: 10px;">Chưa có dữ liệu chấm công trong tháng này</p>';
+            }
+            document.getElementById('totalPayrollAmount').innerText = formatPrice(grandTotalPayroll);
+        }
+
         function openAddDishModal() {
             if (!verifyAdminPin()) return;
             document.getElementById('newDishName').value = '';
@@ -1206,13 +1384,14 @@
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
         }
 
-        // --- QUẢN LÝ NHÂN VIÊN & ĐỔI PIN ---
+        // --- QUẢN LÝ NHÂN VIÊN & LƯƠNG GIỜ ---
         function openStaffManagerModal() {
             if (!verifyAdminPin()) return;
             document.getElementById('currentAdminPinInput').value = '';
             document.getElementById('newAdminPinInput').value = '';
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
+            document.getElementById('newStaffRate').value = '22000';
             renderStaffList();
             document.getElementById('staffManagerModal').style.display = 'flex';
         }
@@ -1226,9 +1405,13 @@
             container.innerHTML = '';
             staffList.forEach((st, idx) => {
                 let maskedPin = '*'.repeat(st.pin.length);
+                let rateStr = formatPrice(st.hourlyRate || 22000) + '/h';
                 container.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
-                        <span><b>${st.name}</b> [${st.id}] - PIN: ${maskedPin}</span>
+                        <div>
+                            <b>${st.name}</b> [${st.id}]<br>
+                            <span style="color: #666; font-size: 12px;">PIN: ${maskedPin} | Lương: ${rateStr}</span>
+                        </div>
                         <div style="display: flex; gap: 4px;">
                             <button style="background: #2196F3; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="openEditStaffModal(${idx})">Sửa</button>
                             <button style="background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteStaff(${idx})">Xóa</button>
@@ -1244,6 +1427,7 @@
             document.getElementById('editStaffIndex').value = idx;
             document.getElementById('editStaffNameInput').value = st.name;
             document.getElementById('editStaffPinInput').value = '';
+            document.getElementById('editStaffRateInput').value = st.hourlyRate || 22000;
             document.getElementById('editStaffModal').style.display = 'flex';
         }
 
@@ -1251,6 +1435,7 @@
             let idx = parseInt(document.getElementById('editStaffIndex').value);
             let newName = document.getElementById('editStaffNameInput').value.trim();
             let newPin = document.getElementById('editStaffPinInput').value.trim();
+            let newRate = parseInt(document.getElementById('editStaffRateInput').value) || 22000;
             
             if (!newName) {
                 alert("Tên nhân viên / chi nhánh không được để trống!");
@@ -1262,12 +1447,13 @@
                 if (newPin) {
                     staffList[idx].pin = newPin;
                 }
+                staffList[idx].hourlyRate = newRate;
                 localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
                 syncStaffToCloud();
                 renderStaffList();
                 renderStaffSelectOptions();
                 document.getElementById('editStaffModal').style.display = 'none';
-                alert("Đã cập nhật thông tin nhân viên/chi nhánh thành công!");
+                alert("Đã cập nhật thông tin nhân viên và lương thành công!");
             }
         }
 
@@ -1293,20 +1479,22 @@
         function addNewStaff() {
             let name = document.getElementById('newStaffName').value.trim();
             let pin = document.getElementById('newStaffPin').value.trim();
+            let rate = parseInt(document.getElementById('newStaffRate').value) || 22000;
             if (!name || !pin) {
                 alert("Vui lòng nhập đầy đủ tên và mã PIN nhân viên!");
                 return;
             }
             let staffId = 'NV' + (staffList.length + 1);
-            staffList.push({ id: staffId, name: name, pin: pin });
+            staffList.push({ id: staffId, name: name, pin: pin, hourlyRate: rate });
             localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
             syncStaffToCloud();
 
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
+            document.getElementById('newStaffRate').value = '22000';
             renderStaffList();
             renderStaffSelectOptions();
-            alert(`Đã thêm nhân viên ${name} với mã [${staffId}] thành công!`);
+            alert(`Đã thêm nhân viên ${name} với mức lương ${formatPrice(rate)}/h thành công!`);
         }
 
         function deleteStaff(idx) {
@@ -1320,6 +1508,7 @@
         }
 
         fetchStaffFromCloud();
+        fetchAttendanceFromCloud();
         fetchMenuFromCloud();
         fetchHistoryFromCloud();
         renderMenu();
