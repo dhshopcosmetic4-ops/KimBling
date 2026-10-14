@@ -104,19 +104,30 @@
 </head>
 <body>
 
-    <!-- MODAL CHỌN TÀI KHOẢN / CHI NHÁNH KHI MỞ APP -->
-    <div class="modal" id="loginModal" style="display: flex; background: rgba(0,0,0,0.8); z-index: 999;">
+    <!-- MODAL ĐĂNG NHẬP (CHỦ QUÁN HOẶC CHỌN NHÂN VIÊN) -->
+    <div class="modal" id="loginModal" style="display: flex; background: rgba(0,0,0,0.85); z-index: 999;">
         <div class="modal-content" style="width: 360px; text-align: center;">
             <h2 style="color: #2196F3; margin-bottom: 5px;">Kim Bling Coffee & Tea</h2>
-            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Vui lòng chọn tài khoản làm việc:</p>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Vui lòng chọn hình thức đăng nhập:</p>
             
-            <div id="accountChoiceContainer" style="display: flex; flex-direction: column; gap: 10px; text-align: left; margin-bottom: 15px; max-height: 180px; overflow-y: auto;">
-                <label style="padding: 10px; border: 2px solid #2196F3; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold;">
-                    <input type="radio" name="accountChoice" value="CQ" checked> 👑 Chủ Quán (Bảo mật PIN)
-                </label>
+            <!-- KHUNG ĐĂNG NHẬP CHỦ QUÁN -->
+            <div style="background: #fff3e0; border: 1.5px solid #ffb74d; border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: left;">
+                <label style="font-weight: bold; font-size: 14px; color: #e65100; display: block; margin-bottom: 6px;">👑 Đăng nhập Chủ Quán</label>
+                <input type="password" id="loginAdminPinInput" placeholder="Nhập mã PIN Chủ Quán" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
+                <button class="btn-action" style="width: 100%; padding: 8px; background: #f57c00;" onclick="loginAsAdmin()">Vào với quyền Chủ Quán</button>
             </div>
 
-            <button class="btn-action" style="width: 100%; padding: 10px; font-size: 16px;" onclick="confirmLoginAccount()">Bắt Đầu Làm Việc</button>
+            <div style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: bold;">HOẶC ĐĂNG NHẬP NHÂN VIÊN / CHI NHÁNH</div>
+
+            <!-- KHUNG ĐĂNG NHẬP NHÂN VIÊN -->
+            <div style="background: #e8f5e9; border: 1.5px solid #81c784; border-radius: 8px; padding: 12px; margin-bottom: 10px; text-align: left;">
+                <label style="font-weight: bold; font-size: 14px; color: #2e7d32; display: block; margin-bottom: 6px;">☕ Đăng nhập Nhân viên / Chi nhánh</label>
+                <select id="loginStaffSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
+                    <!-- Render động danh sách nhân viên -->
+                </select>
+                <input type="password" id="loginStaffPinInput" placeholder="Nhập mã PIN nhân viên" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; margin-bottom: 8px;">
+                <button class="btn-action" style="width: 100%; padding: 8px; background: #4CAF50;" onclick="loginAsStaff()">Vào làm việc (Nhân viên)</button>
+            </div>
         </div>
     </div>
 
@@ -375,10 +386,10 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ NHÂN VIÊN & ĐỔI PIN CHỦ QUÁN -->
+    <!-- MODAL QUẢN LÝ NHÂN VIÊN & ĐỔI PIN CHỦ QUÁN (CHỈ CHỦ QUÁN MỚI DÙNG ĐƯỢC) -->
     <div class="modal" id="staffManagerModal">
         <div class="modal-content" style="width: 450px;">
-            <h3>👥 Quản Lý Nhân Viên & Đổi PIN</h3>
+            <h3>👥 Quản Lý Nhân Viên & Chi Nhánh</h3>
             
             <div style="margin-top: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px;">
                 <h4 style="font-size: 14px; color: #2196F3; margin-bottom: 6px;">🔑 Đổi Mã PIN Chủ Quán</h4>
@@ -414,6 +425,30 @@
             { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234' }
         ];
 
+        function syncStaffToCloud() {
+            syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
+        }
+
+        async function fetchStaffFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getStaff");
+                const data = await response.json();
+                if (data) {
+                    if (data.staffList && Array.isArray(data.staffList)) {
+                        staffList = data.staffList;
+                        localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
+                    }
+                    if (data.adminPin) {
+                        adminPin = data.adminPin;
+                        localStorage.setItem('kimbling_admin_pin', adminPin);
+                    }
+                    renderStaffSelectOptions();
+                }
+            } catch (err) {
+                console.log("Fetch staff error:", err);
+            }
+        }
+
         function verifyAdminPin() {
             let pin = prompt("Nhập mã PIN chủ quán:", "");
             if (pin !== adminPin) {
@@ -423,56 +458,56 @@
             return true;
         }
 
-        function verifyAccountPin(accountCode) {
-            if (accountCode === 'CQ') {
-                let pin = prompt("Nhập mã PIN Chủ Quán:", "");
-                if (pin !== adminPin) {
-                    alert("Mã PIN Chủ Quán không đúng!");
-                    return false;
-                }
-                return true;
-            } else {
-                let staff = staffList.find(s => s.id === accountCode);
-                if (!staff) return true;
-                let pin = prompt(`Nhập mã PIN cho nhân viên [${staff.name}]:`, "");
-                if (pin !== staff.pin) {
-                    alert("Mã PIN nhân viên không đúng!");
-                    return false;
-                }
-                return true;
+        function renderStaffSelectOptions() {
+            const selectEl = document.getElementById('loginStaffSelect');
+            selectEl.innerHTML = '';
+            if (staffList.length === 0) {
+                selectEl.innerHTML = '<option value="">-- Chưa có nhân viên nào --</option>';
+                return;
             }
-        }
-
-        function renderAccountChoices() {
-            const container = document.getElementById('accountChoiceContainer');
-            container.innerHTML = `
-                <label style="padding: 10px; border: 2px solid #2196F3; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold;">
-                    <input type="radio" name="accountChoice" value="CQ" checked> 👑 Chủ Quán (Bảo mật PIN)
-                </label>
-            `;
             staffList.forEach(st => {
-                container.innerHTML += `
-                    <label style="padding: 10px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px;">
-                        <input type="radio" name="accountChoice" value="${st.id}"> ☕ ${st.name} [${st.id}]
-                    </label>
-                `;
+                selectEl.innerHTML += `<option value="${st.id}">${st.name} [${st.id}]</option>`;
             });
         }
 
-        function confirmLoginAccount() {
-            const selected = document.querySelector('input[name="accountChoice"]:checked').value;
-            if (!verifyAccountPin(selected)) return;
-            
-            currentAccount = selected;
+        function loginAsAdmin() {
+            let pin = document.getElementById('loginAdminPinInput').value;
+            if (pin !== adminPin) {
+                alert("Mã PIN Chủ Quán không đúng!");
+                return;
+            }
+            currentAccount = 'CQ';
             localStorage.setItem('kimbling_account', currentAccount);
             document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginAdminPinInput').value = '';
+            updateAccountBadge();
+            refreshAllData();
+        }
+
+        function loginAsStaff() {
+            let selectedId = document.getElementById('loginStaffSelect').value;
+            let pin = document.getElementById('loginStaffPinInput').value;
+            if (!selectedId) {
+                alert("Vui lòng chọn nhân viên/chi nhánh!");
+                return;
+            }
+            let staff = staffList.find(s => s.id === selectedId);
+            if (!staff || pin !== staff.pin) {
+                alert("Mã PIN nhân viên không đúng!");
+                return;
+            }
+            currentAccount = selectedId;
+            localStorage.setItem('kimbling_account', currentAccount);
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginStaffPinInput').value = '';
             updateAccountBadge();
             refreshAllData();
         }
 
         function switchAccount() {
-            renderAccountChoices();
-            document.querySelector(`input[name="accountChoice"][value="${currentAccount || 'CQ'}"]`).checked = true;
+            renderStaffSelectOptions();
+            document.getElementById('loginAdminPinInput').value = '';
+            document.getElementById('loginStaffPinInput').value = '';
             document.getElementById('loginModal').style.display = 'flex';
         }
 
@@ -494,13 +529,15 @@
         }
 
         if (!currentAccount) {
-            renderAccountChoices();
+            renderStaffSelectOptions();
             document.getElementById('loginModal').style.display = 'flex';
         } else {
+            renderStaffSelectOptions();
             updateAccountBadge();
         }
 
         function refreshAllData() {
+            fetchStaffFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
             alert("Đã làm mới và đồng bộ dữ liệu thành công!");
@@ -637,7 +674,12 @@
 
         function clearCartWithPin() {
             if (cart.length === 0) return;
-            if (!verifyAccountPin(currentAccount)) return;
+            let pin = prompt("Nhập mã PIN xác thực để xóa giỏ hàng:", "");
+            let requiredPin = currentAccount === 'CQ' ? adminPin : (staffList.find(s => s.id === currentAccount)?.pin || '');
+            if (pin !== requiredPin) {
+                alert("Mã PIN không đúng!");
+                return;
+            }
             cart = [];
             saveCart();
             renderCart();
@@ -676,13 +718,21 @@
                 const starIcon = isFav ? '⭐' : '☆';
                 const favClass = isFav ? 'menu-item favorite' : 'menu-item';
 
-                menuGrid.innerHTML += `
-                    <div class="${favClass}" onclick="openOptionsModal(${item.id})">
-                        <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
+                // Chỉ hiện nút Sửa/Xóa món nếu là Chủ Quán [CQ]
+                let adminActionBtns = '';
+                if (currentAccount === 'CQ') {
+                    adminActionBtns = `
                         <div class="menu-item-btns">
                             <button class="btn-dish-action" onclick="event.stopPropagation(); openEditDishModal(${item.id})" title="Sửa">✏️</button>
                             <button class="btn-dish-action btn-del-dish" onclick="event.stopPropagation(); deleteDish(${item.id})" title="Xóa">×</button>
                         </div>
+                    `;
+                }
+
+                menuGrid.innerHTML += `
+                    <div class="${favClass}" onclick="openOptionsModal(${item.id})">
+                        <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
+                        ${adminActionBtns}
                         <h4 style="margin-top: 14px;">${item.name}</h4>
                         <p>${formatPrice(item.price)}</p>
                     </div>
@@ -1180,6 +1230,7 @@
             }
             adminPin = newInput.trim();
             localStorage.setItem('kimbling_admin_pin', adminPin);
+            syncStaffToCloud();
             alert("Đã đổi mã PIN chủ quán thành công!");
             document.getElementById('currentAdminPinInput').value = '';
             document.getElementById('newAdminPinInput').value = '';
@@ -1195,9 +1246,12 @@
             let staffId = 'NV' + (staffList.length + 1);
             staffList.push({ id: staffId, name: name, pin: pin });
             localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
+            syncStaffToCloud();
+
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
             renderStaffList();
+            renderStaffSelectOptions();
             alert(`Đã thêm nhân viên ${name} với mã [${staffId}] thành công!`);
         }
 
@@ -1205,10 +1259,13 @@
             if (confirm("Gỡ bỏ nhân viên này?")) {
                 staffList.splice(idx, 1);
                 localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
+                syncStaffToCloud();
                 renderStaffList();
+                renderStaffSelectOptions();
             }
         }
 
+        fetchStaffFromCloud();
         fetchMenuFromCloud();
         fetchHistoryFromCloud();
         renderMenu();
