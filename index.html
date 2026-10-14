@@ -549,6 +549,35 @@
             }
         }
 
+
+        function deleteAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
+                attendanceList = attendanceList.filter(a => a.id !== attId);
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                calculatePayroll();
+                alert("Đã xóa log ca làm thành công!");
+            }
+        }
+
+        function editAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            let att = attendanceList.find(a => a.id === attId);
+            if (!att) return;
+            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
+            if (newHoursStr === null) return;
+            let newHours = parseFloat(newHoursStr);
+            if (isNaN(newHours) || newHours <= 0) {
+                alert("Số giờ không hợp lệ!");
+                return;
+            }
+            att.hours = newHours;
+            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+            calculatePayroll();
+            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
+        }
+
         function verifyAdminPin() {
             let pin = prompt("Nhập mã PIN chủ quán:", "");
             if (pin !== adminPin) {
@@ -610,7 +639,7 @@
                 if (currentActiveShift) {
                     let confirmLeave = confirm("⚠️ CẢNH BÁO: Bạn chưa bấm TAN CA trước khi đổi tài khoản! Bạn có muốn hệ thống tự động TAN CA ngay bây giờ không?");
                     if (confirmLeave) {
-                        toggleAttendance(); // Thực hiện tan ca tự động
+                        toggleAttendance();
                     }
                 }
             }
@@ -720,36 +749,7 @@
         }
 
         function refreshAllData() {
-    
-        function deleteAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
-                attendanceList = attendanceList.filter(a => a.id !== attId);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                calculatePayroll();
-                alert("Đã xóa log ca làm thành công!");
-            }
-        }
-
-        function editAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            let att = attendanceList.find(a => a.id === attId);
-            if (!att) return;
-            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
-            if (newHoursStr === null) return;
-            let newHours = parseFloat(newHoursStr);
-            if (isNaN(newHours) || newHours <= 0) {
-                alert("Số giờ không hợp lệ!");
-                return;
-            }
-            att.hours = newHours;
-            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-            calculatePayroll();
-            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
-        }
-
-        fetchStaffFromCloud();
+            fetchStaffFromCloud();
             fetchAttendanceFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
@@ -1667,35 +1667,6 @@
                 renderStaffList();
                 renderStaffSelectOptions();
             }
-        }
-
-
-        function deleteAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
-                attendanceList = attendanceList.filter(a => a.id !== attId);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                calculatePayroll();
-                alert("Đã xóa log ca làm thành công!");
-            }
-        }
-
-        function editAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            let att = attendanceList.find(a => a.id === attId);
-            if (!att) return;
-            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
-            if (newHoursStr === null) return;
-            let newHours = parseFloat(newHoursStr);
-            if (isNaN(newHours) || newHours <= 0) {
-                alert("Số giờ không hợp lệ!");
-                return;
-            }
-            att.hours = newHours;
-            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-            calculatePayroll();
-            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
         }
 
         fetchStaffFromCloud();
