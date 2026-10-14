@@ -414,6 +414,25 @@
         </div>
     </div>
 
+    <!-- MODAL SỬA NHÂN VIÊN / CHI NHÁNH -->
+    <div class="modal" id="editStaffModal">
+        <div class="modal-content" style="width: 380px;">
+            <h3>✏️ Sửa Thông Tin Nhân Viên / Chi Nhánh</h3>
+            <input type="hidden" id="editStaffIndex">
+            
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px; margin-top: 8px;">Tên nhân viên / Chi nhánh:</label>
+            <input type="text" id="editStaffNameInput" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Mã PIN mới (Để trống nếu không đổi):</label>
+            <input type="password" id="editStaffPinInput" placeholder="Nhập PIN mới nếu muốn đổi" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+
+            <div class="modal-actions">
+                <button style="background: #ccc;" onclick="document.getElementById('editStaffModal').style.display='none'">Hủy</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveEditedStaff()">Cập Nhật</button>
+            </div>
+        </div>
+    </div>
+
     <div id="printable-area"></div>
 
     <script>
@@ -718,7 +737,6 @@
                 const starIcon = isFav ? '⭐' : '☆';
                 const favClass = isFav ? 'menu-item favorite' : 'menu-item';
 
-                // Chỉ hiện nút Sửa/Xóa món nếu là Chủ Quán [CQ]
                 let adminActionBtns = '';
                 if (currentAccount === 'CQ') {
                     adminActionBtns = `
@@ -1209,12 +1227,48 @@
             staffList.forEach((st, idx) => {
                 let maskedPin = '*'.repeat(st.pin.length);
                 container.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
                         <span><b>${st.name}</b> [${st.id}] - PIN: ${maskedPin}</span>
-                        <button style="background: #e74c3c; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;" onclick="deleteStaff(${idx})">Xóa</button>
+                        <div style="display: flex; gap: 4px;">
+                            <button style="background: #2196F3; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="openEditStaffModal(${idx})">Sửa</button>
+                            <button style="background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteStaff(${idx})">Xóa</button>
+                        </div>
                     </div>
                 `;
             });
+        }
+
+        function openEditStaffModal(idx) {
+            let st = staffList[idx];
+            if (!st) return;
+            document.getElementById('editStaffIndex').value = idx;
+            document.getElementById('editStaffNameInput').value = st.name;
+            document.getElementById('editStaffPinInput').value = '';
+            document.getElementById('editStaffModal').style.display = 'flex';
+        }
+
+        function saveEditedStaff() {
+            let idx = parseInt(document.getElementById('editStaffIndex').value);
+            let newName = document.getElementById('editStaffNameInput').value.trim();
+            let newPin = document.getElementById('editStaffPinInput').value.trim();
+            
+            if (!newName) {
+                alert("Tên nhân viên / chi nhánh không được để trống!");
+                return;
+            }
+
+            if (staffList[idx]) {
+                staffList[idx].name = newName;
+                if (newPin) {
+                    staffList[idx].pin = newPin;
+                }
+                localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
+                syncStaffToCloud();
+                renderStaffList();
+                renderStaffSelectOptions();
+                document.getElementById('editStaffModal').style.display = 'none';
+                alert("Đã cập nhật thông tin nhân viên/chi nhánh thành công!");
+            }
         }
 
         function updateAdminPin() {
