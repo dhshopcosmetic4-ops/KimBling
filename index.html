@@ -564,18 +564,35 @@
             if (!verifyAdminPin()) return;
             let att = attendanceList.find(a => a.id === attId);
             if (!att) return;
-            let newHoursStr = prompt("Nhập số giờ làm mới (vd: 8.5):", att.hours);
-            if (newHoursStr === null) return;
-            let newHours = parseFloat(newHoursStr);
-            if (isNaN(newHours) || newHours <= 0) {
-                alert("Số giờ không hợp lệ!");
+            
+            let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
+            if (choice === "1") {
+                let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
+                if (newHoursStr === null) return;
+                let newHours = parseFloat(newHoursStr);
+                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
+                att.hours = newHours;
+                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            } else if (choice === "2") {
+                let newIn = prompt("Nhập giờ vào mới (vd: 08:00 hoặc định dạng cũ):", att.checkInTime);
+                if (newIn === null) return;
+                let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
+                if (newOut === null) return;
+                let newHoursStr = prompt("Nhập lại tổng số giờ tính lương tương ứng:", att.hours);
+                if (newHoursStr === null) return;
+                let newHours = parseFloat(newHoursStr);
+                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
+                att.checkInTime = newIn;
+                att.checkOutTime = newOut;
+                att.hours = newHours;
+                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            } else {
                 return;
             }
-            att.hours = newHours;
-            att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+
             localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
             calculatePayroll();
-            alert("Đã cập nhật lại số giờ và tiền lương thành công!");
+            alert("Đã cập nhật ca làm thành công!");
         }
 
         function verifyAdminPin() {
@@ -1281,7 +1298,12 @@
         }
 
         function openShiftReport() {
-            if (!verifyAdminPin()) return;
+            if (currentAccount !== 'CQ') {
+                let confirmClose = confirm("⚠️ Bạn có chắc chắn muốn kết thúc ca và xem báo cáo kết ca không?");
+                if (!confirmClose) return;
+            } else {
+                if (!verifyAdminPin()) return;
+            }
             let totalRev = 0;
             orderHistory.forEach(o => totalRev += o.total);
             document.getElementById('shiftOrderCount').innerText = orderHistory.length;
@@ -1376,7 +1398,17 @@
         }
 
         function openPayrollModal() {
-            if (!verifyAdminPin()) return;
+            if (currentAccount !== 'CQ') {
+                let staff = staffList.find(s => s.id === currentAccount);
+                if (!staff) return;
+                let pin = prompt(`Nhập mã PIN của nhân viên ${staff.name} để xem bảng lương:`, "");
+                if (pin !== staff.pin) {
+                    alert("Mã PIN nhân viên không đúng!");
+                    return;
+                }
+            } else {
+                if (!verifyAdminPin()) return;
+            }
             const now = new Date();
             document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             renderLiveStaffStatus();
@@ -1387,7 +1419,17 @@
 
         function calculatePayroll() {
             const val = document.getElementById('payrollMonthInput').value;
-            const selectedStaffId = document.getElementById('payrollStaffFilter').value;
+            let selectedStaffId = document.getElementById('payrollStaffFilter').value;
+            
+            // Nếu là nhân viên đăng nhập, ép buộc lọc đúng nhân viên đó
+            if (currentAccount !== 'CQ') {
+                selectedStaffId = currentAccount;
+                const filterEl = document.getElementById('payrollStaffFilter');
+                if (filterEl) {
+                    filterEl.value = currentAccount;
+                    filterEl.disabled = true;
+                }
+            }
             if (!val) return;
             const container = document.getElementById('payrollResultList');
             container.innerHTML = '';
