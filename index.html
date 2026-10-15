@@ -982,13 +982,11 @@ function toggleCustomerMenuMode() {
                         let localO = localHistory.find(l => String(l.id) === String(remoteO.id));
                         let items = (remoteO.items && remoteO.items.length > 0) ? remoteO.items : (localO ? localO.items : []);
                         
-                        // Nếu remoteO và localO đều không có items nhưng có total > 0, tạo 1 item giả lập từ total để không bị 0 món
                         if ((!items || items.length === 0) && remoteO.total > 0) {
                             items = [{ name: 'Đơn hàng tổng hợp', basePrice: remoteO.total, quantity: 1, optionsText: 'Mặc định' }];
                         }
                         
-                        // Chuẩn hóa isoDate thật chuẩn xác tránh lỗi 1899 hoặc chuỗi rác
-                        let rawDate = remoteO.isoDate || remoteO.fullDateStr || '';
+                        let rawDate = remoteO.isoDate || remoteO.fullDateStr || remoteO.time || '';
                         let cleanIso = new Date().toISOString().split('T')[0];
                         if (rawDate.includes('T')) {
                             cleanIso = rawDate.split('T')[0];
@@ -998,15 +996,27 @@ function toggleCustomerMenuMode() {
                         } else if (rawDate.length >= 10) {
                             cleanIso = rawDate.substring(0, 10);
                         }
-                        if (cleanIso.startsWith('1899') || cleanIso.startsWith('1970')) {
+                        if (cleanIso.startsWith('1899') || cleanIso.startsWith('1970') || !cleanIso) {
                             cleanIso = localO && localO.isoDate ? localO.isoDate : new Date().toISOString().split('T')[0];
+                        }
+
+                        let fullDateStr = remoteO.fullDateStr || (localO ? localO.fullDateStr : null);
+                        let timeStr = remoteO.time || (localO ? localO.time : null);
+                        
+                        if (!fullDateStr || fullDateStr.includes('1899') || fullDateStr.includes('1970')) {
+                            fullDateStr = localO && localO.fullDateStr ? localO.fullDateStr : (new Date(parseInt(remoteO.id) || Date.now()).toLocaleString('vi-VN'));
+                        }
+                        if (!timeStr || timeStr.includes('1899')) {
+                            timeStr = localO && localO.time ? localO.time : (new Date(parseInt(remoteO.id) || Date.now()).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
                         }
 
                         return {
                             ...remoteO,
                             total: parseFloat(remoteO.total) || 0,
                             items: items,
-                            isoDate: cleanIso
+                            isoDate: cleanIso,
+                            fullDateStr: fullDateStr,
+                            time: timeStr
                         };
                     });
                     localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
@@ -1342,7 +1352,8 @@ function toggleCustomerMenuMode() {
         function viewBillDetail(orderId) {
             currentViewingBill = orderHistory.find(o => o.id === orderId);
             if (!currentViewingBill) return;
-            document.getElementById('detailTime').innerText = `[${currentViewingBill.account || 'CQ'}] Thời gian: ` + currentViewingBill.fullDateStr + " | Bill: #" + (currentViewingBill.billNo || '---');
+            let displayTime = currentViewingBill.fullDateStr || currentViewingBill.time || new Date(parseInt(currentViewingBill.id) || Date.now()).toLocaleString('vi-VN');
+            document.getElementById('detailTime').innerText = `[${currentViewingBill.account || 'CQ'}] Thời gian: ` + displayTime + " | Bill: #" + (currentViewingBill.billNo || '---');
             const itemsListEl = document.getElementById('detailItemsList');
             itemsListEl.innerHTML = '';
             currentViewingBill.items.forEach(item => {
