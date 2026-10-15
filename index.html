@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V33 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V34 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V33 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V34 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -667,13 +667,27 @@
             return st && st.role === 'viewer';
         }
 
-        function verifyAdminPin() {
-            let pin = prompt("Nhập mã PIN chủ quán:", "");
+        let pinCallbackFn = null;
+        function verifyAdminPin(callback) {
+            // Hiển thị modal nhập PIN thay vì prompt để tránh bị delay/lỗi trên mobile
+            pinCallbackFn = callback;
+            document.getElementById('quickPinInput').value = '';
+            document.getElementById('quickPinModal').style.display = 'flex';
+            document.getElementById('quickPinInput').focus();
+        }
+
+        function confirmQuickPin() {
+            let pin = document.getElementById('quickPinInput').value;
             if (pin !== adminPin) {
                 alert("Mã PIN không đúng!");
-                return false;
+                return;
             }
-            return true;
+            document.getElementById('quickPinModal').style.display = 'none';
+            if (pinCallbackFn) {
+                let cb = pinCallbackFn;
+                pinCallbackFn = null;
+                cb();
+            }
         }
 
         function renderStaffSelectOptions() {
@@ -990,16 +1004,19 @@ function toggleCustomerMenuMode() {
                         // Chuẩn hóa isoDate thật chuẩn xác tránh lỗi 1899 hoặc chuỗi rác
                         let rawDate = remoteO.isoDate || remoteO.fullDateStr || '';
                         let cleanIso = new Date().toISOString().split('T')[0];
-                        if (rawDate.includes('T')) {
-                            cleanIso = rawDate.split('T')[0];
-                        } else if (rawDate.includes('/')) {
-                            let parts = rawDate.split(' ')[0].split('/');
-                            if (parts.length === 3) cleanIso = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                        } else if (rawDate.length >= 10) {
-                            cleanIso = rawDate.substring(0, 10);
+                        if (rawDate && !rawDate.startsWith('1899') && !rawDate.startsWith('1970')) {
+                            if (rawDate.includes('T')) {
+                                cleanIso = rawDate.split('T')[0];
+                            } else if (rawDate.includes('/')) {
+                                let parts = rawDate.split(' ')[0].split('/');
+                                if (parts.length === 3) cleanIso = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                            } else if (rawDate.length >= 10) {
+                                cleanIso = rawDate.substring(0, 10);
+                            }
                         }
-                        if (cleanIso.startsWith('1899') || cleanIso.startsWith('1970')) {
-                            cleanIso = localO && localO.isoDate ? localO.isoDate : new Date().toISOString().split('T')[0];
+                        // Nếu vẫn dính 1899/1970 hoặc rỗng, ép luôn về ngày hôm nay để không bị lệch báo cáo
+                        if (!cleanIso || cleanIso.startsWith('1899') || cleanIso.startsWith('1970')) {
+                            cleanIso = new Date().toISOString().split('T')[0];
                         }
 
                         return {
@@ -1451,8 +1468,14 @@ function toggleCustomerMenuMode() {
         }
 
         function openMonthlyReport() {
-            if (!verifyAdminPin()) return;
-            const now = new Date();
+            verifyAdminPin(() => {
+                const now = new Date();
+                document.getElementById('reportMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                calculateMonthlyReport();
+                document.getElementById('monthlyReportModal').style.display = 'flex';
+            });
+        }
+        function _old_openMonthlyReport() {
             document.getElementById('reportMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             calculateMonthlyReport();
             document.getElementById('monthlyReportModal').style.display = 'flex';
@@ -1535,8 +1558,16 @@ function toggleCustomerMenuMode() {
 
 
         async function openAdvancedReport() {
-            if (!verifyAdminPin()) return;
-            await fetchHistoryFromCloud(); // Tải dữ liệu mới nhất từ Google Sheets về trước khi mở báo cáo
+            verifyAdminPin(async () => {
+                await fetchHistoryFromCloud();
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('reportStartDate').value = today;
+                document.getElementById('reportEndDate').value = today;
+                calculateAdvancedReport();
+                document.getElementById('advancedReportModal').style.display = 'flex';
+            });
+        }
+        async function _old_openAdvancedReport() { // Tải dữ liệu mới nhất từ Google Sheets về trước khi mở báo cáo
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('reportStartDate').value = today;
             document.getElementById('reportEndDate').value = today;
@@ -1640,6 +1671,21 @@ function toggleCustomerMenuMode() {
                     alert("Mã PIN nhân viên không đúng!");
                     return;
                 }
+                proceedPayrollModal();
+            } else {
+                verifyAdminPin(() => {
+                    proceedPayrollModal();
+                });
+            }
+        }
+        function proceedPayrollModal() {
+                let staff = staffList.find(s => s.id === currentAccount);
+                if (!staff) return;
+                let pin = prompt(`Nhập mã PIN của nhân viên ${staff.name} để xem bảng lương:`, "");
+                if (pin !== staff.pin) {
+                    alert("Mã PIN nhân viên không đúng!");
+                    return;
+                }
             } else {
                 if (!verifyAdminPin()) return;
             }
@@ -1730,8 +1776,13 @@ function toggleCustomerMenuMode() {
         }
 
         function openAddDishModal() {
-            if (!verifyAdminPin()) return;
-            document.getElementById('newDishName').value = '';
+            verifyAdminPin(() => {
+                document.getElementById('newDishName').value = '';
+                document.getElementById('newDishPrice').value = '';
+                document.getElementById('addDishModal').style.display = 'flex';
+            });
+        }
+        function _old_openAddDishModal() {
             document.getElementById('newDishPrice').value = '';
             document.getElementById('addDishModal').style.display = 'flex';
         }
@@ -1754,8 +1805,17 @@ function toggleCustomerMenuMode() {
         }
 
         function openEditDishModal(id) {
-            if (!verifyAdminPin()) return;
-            const item = menu.find(i => i.id === id);
+            verifyAdminPin(() => {
+                const item = menu.find(i => i.id === id);
+                if (!item) return;
+                document.getElementById('editDishId').value = item.id;
+                document.getElementById('editDishNameInput').value = item.name;
+                document.getElementById('editDishPriceInput').value = item.price;
+                document.getElementById('editDishImageUrlInput').value = item.imageUrl || '';
+                document.getElementById('editDishModal').style.display = 'flex';
+            });
+        }
+        function _old_openEditDishModal() {
             if (!item) return;
             document.getElementById('editDishId').value = item.id;
             document.getElementById('editDishNameInput').value = item.name;
@@ -1795,8 +1855,8 @@ function toggleCustomerMenuMode() {
         let tempEditingSnacks = [];
 
         function openToppingConfigModal() {
-            if (!verifyAdminPin()) return;
-            tempEditingDrinks = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
+            verifyAdminPin(() => {
+                tempEditingDrinks = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
             tempEditingSnacks = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
             renderToppingConfigLists();
             document.getElementById('toppingConfigModal').style.display = 'flex';
@@ -1843,8 +1903,17 @@ function toggleCustomerMenuMode() {
         }
 
         function openStaffManagerModal() {
-            if (!verifyAdminPin()) return;
-            document.getElementById('currentAdminPinInput').value = '';
+            verifyAdminPin(() => {
+                document.getElementById('currentAdminPinInput').value = '';
+                document.getElementById('newAdminPinInput').value = '';
+                document.getElementById('newStaffName').value = '';
+                document.getElementById('newStaffPin').value = '';
+                document.getElementById('newStaffRate').value = '22000';
+                renderStaffList();
+                document.getElementById('staffManagerModal').style.display = 'flex';
+            });
+        }
+        function _old_openStaffManagerModal() {
             document.getElementById('newAdminPinInput').value = '';
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
@@ -2034,6 +2103,20 @@ fetchStaffFromCloud();
             document.getElementById('guestPreviewModal').style.display = 'none';
         }
     </script>
+
+
+    <!-- MODAL NHẬP PIN NHANH (TRÁNH DELAY TRÊN MOBILE) -->
+    <div class="modal" id="quickPinModal" style="z-index: 1000;">
+        <div class="modal-content" style="width: 320px; text-align: center;">
+            <h3 style="color: #2196F3; margin-bottom: 8px;">🔒 Xác Thực Chủ Quán</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Vui lòng nhập mã PIN chủ quán để tiếp tục:</p>
+            <input type="password" id="quickPinInput" placeholder="Nhập mã PIN..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; margin-bottom: 12px; text-align: center;" onkeydown="if(event.key==='Enter') confirmQuickPin()">
+            <div class="modal-actions" style="justify-content: center; gap: 10px;">
+                <button style="background: #ccc; padding: 8px 16px;" onclick="document.getElementById('quickPinModal').style.display='none'; pinCallbackFn=null;">Hủy</button>
+                <button style="background: #4CAF50; color: white; padding: 8px 16px;" onclick="confirmQuickPin()">Xác Nhận</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
