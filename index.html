@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V33 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V34 Cloud Pro (Realtime Google Sheets)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -61,8 +61,6 @@
         .btn-shift:hover { background: #f57c00; }
         .btn-advanced-report { background: #009688; width: 100%; margin-top: 4px; }
         .btn-advanced-report:hover { background: #00796b; }
-        .btn-payroll { background: #3f51b5; width: 100%; margin-top: 4px; }
-        .btn-payroll:hover { background: #303f9f; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 20px; border-radius: 8px; width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -91,6 +89,8 @@
             width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; 
         }
 
+        #cloudLoading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; }
+
         @media print {
             @page { size: 40mm 30mm; margin: 0; }
             body * { visibility: hidden; }
@@ -104,6 +104,8 @@
     </style>
 </head>
 <body>
+
+    <div id="cloudLoading">☁️ Đang đồng bộ trực tiếp với Google Sheets...</div>
 
     <!-- MODAL ĐĂNG NHẬP -->
     <div class="modal" id="loginModal" style="display: flex; background: rgba(0,0,0,0.85); z-index: 999;">
@@ -131,15 +133,15 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V33 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V34 Cloud Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
-                    <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
+                    <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chưa đăng nhập</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
                 </div>
             </div>
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
-                <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
+                <button class="btn-action" style="background: #e91e63;" onclick="initCloudApp()" title="Tải dữ liệu trực tiếp từ Google Sheets">🔄 Tải Lại Cloud</button>
 
                 <button class="btn-action" id="addDishBtn" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button id="toppingConfigBtn" class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
@@ -168,7 +170,7 @@
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <h2>Hóa Đơn Hiện Tại</h2>
-                <button onclick="clearCartWithPin()" style="background: #ff5252; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">🗑️ Xóa giỏ (PIN)</button>
+                <button onclick="clearCart()" style="background: #ff5252; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">🗑️ Xóa giỏ</button>
             </div>
             <div class="cart-list" id="cartList">
                 <p style="color: #777; text-align: center; margin-top: 10px;">Chưa chọn món nào</p>
@@ -180,7 +182,7 @@
                 <span>Tổng cộng:</span>
                 <span id="totalAmount" style="color: #d32f2f;">0k</span>
             </div>
-            <button class="btn-print" onclick="printBill()">In Tem Dán Ly & Thanh Toán</button>
+            <button class="btn-print" onclick="printBill()">In Tem Dán Ly & Thanh Toán (Lưu Cloud)</button>
 
             <div class="history-box">
                 <h3>
@@ -193,7 +195,6 @@
                     <button class="btn-report" onclick="openMonthlyReport()">📊 Doanh thu tháng</button>
                     <button class="btn-report btn-shift" onclick="openShiftReport()">🔄 Kết ca</button>
                     <button class="btn-report btn-advanced-report" onclick="openAdvancedReport()">📈 Báo cáo chi tiết</button>
-                    
                 </div>
             </div>
         </div>
@@ -265,7 +266,7 @@
 
     <div class="modal" id="monthlyReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Doanh Thu Tháng</h3>
+            <h3>Báo Cáo Doanh Thu Tháng (Cloud)</h3>
             <div style="margin: 10px 0;">
                 <label style="font-size: 14px; font-weight: bold;">Chọn Tháng/Năm:</label>
                 <input type="month" id="reportMonthInput" style="width: 100%; padding: 6px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px;" onchange="calculateMonthlyReport()">
@@ -296,7 +297,7 @@
             </div>
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ff9800; color: white;" onclick="printShiftReport()">🖨️ In Báo Cáo Kết Ca</button>
-                <button style="background: #2196F3; color: white;" onclick="confirmAndResetShift()">✔️ Xác Nhận Kết Ca (Reset Về 0)</button>
+                <button style="background: #2196F3; color: white;" onclick="confirmAndResetShift()">✔️ Xác Nhận Kết Ca</button>
                 <button style="background: #ccc;" onclick="document.getElementById('shiftReportModal').style.display='none'">Đóng</button>
             </div>
         </div>
@@ -304,8 +305,8 @@
 
     <div class="modal" id="advancedReportModal">
         <div class="modal-content" style="width: 580px; max-height: 92vh;">
-            <h3 style="color: #009688; margin-bottom: 4px;">📈 Báo Cáo Doanh Thu & Chi Tiết Đơn Hàng</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Xem danh sách đơn hàng chi tiết từng ngày, xem lại món và in lại tem dán ly.</p>
+            <h3 style="color: #009688; margin-bottom: 4px;">📈 Báo Cáo Doanh Thu & Chi Tiết Đơn Hàng (Cloud)</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 8px;">Xem trực tiếp dữ liệu từ Google Sheets.</p>
             
             <div style="margin: 8px 0; background: #f4f6f9; padding: 8px; border-radius: 6px;">
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Chọn khoảng ngày xem báo cáo:</label>
@@ -337,7 +338,7 @@
                 </div>
             </div>
 
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #333;">📜 Danh Sách Đơn Hàng Chi Tiết (Bấm vào đơn để xem & in lại bill):</div>
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #333;">📜 Danh Sách Đơn Hàng Chi Tiết:</div>
             <div id="advOrdersListContainer" style="max-height: 160px; overflow-y: auto; border: 1px solid #ddd; padding: 6px; border-radius: 4px; background: #fff;"></div>
 
             <div class="modal-actions" style="margin-top: 10px;">
@@ -349,16 +350,14 @@
     <!-- MODAL BẢNG LƯƠNG NHÂN VIÊN -->
     <div class="modal" id="payrollModal">
         <div class="modal-content" style="width: 620px; max-height: 92vh;">
-            <h3 style="color: #3f51b5; margin-bottom: 4px;">👑 Quản Lý Ca Làm & Bảng Lương Chi Tiết</h3>
-            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Theo dõi trạng thái nhân viên trực tiếp và lịch sử chấm công minh bạch.</p>
+            <h3 style="color: #3f51b5; margin-bottom: 4px;">👑 Quản Lý Ca Làm & Bảng Lương (Cloud)</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Theo dõi lịch sử chấm công minh bạch từ Google Sheets.</p>
             
-            <!-- Trạng thái nhân viên trực tuyến hiện tại -->
             <div style="background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 6px; padding: 10px; margin-bottom: 12px;">
                 <h4 style="font-size: 14px; color: #2e7d32; margin-bottom: 6px;">🟢 Trạng Thái Nhân Viên Hiện Tại:</h4>
                 <div id="liveStaffStatusContainer" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
             </div>
 
-            <!-- Bộ lọc -->
             <div style="margin-bottom: 10px; background: #f4f6f9; padding: 10px; border-radius: 6px; display: flex; gap: 10px;">
                 <div style="flex: 1;">
                     <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Chọn Tháng:</label>
@@ -370,11 +369,9 @@
                 </div>
             </div>
 
-            <!-- Danh sách log chi tiết ca làm -->
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #444;">📜 Lịch Sử Log Ca Làm & Tiền Lương Từng Ngày:</div>
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; color: #444;">📜 Lịch Sử Log Ca Làm & Tiền Lương:</div>
             <div id="payrollResultList" style="max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 6px; border-radius: 4px; margin-bottom: 10px; background: #fff;"></div>
             
-            <!-- Tổng kết -->
             <div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                 <div id="payrollSummaryStats" style="font-size: 13px; color: #e65100; font-weight: bold;">Tổng số ca: 0 | Tổng giờ: 0h</div>
                 <div style="text-align: right;">
@@ -391,7 +388,7 @@
 
     <div class="modal" id="addDishModal">
         <div class="modal-content">
-            <h3>Thêm Món Mới (Bảo mật PIN)</h3>
+            <h3>Thêm Món Mới (Cloud)</h3>
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
             <input type="text" id="newDishName" placeholder="Nhập tên món mới">
             
@@ -406,19 +403,19 @@
                 <option value="Food">🍢 Đồ Ăn Vặt</option>
             </select>
 
-            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Link Hình Ảnh (URL trực tiếp, vd từ Imgur):</label>
-            <input type="text" id="newDishImageUrl" placeholder="https://i.imgur.com/... (để trống nếu không có ảnh)">
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Link Hình Ảnh (URL):</label>
+            <input type="text" id="newDishImageUrl" placeholder="https://i.imgur.com/...">
 
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeAddDishModal()">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveNewDishWithPin()">Lưu lại</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveNewDishCloud()">Lưu lên Cloud</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="editDishModal">
         <div class="modal-content">
-            <h3>Sửa Tên & Giá Món (Bảo mật PIN)</h3>
+            <h3>Sửa Tên & Giá Món (Cloud)</h3>
             <input type="hidden" id="editDishId">
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Tên món:</label>
             <input type="text" id="editDishNameInput">
@@ -428,15 +425,14 @@
             <input type="text" id="editDishImageUrlInput">
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeEditDishModal()">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveEditedDish()">Cập nhật</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveEditedDishCloud()">Cập nhật Cloud</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="toppingConfigModal">
         <div class="modal-content" style="width: 420px;">
-            <h3>⚙️ Quản Lý Topping (Bảo mật PIN)</h3>
-            <p style="font-size: 12px; color: #d32f2f; margin-bottom: 8px;">⚠️ Thao tác yêu cầu xác thực chủ quán.</p>
+            <h3>⚙️ Quản Lý Topping (Cloud)</h3>
             
             <label style="font-weight: bold; font-size: 13px; color: #2196F3;">🥤 Topping Thức Uống:</label>
             <div class="topping-config-list" id="drinkToppingConfigList" style="margin-top: 5px; margin-bottom: 15px;"></div>
@@ -446,7 +442,7 @@
 
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeToppingConfigModal()">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveToppingConfigWithPin()">Lưu Topping</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveToppingConfigCloud()">Lưu Topping Cloud</button>
             </div>
         </div>
     </div>
@@ -454,13 +450,13 @@
     <!-- MODAL QUẢN LÝ NHÂN VIÊN & LƯƠNG GIỜ -->
     <div class="modal" id="staffManagerModal">
         <div class="modal-content" style="width: 480px;">
-            <h3>👥 Quản Lý Nhân Viên & Lương Giờ</h3>
+            <h3>👥 Quản Lý Nhân Viên & Lương Giờ (Cloud)</h3>
             
             <div style="margin-top: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px;">
                 <h4 style="font-size: 14px; color: #2196F3; margin-bottom: 6px;">🔑 Đổi Mã PIN Chủ Quán</h4>
                 <input type="password" id="currentAdminPinInput" placeholder="Nhập PIN chủ quán hiện tại" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
                 <input type="password" id="newAdminPinInput" placeholder="Nhập PIN chủ quán mới" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                <button class="btn-action" style="width: 100%; padding: 6px;" onclick="updateAdminPin()">Cập Nhật PIN Chủ Quán</button>
+                <button class="btn-action" style="width: 100%; padding: 6px;" onclick="updateAdminPinCloud()">Cập Nhật PIN Chủ Quán</button>
             </div>
 
             <div style="margin-top: 12px;">
@@ -468,17 +464,17 @@
                 <div id="staffListContainer" style="max-height: 160px; overflow-y: auto; border: 1px solid #eee; padding: 6px; border-radius: 4px; margin-bottom: 8px;"></div>
                 
                 <h4 style="font-size: 13px; color: #333; margin-bottom: 4px;">Thêm Nhân Viên / Chi Nhánh Mới:</h4>
-                <input type="text" id="newStaffName" placeholder="Tên nhân viên / Chi nhánh (vd: M10 Quận 5)" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="text" id="newStaffName" placeholder="Tên nhân viên / Chi nhánh" style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
                 <div style="display: flex; gap: 6px; margin-bottom: 6px;">
                     <input type="password" id="newStaffPin" placeholder="Mã PIN" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <input type="number" id="newStaffRate" placeholder="Lương/giờ (VNĐ, vd 22000)" style="flex: 1.5; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="number" id="newStaffRate" placeholder="Lương/giờ (VNĐ)" style="flex: 1.5; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Vai trò tài khoản:</label>
                 <select id="newStaffRole" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
-                    <option value="seller">☕ Nhân viên Bán Hàng (Full tính năng & Chấm công)</option>
-                    <option value="viewer">👁️ Nhân viên Phục Vụ (Chỉ xem menu & Bảng lương, Không order)</option>
+                    <option value="seller">☕ Nhân viên Bán Hàng</option>
+                    <option value="viewer">👁️ Nhân viên Phục Vụ (Chỉ xem menu)</option>
                 </select>
-                <button class="btn-action" style="width: 100%; padding: 6px; background: #4CAF50;" onclick="addNewStaff()">+ Thêm Nhân Viên Mới</button>
+                <button class="btn-action" style="width: 100%; padding: 6px; background: #4CAF50;" onclick="addNewStaffCloud()">+ Thêm Nhân Viên Mới</button>
             </div>
 
             <div class="modal-actions" style="margin-top: 15px;">
@@ -500,11 +496,11 @@
             <input type="password" id="editStaffPinInput" placeholder="Nhập PIN mới nếu muốn đổi" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
 
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Lương theo giờ (VNĐ):</label>
-            <input type="number" id="editStaffRateInput" placeholder="Ví dụ: 22000" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            <input type="number" id="editStaffRateInput" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
 
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="document.getElementById('editStaffModal').style.display='none'">Hủy</button>
-                <button style="background: #4CAF50; color: white;" onclick="saveEditedStaff()">Cập Nhật</button>
+                <button style="background: #4CAF50; color: white;" onclick="saveEditedStaffCloud()">Cập Nhật Cloud</button>
             </div>
         </div>
     </div>
@@ -514,157 +510,73 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmAjHUlquD2Zp3dEQyJ2fdQ3J-imK7mKS1dBqpK8EXcAcmryyKyzE1EGfm1Op1SOV9Sg/exec";
 
-        let currentAccount = localStorage.getItem('kimbling_account') || '';
-        let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
-        let staffList = JSON.parse(localStorage.getItem('kimbling_staff_list')) || [
-            { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
-        ];
-        let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
+        let currentAccount = localStorage.getItem('kimbling_account_v34') || '';
+        let adminPin = '0';
+        let staffList = [];
+        let attendanceList = [];
+        let menu = [];
+        let drinkToppings = [];
+        let snackToppings = [];
+        let favorites = JSON.parse(localStorage.getItem('kimbling_favorites_v34')) || [];
+        let cart = [];
+        let orderHistory = [];
+        let activeShiftsMap = {};
         
-        // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        
-        // Hàm lấy mốc kết ca chính xác theo tài khoản hiện tại
-        function getShiftResetTime() {
-            if (!currentAccount) return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
-            return parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || '0');
-        }
-        let lastShiftResetTime = getShiftResetTime();
+        let selectedProduct = null;
+        let currentViewingBill = null;
+        let currentModalToppings = {};
 
-
-        function getActiveShift() {
-            if (!currentAccount) return null;
-            return JSON.parse(localStorage.getItem('kimbling_active_shift_' + currentAccount)) || null;
-        }
-        function saveActiveShift(shiftObj) {
-            if (!currentAccount) return;
-            if (shiftObj) {
-                localStorage.setItem('kimbling_active_shift_' + currentAccount, JSON.stringify(shiftObj));
-            } else {
-                localStorage.removeItem('kimbling_active_shift_' + currentAccount);
-            }
+        function showLoading(show) {
+            document.getElementById('cloudLoading').style.display = show ? 'flex' : 'none';
         }
 
-        function syncStaffToCloud() {
-            syncToGoogleSheets('staff', { staffList: staffList, adminPin: adminPin });
-        }
-
-        function syncAttendanceToCloud(record) {
-            syncToGoogleSheets('attendance', record);
-        }
-
-        function syncActiveShiftsToCloud() {
-            let activeShiftsMap = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                let key = localStorage.key(i);
-                if (key && key.startsWith('kimbling_active_shift_')) {
-                    let staffId = key.replace('kimbling_active_shift_', '');
-                    activeShiftsMap[staffId] = JSON.parse(localStorage.getItem(key));
-                }
-            }
-            syncToGoogleSheets('activeShifts', { activeShiftsMap: activeShiftsMap });
-        }
-
-        async function fetchActiveShiftsFromCloud() {
+        async function callCloudAPI(payload) {
+            showLoading(true);
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getActiveShifts");
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
                 const data = await response.json();
-                if (data && data.activeShiftsMap) {
-                    for (let [staffId, shiftObj] of Object.entries(data.activeShiftsMap)) {
-                        if (shiftObj) {
-                            localStorage.setItem('kimbling_active_shift_' + staffId, JSON.stringify(shiftObj));
-                        } else {
-                            localStorage.removeItem('kimbling_active_shift_' + staffId);
-                        }
-                    }
-                }
+                showLoading(false);
+                return data;
             } catch (err) {
-                console.log("Fetch active shifts error:", err);
+                showLoading(false);
+                console.error("Cloud API Error:", err);
+                alert("Lỗi kết nối Google Sheets! Vui lòng kiểm tra lại mạng.");
+                return null;
             }
         }
 
-        async function fetchStaffFromCloud() {
+        async function initCloudApp() {
+            showLoading(true);
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getStaff");
-                const data = await response.json();
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getAllData");
+                const data = await res.json();
                 if (data) {
-                    if (data.staffList && Array.isArray(data.staffList)) {
-                        staffList = data.staffList.map(s => ({ ...s, hourlyRate: s.hourlyRate || 22000 }));
-                        localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
-                    }
-                    if (data.adminPin) {
-                        adminPin = data.adminPin;
-                        localStorage.setItem('kimbling_admin_pin', adminPin);
-                    }
-                    renderStaffSelectOptions();
+                    if (data.menu && data.menu.length > 0) menu = data.menu;
+                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
+                    if (data.snackToppings) snackToppings = data.snackToppings;
+                    if (data.staffList) staffList = data.staffList;
+                    if (data.adminPin) adminPin = data.adminPin;
+                    if (data.attendance) attendanceList = data.attendance;
+                    if (data.history) orderHistory = data.history;
+                    if (data.activeShiftsMap) activeShiftsMap = data.activeShiftsMap;
                 }
             } catch (err) {
-                console.log("Fetch staff error:", err);
+                console.log("Fetch all cloud data error:", err);
             }
-        }
-
-        async function fetchAttendanceFromCloud() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getAttendance");
-                const data = await response.json();
-                if (data && data.attendance && Array.isArray(data.attendance)) {
-                    attendanceList = data.attendance;
-                    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                }
-            } catch (err) {
-                console.log("Fetch attendance error:", err);
-            }
-        }
-
-        function deleteAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
-                attendanceList = attendanceList.filter(a => a.id !== attId);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                calculatePayroll();
-                alert("Đã xóa log ca làm thành công!");
-            }
-        }
-
-        function editAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            let att = attendanceList.find(a => a.id === attId);
-            if (!att) return;
-            
-            let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
-            if (choice === "1") {
-                let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
-                if (newHoursStr === null) return;
-                let newHours = parseFloat(newHoursStr);
-                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-                att.hours = newHours;
-                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-            } else if (choice === "2") {
-                let newIn = prompt("Nhập giờ vào mới (vd: 08:00):", att.checkInTime);
-                if (newIn === null) return;
-                let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
-                if (newOut === null) return;
-                let newHoursStr = prompt("Nhập lại tổng số giờ tính lương tương ứng:", att.hours);
-                if (newHoursStr === null) return;
-                let newHours = parseFloat(newHoursStr);
-                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-                att.checkInTime = newIn;
-                att.checkOutTime = newOut;
-                att.hours = newHours;
-                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+            showLoading(false);
+            renderStaffSelectOptions();
+            if (!currentAccount) {
+                document.getElementById('loginModal').style.display = 'flex';
             } else {
-                return;
+                updateAccountBadge();
             }
-
-            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-            calculatePayroll();
-            alert("Đã cập nhật ca làm thành công!");
-        }
-
-        
-        function isViewerRole(accId) {
-            if (accId === 'CQ') return false;
-            let st = staffList.find(s => s.id === accId);
-            return st && st.role === 'viewer';
+            renderMenu();
+            renderCart();
+            updateHistoryUI();
         }
 
         function verifyAdminPin() {
@@ -695,13 +607,11 @@
                 return;
             }
             currentAccount = 'CQ';
-            localStorage.setItem('kimbling_account', currentAccount);
-            lastShiftResetTime = getShiftResetTime();
+            localStorage.setItem('kimbling_account_v34', currentAccount);
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginAdminPinInput').value = '';
             updateAccountBadge();
             updateHistoryUI();
-            refreshAllData();
         }
 
         function loginAsStaff() {
@@ -717,29 +627,23 @@
                 return;
             }
             currentAccount = selectedId;
-            localStorage.setItem('kimbling_account', currentAccount);
-            lastShiftResetTime = getShiftResetTime();
+            localStorage.setItem('kimbling_account_v34', currentAccount);
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginStaffPinInput').value = '';
             updateAccountBadge();
             updateHistoryUI();
-            refreshAllData();
         }
 
         function switchAccount() {
-            if (currentAccount && currentAccount !== 'CQ') {
-                let currentActiveShift = getActiveShift();
-                if (currentActiveShift) {
-                    let confirmLeave = confirm("⚠️ CẢNH BÁO: Bạn chưa bấm TAN CA trước khi đổi tài khoản! Bạn có muốn hệ thống tự động TAN CA ngay bây giờ không?");
-                    if (confirmLeave) {
-                        toggleAttendance();
-                    }
-                }
-            }
-            renderStaffSelectOptions();
             document.getElementById('loginAdminPinInput').value = '';
             document.getElementById('loginStaffPinInput').value = '';
+            renderStaffSelectOptions();
             document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function getActiveShift() {
+            if (!currentAccount || currentAccount === 'CQ') return null;
+            return activeShiftsMap[currentAccount] || null;
         }
 
         function updateAccountBadge() {
@@ -772,7 +676,6 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
-                // Cả nhân viên bán hàng và phục vụ đều có nút vào ca và bảng lương
                 if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
                 
@@ -791,7 +694,7 @@
             const attendanceBtn = document.getElementById('attendanceBtn');
             const statusBadge = document.getElementById('attendanceStatusBadge');
             let currentActiveShift = getActiveShift();
-            if (currentActiveShift && currentActiveShift.staffId === currentAccount) {
+            if (currentActiveShift) {
                 attendanceBtn.innerText = "🛑 Tan Ca";
                 attendanceBtn.style.background = "#e74c3c";
                 statusBadge.innerText = "🟢 Đang trong ca";
@@ -806,7 +709,7 @@
             }
         }
 
-        function toggleAttendance() {
+        async function toggleAttendance() {
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
             const now = new Date();
@@ -822,8 +725,7 @@
                     hourlyRate: staff.hourlyRate || 22000,
                     date: now.toISOString().split('T')[0]
                 };
-                saveActiveShift(currentActiveShift);
-                syncActiveShiftsToCloud();
+                activeShiftsMap[currentAccount] = currentActiveShift;
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
                 let checkInDate = new Date(currentActiveShift.checkInIso);
@@ -845,47 +747,21 @@
                 };
 
                 attendanceList.push(record);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                syncAttendanceToCloud(record);
+                delete activeShiftsMap[currentAccount];
 
-                saveActiveShift(null);
-                syncActiveShiftsToCloud();
-                alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                let res = await callCloudAPI({ type: 'saveAttendanceAndShift', record: record, activeShiftsMap: activeShiftsMap });
+                if (res && res.status === 'success') {
+                    alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                }
             }
+            await callCloudAPI({ type: 'updateActiveShifts', activeShiftsMap: activeShiftsMap });
             updateAttendanceUIState();
         }
 
-        if (!currentAccount) {
-            renderStaffSelectOptions();
-            document.getElementById('loginModal').style.display = 'flex';
-        } else {
-            renderStaffSelectOptions();
-            updateAccountBadge();
-        }
-
-        function refreshAllData() {
-            fetchStaffFromCloud();
-            fetchAttendanceFromCloud();
-            fetchActiveShiftsFromCloud();
-            fetchMenuFromCloud();
-            fetchHistoryFromCloud();
-            setTimeout(() => {
-                if(document.getElementById('payrollModal').style.display === 'flex') {
-                    renderLiveStaffStatus();
-                }
-                alert("Đã làm mới và đồng bộ dữ liệu thành công!");
-            }, 600);
-        }
-
-        function formatPrice(val) {
-            return (val / 1000) + 'k';
-        }
+        function formatPrice(val) { return (val / 1000) + 'k'; }
 
         function removeDiacritics(str) {
-            return str.normalize('NFD')
-                      .replace(/[̀-ͯ]/g, '')
-                      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                      .toLowerCase();
+            return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
         }
 
         function smartMatch(query, target) {
@@ -908,131 +784,12 @@
             return false;
         }
 
-        const defaultMenu = [{"id": 1, "name": "Matcha Latte", "price": 20000, "category": "MilkTea"}, {"id": 2, "name": "Matcha Bạc Hà", "price": 24000, "category": "MilkTea"}, {"id": 3, "name": "Matcha Cà Phê", "price": 24000, "category": "Coffee"}, {"id": 4, "name": "Matcha Sốt Trái Cây + Kem", "price": 27000, "category": "MilkTea"}, {"id": 5, "name": "Matcha Oreo", "price": 27000, "category": "MilkTea"}, {"id": 6, "name": "Matcha Chuối", "price": 25000, "category": "MilkTea"}, {"id": 7, "name": "Matcha Socola Oreo", "price": 30000, "category": "MilkTea"}, {"id": 8, "name": "Trà Sữa Đài Loan Trân Châu", "price": 20000, "category": "MilkTea"}, {"id": 9, "name": "Trà Sữa Socola", "price": 22000, "category": "MilkTea"}, {"id": 10, "name": "Trà Sữa Yến Mạch", "price": 25000, "category": "MilkTea"}, {"id": 11, "name": "Trà Sữa Khoai Môn", "price": 22000, "category": "MilkTea"}, {"id": 12, "name": "Trà Sữa Matcha", "price": 22000, "category": "MilkTea"}, {"id": 13, "name": "Trà Sữa Than Tre", "price": 22000, "category": "MilkTea"}, {"id": 14, "name": "Cà Phê Đá", "price": 16000, "category": "Coffee"}, {"id": 15, "name": "Cà Phê Sữa Đá", "price": 19000, "category": "Coffee"}, {"id": 16, "name": "Cà Phê Muối", "price": 20000, "category": "Coffee"}, {"id": 17, "name": "Bạc Sỉu Đá", "price": 19000, "category": "Coffee"}, {"id": 18, "name": "Cà Phê Trứng Sữa", "price": 22000, "category": "Coffee"}, {"id": 19, "name": "Cà Phê Bọt Biển", "price": 22000, "category": "Coffee"}, {"id": 20, "name": "Cà Phê Đá Pha Máy Nguyên Chất", "price": 18000, "category": "Coffee"}, {"id": 21, "name": "Cà Phê Sữa Pha Máy Nguyên Chất", "price": 21000, "category": "Coffee"}, {"id": 22, "name": "Cà Phê Sữa Caramel", "price": 21000, "category": "Coffee"}, {"id": 23, "name": "Cà Phê Yến Mạch", "price": 25000, "category": "Coffee"}, {"id": 24, "name": "Cacao Latte", "price": 20000, "category": "Coffee"}, {"id": 25, "name": "Cacao Yến Mạch", "price": 25000, "category": "Coffee"}, {"id": 26, "name": "Cacao Phô Mai Sữa", "price": 22000, "category": "Coffee"}, {"id": 27, "name": "Cacao Chuối", "price": 27000, "category": "Coffee"}, {"id": 28, "name": "Cacao Oreo", "price": 27000, "category": "Coffee"}, {"id": 29, "name": "Cacao Bạc Hà", "price": 24000, "category": "Coffee"}, {"id": 30, "name": "Hoa Anh Đào Latte Kem", "price": 22000, "category": "MilkTea"}, {"id": 31, "name": "Hoa Anh Đào Latte Sốt Trái Cây Tùy Chọn + Kem", "price": 27000, "category": "MilkTea"}, {"id": 32, "name": "Soda Việt Quất + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 33, "name": "Soda Dâu + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 34, "name": "Soda Bạc Hà + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 35, "name": "Soda Đào + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 36, "name": "Soda Xoài + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 37, "name": "Soda Ổi + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 38, "name": "Soda Mãng Cầu + Thạch Trái Cây", "price": 22000, "category": "MilkTea"}, {"id": 39, "name": "Thái Đỏ Latte Cacao", "price": 22000, "category": "Coffee"}, {"id": 40, "name": "Thái Xanh Latte Cacao", "price": 22000, "category": "Coffee"}, {"id": 41, "name": "Trà Sữa Thái Đỏ", "price": 22000, "category": "MilkTea"}, {"id": 42, "name": "Trà Sữa Thái Xanh", "price": 22000, "category": "MilkTea"}, {"id": 43, "name": "Trà Tắc Thái Xanh", "price": 17000, "category": "MilkTea"}, {"id": 44, "name": "Trà Tắc Thái Đỏ", "price": 17000, "category": "MilkTea"}, {"id": 45, "name": "Thái Xanh Cafe", "price": 22000, "category": "Coffee"}, {"id": 46, "name": "Thái Đỏ Cafe", "price": 22000, "category": "Coffee"}, {"id": 47, "name": "Cafe Mật Ong", "price": 20000, "category": "Coffee"}, {"id": 48, "name": "Ly 1 Lít Bí Đao", "price": 20000, "category": "MilkTea"}, {"id": 49, "name": "Ly 1 Lít Hoa Cúc", "price": 20000, "category": "MilkTea"}, {"id": 50, "name": "Ly 1 Lít Rong Biển Sương Sáo Hạt Chia", "price": 20000, "category": "MilkTea"}, {"id": 51, "name": "Milo Dầm", "price": 25000, "category": "MilkTea"}, {"id": 52, "name": "Khoai Môn Latte", "price": 20000, "category": "MilkTea"}, {"id": 53, "name": "Khoai Môn Yến Mạch", "price": 25000, "category": "MilkTea"}, {"id": 54, "name": "Khoai Môn Cafe", "price": 25000, "category": "Coffee"}, {"id": 55, "name": "Khoai Môn Matcha Kem", "price": 27000, "category": "MilkTea"}, {"id": 56, "name": "Khoai Môn Oreo", "price": 27000, "category": "MilkTea"}, {"id": 57, "name": "Sâm Dứa Sữa", "price": 20000, "category": "MilkTea"}, {"id": 58, "name": "Sâm Dứa Sữa Cà Phê", "price": 24000, "category": "Coffee"}, {"id": 59, "name": "Sâm Dứa Sữa Matcha", "price": 25000, "category": "MilkTea"}, {"id": 60, "name": "Sữa Tươi Cà Phê", "price": 22000, "category": "Coffee"}, {"id": 61, "name": "Sữa Tươi Sương Sáo", "price": 20000, "category": "MilkTea"}, {"id": 62, "name": "Cà Phê Sữa Chuối", "price": 24000, "category": "Coffee"}, {"id": 63, "name": "Sữa Tươi Trân Châu Đường Đen", "price": 22000, "category": "MilkTea"}, {"id": 64, "name": "Oreo Latte", "price": 22000, "category": "MilkTea"}, {"id": 65, "name": "Việt Quất Latte", "price": 25000, "category": "MilkTea"}, {"id": 66, "name": "Dâu Latte", "price": 25000, "category": "MilkTea"}, {"id": 67, "name": "Đào Latte", "price": 25000, "category": "MilkTea"}, {"id": 68, "name": "Xoài Latte", "price": 25000, "category": "MilkTea"}, {"id": 69, "name": "Hồng Trà Tắc", "price": 12000, "category": "MilkTea"}, {"id": 70, "name": "Hồng Trà Xí Muội", "price": 17000, "category": "MilkTea"}, {"id": 71, "name": "Hồng Trà Dâu", "price": 17000, "category": "MilkTea"}, {"id": 72, "name": "Hồng Trà Đào", "price": 17000, "category": "MilkTea"}, {"id": 73, "name": "Hồng Trà Xoài", "price": 17000, "category": "MilkTea"}, {"id": 74, "name": "Hồng Trà Dưa Lưới", "price": 17000, "category": "MilkTea"}, {"id": 75, "name": "Hồng Trà Việt Quất", "price": 17000, "category": "MilkTea"}, {"id": 76, "name": "Hồng Trà Vải", "price": 17000, "category": "MilkTea"}, {"id": 77, "name": "Hồng Trà Ổi", "price": 17000, "category": "MilkTea"}, {"id": 78, "name": "Hồng Trà Mãng Cầu", "price": 17000, "category": "MilkTea"}, {"id": 79, "name": "Hồng Trà Dâu Tầm", "price": 17000, "category": "MilkTea"}, {"id": 80, "name": "Hồng Trà Chanh Dây", "price": 17000, "category": "MilkTea"}, {"id": 81, "name": "Hồng Trà Me", "price": 20000, "category": "MilkTea"}, {"id": 82, "name": "Sữa Chua Kem", "price": 20000, "category": "Yogurt"}, {"id": 83, "name": "Sữa Chua Phô Mai", "price": 24000, "category": "Yogurt"}, {"id": 84, "name": "Sữa Chua Việt Quất (Ly Khổng Lồ 1 Lít)", "price": 27000, "category": "Yogurt"}, {"id": 85, "name": "Sữa Chua Dâu Tây + Oreo (Ly Khổng Lồ 1 Lít)", "price": 27000, "category": "Yogurt"}, {"id": 86, "name": "Sữa Chua Cà Phê", "price": 25000, "category": "Yogurt"}, {"id": 87, "name": "Sữa Chua Matcha", "price": 27000, "category": "Yogurt"}, {"id": 88, "name": "Sữa Dừa Sương Sáo", "price": 24000, "category": "MilkTea"}, {"id": 89, "name": "Đá Me Đậu Phộng Hạt Đát", "price": 22000, "category": "MilkTea"}, {"id": 90, "name": "Hojicha Latte", "price": 20000, "category": "MilkTea"}, {"id": 91, "name": "Matcha Yến Mạch", "price": 25000, "category": "MilkTea"}, {"id": 92, "name": "Socola Chuối Oreo", "price": 30000, "category": "MilkTea"}, {"id": 93, "name": "Sữa Tuyết Việt Quất", "price": 35000, "category": "MilkTea"}, {"id": 94, "name": "Sữa Tuyết Oreo", "price": 35000, "category": "MilkTea"}, {"id": 95, "name": "Lipton Latte", "price": 20000, "category": "MilkTea"}, {"id": 96, "name": "Chân Gà Rút Xương Sốt Thái", "price": 45000, "category": "Food"}, {"id": 97, "name": "Lạp Xưởng Tươi Nướng (1 cây)", "price": 15000, "category": "Food"}, {"id": 98, "name": "Sứa Sốt Thái", "price": 60000, "category": "Food"}, {"id": 99, "name": "Cá Viên 25k", "price": 25000, "category": "Food"}, {"id": 100, "name": "Cá Viên Chiên Thập Cẩm", "price": 45000, "category": "Food"}, {"id": 101, "name": "Cá Viên Sốt Phô Mai", "price": 35000, "category": "Food"}, {"id": 102, "name": "Cá Viên Sốt Mắm Tỏi", "price": 35000, "category": "Food"}, {"id": 103, "name": "Cá Viên Sốt Trứng Muối", "price": 35000, "category": "Food"}, {"id": 104, "name": "Tokbokki Sốt Phô Mai", "price": 35000, "category": "Food"}, {"id": 105, "name": "Tokbokki Sốt Trứng Muối", "price": 35000, "category": "Food"}, {"id": 106, "name": "Mẹc Bánh Tráng Chấm Chua Cay", "price": 25000, "category": "Food"}, {"id": 107, "name": "Cơm Chiên Dương Châu", "price": 20000, "category": "Food"}, {"id": 108, "name": "Gỏi Khô Bò (Đặc sản)", "price": 25000, "category": "Food"}, {"id": 109, "name": "Mì Sườn Ức Gà Phô Mai Cay", "price": 30000, "category": "Food"}, {"id": 110, "name": "Mì Tương Đen", "price": 25000, "category": "Food"}, {"id": 111, "name": "Mì Trộn Indomie", "price": 20000, "category": "Food"}, {"id": 112, "name": "Mì Trộn Cá Viên", "price": 30000, "category": "Food"}];
-        
-        const defaultDrinkToppings = [{"name": "Trân Châu Trắng", "price": 3000}, {"name": "Trân Châu Caramel", "price": 3000}, {"name": "Thủy Tinh Đào", "price": 3000}, {"name": "Thủy Tinh Dâu", "price": 3000}, {"name": "Thủy Tinh Việt Quất", "price": 3000}, {"name": "Trân Châu Mini", "price": 3000}, {"name": "Hạt Đát", "price": 3000}, {"name": "Thạch Sương Sáo Sợi", "price": 3000}, {"name": "Thạch Dừa", "price": 3000}, {"name": "Thạch Trái Cây", "price": 3000}, {"name": "Kem Machiato", "price": 3000}, {"name": "Bánh Oreo", "price": 5000}, {"name": "Trân Châu Phô Mai Giòn", "price": 5000}, {"name": "Ly Bánh Que", "price": 12000}, {"name": "Ly Kem Phô Mai Trứng Muối", "price": 12000}, {"name": "Bánh Flan", "price": 9000}];
-        const defaultSnackToppings = [{"name": "Bánh Tráng Thêm", "price": 3000}, {"name": "5 Trứng Cút Thêm", "price": 5000}, {"name": "Xoài Thêm", "price": 5000}, {"name": "Sốt Chấm Thêm", "price": 3000}, {"name": "Mì Thêm", "price": 10000}, {"name": "Trứng Gà Luộc Thêm", "price": 5000}, {"name": "Xúc Xích Thêm", "price": 5000}, {"name": "Khô Bò Đen Thêm", "price": 10000}];
-
-        let menu = JSON.parse(localStorage.getItem('kimbling_menu')) || defaultMenu;
-        let drinkToppings = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
-        let snackToppings = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
-        let favorites = JSON.parse(localStorage.getItem('kimbling_favorites')) || [];
-        let cart = JSON.parse(localStorage.getItem('kimbling_cart')) || [];
-        let orderHistory = JSON.parse(localStorage.getItem('kimbling_history')) || [];
-        let selectedProduct = null;
-        let currentViewingBill = null;
-        let currentModalToppings = {};
-
-let isCustomerViewMode = false;
-function toggleCustomerMenuMode() {
-    isCustomerViewMode = !isCustomerViewMode;
-    const billSection = document.querySelector('.bill-section');
-    const btn = document.getElementById('customerModeBtn');
-    if (isCustomerViewMode) {
-        billSection.style.display = 'none';
-        document.querySelector('.menu-section').style.flex = '1';
-        btn.innerText = "🔙 Quay lại POS";
-        btn.style.background = "#e74c3c";
-        alert("Đã chuyển sang CHẾ ĐỘ KHÁCH XEM MENU! Toàn bộ tính năng bán hàng và thu ngân đã được ẩn. Đưa máy cho khách xem thoải mái.");
-    } else {
-        billSection.style.display = 'flex';
-        document.querySelector('.menu-section').style.flex = '2';
-        btn.innerText = "👁️ Chế Độ Khách Xem";
-        btn.style.background = "#009688";
-    }
-    renderMenu();
-}
-
-
-        function syncToGoogleSheets(typeData, payload) {
-            if (!GOOGLE_SCRIPT_URL) return;
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: typeData, account: currentAccount, ...payload })
-            }).catch(err => console.log("Sync error:", err));
-        }
-
-        async function fetchMenuFromCloud() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
-                const data = await response.json();
-                if (data && data.menu && data.menu.length > 0) {
-                    menu = data.menu;
-                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
-                    if (data.snackToppings) snackToppings = data.snackToppings;
-                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
-                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
-                    renderMenu();
-                }
-            } catch (err) {
-                console.log("Auto fetch menu error:", err);
-            }
-        }
-
-        async function fetchHistoryFromCloud() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getHistory");
-                const data = await response.json();
-                if (data && data.history && Array.isArray(data.history)) {
-                    let localHistory = JSON.parse(localStorage.getItem('kimbling_history')) || [];
-                    orderHistory = data.history.map(remoteO => {
-                        let localO = localHistory.find(l => String(l.id) === String(remoteO.id));
-                        let items = (remoteO.items && remoteO.items.length > 0) ? remoteO.items : (localO ? localO.items : []);
-                        
-                        if ((!items || items.length === 0) && remoteO.total > 0) {
-                            items = [{ name: 'Đơn hàng tổng hợp', basePrice: remoteO.total, quantity: 1, optionsText: 'Mặc định' }];
-                        }
-                        
-                        let rawDate = remoteO.isoDate || remoteO.fullDateStr || remoteO.time || '';
-                        let cleanIso = new Date().toISOString().split('T')[0];
-                        if (rawDate.includes('T')) {
-                            cleanIso = rawDate.split('T')[0];
-                        } else if (rawDate.includes('/')) {
-                            let parts = rawDate.split(' ')[0].split('/');
-                            if (parts.length === 3) cleanIso = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-                        } else if (rawDate.length >= 10) {
-                            cleanIso = rawDate.substring(0, 10);
-                        }
-                        if (cleanIso.startsWith('1899') || cleanIso.startsWith('1970') || !cleanIso) {
-                            cleanIso = localO && localO.isoDate ? localO.isoDate : new Date().toISOString().split('T')[0];
-                        }
-
-                        let fullDateStr = remoteO.fullDateStr || (localO ? localO.fullDateStr : null);
-                        let timeStr = remoteO.time || (localO ? localO.time : null);
-                        
-                        if (!fullDateStr || fullDateStr.includes('1899') || fullDateStr.includes('1970')) {
-                            fullDateStr = localO && localO.fullDateStr ? localO.fullDateStr : (new Date(parseInt(remoteO.id) || Date.now()).toLocaleString('vi-VN'));
-                        }
-                        if (!timeStr || timeStr.includes('1899')) {
-                            timeStr = localO && localO.time ? localO.time : (new Date(parseInt(remoteO.id) || Date.now()).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
-                        }
-
-                        return {
-                            ...remoteO,
-                            total: parseFloat(remoteO.total) || 0,
-                            items: items,
-                            isoDate: cleanIso,
-                            fullDateStr: fullDateStr,
-                            time: timeStr
-                        };
-                    });
-                    localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
-                    updateHistoryUI();
-                }
-            } catch (err) {
-                console.log("Fetch history error:", err);
-            }
-        }
-
         function toggleFavorite(id, event) {
             event.stopPropagation();
             const index = favorites.indexOf(id);
             if (index > -1) favorites.splice(index, 1);
             else favorites.push(id);
-            localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
+            localStorage.setItem('kimbling_favorites_v34', JSON.stringify(favorites));
             renderMenu();
         }
 
@@ -1059,23 +816,7 @@ function toggleCustomerMenuMode() {
             }
             if (n.includes('sua chua')) return 'Yogurt';
             if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso') || n.includes('cafe')) return 'Coffee';
-            if (n.includes('tra') || n.includes('matcha') || n.includes('soda') || n.includes('latte') || n.includes('hong tra') || n.includes('sua tuoi') || n.includes('sam dua') || n.includes('lipton')) {
-                return 'MilkTea';
-            }
             return 'MilkTea';
-        }
-
-        function clearCartWithPin() {
-            if (cart.length === 0) return;
-            let pin = prompt("Nhập mã PIN xác thực để xóa giỏ hàng:", "");
-            let requiredPin = currentAccount === 'CQ' ? adminPin : (staffList.find(s => s.id === currentAccount)?.pin || '');
-            if (pin !== requiredPin) {
-                alert("Mã PIN không đúng!");
-                return;
-            }
-            cart = [];
-            saveCart();
-            renderCart();
         }
 
         function renderMenu() {
@@ -1086,17 +827,12 @@ function toggleCustomerMenuMode() {
             let filteredMenu = menu.filter(item => {
                 const matchKey = smartMatch(keyword, item.name);
                 if (!matchKey) return false;
-
                 if (currentCategory === 'Favorite') return favorites.includes(item.id);
                 else if (currentCategory !== 'All') return getCategoryType(item.name, item.category) === currentCategory;
                 return true;
             });
 
-            filteredMenu.sort((a, b) => {
-                const aFav = favorites.includes(a.id) ? 1 : 0;
-                const bFav = favorites.includes(b.id) ? 1 : 0;
-                return bFav - aFav;
-            });
+            filteredMenu.sort((a, b) => (favorites.includes(b.id) ? 1 : 0) - (favorites.includes(a.id) ? 1 : 0));
 
             if (filteredMenu.length === 0) {
                 menuGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #777; font-size: 15px;">Không tìm thấy món phù hợp</p>';
@@ -1113,18 +849,15 @@ function toggleCustomerMenuMode() {
                     adminActionBtns = `
                         <div class="menu-item-btns">
                             <button class="btn-dish-action" onclick="event.stopPropagation(); openEditDishModal(${item.id})" title="Sửa">✏️</button>
-                            <button class="btn-dish-action btn-del-dish" onclick="event.stopPropagation(); deleteDish(${item.id})" title="Xóa">×</button>
+                            <button class="btn-dish-action btn-del-dish" onclick="event.stopPropagation(); deleteDishCloud(${item.id})" title="Xóa">×</button>
                         </div>
                     `;
                 }
 
-                let imgTag = '';
-                if (item.imageUrl) {
-                    imgTag = `<div style="width: 100%; height: 90px; background: #eee; border-radius: 6px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
-                }
+                let imgTag = item.imageUrl ? `<div style="width: 100%; height: 90px; background: #eee; border-radius: 6px; overflow: hidden; margin-bottom: 6px;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : '';
                 menuGrid.innerHTML += `
                     <div class="${favClass}" onclick="openOptionsModal(${item.id})">
-                        <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
+                        <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Yêu thích">${starIcon}</button>
                         ${adminActionBtns}
                         ${imgTag}
                         <h4 style="${item.imageUrl ? 'font-size: 13px;' : 'margin-top: 14px;'}">${item.name}</h4>
@@ -1149,9 +882,7 @@ function toggleCustomerMenuMode() {
             }
 
             filteredToppings.forEach((top) => {
-                if (currentModalToppings[top.name] === undefined) {
-                    currentModalToppings[top.name] = 0;
-                }
+                if (currentModalToppings[top.name] === undefined) currentModalToppings[top.name] = 0;
                 let safeKey = top.name.replace(/[^a-zA-Z0-9]/g, '_');
                 modalToppingList.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f9f9f9;">
@@ -1167,31 +898,26 @@ function toggleCustomerMenuMode() {
         }
 
         function changeModalToppingQty(toppingName, delta) {
-            if (currentModalToppings[toppingName] === undefined) {
-                currentModalToppings[toppingName] = 0;
-            }
+            if (currentModalToppings[toppingName] === undefined) currentModalToppings[toppingName] = 0;
             currentModalToppings[toppingName] += delta;
-            if (currentModalToppings[toppingName] < 0) {
-                currentModalToppings[toppingName] = 0;
-            }
+            if (currentModalToppings[toppingName] < 0) currentModalToppings[toppingName] = 0;
 
             let safeKey = toppingName.replace(/[^a-zA-Z0-9]/g, '_');
             const spanEl = document.getElementById(`topping-qty-${safeKey}`);
-            if (spanEl) {
-                spanEl.innerText = currentModalToppings[toppingName];
-            }
+            if (spanEl) spanEl.innerText = currentModalToppings[toppingName];
             updateModalTotal();
         }
 
         function openOptionsModal(id) {
-            if (isViewerRole(currentAccount)) {
-                alert("ℹ️ Tài khoản Phục Vụ chỉ có quyền xem menu cho khách, không thể tạo đơn hàng (order)!");
+            let stObj = staffList.find(s => s.id === currentAccount);
+            if (stObj && stObj.role === 'viewer') {
+                alert("ℹ️ Tài khoản Phục Vụ chỉ có quyền xem menu, không thể tạo đơn hàng!");
                 return;
             }
             if (currentAccount && currentAccount !== 'CQ') {
                 let activeShift = getActiveShift();
                 if (!activeShift) {
-                    alert("⛔ BẠN CHƯA VÀO CA! Vui lòng bấm nút '⏱️ Vào Ca' ở góc trên bên trái trước khi bắt đầu chọn món và bán hàng.");
+                    alert("⛔ BẠN CHƯA VÀO CA! Vui lòng bấm '⏱️ Vào Ca' trước khi bán hàng.");
                     return;
                 }
             }
@@ -1200,11 +926,10 @@ function toggleCustomerMenuMode() {
             document.getElementById('modalDishName').innerText = selectedProduct.name;
             
             const isFood = getCategoryType(selectedProduct.name) === 'Food';
-            
             document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị (Bấm tăng giảm x2, x3):' : '🥤 Topping Thức Uống (Bấm tăng giảm x2, x3):';
+            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị:' : '🥤 Topping Thức Uống:';
 
             currentModalToppings = {};
             let availableList = isFood ? snackToppings : drinkToppings;
@@ -1237,9 +962,7 @@ function toggleCustomerMenuMode() {
             for (let [topName, qty] of Object.entries(currentModalToppings)) {
                 if (qty > 0) {
                     let foundTop = availableList.find(t => t.name === topName);
-                    if (foundTop) {
-                        currentPrice += foundTop.price * qty;
-                    }
+                    if (foundTop) currentPrice += foundTop.price * qty;
                 }
             }
 
@@ -1271,17 +994,13 @@ function toggleCustomerMenuMode() {
                     if (foundTop) {
                         itemPrice += foundTop.price * qty;
                         toppingNames.push(qty > 1 ? `${topName} x${qty}` : topName);
-                        for (let i = 0; i < qty; i++) {
-                            rawToppings.push(foundTop.name);
-                        }
+                        for (let i = 0; i < qty; i++) rawToppings.push(foundTop.name);
                     }
                 }
             }
 
             let optionsText = isFood ? "" : `Size: ${size} | ${sugar}, ${ice}`;
-            if (toppingNames.length > 0) {
-                optionsText += (optionsText ? " | + " : "+ ") + toppingNames.join(', ');
-            }
+            if (toppingNames.length > 0) optionsText += (optionsText ? " | + " : "+ ") + toppingNames.join(', ');
             if (!optionsText) optionsText = "Mặc định";
 
             const existing = cart.find(i => i.id === selectedProduct.id && i.optionsText === optionsText);
@@ -1298,7 +1017,6 @@ function toggleCustomerMenuMode() {
                     rawToppings: rawToppings
                 });
             }
-            saveCart();
             renderCart();
             closeOptionsModal();
         }
@@ -1309,11 +1027,13 @@ function toggleCustomerMenuMode() {
                 item.quantity += delta;
                 if (item.quantity <= 0) cart = cart.filter(i => i.cartId !== cartId);
             }
-            saveCart();
             renderCart();
         }
 
-        function saveCart() { localStorage.setItem('kimbling_cart', JSON.stringify(cart)); }
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
 
         function renderCart() {
             const cartList = document.getElementById('cartList');
@@ -1349,30 +1069,32 @@ function toggleCustomerMenuMode() {
             totalAmountEl.innerText = formatPrice(total);
         }
 
-        function viewBillDetail(orderId) {
-            currentViewingBill = orderHistory.find(o => o.id === orderId);
-            if (!currentViewingBill) return;
-            let displayTime = currentViewingBill.fullDateStr || currentViewingBill.time || new Date(parseInt(currentViewingBill.id) || Date.now()).toLocaleString('vi-VN');
-            document.getElementById('detailTime').innerText = `[${currentViewingBill.account || 'CQ'}] Thời gian: ` + displayTime + " | Bill: #" + (currentViewingBill.billNo || '---');
-            const itemsListEl = document.getElementById('detailItemsList');
-            itemsListEl.innerHTML = '';
-            currentViewingBill.items.forEach(item => {
-                itemsListEl.innerHTML += `
-                    <div style="margin-bottom: 6px;">
-                        <div style="display: flex; justify-content: space-between; font-weight: bold;">
-                            <span>${item.name} (x${item.quantity})</span>
-                            <span>${formatPrice(item.basePrice * item.quantity)}</span>
-                        </div>
-                        <div style="font-size: 13px; color: #555; padding-left: 10px;">- ${item.optionsText}</div>
-                    </div>
-                `;
-            });
-            document.getElementById('detailTotal').innerText = formatPrice(currentViewingBill.total);
-            document.getElementById('billDetailModal').style.display = 'flex';
-        }
+        async function printBill() {
+            if (cart.length === 0) { alert("Vui lòng chọn món trước khi in bill!"); return; }
+            let total = 0;
+            cart.forEach(item => total += item.basePrice * item.quantity);
+            const now = new Date();
+            const newOrder = {
+                id: Date.now(),
+                billNo: orderHistory.length + 1,
+                account: currentAccount,
+                isoDate: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                fullDateStr: now.toLocaleString('vi-VN'),
+                total: total,
+                items: [...cart]
+            };
 
-        function closeBillDetailModal() { document.getElementById('billDetailModal').style.display = 'none'; }
-        function reprintBillFromDetail() { if (currentViewingBill) executePrint(currentViewingBill); closeBillDetailModal(); }
+            let res = await callCloudAPI({ type: 'saveOrder', order: newOrder });
+            if (res && res.status === 'success') {
+                orderHistory.push(newOrder);
+                executePrint(newOrder);
+                cart = [];
+                renderCart();
+                updateHistoryUI();
+                alert("Đã lưu đơn hàng trực tiếp lên Google Sheets thành công!");
+            }
+        }
 
         function executePrint(orderObj) {
             let stickersHTML = '';
@@ -1405,51 +1127,21 @@ function toggleCustomerMenuMode() {
             setTimeout(() => { window.print(); }, 100);
         }
 
-        function printBill() {
-            if (cart.length === 0) { alert("Vui lòng chọn món trước khi in bill!"); return; }
-            let total = 0;
-            cart.forEach(item => total += item.basePrice * item.quantity);
-            const now = new Date();
-            const newOrder = {
-                id: Date.now(),
-                billNo: orderHistory.length + 1,
-                account: currentAccount,
-                isoDate: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-                fullDateStr: now.toLocaleString('vi-VN'),
-                total: total,
-                items: [...cart]
-            };
-
-            executePrint(newOrder);
-            orderHistory.push(newOrder);
-            localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
-            syncToGoogleSheets('history', newOrder);
-
-            cart = [];
-            saveCart();
-            renderCart();
-            updateHistoryUI();
-        }
-
         function updateHistoryUI() {
             const historyList = document.getElementById('historyList');
             const todayRevenueEl = document.getElementById('todayRevenue');
             
-            // Lọc các đơn hàng phát sinh SAU thời điểm kết ca gần nhất (lastShiftResetTime)
-            
-            lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+            let todayStr = new Date().toISOString().split('T')[0];
+            let todayOrders = orderHistory.filter(o => (o.isoDate || '').startsWith(todayStr));
 
-
-            if (currentShiftOrders.length === 0) {
-                historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>';
+            if (todayOrders.length === 0) {
+                historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào hôm nay</p>';
                 todayRevenueEl.innerText = '0k';
                 return;
             }
             historyList.innerHTML = '';
             let totalRevenue = 0;
-            [...currentShiftOrders].reverse().forEach((order) => {
+            [...todayOrders].reverse().forEach((order) => {
                 totalRevenue += order.total;
                 historyList.innerHTML += `
                     <div class="history-item" onclick="viewBillDetail(${order.id})">
@@ -1460,6 +1152,30 @@ function toggleCustomerMenuMode() {
             });
             todayRevenueEl.innerText = formatPrice(totalRevenue);
         }
+
+        function viewBillDetail(orderId) {
+            currentViewingBill = orderHistory.find(o => o.id === orderId);
+            if (!currentViewingBill) return;
+            document.getElementById('detailTime').innerText = `[${currentViewingBill.account || 'CQ'}] Thời gian: ` + (currentViewingBill.fullDateStr || currentViewingBill.time) + " | Bill: #" + (currentViewingBill.billNo || '---');
+            const itemsListEl = document.getElementById('detailItemsList');
+            itemsListEl.innerHTML = '';
+            currentViewingBill.items.forEach(item => {
+                itemsListEl.innerHTML += `
+                    <div style="margin-bottom: 6px;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                            <span>${item.name} (x${item.quantity})</span>
+                            <span>${formatPrice(item.basePrice * item.quantity)}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #555; padding-left: 10px;">- ${item.optionsText}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('detailTotal').innerText = formatPrice(currentViewingBill.total);
+            document.getElementById('billDetailModal').style.display = 'flex';
+        }
+
+        function closeBillDetailModal() { document.getElementById('billDetailModal').style.display = 'none'; }
+        function reprintBillFromDetail() { if (currentViewingBill) executePrint(currentViewingBill); closeBillDetailModal(); }
 
         function openMonthlyReport() {
             if (!verifyAdminPin()) return;
@@ -1485,56 +1201,39 @@ function toggleCustomerMenuMode() {
 
         function openShiftReport() {
             if (currentAccount !== 'CQ') {
-                let confirmClose = confirm("⚠️ Bạn có chắc chắn muốn kết thúc ca và xem báo cáo kết ca không?");
-                if (!confirmClose) return;
+                if (!confirm("⚠️ Bạn có chắc chắn muốn kết thúc ca và xem báo cáo?")) return;
             } else {
                 if (!verifyAdminPin()) return;
             }
-            
-            // Lấy danh sách đơn hàng trong ca hiện tại (từ sau lần reset cuối)
-            
-            lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
-
+            let todayStr = new Date().toISOString().split('T')[0];
+            let todayOrders = orderHistory.filter(o => (o.isoDate || '').startsWith(todayStr));
             let totalRev = 0;
-            currentShiftOrders.forEach(o => totalRev += o.total);
+            todayOrders.forEach(o => totalRev += o.total);
 
-            document.getElementById('shiftOrderCount').innerText = currentShiftOrders.length;
+            document.getElementById('shiftOrderCount').innerText = todayOrders.length;
             document.getElementById('shiftTotalRevenue').innerText = formatPrice(totalRev);
             document.getElementById('shiftReportModal').style.display = 'flex';
         }
 
         function confirmAndResetShift() {
-            if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
-                lastShiftResetTime = Date.now();
-                localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
-                if (currentAccount) {
-                    localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
-                } else {
-                    localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
-                }
-                updateHistoryUI();
-                document.getElementById('shiftReportModal').style.display = 'none';
-                alert("Đã kết ca và reset doanh thu ca hiện tại về 0 thành công!");
-            }
+            alert("Ca làm việc đã được ghi nhận trên Google Sheets!");
+            document.getElementById('shiftReportModal').style.display = 'none';
         }
 
         function printShiftReport() {
-            
-            lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
-
+            let todayStr = new Date().toISOString().split('T')[0];
+            let todayOrders = orderHistory.filter(o => (o.isoDate || '').startsWith(todayStr));
             let totalRev = 0;
-            currentShiftOrders.forEach(o => totalRev += o.total);
+            todayOrders.forEach(o => totalRev += o.total);
 
             let reportHTML = `
                 <div class="print-sticker">
                     <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING (${currentAccount})</div>
                     <div style="font-size: 7.5px; text-align: center;">BÁO CÁO KẾT CA</div>
                     <div style="border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 8px; text-align: center;">${new Date().toLocaleString('vi-VN')}</div>
-                    <div style="font-size: 8.5px;">Tổng đơn trong ca: <b>${currentShiftOrders.length}</b></div>
+                    <div style="font-size: 8.5px;">Tổng đơn hôm nay: <b>${todayOrders.length}</b></div>
                     <div style="font-weight: bold; display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #000; margin-top: auto;">
-                        <span>Doanh thu ca:</span>
+                        <span>Doanh thu:</span>
                         <span>${formatPrice(totalRev)}</span>
                     </div>
                 </div>
@@ -1543,11 +1242,8 @@ function toggleCustomerMenuMode() {
             setTimeout(() => { window.print(); }, 100);
         }
 
-
-
-        async function openAdvancedReport() {
+        function openAdvancedReport() {
             if (!verifyAdminPin()) return;
-            await fetchHistoryFromCloud(); // Tải dữ liệu mới nhất từ Google Sheets về trước khi mở báo cáo
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('reportStartDate').value = today;
             document.getElementById('reportEndDate').value = today;
@@ -1563,7 +1259,6 @@ function toggleCustomerMenuMode() {
             let filteredOrders = [];
 
             orderHistory.forEach(o => {
-                // So sánh theo chuỗi ngày YYYY-MM-DD
                 let oDate = (o.isoDate || '').substring(0, 10);
                 if (oDate && oDate >= start && oDate <= end) {
                     totalRev += parseFloat(o.total) || 0; 
@@ -1590,18 +1285,15 @@ function toggleCustomerMenuMode() {
             renderList(dishes, 'advTopDishes');
             renderList(toppings, 'advTopToppings');
 
-            // Render danh sách đơn hàng chi tiết
             const ordersContainer = document.getElementById('advOrdersListContainer');
             ordersContainer.innerHTML = '';
             if (filteredOrders.length === 0) {
-                ordersContainer.innerHTML = '<p style="text-align: center; color: #777; font-size: 12px; padding: 10px;">Không có đơn hàng nào trong khoảng ngày này</p>';
+                ordersContainer.innerHTML = '<p style="text-align: center; color: #777; font-size: 12px; padding: 10px;">Không có đơn hàng nào</p>';
             } else {
                 filteredOrders.sort((a, b) => b.id - a.id).forEach(o => {
                     ordersContainer.innerHTML += `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-bottom: 1px solid #f1f1f1; font-size: 12px; cursor: pointer;" onclick="document.getElementById('advancedReportModal').style.display='none'; viewBillDetail(${o.id});">
-                            <div>
-                                <b>🕒 ${o.time}</b> [${o.account || 'CQ'}] #${o.billNo || ''} — <b>${o.items.length} món</b>
-                            </div>
+                            <div><b>🕒 ${o.time}</b> [${o.account || 'CQ'}] #${o.billNo || ''} — <b>${o.items.length} món</b></div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <strong style="color: #d32f2f; font-size: 13px;">${formatPrice(o.total)}</strong>
                                 <button style="background: #2196F3; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); executePrint(${JSON.stringify(o).replace(/"/g, '&quot;')});">🖨️ In bill</button>
@@ -1620,11 +1312,11 @@ function toggleCustomerMenuMode() {
                 return;
             }
             staffList.forEach(st => {
-                let activeShift = JSON.parse(localStorage.getItem('kimbling_active_shift_' + st.id));
-                let isWorking = activeShift !== null;
+                let activeShift = activeShiftsMap[st.id];
+                let isWorking = activeShift !== undefined && activeShift !== null;
                 let statusBadgeBg = isWorking ? '#d4edda' : '#f8d7da';
                 let statusTextColor = isWorking ? '#155724' : '#721c24';
-                let statusText = isWorking ? `🟢 Đang làm (Từ ${activeShift.checkInTime.split(' ')[0] === new Date().toLocaleDateString('vi-VN') ? activeShift.checkInTime.split(' ')[1] : activeShift.checkInTime})` : '🔴 Đang Off';
+                let statusText = isWorking ? `🟢 Đang làm` : '🔴 Đang Off';
 
                 container.innerHTML += `
                     <div style="background: ${statusBadgeBg}; color: ${statusTextColor}; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid rgba(0,0,0,0.05);">
@@ -1646,11 +1338,8 @@ function toggleCustomerMenuMode() {
             if (currentAccount !== 'CQ') {
                 let staff = staffList.find(s => s.id === currentAccount);
                 if (!staff) return;
-                let pin = prompt(`Nhập mã PIN của nhân viên ${staff.name} để xem bảng lương:`, "");
-                if (pin !== staff.pin) {
-                    alert("Mã PIN nhân viên không đúng!");
-                    return;
-                }
+                let pin = prompt(`Nhập mã PIN nhân viên ${staff.name}:`, "");
+                if (pin !== staff.pin) { alert("Mã PIN không đúng!"); return; }
             } else {
                 if (!verifyAdminPin()) return;
             }
@@ -1659,18 +1348,12 @@ function toggleCustomerMenuMode() {
             renderLiveStaffStatus();
             renderPayrollStaffFilter();
             
-            // Nếu là nhân viên/phục vụ, cố định filter đúng tài khoản của họ
             if (currentAccount !== 'CQ') {
                 const filterEl = document.getElementById('payrollStaffFilter');
-                if (filterEl) {
-                    filterEl.value = currentAccount;
-                    filterEl.disabled = true;
-                }
+                if (filterEl) { filterEl.value = currentAccount; filterEl.disabled = true; }
             } else {
                 const filterEl = document.getElementById('payrollStaffFilter');
-                if (filterEl) {
-                    filterEl.disabled = false;
-                }
+                if (filterEl) { filterEl.disabled = false; }
             }
             
             calculatePayroll();
@@ -1680,16 +1363,9 @@ function toggleCustomerMenuMode() {
         function calculatePayroll() {
             const val = document.getElementById('payrollMonthInput').value;
             let selectedStaffId = document.getElementById('payrollStaffFilter').value;
-            
-            if (currentAccount !== 'CQ') {
-                selectedStaffId = currentAccount;
-                const filterEl = document.getElementById('payrollStaffFilter');
-                if (filterEl) {
-                    filterEl.value = currentAccount;
-                    filterEl.disabled = true;
-                }
-            }
+            if (currentAccount !== 'CQ') selectedStaffId = currentAccount;
             if (!val) return;
+
             const container = document.getElementById('payrollResultList');
             container.innerHTML = '';
 
@@ -1700,37 +1376,22 @@ function toggleCustomerMenuMode() {
             });
 
             filteredShifts.sort((a, b) => new Date(b.id) - new Date(a.id));
-
-            let totalHoursSum = 0;
-            let totalPaySum = 0;
+            let totalHoursSum = 0, totalPaySum = 0;
 
             if (filteredShifts.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #777; font-size: 13px; padding: 15px;">Không có dữ liệu log ca làm trong bộ lọc này</p>';
+                container.innerHTML = '<p style="text-align: center; color: #777; font-size: 13px; padding: 15px;">Không có dữ liệu ca làm</p>';
             } else {
                 filteredShifts.forEach(att => {
                     totalHoursSum += att.hours || 0;
                     totalPaySum += att.totalPay || 0;
-                    let rateStr = formatPrice(att.hourlyRate || 22000) + '/h';
-                    let adminActions = '';
-                    if (currentAccount === 'CQ') {
-                        adminActions = `
-                            <div style="margin-top: 4px; display: flex; gap: 4px;">
-                                <button style="background: #2196F3; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;" onclick="editAttendanceRecord(${att.id})">Sửa giờ</button>
-                                <button style="background: #e74c3c; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 11px;" onclick="deleteAttendanceRecord(${att.id})">Xóa</button>
-                            </div>
-                        `;
-                    }
                     container.innerHTML += `
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
                             <div>
-                                <b>${att.staffName}</b> [${att.staffId}] — <span style="color: #333; font-weight: bold;">Ngày: ${att.date}</span><br>
+                                <b>${att.staffName}</b> [${att.staffId}] — <b>Ngày: ${att.date}</b><br>
                                 <span style="color: #666; font-size: 12px;">🕒 Vào: ${att.checkInTime} ➔ Ra: ${att.checkOutTime || '---'}</span><br>
-                                <span style="color: #009688; font-size: 12px; font-weight: bold;">⏱️ Thời gian: ${att.hours} giờ (${rateStr})</span>
-                                ${adminActions}
+                                <span style="color: #009688; font-size: 12px; font-weight: bold;">⏱️ Thời gian: ${att.hours} giờ</span>
                             </div>
-                            <div style="text-align: right;">
-                                <strong style="color: #27ae60; font-size: 15px;">${formatPrice(att.totalPay)}</strong>
-                            </div>
+                            <div style="text-align: right;"><strong style="color: #27ae60; font-size: 15px;">${formatPrice(att.totalPay)}</strong></div>
                         </div>
                     `;
                 });
@@ -1748,20 +1409,23 @@ function toggleCustomerMenuMode() {
         }
         function closeAddDishModal() { document.getElementById('addDishModal').style.display = 'none'; }
         
-        function saveNewDishWithPin() {
+        async function saveNewDishCloud() {
             if (!verifyAdminPin()) return;
             const name = document.getElementById('newDishName').value.trim();
             const price = parseInt(document.getElementById('newDishPrice').value);
             const cat = document.getElementById('newDishCategory').value;
-            if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
-            
             const imageUrl = document.getElementById('newDishImageUrl').value.trim();
-            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat, imageUrl: imageUrl });
-            localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-            renderMenu();
-            closeAddDishModal();
-            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
-            alert("Đã thêm món mới và đồng bộ lên Google Sheets thành công!");
+            if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
+
+            const newItem = { id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat, imageUrl };
+            menu.push(newItem);
+
+            let res = await callCloudAPI({ type: 'saveMenuConfig', menu, drinkToppings, snackToppings });
+            if (res && res.status === 'success') {
+                renderMenu();
+                closeAddDishModal();
+                alert("Đã lưu món mới lên Google Sheets thành công!");
+            }
         }
 
         function openEditDishModal(id) {
@@ -1776,30 +1440,34 @@ function toggleCustomerMenuMode() {
         }
         function closeEditDishModal() { document.getElementById('editDishModal').style.display = 'none'; }
         
-        function saveEditedDish() {
+        async function saveEditedDishCloud() {
             if (!verifyAdminPin()) return;
             const id = parseInt(document.getElementById('editDishId').value);
             const name = document.getElementById('editDishNameInput').value.trim();
             const price = parseInt(document.getElementById('editDishPriceInput').value);
             const imageUrl = document.getElementById('editDishImageUrlInput').value.trim();
+            
             const item = menu.find(i => i.id === id);
             if (item) {
                 item.name = name; item.price = price; item.imageUrl = imageUrl;
-                localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                renderMenu();
-                syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+                let res = await callCloudAPI({ type: 'saveMenuConfig', menu, drinkToppings, snackToppings });
+                if (res && res.status === 'success') {
+                    renderMenu();
+                    closeEditDishModal();
+                    alert("Đã cập nhật món lên Google Sheets!");
+                }
             }
-            closeEditDishModal();
         }
 
-        function deleteDish(id) {
+        async function deleteDishCloud(id) {
             if (!verifyAdminPin()) return;
             menu = menu.filter(i => i.id !== id);
             favorites = favorites.filter(favId => favId !== id);
-            localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-            localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
-            renderMenu();
-            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+            let res = await callCloudAPI({ type: 'saveMenuConfig', menu, drinkToppings, snackToppings });
+            if (res && res.status === 'success') {
+                renderMenu();
+                alert("Đã xóa món trên Google Sheets!");
+            }
         }
 
         let tempEditingDrinks = [];
@@ -1807,8 +1475,8 @@ function toggleCustomerMenuMode() {
 
         function openToppingConfigModal() {
             if (!verifyAdminPin()) return;
-            tempEditingDrinks = JSON.parse(localStorage.getItem('kim_bling_drink_toppings')) || defaultDrinkToppings;
-            tempEditingSnacks = JSON.parse(localStorage.getItem('kim_bling_snack_toppings')) || defaultSnackToppings;
+            tempEditingDrinks = JSON.parse(JSON.stringify(drinkToppings));
+            tempEditingSnacks = JSON.parse(JSON.stringify(snackToppings));
             renderToppingConfigLists();
             document.getElementById('toppingConfigModal').style.display = 'flex';
         }
@@ -1842,15 +1510,15 @@ function toggleCustomerMenuMode() {
             snackListEl.innerHTML += `<button class="btn-action" style="font-size:11px; padding:4px; background:#ff9800;" onclick="tempEditingSnacks.push({name:'', price:3000}); renderToppingConfigLists()">+ Thêm Topping Ăn Vặt</button>`;
         }
 
-        function saveToppingConfigWithPin() {
+        async function saveToppingConfigCloud() {
             if (!verifyAdminPin()) return;
             drinkToppings = tempEditingDrinks.filter(t => t.name.trim() !== "");
             snackToppings = tempEditingSnacks.filter(t => t.name.trim() !== "");
-            localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
-            localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
-            alert("Đã lưu cấu hình topping thành công!");
-            closeToppingConfigModal();
-            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+            let res = await callCloudAPI({ type: 'saveMenuConfig', menu, drinkToppings, snackToppings });
+            if (res && res.status === 'success') {
+                closeToppingConfigModal();
+                alert("Đã lưu cấu hình topping trực tiếp lên Google Sheets thành công!");
+            }
         }
 
         function openStaffManagerModal() {
@@ -1872,9 +1540,9 @@ function toggleCustomerMenuMode() {
             }
             container.innerHTML = '';
             staffList.forEach((st, idx) => {
-                let maskedPin = '*'.repeat(st.pin.length);
+                let maskedPin = '*'.repeat(st.pin ? st.pin.length : 4);
                 let rateStr = formatPrice(st.hourlyRate || 22000) + '/h';
-                let roleBadge = (st.role === 'viewer') ? '<span style="background: #e0f7fa; color: #006064; padding: 1px 4px; border-radius: 3px; font-size: 11px; font-weight: bold;">Phục vụ xem menu</span>' : '<span style="background: #e8f5e9; color: #2e7d32; padding: 1px 4px; border-radius: 3px; font-size: 11px; font-weight: bold;">Bán hàng</span>';
+                let roleBadge = (st.role === 'viewer') ? '<span style="background: #e0f7fa; color: #006064; padding: 1px 4px; border-radius: 3px; font-size: 11px;">Phục vụ</span>' : '<span style="background: #e8f5e9; color: #2e7d32; padding: 1px 4px; border-radius: 3px; font-size: 11px;">Bán hàng</span>';
                 container.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
                         <div>
@@ -1883,7 +1551,7 @@ function toggleCustomerMenuMode() {
                         </div>
                         <div style="display: flex; gap: 4px;">
                             <button style="background: #2196F3; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="openEditStaffModal(${idx})">Sửa</button>
-                            <button style="background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteStaff(${idx})">Xóa</button>
+                            <button style="background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="deleteStaffCloud(${idx})">Xóa</button>
                         </div>
                     </div>
                 `;
@@ -1900,151 +1568,75 @@ function toggleCustomerMenuMode() {
             document.getElementById('editStaffModal').style.display = 'flex';
         }
 
-        function saveEditedStaff() {
+        async function saveEditedStaffCloud() {
             let idx = parseInt(document.getElementById('editStaffIndex').value);
             let newName = document.getElementById('editStaffNameInput').value.trim();
             let newPin = document.getElementById('editStaffPinInput').value.trim();
             let newRate = parseInt(document.getElementById('editStaffRateInput').value) || 22000;
             
-            if (!newName) {
-                alert("Tên nhân viên / chi nhánh không được để trống!");
-                return;
-            }
+            if (!newName) { alert("Tên không được để trống!"); return; }
 
             if (staffList[idx]) {
                 staffList[idx].name = newName;
                 if (newPin) staffList[idx].pin = newPin;
                 staffList[idx].hourlyRate = newRate;
             }
-            localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
-            syncStaffToCloud();
-            renderStaffList();
-            renderStaffSelectOptions();
-            document.getElementById('editStaffModal').style.display = 'none';
-            alert("Đã cập nhật thông tin nhân viên và lương thành công!");
+            let res = await callCloudAPI({ type: 'saveStaffConfig', staffList: staffList, adminPin: adminPin });
+            if (res && res.status === 'success') {
+                renderStaffList();
+                renderStaffSelectOptions();
+                document.getElementById('editStaffModal').style.display = 'none';
+                alert("Đã cập nhật thông tin nhân viên lên Google Sheets!");
+            }
         }
 
-        function updateAdminPin() {
+        async function updateAdminPinCloud() {
             let curInput = document.getElementById('currentAdminPinInput').value;
             let newInput = document.getElementById('newAdminPinInput').value;
-            if (curInput !== adminPin) {
-                alert("Mã PIN chủ quán hiện tại không đúng!");
-                return;
-            }
-            if (!newInput || newInput.trim() === '') {
-                alert("Vui lòng nhập mã PIN mới hợp lệ!");
-                return;
-            }
+            if (curInput !== adminPin) { alert("Mã PIN hiện tại không đúng!"); return; }
+            if (!newInput || newInput.trim() === '') { alert("Vui lòng nhập PIN mới!"); return; }
+
             adminPin = newInput.trim();
-            localStorage.setItem('kimbling_admin_pin', adminPin);
-            syncStaffToCloud();
-            alert("Đã đổi mã PIN chủ quán thành công!");
-            document.getElementById('currentAdminPinInput').value = '';
-            document.getElementById('newAdminPinInput').value = '';
+            let res = await callCloudAPI({ type: 'saveStaffConfig', staffList: staffList, adminPin: adminPin });
+            if (res && res.status === 'success') {
+                alert("Đã đổi mã PIN chủ quán thành công trên Google Sheets!");
+                document.getElementById('currentAdminPinInput').value = '';
+                document.getElementById('newAdminPinInput').value = '';
+            }
         }
 
-        function addNewStaff() {
+        async function addNewStaffCloud() {
             let name = document.getElementById('newStaffName').value.trim();
             let pin = document.getElementById('newStaffPin').value.trim();
             let rate = parseInt(document.getElementById('newStaffRate').value) || 22000;
-            if (!name || !pin) {
-                alert("Vui lòng nhập đầy đủ tên và mã PIN nhân viên!");
-                return;
-            }
+            if (!name || !pin) { alert("Vui lòng nhập đầy đủ tên và PIN!"); return; }
+
             let role = document.getElementById('newStaffRole').value;
             let staffId = (role === 'viewer' ? 'PV' : 'NV') + (staffList.length + 1);
             staffList.push({ id: staffId, name: name, pin: pin, hourlyRate: rate, role: role });
-            localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
-            syncStaffToCloud();
 
-            document.getElementById('newStaffName').value = '';
-            document.getElementById('newStaffPin').value = '';
-            document.getElementById('newStaffRate').value = '22000';
-            renderStaffList();
-            renderStaffSelectOptions();
-            alert(`Đã thêm nhân viên ${name} với mức lương ${formatPrice(rate)}/h thành công!`);
-        }
-
-        function deleteStaff(idx) {
-            if (confirm("Gỡ bỏ nhân viên này?")) {
-                staffList.splice(idx, 1);
-                localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
-                syncStaffToCloud();
+            let res = await callCloudAPI({ type: 'saveStaffConfig', staffList: staffList, adminPin: adminPin });
+            if (res && res.status === 'success') {
+                document.getElementById('newStaffName').value = '';
+                document.getElementById('newStaffPin').value = '';
                 renderStaffList();
                 renderStaffSelectOptions();
+                alert("Đã thêm nhân viên mới lên Google Sheets thành công!");
             }
         }
 
-        function openOnlineMenu() {
-    let menuUrl = localStorage.getItem('kimbling_online_menu_url');
-    if (!menuUrl) {
-        menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
-        if (menuUrl) {
-            localStorage.setItem('kimbling_online_menu_url', menuUrl);
-        } else {
-            return;
-        }
-    }
-    window.open(menuUrl, '_blank');
-}
-fetchStaffFromCloud();
-        fetchAttendanceFromCloud();
-        fetchMenuFromCloud();
-        fetchHistoryFromCloud();
-        renderMenu();
-        renderCart();
-        updateHistoryUI();
-    </script>
-
-    <!-- MODAL XEM TRƯỚC GIAO DIỆN KHÁCH QUÉT -->
-    <div class="modal" id="guestPreviewModal">
-        <div class="modal-content" style="width: 380px; max-height: 85vh; padding: 15px; text-align: center; background: #fdfdfd; border-radius: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
-                <h3 style="color: #009688; margin: 0; font-size: 16px;">📱 Giao Diện Khách Quét QR</h3>
-                <button onclick="closeGuestPreviewModal()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ Đóng</button>
-            </div>
-            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Đây là những gì khách hàng nhìn thấy trên điện thoại của họ khi quét mã QR tại quầy:</p>
-            
-            <!-- Khung giả lập màn hình điện thoại -->
-            <div style="border: 4px solid #333; border-radius: 12px; background: #f4f6f9; height: 420px; overflow-y: auto; text-align: left; padding: 10px; box-shadow: inset 0 0 8px rgba(0,0,0,0.1);">
-                <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #bbb; padding-bottom: 6px;">
-                    <h4 style="font-size: 14px; color: #333; margin: 0;">Kim Bling Coffee & Tea</h4>
-                    <span style="font-size: 10px; color: #e91e63; font-weight: bold;">Menu Trực Quan (Takeaway)</span>
-                </div>
-                <div id="guestPreviewGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
-            </div>
-
-            <div style="margin-top: 12px; font-size: 11px; color: #888;">
-                💡 Khách chỉ có thể xem menu, không thể bấm đặt hàng hay can thiệp vào hệ thống thu ngân.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function openGuestPreviewModal() {
-            const guestGrid = document.getElementById('guestPreviewGrid');
-            guestGrid.innerHTML = '';
-            
-            menu.forEach(item => {
-                let imgTag = '';
-                if (item.imageUrl) {
-                    imgTag = `<div style="width: 100%; height: 75px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 4px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
+        async function deleteStaffCloud(idx) {
+            if (confirm("Gỡ bỏ nhân viên này?")) {
+                staffList.splice(idx, 1);
+                let res = await callCloudAPI({ type: 'saveStaffConfig', staffList: staffList, adminPin: adminPin });
+                if (res && res.status === 'success') {
+                    renderStaffList();
+                    renderStaffSelectOptions();
                 }
-                guestGrid.innerHTML += `
-                    <div style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        ${imgTag}
-                        <h5 style="font-size: 11px; margin-bottom: 4px; color: #333; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</h5>
-                        <p style="color: #d32f2f; font-weight: bold; font-size: 11px; margin: 0;">${formatPrice(item.price)}</p>
-                    </div>
-                `;
-            });
-            document.getElementById('guestPreviewModal').style.display = 'flex';
+            }
         }
 
-        function closeGuestPreviewModal() {
-            document.getElementById('guestPreviewModal').style.display = 'none';
-        }
+        initCloudApp();
     </script>
-
 </body>
 </html>
