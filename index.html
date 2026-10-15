@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V17 (Đã có tính năng ca làm)</title>
+    <title>Kim Bling Coffee & Tea - V19 Pro (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V17 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V19 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -182,10 +182,10 @@
 
             <div class="history-box">
                 <h3>
-                    <span>Doanh thu ngày: <strong id="todayRevenue" style="color: #27ae60;">0k</strong></span>
+                    <span>Doanh thu ca / ngày: <strong id="todayRevenue" style="color: #27ae60;">0k</strong></span>
                 </h3>
                 <div class="history-list" id="historyList">
-                    <p style="color: #999; text-align: center;">Chưa có đơn hàng nào hôm nay</p>
+                    <p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>
                 </div>
                 <div class="report-actions">
                     <button class="btn-report" onclick="openMonthlyReport()">📊 Doanh thu tháng</button>
@@ -281,19 +281,20 @@
 
     <div class="modal" id="shiftReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Kết Ca (Hôm Nay)</h3>
+            <h3>Báo Cáo Kết Ca Hiện Tại</h3>
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 15px;">
                 <p style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                    <span>Tổng số đơn bán ra:</span>
+                    <span>Tổng số đơn trong ca:</span>
                     <strong id="shiftOrderCount">0</strong>
                 </p>
                 <p style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                    <span>Tổng tiền mặt / doanh thu:</span>
+                    <span>Tổng tiền mặt / doanh thu ca:</span>
                     <strong id="shiftTotalRevenue" style="color: #27ae60;">0k</strong>
                 </p>
             </div>
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ff9800; color: white;" onclick="printShiftReport()">🖨️ In Báo Cáo Kết Ca</button>
+                <button style="background: #2196F3; color: white;" onclick="confirmAndResetShift()">✔️ Xác Nhận Kết Ca (Reset Về 0)</button>
                 <button style="background: #ccc;" onclick="document.getElementById('shiftReportModal').style.display='none'">Đóng</button>
             </div>
         </div>
@@ -495,6 +496,10 @@
             { id: 'M9', name: 'Chi nhánh M9 CXPL', pin: '1234', hourlyRate: 22000 }
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
+        
+        // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
+        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset') || '0');
+
         function getActiveShift() {
             if (!currentAccount) return null;
             return JSON.parse(localStorage.getItem('kimbling_active_shift_' + currentAccount)) || null;
@@ -549,7 +554,6 @@
             }
         }
 
-
         function deleteAttendanceRecord(attId) {
             if (!verifyAdminPin()) return;
             if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
@@ -574,7 +578,7 @@
                 att.hours = newHours;
                 att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
             } else if (choice === "2") {
-                let newIn = prompt("Nhập giờ vào mới (vd: 08:00 hoặc định dạng cũ):", att.checkInTime);
+                let newIn = prompt("Nhập giờ vào mới (vd: 08:00):", att.checkInTime);
                 if (newIn === null) return;
                 let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
                 if (newOut === null) return;
@@ -1259,14 +1263,18 @@
         function updateHistoryUI() {
             const historyList = document.getElementById('historyList');
             const todayRevenueEl = document.getElementById('todayRevenue');
-            if (orderHistory.length === 0) {
-                historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào hôm nay</p>';
+            
+            // Lọc các đơn hàng phát sinh SAU thời điểm kết ca gần nhất (lastShiftResetTime)
+            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+
+            if (currentShiftOrders.length === 0) {
+                historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>';
                 todayRevenueEl.innerText = '0k';
                 return;
             }
             historyList.innerHTML = '';
             let totalRevenue = 0;
-            [...orderHistory].reverse().forEach((order) => {
+            [...currentShiftOrders].reverse().forEach((order) => {
                 totalRevenue += order.total;
                 historyList.innerHTML += `
                     <div class="history-item" onclick="viewBillDetail(${order.id})">
@@ -1304,24 +1312,40 @@
             } else {
                 if (!verifyAdminPin()) return;
             }
+            
+            // Lấy danh sách đơn hàng trong ca hiện tại (từ sau lần reset cuối)
+            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
             let totalRev = 0;
-            orderHistory.forEach(o => totalRev += o.total);
-            document.getElementById('shiftOrderCount').innerText = orderHistory.length;
+            currentShiftOrders.forEach(o => totalRev += o.total);
+
+            document.getElementById('shiftOrderCount').innerText = currentShiftOrders.length;
             document.getElementById('shiftTotalRevenue').innerText = formatPrice(totalRev);
             document.getElementById('shiftReportModal').style.display = 'flex';
         }
 
+        function confirmAndResetShift() {
+            if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
+                lastShiftResetTime = Date.now();
+                localStorage.setItem('kimbling_last_shift_reset', lastShiftResetTime);
+                updateHistoryUI();
+                document.getElementById('shiftReportModal').style.display = 'none';
+                alert("Đã kết ca và reset doanh thu ca hiện tại về 0 thành công!");
+            }
+        }
+
         function printShiftReport() {
+            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
             let totalRev = 0;
-            orderHistory.forEach(o => totalRev += o.total);
+            currentShiftOrders.forEach(o => totalRev += o.total);
+
             let reportHTML = `
                 <div class="print-sticker">
                     <div style="font-weight: bold; font-size: 10px; text-align: center;">KIM BLING (${currentAccount})</div>
                     <div style="font-size: 7.5px; text-align: center;">BÁO CÁO KẾT CA</div>
-                    <div style="border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 8px; text-align: center;">${new Date().toLocaleDateString('vi-VN')}</div>
-                    <div style="font-size: 8.5px;">Tổng đơn: <b>${orderHistory.length}</b></div>
+                    <div style="border-bottom: 1px solid #000; margin-bottom: 2px; font-size: 8px; text-align: center;">${new Date().toLocaleString('vi-VN')}</div>
+                    <div style="font-size: 8.5px;">Tổng đơn trong ca: <b>${currentShiftOrders.length}</b></div>
                     <div style="font-weight: bold; display: flex; justify-content: space-between; font-size: 9px; border-top: 1px dashed #000; margin-top: auto;">
-                        <span>Doanh thu:</span>
+                        <span>Doanh thu ca:</span>
                         <span>${formatPrice(totalRev)}</span>
                     </div>
                 </div>
@@ -1421,7 +1445,6 @@
             const val = document.getElementById('payrollMonthInput').value;
             let selectedStaffId = document.getElementById('payrollStaffFilter').value;
             
-            // Nếu là nhân viên đăng nhập, ép buộc lọc đúng nhân viên đó
             if (currentAccount !== 'CQ') {
                 selectedStaffId = currentAccount;
                 const filterEl = document.getElementById('payrollStaffFilter');
