@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V23 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V24 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V23 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V24 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -140,10 +140,9 @@
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
-                <button class="btn-action" style="background: #009688;" onclick="toggleCustomerMenuMode()" id="customerModeBtn" title="Chuyển sang chế độ menu cho khách xem">👁️ Chế Độ Khách Xem</button>
-                <button class="btn-action" style="background: #ff5722;" onclick="openGuestPreviewModal()" title="Xem trước giao diện điện thoại khách quét QR">📱 Xem Trước Khách Quét</button>
-                <button class="btn-action" onclick="openAddDishModal()">+ Thêm Món</button>
-                <button class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
+
+                <button class="btn-action" id="addDishBtn" onclick="openAddDishModal()">+ Thêm Món</button>
+                <button id="toppingConfigBtn" class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
                 <button class="btn-action" style="background: #3f51b5;" onclick="openStaffManagerModal()" id="staffManagerBtn">👥 Nhân Viên</button>
                 <button class="btn-action btn-secondary" onclick="switchAccount()">👤 Đổi Account</button>
             </div>
@@ -694,7 +693,8 @@
             const staffBtn = document.getElementById('staffManagerBtn');
             const attendanceBtn = document.getElementById('attendanceBtn');
             const attendanceStatusBadge = document.getElementById('attendanceStatusBadge');
-            const customerModeBtn = document.getElementById('customerModeBtn');
+            const addDishBtn = document.getElementById('addDishBtn');
+            const toppingConfigBtn = document.getElementById('toppingConfigBtn');
             const billSection = document.querySelector('.bill-section');
 
             if (currentAccount === 'CQ') {
@@ -704,7 +704,8 @@
                 if(staffBtn) staffBtn.style.display = 'inline-block';
                 if(attendanceBtn) attendanceBtn.style.display = 'none';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
-                if(customerModeBtn) customerModeBtn.style.display = 'inline-block';
+                if(addDishBtn) addDishBtn.style.display = 'inline-block';
+                if(toppingConfigBtn) toppingConfigBtn.style.display = 'inline-block';
                 billSection.style.display = 'flex';
                 document.querySelector('.menu-section').style.flex = '2';
             } else {
@@ -714,21 +715,21 @@
                 badge.style.background = isViewer ? '#e0f7fa' : '#e8f5e9';
                 badge.style.color = isViewer ? '#006064' : '#2e7d32';
                 if(staffBtn) staffBtn.style.display = 'none';
+                if(addDishBtn) addDishBtn.style.display = 'none';
+                if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
+                
+                // Cả nhân viên bán hàng và phục vụ đều có nút vào ca và bảng lương
+                if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
+                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
                 
                 if (isViewer) {
-                    if(attendanceBtn) attendanceBtn.style.display = 'none';
-                    if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
-                    if(customerModeBtn) customerModeBtn.style.display = 'none';
                     billSection.style.display = 'none';
                     document.querySelector('.menu-section').style.flex = '1';
                 } else {
-                    if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
-                    if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
-                    if(customerModeBtn) customerModeBtn.style.display = 'inline-block';
                     billSection.style.display = 'flex';
                     document.querySelector('.menu-section').style.flex = '2';
-                    updateAttendanceUIState();
                 }
+                updateAttendanceUIState();
             }
         }
 
