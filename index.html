@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V24 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V25 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V24 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V25 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -151,13 +151,13 @@
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món thông minh (Không dấu, viết tắt: vd 'ts', 'cf')..." oninput="renderMenu()">
         </div>
-        <div class="category-tabs" style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 4px;">
-            <button class="cat-btn active" onclick="filterCategory('All', this)" style="background: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">Tất cả</button>
-            <button class="cat-btn" onclick="filterCategory('Favorite', this)" style="background: #e0e0e0; color: #333; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">⭐ Yêu thích</button>
-            <button class="cat-btn" onclick="filterCategory('Coffee', this)" style="background: #e0e0e0; color: #333; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">☕ Cà Phê</button>
-            <button class="cat-btn" onclick="filterCategory('MilkTea', this)" style="background: #e0e0e0; color: #333; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">🧋 Trà Sữa & Trà</button>
-            <button class="cat-btn" onclick="filterCategory('Yogurt', this)" style="background: #e0e0e0; color: #333; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">🥛 Sữa Chua</button>
-            <button class="cat-btn" onclick="filterCategory('Food', this)" style="background: #e0e0e0; color: #333; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap;">🍢 Đồ Ăn Vặt</button>
+        <div class="category-tabs" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 15px;">
+            <button class="cat-btn active" onclick="filterCategory('All', this)" style="background: #2196F3; color: white; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">📋 Tất cả</button>
+            <button class="cat-btn" onclick="filterCategory('Favorite', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">⭐ Yêu thích</button>
+            <button class="cat-btn" onclick="filterCategory('Coffee', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">☕ Cà Phê</button>
+            <button class="cat-btn" onclick="filterCategory('MilkTea', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">🧋 Trà Sữa</button>
+            <button class="cat-btn" onclick="filterCategory('Yogurt', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">🥛 Sữa Chua</button>
+            <button class="cat-btn" onclick="filterCategory('Food', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">🍢 Ăn Vặt</button>
         </div>
 
         <div class="menu-grid" id="menuGrid"></div>
@@ -509,7 +509,7 @@
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
         // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset') || '0');
+        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset') || '0');
 
         function getActiveShift() {
             if (!currentAccount) return null;
@@ -1407,6 +1407,7 @@ function toggleCustomerMenuMode() {
             if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
                 lastShiftResetTime = Date.now();
                 localStorage.setItem('kimbling_last_shift_reset', lastShiftResetTime);
+                localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
                 updateHistoryUI();
                 document.getElementById('shiftReportModal').style.display = 'none';
                 alert("Đã kết ca và reset doanh thu ca hiện tại về 0 thành công!");
@@ -1517,6 +1518,21 @@ function toggleCustomerMenuMode() {
             document.getElementById('payrollMonthInput').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             renderLiveStaffStatus();
             renderPayrollStaffFilter();
+            
+            // Nếu là nhân viên/phục vụ, cố định filter đúng tài khoản của họ
+            if (currentAccount !== 'CQ') {
+                const filterEl = document.getElementById('payrollStaffFilter');
+                if (filterEl) {
+                    filterEl.value = currentAccount;
+                    filterEl.disabled = true;
+                }
+            } else {
+                const filterEl = document.getElementById('payrollStaffFilter');
+                if (filterEl) {
+                    filterEl.disabled = false;
+                }
+            }
+            
             calculatePayroll();
             document.getElementById('payrollModal').style.display = 'flex';
         }
