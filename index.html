@@ -139,13 +139,11 @@
             </div>
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
-                <button class="btn-action" style="background: #3f51b5; display: none;" id="payrollHeaderBtn" onclick="openPayrollModal()">💰 Bảng Lương</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
 
-                <button class="btn-action" style="background: #009688;" onclick="copyCustomerMenuLink()" title="Sao chép link menu cho khách xem">🔗 Link Menu Khách</button>
                 <button class="btn-action" id="addDishBtn" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button id="toppingConfigBtn" class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
-                <button class="btn-action" style="background: #3f51b5;" id="staffManagerBtn">👥 Nhân Viên</button>
+                <button class="btn-action" style="background: #3f51b5;" onclick="openStaffManagerModal()" id="staffManagerBtn">👥 Nhân Viên</button>
                 <button class="btn-action btn-secondary" onclick="switchAccount()">👤 Đổi Account</button>
             </div>
         </div>
@@ -694,26 +692,10 @@
             const badge = document.getElementById('currentAccountBadge');
             const staffBtn = document.getElementById('staffManagerBtn');
             const attendanceBtn = document.getElementById('attendanceBtn');
-            const payrollHeaderBtn = document.getElementById('payrollHeaderBtn');
             const attendanceStatusBadge = document.getElementById('attendanceStatusBadge');
             const addDishBtn = document.getElementById('addDishBtn');
             const toppingConfigBtn = document.getElementById('toppingConfigBtn');
             const billSection = document.querySelector('.bill-section');
-
-            if (isCustomerGuestURL) {
-                badge.innerText = "🌐 Khách Hàng Xem Menu";
-                badge.style.background = "#e0f2f1";
-                badge.style.color = "#00695c";
-                if(staffBtn) staffBtn.style.display = 'none';
-                if(attendanceBtn) attendanceBtn.style.display = 'none';
-                if(payrollHeaderBtn) payrollHeaderBtn.style.display = 'none';
-                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
-                if(addDishBtn) addDishBtn.style.display = 'none';
-                if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
-                billSection.style.display = 'none';
-                document.querySelector('.menu-section').style.flex = '1';
-                return;
-            }
 
             if (currentAccount === 'CQ') {
                 badge.innerText = "👑 Chủ Quán [CQ]";
@@ -721,7 +703,6 @@
                 badge.style.color = "#e65100";
                 if(staffBtn) staffBtn.style.display = 'inline-block';
                 if(attendanceBtn) attendanceBtn.style.display = 'none';
-                if(payrollHeaderBtn) payrollHeaderBtn.style.display = 'none';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
                 if(addDishBtn) addDishBtn.style.display = 'inline-block';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'inline-block';
@@ -737,8 +718,8 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
+                // Cả nhân viên bán hàng và phục vụ đều có nút vào ca và bảng lương
                 if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
-                if(payrollHeaderBtn) payrollHeaderBtn.style.display = 'inline-block';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
                 
                 if (isViewer) {
@@ -818,26 +799,12 @@
             updateAttendanceUIState();
         }
 
-        if (isCustomerGuestURL) {
-            currentAccount = 'CUSTOMER_VIEW';
-            document.getElementById('loginModal').style.display = 'none';
-        } else if (!currentAccount) {
+        if (!currentAccount) {
             renderStaffSelectOptions();
             document.getElementById('loginModal').style.display = 'flex';
         } else {
             renderStaffSelectOptions();
             updateAccountBadge();
-        }
-
-        
-        function copyCustomerMenuLink() {
-            let baseUrl = window.location.href.split('?')[0];
-            let customerLink = baseUrl + '?mode=customer';
-            navigator.clipboard.writeText(customerLink).then(() => {
-                alert("Đã sao chép đường link menu cho khách: \n" + customerLink + "\n\nBạn có thể dán (Paste) gửi qua Zalo, Facebook hoặc in mã QR cho khách quét xem trực tiếp không cần đăng nhập!");
-            }).catch(err => {
-                prompt("Sao chép đường link thủ công:", customerLink);
-            });
         }
 
         function refreshAllData() {
