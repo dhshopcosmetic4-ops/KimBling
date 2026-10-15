@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V29 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V30 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V29 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V30 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -977,7 +977,10 @@ function toggleCustomerMenuMode() {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getHistory");
                 const data = await response.json();
                 if (data && data.history && Array.isArray(data.history)) {
-                    orderHistory = data.history;
+                    orderHistory = data.history.map(o => ({
+                        ...o,
+                        isoDate: o.isoDate ? o.isoDate.split('T')[0] : (o.fullDateStr ? o.fullDateStr.split(',')[0].split('/').reverse().join('-') : new Date().toISOString().split('T')[0])
+                    }));
                     localStorage.setItem('kimbling_history', JSON.stringify(orderHistory));
                     updateHistoryUI();
                 }
@@ -1498,14 +1501,7 @@ function toggleCustomerMenuMode() {
             setTimeout(() => { window.print(); }, 100);
         }
 
-        function openAdvancedReport() {
-            if (!verifyAdminPin()) return;
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('reportStartDate').value = today;
-            document.getElementById('reportEndDate').value = today;
-            calculateAdvancedReport();
-            document.getElementById('advancedReportModal').style.display = 'flex';
-        }
+
 
         async function openAdvancedReport() {
             if (!verifyAdminPin()) return;
