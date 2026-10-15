@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V19 Pro (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V23 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V19 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V23 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -140,6 +140,8 @@
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
+                <button class="btn-action" style="background: #009688;" onclick="toggleCustomerMenuMode()" id="customerModeBtn" title="Chuyển sang chế độ menu cho khách xem">👁️ Chế Độ Khách Xem</button>
+                <button class="btn-action" style="background: #ff5722;" onclick="openGuestPreviewModal()" title="Xem trước giao diện điện thoại khách quét QR">📱 Xem Trước Khách Quét</button>
                 <button class="btn-action" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
                 <button class="btn-action" style="background: #3f51b5;" onclick="openStaffManagerModal()" id="staffManagerBtn">👥 Nhân Viên</button>
@@ -392,6 +394,9 @@
                 <option value="Food">🍢 Đồ Ăn Vặt</option>
             </select>
 
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Link Hình Ảnh (URL trực tiếp, vd từ Imgur):</label>
+            <input type="text" id="newDishImageUrl" placeholder="https://i.imgur.com/... (để trống nếu không có ảnh)">
+
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeAddDishModal()">Hủy</button>
                 <button style="background: #4CAF50; color: white;" onclick="saveNewDishWithPin()">Lưu lại</button>
@@ -407,6 +412,8 @@
             <input type="text" id="editDishNameInput">
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px; margin-top: 6px;">Giá mới (VNĐ):</label>
             <input type="number" id="editDishPriceInput">
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px; margin-top: 6px;">Link Hình Ảnh (URL):</label>
+            <input type="text" id="editDishImageUrlInput">
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeEditDishModal()">Hủy</button>
                 <button style="background: #4CAF50; color: white;" onclick="saveEditedDish()">Cập nhật</button>
@@ -454,6 +461,11 @@
                     <input type="password" id="newStaffPin" placeholder="Mã PIN" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                     <input type="number" id="newStaffRate" placeholder="Lương/giờ (VNĐ, vd 22000)" style="flex: 1.5; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Vai trò tài khoản:</label>
+                <select id="newStaffRole" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                    <option value="seller">☕ Nhân viên Bán Hàng (Full tính năng & Chấm công)</option>
+                    <option value="viewer">👁️ Nhân viên Phục Vụ (Chỉ xem menu & Bảng lương, Không order)</option>
+                </select>
                 <button class="btn-action" style="width: 100%; padding: 6px; background: #4CAF50;" onclick="addNewStaff()">+ Thêm Nhân Viên Mới</button>
             </div>
 
@@ -599,6 +611,13 @@
             alert("Đã cập nhật ca làm thành công!");
         }
 
+        
+        function isViewerRole(accId) {
+            if (accId === 'CQ') return false;
+            let st = staffList.find(s => s.id === accId);
+            return st && st.role === 'viewer';
+        }
+
         function verifyAdminPin() {
             let pin = prompt("Nhập mã PIN chủ quán:", "");
             if (pin !== adminPin) {
@@ -675,6 +694,8 @@
             const staffBtn = document.getElementById('staffManagerBtn');
             const attendanceBtn = document.getElementById('attendanceBtn');
             const attendanceStatusBadge = document.getElementById('attendanceStatusBadge');
+            const customerModeBtn = document.getElementById('customerModeBtn');
+            const billSection = document.querySelector('.bill-section');
 
             if (currentAccount === 'CQ') {
                 badge.innerText = "👑 Chủ Quán [CQ]";
@@ -683,15 +704,31 @@
                 if(staffBtn) staffBtn.style.display = 'inline-block';
                 if(attendanceBtn) attendanceBtn.style.display = 'none';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
+                if(customerModeBtn) customerModeBtn.style.display = 'inline-block';
+                billSection.style.display = 'flex';
+                document.querySelector('.menu-section').style.flex = '2';
             } else {
                 let st = staffList.find(s => s.id === currentAccount);
-                badge.innerText = `☕ ${st ? st.name : currentAccount} [${currentAccount}]`;
-                badge.style.background = "#e8f5e9";
-                badge.style.color = "#2e7d32";
+                let isViewer = (st && st.role === 'viewer');
+                badge.innerText = `${isViewer ? '👁️ Phục vụ' : '☕ Nhân viên'} ${st ? st.name : currentAccount} [${currentAccount}]`;
+                badge.style.background = isViewer ? '#e0f7fa' : '#e8f5e9';
+                badge.style.color = isViewer ? '#006064' : '#2e7d32';
                 if(staffBtn) staffBtn.style.display = 'none';
-                if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
-                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
-                updateAttendanceUIState();
+                
+                if (isViewer) {
+                    if(attendanceBtn) attendanceBtn.style.display = 'none';
+                    if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'none';
+                    if(customerModeBtn) customerModeBtn.style.display = 'none';
+                    billSection.style.display = 'none';
+                    document.querySelector('.menu-section').style.flex = '1';
+                } else {
+                    if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
+                    if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
+                    if(customerModeBtn) customerModeBtn.style.display = 'inline-block';
+                    billSection.style.display = 'flex';
+                    document.querySelector('.menu-section').style.flex = '2';
+                    updateAttendanceUIState();
+                }
             }
         }
 
@@ -770,7 +807,19 @@
         }
 
         function refreshAllData() {
-            fetchStaffFromCloud();
+            function openOnlineMenu() {
+    let menuUrl = localStorage.getItem('kimbling_online_menu_url');
+    if (!menuUrl) {
+        menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
+        if (menuUrl) {
+            localStorage.setItem('kimbling_online_menu_url', menuUrl);
+        } else {
+            return;
+        }
+    }
+    window.open(menuUrl, '_blank');
+}
+fetchStaffFromCloud();
             fetchAttendanceFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
@@ -822,6 +871,27 @@
         let selectedProduct = null;
         let currentViewingBill = null;
         let currentModalToppings = {};
+
+let isCustomerViewMode = false;
+function toggleCustomerMenuMode() {
+    isCustomerViewMode = !isCustomerViewMode;
+    const billSection = document.querySelector('.bill-section');
+    const btn = document.getElementById('customerModeBtn');
+    if (isCustomerViewMode) {
+        billSection.style.display = 'none';
+        document.querySelector('.menu-section').style.flex = '1';
+        btn.innerText = "🔙 Quay lại POS";
+        btn.style.background = "#e74c3c";
+        alert("Đã chuyển sang CHẾ ĐỘ KHÁCH XEM MENU! Toàn bộ tính năng bán hàng và thu ngân đã được ẩn. Đưa máy cho khách xem thoải mái.");
+    } else {
+        billSection.style.display = 'flex';
+        document.querySelector('.menu-section').style.flex = '2';
+        btn.innerText = "👁️ Chế Độ Khách Xem";
+        btn.style.background = "#009688";
+    }
+    renderMenu();
+}
+
 
         function syncToGoogleSheets(typeData, payload) {
             if (!GOOGLE_SCRIPT_URL) return;
@@ -956,11 +1026,16 @@
                     `;
                 }
 
+                let imgTag = '';
+                if (item.imageUrl) {
+                    imgTag = `<div style="width: 100%; height: 90px; background: #eee; border-radius: 6px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
+                }
                 menuGrid.innerHTML += `
                     <div class="${favClass}" onclick="openOptionsModal(${item.id})">
                         <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
                         ${adminActionBtns}
-                        <h4 style="margin-top: 14px;">${item.name}</h4>
+                        ${imgTag}
+                        <h4 style="${item.imageUrl ? 'font-size: 13px;' : 'margin-top: 14px;'}">${item.name}</h4>
                         <p>${formatPrice(item.price)}</p>
                     </div>
                 `;
@@ -1017,6 +1092,10 @@
         }
 
         function openOptionsModal(id) {
+            if (isViewerRole(currentAccount)) {
+                alert("ℹ️ Tài khoản Phục Vụ chỉ có quyền xem menu cho khách, không thể tạo đơn hàng (order)!");
+                return;
+            }
             if (currentAccount && currentAccount !== 'CQ') {
                 let activeShift = getActiveShift();
                 if (!activeShift) {
@@ -1519,7 +1598,8 @@
             const cat = document.getElementById('newDishCategory').value;
             if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
             
-            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat });
+            const imageUrl = document.getElementById('newDishImageUrl').value.trim();
+            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat, imageUrl: imageUrl });
             localStorage.setItem('kimbling_menu', JSON.stringify(menu));
             renderMenu();
             closeAddDishModal();
@@ -1534,6 +1614,7 @@
             document.getElementById('editDishId').value = item.id;
             document.getElementById('editDishNameInput').value = item.name;
             document.getElementById('editDishPriceInput').value = item.price;
+            document.getElementById('editDishImageUrlInput').value = item.imageUrl || '';
             document.getElementById('editDishModal').style.display = 'flex';
         }
         function closeEditDishModal() { document.getElementById('editDishModal').style.display = 'none'; }
@@ -1543,9 +1624,10 @@
             const id = parseInt(document.getElementById('editDishId').value);
             const name = document.getElementById('editDishNameInput').value.trim();
             const price = parseInt(document.getElementById('editDishPriceInput').value);
+            const imageUrl = document.getElementById('editDishImageUrlInput').value.trim();
             const item = menu.find(i => i.id === id);
             if (item) {
-                item.name = name; item.price = price;
+                item.name = name; item.price = price; item.imageUrl = imageUrl;
                 localStorage.setItem('kimbling_menu', JSON.stringify(menu));
                 renderMenu();
                 syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
@@ -1635,10 +1717,11 @@
             staffList.forEach((st, idx) => {
                 let maskedPin = '*'.repeat(st.pin.length);
                 let rateStr = formatPrice(st.hourlyRate || 22000) + '/h';
+                let roleBadge = (st.role === 'viewer') ? '<span style="background: #e0f7fa; color: #006064; padding: 1px 4px; border-radius: 3px; font-size: 11px; font-weight: bold;">Phục vụ xem menu</span>' : '<span style="background: #e8f5e9; color: #2e7d32; padding: 1px 4px; border-radius: 3px; font-size: 11px; font-weight: bold;">Bán hàng</span>';
                 container.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f1f1; font-size: 13px;">
                         <div>
-                            <b>${st.name}</b> [${st.id}]<br>
+                            <b>${st.name}</b> [${st.id}] ${roleBadge}<br>
                             <span style="color: #666; font-size: 12px;">PIN: ${maskedPin} | Lương: ${rateStr}</span>
                         </div>
                         <div style="display: flex; gap: 4px;">
@@ -1711,8 +1794,9 @@
                 alert("Vui lòng nhập đầy đủ tên và mã PIN nhân viên!");
                 return;
             }
-            let staffId = 'NV' + (staffList.length + 1);
-            staffList.push({ id: staffId, name: name, pin: pin, hourlyRate: rate });
+            let role = document.getElementById('newStaffRole').value;
+            let staffId = (role === 'viewer' ? 'PV' : 'NV') + (staffList.length + 1);
+            staffList.push({ id: staffId, name: name, pin: pin, hourlyRate: rate, role: role });
             localStorage.setItem('kimbling_staff_list', JSON.stringify(staffList));
             syncStaffToCloud();
 
@@ -1734,7 +1818,19 @@
             }
         }
 
-        fetchStaffFromCloud();
+        function openOnlineMenu() {
+    let menuUrl = localStorage.getItem('kimbling_online_menu_url');
+    if (!menuUrl) {
+        menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
+        if (menuUrl) {
+            localStorage.setItem('kimbling_online_menu_url', menuUrl);
+        } else {
+            return;
+        }
+    }
+    window.open(menuUrl, '_blank');
+}
+fetchStaffFromCloud();
         fetchAttendanceFromCloud();
         fetchMenuFromCloud();
         fetchHistoryFromCloud();
@@ -1742,5 +1838,56 @@
         renderCart();
         updateHistoryUI();
     </script>
+
+    <!-- MODAL XEM TRƯỚC GIAO DIỆN KHÁCH QUÉT -->
+    <div class="modal" id="guestPreviewModal">
+        <div class="modal-content" style="width: 380px; max-height: 85vh; padding: 15px; text-align: center; background: #fdfdfd; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
+                <h3 style="color: #009688; margin: 0; font-size: 16px;">📱 Giao Diện Khách Quét QR</h3>
+                <button onclick="closeGuestPreviewModal()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ Đóng</button>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Đây là những gì khách hàng nhìn thấy trên điện thoại của họ khi quét mã QR tại quầy:</p>
+            
+            <!-- Khung giả lập màn hình điện thoại -->
+            <div style="border: 4px solid #333; border-radius: 12px; background: #f4f6f9; height: 420px; overflow-y: auto; text-align: left; padding: 10px; box-shadow: inset 0 0 8px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #bbb; padding-bottom: 6px;">
+                    <h4 style="font-size: 14px; color: #333; margin: 0;">Kim Bling Coffee & Tea</h4>
+                    <span style="font-size: 10px; color: #e91e63; font-weight: bold;">Menu Trực Quan (Takeaway)</span>
+                </div>
+                <div id="guestPreviewGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
+            </div>
+
+            <div style="margin-top: 12px; font-size: 11px; color: #888;">
+                💡 Khách chỉ có thể xem menu, không thể bấm đặt hàng hay can thiệp vào hệ thống thu ngân.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openGuestPreviewModal() {
+            const guestGrid = document.getElementById('guestPreviewGrid');
+            guestGrid.innerHTML = '';
+            
+            menu.forEach(item => {
+                let imgTag = '';
+                if (item.imageUrl) {
+                    imgTag = `<div style="width: 100%; height: 75px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 4px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
+                }
+                guestGrid.innerHTML += `
+                    <div style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        ${imgTag}
+                        <h5 style="font-size: 11px; margin-bottom: 4px; color: #333; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</h5>
+                        <p style="color: #d32f2f; font-weight: bold; font-size: 11px; margin: 0;">${formatPrice(item.price)}</p>
+                    </div>
+                `;
+            });
+            document.getElementById('guestPreviewModal').style.display = 'flex';
+        }
+
+        function closeGuestPreviewModal() {
+            document.getElementById('guestPreviewModal').style.display = 'none';
+        }
+    </script>
+
 </body>
 </html>
