@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V26 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V27 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V26 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V27 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -510,7 +510,14 @@
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
         // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || localStorage.getItem('kimbling_last_shift_reset') || '0');
+        
+        // Hàm lấy mốc kết ca chính xác theo tài khoản hiện tại
+        function getShiftResetTime() {
+            if (!currentAccount) return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
+            return parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || '0');
+        }
+        let lastShiftResetTime = getShiftResetTime();
+
 
         function getActiveShift() {
             if (!currentAccount) return null;
@@ -647,7 +654,7 @@
             }
             currentAccount = 'CQ';
             localStorage.setItem('kimbling_account', currentAccount);
-            lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_CQ') || localStorage.getItem('kimbling_last_shift_reset_global') || 0);
+            lastShiftResetTime = getShiftResetTime();
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginAdminPinInput').value = '';
             updateAccountBadge();
@@ -669,7 +676,7 @@
             }
             currentAccount = selectedId;
             localStorage.setItem('kimbling_account', currentAccount);
-            lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || 0);
+            lastShiftResetTime = getShiftResetTime();
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginStaffPinInput').value = '';
             updateAccountBadge();
@@ -1350,7 +1357,10 @@ function toggleCustomerMenuMode() {
             const todayRevenueEl = document.getElementById('todayRevenue');
             
             // Lọc các đơn hàng phát sinh SAU thời điểm kết ca gần nhất (lastShiftResetTime)
+            
+            lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+
 
             if (currentShiftOrders.length === 0) {
                 historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>';
@@ -1399,7 +1409,10 @@ function toggleCustomerMenuMode() {
             }
             
             // Lấy danh sách đơn hàng trong ca hiện tại (từ sau lần reset cuối)
+            
+            lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+
             let totalRev = 0;
             currentShiftOrders.forEach(o => totalRev += o.total);
 
@@ -1411,10 +1424,11 @@ function toggleCustomerMenuMode() {
         function confirmAndResetShift() {
             if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
                 lastShiftResetTime = Date.now();
-                localStorage.setItem('kimbling_last_shift_reset', lastShiftResetTime);
                 localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
                 if (currentAccount) {
                     localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+                } else {
+                    localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
                 }
                 updateHistoryUI();
                 document.getElementById('shiftReportModal').style.display = 'none';
@@ -1423,7 +1437,10 @@ function toggleCustomerMenuMode() {
         }
 
         function printShiftReport() {
+            
+            lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+
             let totalRev = 0;
             currentShiftOrders.forEach(o => totalRev += o.total);
 
