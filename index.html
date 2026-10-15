@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V34 Cloud Pro (Realtime Google Sheets)</title>
+    <title>Kim Bling Coffee & Tea - V34 Cloud Pro (Realtime Google Sheets - Fixed Sync)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -133,7 +133,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V34 Cloud Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V34 Cloud Pro - Sync Fix]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chưa đăng nhập</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -520,7 +520,9 @@
         let favorites = JSON.parse(localStorage.getItem('kimbling_favorites_v34')) || [];
         let cart = [];
         let orderHistory = [];
-        let activeShiftsMap = {};
+        
+        // Khôi phục activeShiftsMap từ localStorage nếu có sẵn (giải quyết triệt để lỗi mất trạng thái ca làm, lương/doanh thu 0đ khi thoát app và vào lại)
+        let activeShiftsMap = JSON.parse(localStorage.getItem('kimbling_active_shifts_v34')) || {};
         
         let selectedProduct = null;
         let currentViewingBill = null;
@@ -562,10 +564,15 @@
                     if (data.adminPin) adminPin = data.adminPin;
                     if (data.attendance) attendanceList = data.attendance;
                     if (data.history) orderHistory = data.history;
-                    if (data.activeShiftsMap) activeShiftsMap = data.activeShiftsMap;
+                    
+                    // Đồng bộ activeShiftsMap ưu tiên từ Cloud, nếu Cloud trống nhưng local có thì giữ local để tránh mất ca đang làm
+                    if (data.activeShiftsMap && Object.keys(data.activeShiftsMap).length > 0) {
+                        activeShiftsMap = data.activeShiftsMap;
+                    }
+                    localStorage.setItem('kimbling_active_shifts_v34', JSON.stringify(activeShiftsMap));
                 }
             } catch (err) {
-                console.log("Fetch all cloud data error:", err);
+                console.log("Fetch all cloud data error, using local backup:", err);
             }
             showLoading(false);
             renderStaffSelectOptions();
@@ -726,6 +733,7 @@
                     date: now.toISOString().split('T')[0]
                 };
                 activeShiftsMap[currentAccount] = currentActiveShift;
+                localStorage.setItem('kimbling_active_shifts_v34', JSON.stringify(activeShiftsMap));
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
                 let checkInDate = new Date(currentActiveShift.checkInIso);
@@ -748,6 +756,7 @@
 
                 attendanceList.push(record);
                 delete activeShiftsMap[currentAccount];
+                localStorage.setItem('kimbling_active_shifts_v34', JSON.stringify(activeShiftsMap));
 
                 let res = await callCloudAPI({ type: 'saveAttendanceAndShift', record: record, activeShiftsMap: activeShiftsMap });
                 if (res && res.status === 'success') {
