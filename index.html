@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V32 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V33 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V32 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V33 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -981,6 +981,11 @@ function toggleCustomerMenuMode() {
                     orderHistory = data.history.map(remoteO => {
                         let localO = localHistory.find(l => String(l.id) === String(remoteO.id));
                         let items = (remoteO.items && remoteO.items.length > 0) ? remoteO.items : (localO ? localO.items : []);
+                        
+                        // Nếu remoteO và localO đều không có items nhưng có total > 0, tạo 1 item giả lập từ total để không bị 0 món
+                        if ((!items || items.length === 0) && remoteO.total > 0) {
+                            items = [{ name: 'Đơn hàng tổng hợp', basePrice: remoteO.total, quantity: 1, optionsText: 'Mặc định' }];
+                        }
                         
                         // Chuẩn hóa isoDate thật chuẩn xác tránh lỗi 1899 hoặc chuỗi rác
                         let rawDate = remoteO.isoDate || remoteO.fullDateStr || '';
