@@ -140,6 +140,9 @@
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
+                <button class="btn-action" style="background: #009688;" id="customerModeBtn" onclick="toggleCustomerMenuMode()">👁️ Chế Độ Khách Xem</button>
+                <button class="btn-action" style="background: #673AB7;" onclick="openGuestPreviewModal()">📱 Xem Trước Khách Quét</button>
+                <button class="btn-action" style="background: #00BCD4;" onclick="openOnlineMenu()">🌐 Menu Online</button>
 
                 <button class="btn-action" id="addDishBtn" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button id="toppingConfigBtn" class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
@@ -521,15 +524,11 @@
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
-        // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        
-        // Hàm lấy mốc kết ca chính xác theo tài khoản hiện tại
         function getShiftResetTime() {
             if (!currentAccount) return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
             return parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || '0');
         }
         let lastShiftResetTime = getShiftResetTime();
-
 
         function getActiveShift() {
             if (!currentAccount) return null;
@@ -630,7 +629,9 @@
             let att = attendanceList.find(a => a.id === attId);
             if (!att) return;
             
-            let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
+            let choice = prompt("Chọn thông tin muốn sửa:
+1. Sửa tổng số giờ (vd: 8.5)
+2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
             if (choice === "1") {
                 let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
                 if (newHoursStr === null) return;
@@ -660,7 +661,6 @@
             alert("Đã cập nhật ca làm thành công!");
         }
 
-        
         function isViewerRole(accId) {
             if (accId === 'CQ') return false;
             let st = staffList.find(s => s.id === accId);
@@ -772,7 +772,6 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
-                // Cả nhân viên bán hàng và phục vụ đều có nút vào ca và bảng lương
                 if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
                 
@@ -923,26 +922,25 @@
         let currentViewingBill = null;
         let currentModalToppings = {};
 
-let isCustomerViewMode = false;
-function toggleCustomerMenuMode() {
-    isCustomerViewMode = !isCustomerViewMode;
-    const billSection = document.querySelector('.bill-section');
-    const btn = document.getElementById('customerModeBtn');
-    if (isCustomerViewMode) {
-        billSection.style.display = 'none';
-        document.querySelector('.menu-section').style.flex = '1';
-        btn.innerText = "🔙 Quay lại POS";
-        btn.style.background = "#e74c3c";
-        alert("Đã chuyển sang CHẾ ĐỘ KHÁCH XEM MENU! Toàn bộ tính năng bán hàng và thu ngân đã được ẩn. Đưa máy cho khách xem thoải mái.");
-    } else {
-        billSection.style.display = 'flex';
-        document.querySelector('.menu-section').style.flex = '2';
-        btn.innerText = "👁️ Chế Độ Khách Xem";
-        btn.style.background = "#009688";
-    }
-    renderMenu();
-}
-
+        let isCustomerViewMode = false;
+        function toggleCustomerMenuMode() {
+            isCustomerViewMode = !isCustomerViewMode;
+            const billSection = document.querySelector('.bill-section');
+            const btn = document.getElementById('customerModeBtn');
+            if (isCustomerViewMode) {
+                billSection.style.display = 'none';
+                document.querySelector('.menu-section').style.flex = '1';
+                btn.innerText = "🔙 Quay lại POS";
+                btn.style.background = "#e74c3c";
+                alert("Đã chuyển sang CHẾ ĐỘ KHÁCH XEM MENU! Toàn bộ tính năng bán hàng và thu ngân đã được ẩn. Đưa máy cho khách xem thoải mái.");
+            } else {
+                billSection.style.display = 'flex';
+                document.querySelector('.menu-section').style.flex = '2';
+                btn.innerText = "👁️ Chế Độ Khách Xem";
+                btn.style.background = "#009688";
+            }
+            renderMenu();
+        }
 
         function syncToGoogleSheets(typeData, payload) {
             if (!GOOGLE_SCRIPT_URL) return;
@@ -1436,11 +1434,8 @@ function toggleCustomerMenuMode() {
             const historyList = document.getElementById('historyList');
             const todayRevenueEl = document.getElementById('todayRevenue');
             
-            // Lọc các đơn hàng phát sinh SAU thời điểm kết ca gần nhất (lastShiftResetTime)
-            
             lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
-
 
             if (currentShiftOrders.length === 0) {
                 historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>';
@@ -1491,8 +1486,6 @@ function toggleCustomerMenuMode() {
                 if (!verifyAdminPin()) return;
             }
             
-            // Lấy danh sách đơn hàng trong ca hiện tại (từ sau lần reset cuối)
-            
             lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
 
@@ -1520,7 +1513,6 @@ function toggleCustomerMenuMode() {
         }
 
         function printShiftReport() {
-            
             lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
 
@@ -1543,11 +1535,9 @@ function toggleCustomerMenuMode() {
             setTimeout(() => { window.print(); }, 100);
         }
 
-
-
         async function openAdvancedReport() {
             if (!verifyAdminPin()) return;
-            await fetchHistoryFromCloud(); // Tải dữ liệu mới nhất từ Google Sheets về trước khi mở báo cáo
+            await fetchHistoryFromCloud();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('reportStartDate').value = today;
             document.getElementById('reportEndDate').value = today;
@@ -1563,7 +1553,6 @@ function toggleCustomerMenuMode() {
             let filteredOrders = [];
 
             orderHistory.forEach(o => {
-                // So sánh theo chuỗi ngày YYYY-MM-DD
                 let oDate = (o.isoDate || '').substring(0, 10);
                 if (oDate && oDate >= start && oDate <= end) {
                     totalRev += parseFloat(o.total) || 0; 
@@ -1590,7 +1579,6 @@ function toggleCustomerMenuMode() {
             renderList(dishes, 'advTopDishes');
             renderList(toppings, 'advTopToppings');
 
-            // Render danh sách đơn hàng chi tiết
             const ordersContainer = document.getElementById('advOrdersListContainer');
             ordersContainer.innerHTML = '';
             if (filteredOrders.length === 0) {
@@ -1659,7 +1647,6 @@ function toggleCustomerMenuMode() {
             renderLiveStaffStatus();
             renderPayrollStaffFilter();
             
-            // Nếu là nhân viên/phục vụ, cố định filter đúng tài khoản của họ
             if (currentAccount !== 'CQ') {
                 const filterEl = document.getElementById('payrollStaffFilter');
                 if (filterEl) {
@@ -1976,18 +1963,19 @@ function toggleCustomerMenuMode() {
         }
 
         function openOnlineMenu() {
-    let menuUrl = localStorage.getItem('kimbling_online_menu_url');
-    if (!menuUrl) {
-        menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
-        if (menuUrl) {
-            localStorage.setItem('kimbling_online_menu_url', menuUrl);
-        } else {
-            return;
+            let menuUrl = localStorage.getItem('kimbling_online_menu_url');
+            if (!menuUrl) {
+                menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
+                if (menuUrl) {
+                    localStorage.setItem('kimbling_online_menu_url', menuUrl);
+                } else {
+                    return;
+                }
+            }
+            window.open(menuUrl, '_blank');
         }
-    }
-    window.open(menuUrl, '_blank');
-}
-fetchStaffFromCloud();
+
+        fetchStaffFromCloud();
         fetchAttendanceFromCloud();
         fetchMenuFromCloud();
         fetchHistoryFromCloud();
@@ -2005,7 +1993,6 @@ fetchStaffFromCloud();
             </div>
             <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Đây là những gì khách hàng nhìn thấy trên điện thoại của họ khi quét mã QR tại quầy:</p>
             
-            <!-- Khung giả lập màn hình điện thoại -->
             <div style="border: 4px solid #333; border-radius: 12px; background: #f4f6f9; height: 420px; overflow-y: auto; text-align: left; padding: 10px; box-shadow: inset 0 0 8px rgba(0,0,0,0.1);">
                 <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #bbb; padding-bottom: 6px;">
                     <h4 style="font-size: 14px; color: #333; margin: 0;">Kim Bling Coffee & Tea</h4>
