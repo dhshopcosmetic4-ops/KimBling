@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V25 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V26 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V25 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V26 Pro]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -144,6 +144,7 @@
                 <button class="btn-action" id="addDishBtn" onclick="openAddDishModal()">+ Thêm Món</button>
                 <button id="toppingConfigBtn" class="btn-topping-config" onclick="openToppingConfigModal()">⚙️ Topping</button>
                 <button class="btn-action" style="background: #3f51b5;" onclick="openStaffManagerModal()" id="staffManagerBtn">👥 Nhân Viên</button>
+                <button class="btn-action" style="background: #3f51b5;" onclick="openPayrollModal()">💰 Bảng Lương</button>
                 <button class="btn-action btn-secondary" onclick="switchAccount()">👤 Đổi Account</button>
             </div>
         </div>
@@ -192,7 +193,7 @@
                     <button class="btn-report" onclick="openMonthlyReport()">📊 Doanh thu tháng</button>
                     <button class="btn-report btn-shift" onclick="openShiftReport()">🔄 Kết ca</button>
                     <button class="btn-report btn-advanced-report" onclick="openAdvancedReport()">📈 Báo cáo chi tiết</button>
-                    <button class="btn-report btn-payroll" onclick="openPayrollModal()">💰 Bảng Lương Nhân Viên</button>
+                    
                 </div>
             </div>
         </div>
@@ -509,7 +510,7 @@
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
         // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset') || '0');
+        let lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || localStorage.getItem('kimbling_last_shift_reset') || '0');
 
         function getActiveShift() {
             if (!currentAccount) return null;
@@ -646,9 +647,11 @@
             }
             currentAccount = 'CQ';
             localStorage.setItem('kimbling_account', currentAccount);
+            lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_CQ') || localStorage.getItem('kimbling_last_shift_reset_global') || 0);
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginAdminPinInput').value = '';
             updateAccountBadge();
+            updateHistoryUI();
             refreshAllData();
         }
 
@@ -666,9 +669,11 @@
             }
             currentAccount = selectedId;
             localStorage.setItem('kimbling_account', currentAccount);
+            lastShiftResetTime = parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || 0);
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('loginStaffPinInput').value = '';
             updateAccountBadge();
+            updateHistoryUI();
             refreshAllData();
         }
 
@@ -1407,7 +1412,10 @@ function toggleCustomerMenuMode() {
             if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
                 lastShiftResetTime = Date.now();
                 localStorage.setItem('kimbling_last_shift_reset', lastShiftResetTime);
-                localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+                localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
+                if (currentAccount) {
+                    localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+                }
                 updateHistoryUI();
                 document.getElementById('shiftReportModal').style.display = 'none';
                 alert("Đã kết ca và reset doanh thu ca hiện tại về 0 thành công!");
