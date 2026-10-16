@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+<script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'guest' || urlParams.get('guest') === '1' || urlParams.get('menu') === '1') {
+            window.__IS_GUEST_MODE__ = true;
+            const style = document.createElement('style');
+            style.innerHTML = '#loginModal { display: none !important; }';
+            document.head.appendChild(style);
+        }
+    })();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kim Bling Coffee & Tea - V37 (Danh mục Topping)</title>
@@ -1051,9 +1062,9 @@ Lương dự kiến: ${formatPrice(totalPay)}`)) return;
             updateAttendanceUIState();
         }
 
-        // Ưu tiên kiểm tra nếu có tham số guest trên URL thì ép vào chế độ khách ngay lập tức, không bao giờ đòi PIN hay hiện bảng đăng nhập
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('mode') === 'guest' || urlParams.get('guest') === '1' || urlParams.get('menu') === '1') {
+        // Kiểm tra chế độ khách ngay lập tức
+        const urlParamsInit = new URLSearchParams(window.location.search);
+        if (window.__IS_GUEST_MODE__ || urlParamsInit.get('mode') === 'guest' || urlParamsInit.get('guest') === '1' || urlParamsInit.get('menu') === '1') {
             checkGuestUrlMode();
             renderMenu();
         } else if (!currentAccount) {
