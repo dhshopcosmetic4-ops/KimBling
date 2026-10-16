@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V37 (Độc lập tài khoản & Đồng bộ)</title>
+    <title>Kim Bling Coffee & Tea - V38 (Quản lý doanh thu độc lập từng tài khoản)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V37]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V38]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -284,7 +284,7 @@
 
     <div class="modal" id="shiftReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Kết Ca Hiện Tại - V37</h3>
+            <h3>Báo Cáo Kết Ca Hiện Tại - V38</h3>
             <div style="margin:10px 0;padding:10px;background:#fff8e1;border-radius:6px;">
                 <label for="shiftOpeningCash" style="display:block;font-weight:bold;font-size:14px;">Tiền lẻ đầu ca trong két (VNĐ)</label>
                 <input id="shiftOpeningCash" type="number" min="0" step="1000" placeholder="Ví dụ: 200000" style="width:100%;padding:9px;margin-top:5px;border:1px solid #ddd;border-radius:5px;box-sizing:border-box;">
@@ -521,7 +521,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxC_elqZeMcaRPmZJqDPF8EW-9otL8rAqMb-pba-PAPGKScLO8aoZVXhJtA70Tke7XMCQ/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyl6Ery9F4DHuYI3SNxxhtWx81EQvFN7n1rEyZ3nuFM5s8iZVMGAupQ0PSw47vk2XG2nw/exec";
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -530,8 +530,11 @@
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
+        // Hàm lấy mốc kết ca độc lập theo từng tài khoản
         function getShiftResetTime() {
-            if (!currentAccount) return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
+            if (!currentAccount || currentAccount === 'CQ') {
+                return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
+            }
             return parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || '0');
         }
         let lastShiftResetTime = getShiftResetTime();
@@ -1624,7 +1627,7 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
             const newOrder = {
                 id: Date.now(),
                 billNo: orderHistory.length + 1,
-                account: currentAccount || 'CQ',
+                account: currentAccount,
                 isoDate: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                 fullDateStr: now.toLocaleString('vi-VN'),
@@ -1647,13 +1650,14 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
             const historyList = document.getElementById('historyList');
             const todayRevenueEl = document.getElementById('todayRevenue');
             
+            // Lọc doanh thu ca/ngày theo đúng tài khoản đăng nhập để không bị chồng chéo
             lastShiftResetTime = getShiftResetTime();
-            
-            // Lọc độc lập theo tài khoản: Nhân viên chỉ thấy đơn của chính họ, Chủ quán thấy toàn bộ đơn cửa hàng
             let currentShiftOrders = orderHistory.filter(o => {
                 if (o.id <= lastShiftResetTime) return false;
-                if (currentAccount === 'CQ') return true;
-                return (o.account || 'CQ') === currentAccount;
+                if (currentAccount && currentAccount !== 'CQ') {
+                    return (o.account === currentAccount);
+                }
+                return true; // Chủ quán (CQ) có thể thấy tổng hợp hoặc tất cả đơn trong ca hệ thống
             });
 
             if (currentShiftOrders.length === 0) {
@@ -1705,11 +1709,14 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
                 if (!verifyAdminPin()) return;
             }
             
+            // Lấy danh sách đơn hàng trong ca hiện tại của tài khoản hiện tại
             lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => {
                 if (o.id <= lastShiftResetTime) return false;
-                if (currentAccount === 'CQ') return true;
-                return (o.account || 'CQ') === currentAccount;
+                if (currentAccount && currentAccount !== 'CQ') {
+                    return (o.account === currentAccount);
+                }
+                return true;
             });
 
             let totalRev = 0;
@@ -1725,23 +1732,26 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
         function confirmAndResetShift() {
             if (!confirm("Xác nhận chốt kết ca và làm mới doanh thu ca hiện tại về 0 cho tài khoản này?")) return;
             const closedAt = new Date().toLocaleString('vi-VN');
-            lastShiftResetTime = Date.now();
+            const newResetTime = Date.now();
             
-            const active = getActiveShift();
+            lastShiftResetTime = getShiftResetTime();
             const shiftOrders = orderHistory.filter(o => {
-                const shiftStart = active ? active.id : (getShiftResetTime());
-                return o.id > shiftStart && o.id <= lastShiftResetTime && (currentAccount === 'CQ' || (o.account || 'CQ') === currentAccount);
+                if (o.id <= lastShiftResetTime || o.id > newResetTime) return false;
+                if (currentAccount && currentAccount !== 'CQ') {
+                    return (o.account === currentAccount);
+                }
+                return true;
             });
-            
             const revenue = shiftOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+            const active = getActiveShift();
             const record = {
-                id: 'close_' + lastShiftResetTime + '_' + (currentAccount || 'global'),
+                id: 'close_' + newResetTime + '_' + (currentAccount || 'global'),
                 account: currentAccount || 'global',
                 staffId: active && active.staffId ? active.staffId : currentAccount,
                 staffName: active && active.staffName ? active.staffName : (staffList.find(x => x.id === currentAccount)?.name || currentAccount || 'Chủ quán'),
                 openedAt: active && active.checkInTime ? active.checkInTime : '',
                 closedAt,
-                closingTimestamp: lastShiftResetTime,
+                closingTimestamp: newResetTime,
                 orderCount: shiftOrders.length,
                 revenue,
                 openingCash: Number((active && active.openingCash) ?? localStorage.getItem('kimbling_opening_cash_' + (currentAccount || 'global')) ?? 0) || 0
@@ -1769,28 +1779,30 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
             history.push(record);
             localStorage.setItem('kimbling_shift_closing_history_' + (currentAccount || 'global'), JSON.stringify(history));
             try { syncToGoogleSheets('shiftClosing', { shiftClosing: record }); } catch (e) { console.log('Shift closing sync unavailable:', e); }
-            
-            // Lưu mốc reset riêng biệt theo tài khoản để không ảnh hưởng chéo doanh thu giữa các nhân viên
-            if (currentAccount) {
-                localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+
+            // Lưu mốc kết ca độc lập theo tài khoản để không bị chồng chéo doanh thu giữa các nhân viên
+            if (currentAccount && currentAccount !== 'CQ') {
+                localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, newResetTime);
             } else {
-                localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
-                localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
+                localStorage.setItem('kimbling_last_shift_reset_global', newResetTime);
             }
+            lastShiftResetTime = getShiftResetTime();
 
             document.getElementById('shiftClosingHistoryBox').style.display = 'none';
             updateHistoryUI();
             document.getElementById('shiftReportModal').style.display = 'none';
             updateAttendanceUIState();
-            alert(currentAccount !== 'CQ' && active ? 'Đã kết ca thành công, đã chốt chấm công và bật lại nút Vào Ca.' : 'Đã kết ca và lưu lịch sử thành công.');
+            alert(currentAccount !== 'CQ' && active ? 'Đã kết ca thành công, đã chốt chấm công và reset doanh thu riêng của bạn về 0.' : 'Đã kết ca và lưu lịch sử thành công.');
         }
 
         function printShiftReport() {
             lastShiftResetTime = getShiftResetTime();
             let currentShiftOrders = orderHistory.filter(o => {
                 if (o.id <= lastShiftResetTime) return false;
-                if (currentAccount === 'CQ') return true;
-                return (o.account || 'CQ') === currentAccount;
+                if (currentAccount && currentAccount !== 'CQ') {
+                    return (o.account === currentAccount);
+                }
+                return true;
             });
 
             let totalRev = 0;
@@ -1857,20 +1869,16 @@ Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ
                 if (value instanceof Date && !isNaN(value.getTime())) {
                     return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
                 }
-
                 const str = String(value).trim();
                 if (!str) return '';
-
                 let match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
                 if (match) {
                     return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
                 }
-
                 match = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
                 if (match) {
                     return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
                 }
-
                 const parsed = new Date(str);
                 if (!isNaN(parsed.getTime())) {
                     return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
