@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V34 Pro (Phân Quyền Phục Vụ Xem Menu) (Menu Hình Ảnh Trực Quan) (Quản Lý Ca & Doanh Thu)</title>
+    <title>Kim Bling Coffee & Tea - V36 (Kết ca & chấm công)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -131,7 +131,7 @@
     <div class="menu-section">
         <div class="menu-header">
             <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V34 Pro]</span></h2>
+                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V36]</span></h2>
                 <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
                     <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
                     <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
@@ -283,7 +283,7 @@
 
     <div class="modal" id="shiftReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Kết Ca Hiện Tại - V35</h3>
+            <h3>Báo Cáo Kết Ca Hiện Tại - V36</h3>
             <div style="margin:10px 0;padding:10px;background:#fff8e1;border-radius:6px;">
                 <label for="shiftOpeningCash" style="display:block;font-weight:bold;font-size:14px;">Tiền lẻ đầu ca trong két (VNĐ)</label>
                 <input id="shiftOpeningCash" type="number" min="0" step="1000" placeholder="Ví dụ: 200000" style="width:100%;padding:9px;margin-top:5px;border:1px solid #ddd;border-radius:5px;box-sizing:border-box;">
@@ -386,7 +386,7 @@
             <div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                 <div id="payrollSummaryStats" style="font-size: 13px; color: #e65100; font-weight: bold;">Tổng số ca: 0 | Tổng giờ: 0h</div>
                 <div style="text-align: right;">
-                    <span style="font-size: 13px; color: #e65100;">Tổng tiền lương: </span>
+                    <span style="font-size: 13px; color: #e65100;">Lương thực nhận (đã trừ phạt): </span>
                     <strong id="totalPayrollAmount" style="color: #e65100; font-size: 17px;">0k</strong>
                 </div>
             </div>
@@ -520,7 +520,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuIYDMgsbCSobPrRmD9TQD41Brso1k4M2vYnUJGqHS1G4yU0PBWw9xCja1789JXr6dHA/exec";
+        const GOOGLE_SCRIPT_URL = ""; // Dán URL Web App mới sau khi triển khai Apps Script V36.
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -571,11 +571,116 @@
         }
         function saveActiveShift(shiftObj) {
             if (!currentAccount) return;
+            const removedKey = 'kimbling_active_shift_removed_' + currentAccount;
             if (shiftObj) {
                 localStorage.setItem('kimbling_active_shift_' + currentAccount, JSON.stringify(shiftObj));
+                localStorage.removeItem(removedKey);
             } else {
                 localStorage.removeItem('kimbling_active_shift_' + currentAccount);
+                localStorage.setItem(removedKey, '1');
             }
+        }
+
+        // V36: vi phạm kết ca và khấu trừ lương. Apps Script mới sẽ lưu/đồng bộ các bản ghi này giữa thiết bị.
+        function getShiftViolations() {
+            try { return JSON.parse(localStorage.getItem('kimbling_shift_violations') || '[]') || []; }
+            catch (e) { return []; }
+        }
+        function saveShiftViolations(rows) {
+            localStorage.setItem('kimbling_shift_violations', JSON.stringify(rows));
+        }
+        function getLocalDateKey(dateObj) {
+            const d = dateObj || new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        function getMondayWeekKey(dateObj) {
+            const d = new Date(dateObj);
+            d.setHours(0,0,0,0);
+            const day = (d.getDay() + 6) % 7;
+            d.setDate(d.getDate() - day);
+            return getLocalDateKey(d);
+        }
+        function createViolationForShift(staffId, shift, deadlineDate) {
+            const violations = getShiftViolations();
+            const violationId = 'violation_' + String(shift.id);
+            if (violations.some(v => v.id === violationId)) return null;
+            const staff = staffList.find(x => x.id === staffId) || {};
+            const end = new Date(deadlineDate);
+            const start = new Date(shift.checkInIso || Date.now());
+            let hours = Math.max(0.05, Number(((end - start) / 3600000).toFixed(2)));
+            const rate = Number(shift.hourlyRate || staff.hourlyRate || 22000);
+            const violation = {
+                id: violationId, staffId, staffName: shift.staffName || staff.name || staffId,
+                shiftId: shift.id, occurredAt: end.toISOString(), date: getLocalDateKey(end),
+                weekKey: getMondayWeekKey(end), reason: 'Ca chưa được kết thúc trước 23:58',
+                penaltyEligible: false, notified: false
+            };
+            violations.push(violation);
+            saveShiftViolations(violations);
+            const record = {
+                id: shift.id, staffId, staffName: violation.staffName,
+                checkInTime: shift.checkInTime || '', checkOutTime: end.toLocaleString('vi-VN') + ' (tự động 23:58)',
+                hours, hourlyRate: rate, totalPay: Math.round(hours * rate),
+                date: shift.date || getLocalDateKey(start), autoClosed: true, violationId
+            };
+            if (!attendanceList.some(a => String(a.id) === String(record.id))) attendanceList.push(record);
+            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+            try { syncAttendanceToCloud(record); } catch (e) { console.log('Attendance sync:', e); }
+            try { syncToGoogleSheets('shiftViolation', { violation }); } catch (e) { console.log('Violation sync:', e); }
+            localStorage.removeItem('kimbling_active_shift_' + staffId);
+            localStorage.setItem('kimbling_active_shift_removed_' + staffId, '1');
+            return violation;
+        }
+        function processMissedShiftDeadlines() {
+            const now = new Date();
+            const deadlineToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 58, 0, 0);
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('kimbling_active_shift_') && !key.startsWith('kimbling_active_shift_removed_')) keys.push(key);
+            }
+            let changed = false;
+            keys.forEach(key => {
+                let shift;
+                try { shift = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) { shift = null; }
+                if (!shift) return;
+                const staffId = key.replace('kimbling_active_shift_', '');
+                const staff = staffList.find(x => x.id === staffId);
+                if (staff && staff.role === 'viewer') return;
+                const started = new Date(shift.checkInIso || now);
+                const missedPriorDay = getLocalDateKey(started) < getLocalDateKey(now);
+                if (missedPriorDay || now >= deadlineToday) {
+                    const deadline = missedPriorDay ? new Date(started.getFullYear(), started.getMonth(), started.getDate(), 23, 58, 0, 0) : deadlineToday;
+                    if (createViolationForShift(staffId, shift, deadline)) changed = true;
+                }
+            });
+            if (changed) syncActiveShiftsToCloud();
+            return changed;
+        }
+        function getViolationPayrollSummary(month, selectedStaffId) {
+            const all = getShiftViolations().slice().sort((a,b) => new Date(a.occurredAt) - new Date(b.occurredAt));
+            const weekCounts = {};
+            const penalties = new Set();
+            all.forEach(v => {
+                const key = v.staffId + '|' + (v.weekKey || getMondayWeekKey(new Date(v.occurredAt)));
+                weekCounts[key] = (weekCounts[key] || 0) + 1;
+                if (weekCounts[key] >= 4) penalties.add(v.id);
+            });
+            const monthly = all.filter(v => String(v.date || v.occurredAt || '').startsWith(month) && (selectedStaffId === 'ALL' || v.staffId === selectedStaffId));
+            return { count: monthly.length, deduction: monthly.reduce((sum,v) => sum + (penalties.has(v.id) ? 50000 : 0), 0), penaltyCount: monthly.filter(v => penalties.has(v.id)).length };
+        }
+        function notifyShiftViolationsOnLogin() {
+            if (!currentAccount) return;
+            const rows = getShiftViolations();
+            const seenKey = 'kimbling_seen_shift_violations_' + currentAccount;
+            let seen = [];
+            try { seen = JSON.parse(localStorage.getItem(seenKey) || '[]') || []; } catch(e) {}
+            const pending = rows.filter(v => (currentAccount === 'CQ' || v.staffId === currentAccount) && !seen.includes(v.id));
+            if (!pending.length) return;
+            const totalPenalty = getViolationPayrollSummary(getLocalDateKey(new Date()).slice(0,7), currentAccount === 'CQ' ? 'ALL' : currentAccount).deduction;
+            const lines = pending.map(v => '• ' + (v.staffName || v.staffId) + ' — ' + (v.date || '') + ': ' + (v.reason || 'Vi phạm kết ca')).join('\n');
+            alert('⚠️ THÔNG BÁO VI PHẠM KẾT CA\n' + lines + (currentAccount === 'CQ' ? '\n\nTiền phạt phát sinh trong tháng hiện tại: ' + formatPrice(totalPenalty) : '\n\nTừ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ.'));
+            localStorage.setItem(seenKey, JSON.stringify(seen.concat(pending.map(v => v.id))));
         }
 
         function syncStaffToCloud() {
@@ -588,14 +693,22 @@
 
         function syncActiveShiftsToCloud() {
             let activeShiftsMap = {};
+            const removedKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
                 let key = localStorage.key(i);
-                if (key && key.startsWith('kimbling_active_shift_')) {
+                if (key && key.startsWith('kimbling_active_shift_') && !key.startsWith('kimbling_active_shift_removed_')) {
                     let staffId = key.replace('kimbling_active_shift_', '');
-                    activeShiftsMap[staffId] = JSON.parse(localStorage.getItem(key));
+                    try { activeShiftsMap[staffId] = JSON.parse(localStorage.getItem(key)); } catch(e) {}
+                } else if (key && key.startsWith('kimbling_active_shift_removed_')) {
+                    const staffId = key.replace('kimbling_active_shift_removed_', '');
+                    activeShiftsMap[staffId] = null;
+                    removedKeys.push(key);
                 }
             }
-            syncToGoogleSheets('activeShifts', { activeShiftsMap: activeShiftsMap });
+            const syncResult = syncToGoogleSheets('activeShifts', { activeShiftsMap: activeShiftsMap });
+            if (syncResult && typeof syncResult.then === 'function') {
+                syncResult.then(() => removedKeys.forEach(key => localStorage.removeItem(key))).catch(() => {});
+            }
         }
 
         async function fetchActiveShiftsFromCloud() {
@@ -603,14 +716,24 @@
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getActiveShifts");
                 const data = await response.json();
                 if (data && data.activeShiftsMap) {
-                    for (let [staffId, shiftObj] of Object.entries(data.activeShiftsMap)) {
-                        if (shiftObj) {
-                            localStorage.setItem('kimbling_active_shift_' + staffId, JSON.stringify(shiftObj));
-                        } else {
-                            localStorage.removeItem('kimbling_active_shift_' + staffId);
-                        }
+                    const remoteMap = data.activeShiftsMap;
+                    const localKeys = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('kimbling_active_shift_') && !key.startsWith('kimbling_active_shift_removed_')) localKeys.push(key);
+                    }
+                    localKeys.forEach(key => {
+                        const staffId = key.replace('kimbling_active_shift_', '');
+                        if (!Object.prototype.hasOwnProperty.call(remoteMap, staffId)) localStorage.removeItem(key);
+                    });
+                    for (let [staffId, shiftObj] of Object.entries(remoteMap)) {
+                        if (shiftObj) localStorage.setItem('kimbling_active_shift_' + staffId, JSON.stringify(shiftObj));
+                        else localStorage.removeItem('kimbling_active_shift_' + staffId);
                     }
                 }
+                processMissedShiftDeadlines();
+                notifyShiftViolationsOnLogin();
+                if (currentAccount) updateAttendanceUIState();
             } catch (err) {
                 console.log("Fetch active shifts error:", err);
             }
@@ -646,6 +769,24 @@
                 }
             } catch (err) {
                 console.log("Fetch attendance error:", err);
+            }
+        }
+
+        async function fetchShiftViolationsFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + '?type=getShiftViolations');
+                const data = await response.json();
+                const cloudRows = data && Array.isArray(data.shiftViolations) ? data.shiftViolations : [];
+                if (cloudRows.length) {
+                    const merged = new Map();
+                    [...getShiftViolations(), ...cloudRows].forEach(v => { if (v && v.id) merged.set(String(v.id), v); });
+                    saveShiftViolations(Array.from(merged.values()));
+                }
+                processMissedShiftDeadlines();
+                notifyShiftViolationsOnLogin();
+                if (document.getElementById('payrollModal')?.style.display === 'flex') calculatePayroll();
+            } catch (err) {
+                console.log('Fetch shift violations error:', err);
             }
         }
 
@@ -757,6 +898,8 @@
             document.getElementById('loginStaffPinInput').value = '';
             updateAccountBadge();
             updateHistoryUI();
+            processMissedShiftDeadlines();
+            notifyShiftViolationsOnLogin();
             refreshAllData();
         }
 
@@ -806,9 +949,9 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
-                // Cả nhân viên bán hàng và phục vụ đều có nút vào ca và bảng lương
-                if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
-                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
+                // Chỉ nhân viên bán hàng (không phải viewer) dùng chấm công/kết ca.
+                if(attendanceBtn) attendanceBtn.style.display = isViewer ? 'none' : 'inline-block';
+                if(attendanceStatusBadge) attendanceStatusBadge.style.display = isViewer ? 'none' : 'inline-block';
                 
                 if (isViewer) {
                     billSection.style.display = 'none';
@@ -866,6 +1009,10 @@
                 syncActiveShiftsToCloud();
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
+                if (staff.role !== 'viewer') {
+                    openShiftReport();
+                    return;
+                }
                 let checkInDate = new Date(currentActiveShift.checkInIso);
                 let diffMs = now - checkInDate;
                 let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
@@ -906,6 +1053,7 @@
         function refreshAllData() {
             fetchStaffFromCloud();
             fetchAttendanceFromCloud();
+            fetchShiftViolationsFromCloud();
             fetchActiveShiftsFromCloud();
             fetchMenuFromCloud();
             fetchHistoryFromCloud();
@@ -986,12 +1134,12 @@ function toggleCustomerMenuMode() {
 
         function syncToGoogleSheets(typeData, payload) {
             if (!GOOGLE_SCRIPT_URL) return;
-            fetch(GOOGLE_SCRIPT_URL, {
+            return fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                 body: JSON.stringify({ type: typeData, account: currentAccount, ...payload })
-            }).catch(err => console.log("Sync error:", err));
+            }).catch(err => { console.log("Sync error:", err); throw err; });
         }
 
         async function fetchMenuFromCloud() {
@@ -1565,6 +1713,24 @@ function toggleCustomerMenuMode() {
                 revenue,
                 openingCash: Number((active && active.openingCash) ?? localStorage.getItem('kimbling_opening_cash_' + (currentAccount || 'global')) ?? 0) || 0
             };
+            // Khi nhân viên bán hàng xác nhận kết ca, đóng chấm công và bật lại nút Vào Ca.
+            if (currentAccount !== 'CQ' && active && active.staffId === currentAccount) {
+                const end = new Date();
+                const start = new Date(active.checkInIso || end);
+                let hours = Math.max(0.05, Number(((end - start) / 3600000).toFixed(2)));
+                const rate = Number(active.hourlyRate || staffList.find(x => x.id === currentAccount)?.hourlyRate || 22000);
+                const attendanceRecord = {
+                    id: active.id, staffId: active.staffId, staffName: active.staffName || currentAccount,
+                    checkInTime: active.checkInTime || '', checkOutTime: end.toLocaleString('vi-VN'),
+                    hours, hourlyRate: rate, totalPay: Math.round(hours * rate), date: active.date || getLocalDateKey(start),
+                    shiftClosingId: record.id
+                };
+                if (!attendanceList.some(a => String(a.id) === String(attendanceRecord.id))) attendanceList.push(attendanceRecord);
+                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                syncAttendanceToCloud(attendanceRecord);
+                saveActiveShift(null);
+                syncActiveShiftsToCloud();
+            }
             const history = getShiftClosingHistory();
             history.push(record);
             localStorage.setItem('kimbling_shift_closing_history_' + (currentAccount || 'global'), JSON.stringify(history));
@@ -1577,7 +1743,8 @@ function toggleCustomerMenuMode() {
             document.getElementById('shiftClosingHistoryBox').style.display = 'none';
             updateHistoryUI();
             document.getElementById('shiftReportModal').style.display = 'none';
-            alert('Đã kết ca và lưu lịch sử trên thiết bị này.');
+            updateAttendanceUIState();
+            alert(currentAccount !== 'CQ' && active ? 'Đã kết ca thành công, đã chốt chấm công và bật lại nút Vào Ca.' : 'Đã kết ca và lưu lịch sử trên thiết bị này.');
         }
 
         function printShiftReport() {
@@ -1869,6 +2036,7 @@ function toggleCustomerMenuMode() {
 
             let totalHoursSum = 0;
             let totalPaySum = 0;
+            const violationSummary = getViolationPayrollSummary(val, selectedStaffId);
 
             if (filteredShifts.length === 0) {
                 container.innerHTML = '<p style="text-align: center; color: #777; font-size: 13px; padding: 15px;">Không có dữ liệu log ca làm trong bộ lọc này</p>';
@@ -1902,8 +2070,9 @@ function toggleCustomerMenuMode() {
                 });
             }
 
-            document.getElementById('payrollSummaryStats').innerText = `Tổng số ca: ${filteredShifts.length} | Tổng giờ: ${totalHoursSum.toFixed(1)}h`;
-            document.getElementById('totalPayrollAmount').innerText = formatPrice(totalPaySum);
+            const netPay = Math.max(0, totalPaySum - violationSummary.deduction);
+            document.getElementById('payrollSummaryStats').innerText = `Tổng số ca: ${filteredShifts.length} | Tổng giờ: ${totalHoursSum.toFixed(1)}h | Vi phạm: ${violationSummary.count} lần | Tiền phạt: ${formatPrice(violationSummary.deduction)}`;
+            document.getElementById('totalPayrollAmount').innerText = formatPrice(netPay);
         }
 
         function openAddDishModal() {
