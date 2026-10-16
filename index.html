@@ -1548,7 +1548,10 @@ function toggleCustomerMenuMode() {
         async function openAdvancedReport() {
             if (!verifyAdminPin()) return;
             await fetchHistoryFromCloud(); // Tải dữ liệu mới nhất từ Google Sheets về trước khi mở báo cáo
-            const today = new Date().toISOString().split('T')[0];
+
+            // Dùng ngày giờ địa phương, tránh lệch ngày do toISOString() chuyển sang UTC.
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             document.getElementById('reportStartDate').value = today;
             document.getElementById('reportEndDate').value = today;
             calculateAdvancedReport();
@@ -1559,52 +1562,117 @@ function toggleCustomerMenuMode() {
             const start = document.getElementById('reportStartDate').value;
             const end = document.getElementById('reportEndDate').value;
             if (!start || !end) return;
+
             let totalRev = 0, count = 0, dishes = {}, toppings = {};
             let filteredOrders = [];
 
-            orderHistory.forEach(o => {
-                // So sánh theo chuỗi ngày YYYY-MM-DD
-                let oDate = (o.isoDate || '').substring(0, 10);
-                if (oDate && oDate >= start && oDate <= end) {
-                    totalRev += parseFloat(o.total) || 0; 
-                    count++;
-                    filteredOrders.push(o);
-                    if (Array.isArray(o.items)) {
-                        o.items.forEach(i => {
-                            dishes[i.name] = (dishes[i.name] || 0) + (i.quantity || 1);
-                            if (i.rawToppings) i.rawToppings.forEach(t => toppings[t] = (toppings[t] || 0) + 1);
-                        });
+            // Chuẩn hóa ngày về YYYY-MM-DD để so sánh nhất quán, kể cả dữ liệu cũ từ Google Sheets.
+            const normalizeReportDate = (value) => {
+                if (value === null || value === undefined || value === '') return '';
+                if (value instanceof Date && !isNaN(value.getTime())) {
+                    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+                }
+
+                const str = String(value).trim();
+                if (!str) return '';
+
+                // Ngày ISO hoặc chuỗi bắt đầu bằng YYYY-MM-DD.
+                let match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+                if (match) {
+                    return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+                }
+
+                // Ngày dạng Việt Nam: DD/MM/YYYY hoặc DD-MM-YYYY.
+                match = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+                if (match) {
+                    return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
+                }
+
+                // Dự phòng cho định dạng ngày khác do nguồn dữ liệu trả về.
+                const parsed = new Date(str);
+                if (!isNaN(parsed.getTime())) {
+                    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+                }
+                return '';
+            };
+
+            const getOrderReportDate = (order) => {
+                // Ưu tiên ngày hiển thị địa phương nếu có để tránh ngày ISO bị lệch UTC.
+                const localDate = normalizeReportDate(order.fullDateStr);
+                if (localDate) return localDate;
+                return normalizeReportDate(order.isoDate || order.time || '');
+            };
+
+            const getOrderItems = (order) => {
+                if (Array.isArray(order.items)) return order.items;
+                if (typeof order.items === 'string') {
+                    try {
+                        const parsedItems = JSON.parse(order.items);
+                        return Array.isArray(parsedItems) ? parsedItems : [];
+                    } catch (err) {
+                        return [];
                     }
                 }
+                return [];
+            };
+
+            orderHistory.forEach(o => {
+                const oDate = getOrderReportDate(o);
+                if (oDate && oDate >= start && oDate <= end) {
+                    totalRev += parseFloat(o.total) || 0;
+                    count++;
+                    filteredOrders.push(o);
+
+                    getOrderItems(o).forEach(i => {
+                        if (!i || typeof i !== 'object') return;
+                        const itemName = i.name || 'Món chưa có tên';
+                        const quantity = parseFloat(i.quantity) || 1;
+                        dishes[itemName] = (dishes[itemName] || 0) + quantity;
+                        if (Array.isArray(i.rawToppings)) {
+                            i.rawToppings.forEach(t => {
+                                const toppingName = typeof t === 'string' ? t : (t && t.name ? t.name : '');
+                                if (toppingName) toppings[toppingName] = (toppings[toppingName] || 0) + 1;
+                            });
+                        }
+                    });
+                }
             });
+
             document.getElementById('advTotalRevenue').innerText = formatPrice(totalRev);
             document.getElementById('advOrderCount').innerText = `Tổng số đơn: ${count} đơn`;
-            
+
             const renderList = (obj, elId) => {
                 const el = document.getElementById(elId);
                 el.innerHTML = '';
-                const sorted = Object.entries(obj).sort((a,b) => b[1] - a[1]);
-                if (sorted.length === 0) el.innerHTML = '<p style="color:#999;">Không có dữ liệu</p>';
-                else sorted.forEach(([k, v]) => el.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${k}</span> <b>${v}</b></div>`);
+                const sorted = Object.entries(obj).sort((a, b) => b[1] - a[1]);
+                if (sorted.length === 0) {
+                    el.innerHTML = '<p style="color:#999;">Không có dữ liệu</p>';
+                } else {
+                    sorted.forEach(([k, v]) => {
+                        el.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span>${k}</span> <b>${v}</b></div>`;
+                    });
+                }
             };
             renderList(dishes, 'advTopDishes');
             renderList(toppings, 'advTopToppings');
 
-            // Render danh sách đơn hàng chi tiết
+            // Render danh sách đơn hàng chi tiết.
             const ordersContainer = document.getElementById('advOrdersListContainer');
             ordersContainer.innerHTML = '';
             if (filteredOrders.length === 0) {
                 ordersContainer.innerHTML = '<p style="text-align: center; color: #777; font-size: 12px; padding: 10px;">Không có đơn hàng nào trong khoảng ngày này</p>';
             } else {
-                filteredOrders.sort((a, b) => b.id - a.id).forEach(o => {
+                filteredOrders.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0)).forEach(o => {
+                    const items = getOrderItems(o);
+                    const safeOrder = JSON.stringify(o).replace(/"/g, '&quot;');
                     ordersContainer.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-bottom: 1px solid #f1f1f1; font-size: 12px; cursor: pointer;" onclick="document.getElementById('advancedReportModal').style.display='none'; viewBillDetail(${o.id});">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-bottom: 1px solid #f1f1f1; font-size: 12px; cursor: pointer;" onclick="document.getElementById('advancedReportModal').style.display='none'; viewBillDetail(${Number(o.id) || 0});">
                             <div>
-                                <b>🕒 ${o.time}</b> [${o.account || 'CQ'}] #${o.billNo || ''} — <b>${o.items.length} món</b>
+                                <b>🕒 ${o.time || ''}</b> [${o.account || 'CQ'}] #${o.billNo || ''} — <b>${items.length} món</b>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <strong style="color: #d32f2f; font-size: 13px;">${formatPrice(o.total)}</strong>
-                                <button style="background: #2196F3; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); executePrint(${JSON.stringify(o).replace(/"/g, '&quot;')});">🖨️ In bill</button>
+                                <strong style="color: #d32f2f; font-size: 13px;">${formatPrice(parseFloat(o.total) || 0)}</strong>
+                                <button style="background: #2196F3; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;" onclick="event.stopPropagation(); executePrint(${safeOrder});">🖨️ In bill</button>
                             </div>
                         </div>
                     `;
