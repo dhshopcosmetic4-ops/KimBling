@@ -521,7 +521,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrSwmb4y89_hBLn5fFeZ3dkrOJFb9hN5phQDj2fAcybHRssXkeI1uDehkR_onqF2NgIA/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEOe1hjnItCwnMLYrTP-z4B-oH72Xvx_ss2N7skcFfrkkEGCy4-1AtbX7fdaCTF3FaZA/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -1057,6 +1057,7 @@
             fetchShiftViolationsFromCloud();
             fetchActiveShiftsFromCloud();
             fetchMenuFromCloud();
+            fetchShiftClosingFromCloud();
             fetchHistoryFromCloud();
             setTimeout(() => {
                 if(document.getElementById('payrollModal').style.display === 'flex') {
@@ -1161,7 +1162,28 @@ function toggleCustomerMenuMode() {
             }
         }
 
-        async function fetchHistoryFromCloud() {
+        
+        async function fetchShiftClosingFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getShiftClosing");
+                const data = await response.json();
+                if (data && data.shiftClosing && Array.isArray(data.shiftClosing)) {
+                    const storageKey = 'kimbling_shift_closing_history_' + (currentAccount || 'global');
+                    let localHistory = [];
+                    try { localHistory = JSON.parse(localStorage.getItem(storageKey) || '[]') || []; } catch(e){}
+                    const mergedMap = new Map();
+                    [...data.shiftClosing, ...localHistory].forEach(r => {
+                        if (r && r.id) mergedMap.set(String(r.id), r);
+                    });
+                    const merged = Array.from(mergedMap.values());
+                    localStorage.setItem(storageKey, JSON.stringify(merged));
+                }
+            } catch (err) {
+                console.log("Fetch shift closing error:", err);
+            }
+        }
+    
+async function fetchHistoryFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getHistory");
                 const data = await response.json();
@@ -2348,6 +2370,7 @@ function toggleCustomerMenuMode() {
 fetchStaffFromCloud();
         fetchAttendanceFromCloud();
         fetchMenuFromCloud();
+        fetchShiftClosingFromCloud();
         fetchHistoryFromCloud();
         renderMenu();
         renderCart();
