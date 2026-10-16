@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - V37 (Danh mục Topping)</title>
+    <title>Kim Bling Coffee & Tea - V37 (Độc lập tài khoản & Đồng bộ)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
@@ -284,7 +284,7 @@
 
     <div class="modal" id="shiftReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Kết Ca Hiện Tại - V36</h3>
+            <h3>Báo Cáo Kết Ca Hiện Tại - V37</h3>
             <div style="margin:10px 0;padding:10px;background:#fff8e1;border-radius:6px;">
                 <label for="shiftOpeningCash" style="display:block;font-weight:bold;font-size:14px;">Tiền lẻ đầu ca trong két (VNĐ)</label>
                 <input id="shiftOpeningCash" type="number" min="0" step="1000" placeholder="Ví dụ: 200000" style="width:100%;padding:9px;margin-top:5px;border:1px solid #ddd;border-radius:5px;box-sizing:border-box;">
@@ -521,7 +521,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEOe1hjnItCwnMLYrTP-z4B-oH72Xvx_ss2N7skcFfrkkEGCy4-1AtbX7fdaCTF3FaZA/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEOe1hjnItCwnMLYrTP-z4B-oH72Xvx_ss2N7skcFfrkkEGCy4-1AtbX7fdaCTF3FaZA/exec";
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -530,15 +530,11 @@
         ];
         let attendanceList = JSON.parse(localStorage.getItem('kimbling_attendance')) || [];
         
-        // Thời điểm kết ca gần nhất để reset doanh thu hiển thị trên màn hình
-        
-        // Hàm lấy mốc kết ca chính xác theo tài khoản hiện tại
         function getShiftResetTime() {
             if (!currentAccount) return parseInt(localStorage.getItem('kimbling_last_shift_reset_global') || '0');
             return parseInt(localStorage.getItem('kimbling_last_shift_reset_' + currentAccount) || localStorage.getItem('kimbling_last_shift_reset_global') || '0');
         }
         let lastShiftResetTime = getShiftResetTime();
-
 
         function getShiftClosingHistory() {
             try { return JSON.parse(localStorage.getItem('kimbling_shift_closing_history_' + (currentAccount || 'global')) || '[]') || []; }
@@ -582,7 +578,6 @@
             }
         }
 
-        // V37: danh mục xem topping; giữ nguyên luồng kết ca và khấu trừ lương. Apps Script mới sẽ lưu/đồng bộ các bản ghi này giữa thiết bị.
         function getShiftViolations() {
             try { return JSON.parse(localStorage.getItem('kimbling_shift_violations') || '[]') || []; }
             catch (e) { return []; }
@@ -679,8 +674,14 @@
             const pending = rows.filter(v => (currentAccount === 'CQ' || v.staffId === currentAccount) && !seen.includes(v.id));
             if (!pending.length) return;
             const totalPenalty = getViolationPayrollSummary(getLocalDateKey(new Date()).slice(0,7), currentAccount === 'CQ' ? 'ALL' : currentAccount).deduction;
-            const lines = pending.map(v => '• ' + (v.staffName || v.staffId) + ' — ' + (v.date || '') + ': ' + (v.reason || 'Vi phạm kết ca')).join('\n');
-            alert('⚠️ THÔNG BÁO VI PHẠM KẾT CA\n' + lines + (currentAccount === 'CQ' ? '\n\nTiền phạt phát sinh trong tháng hiện tại: ' + formatPrice(totalPenalty) : '\n\nTừ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ.'));
+            const lines = pending.map(v => '• ' + (v.staffName || v.staffId) + ' — ' + (v.date || '') + ': ' + (v.reason || 'Vi phạm kết ca')).join('
+');
+            alert('⚠️ THÔNG BÁO VI PHẠM KẾT CA
+' + lines + (currentAccount === 'CQ' ? '
+
+Tiền phạt phát sinh trong tháng hiện tại: ' + formatPrice(totalPenalty) : '
+
+Từ lần thứ 4 trong cùng tuần, mỗi lần vi phạm bị trừ 50.000đ.'));
             localStorage.setItem(seenKey, JSON.stringify(seen.concat(pending.map(v => v.id))));
         }
 
@@ -806,7 +807,9 @@
             let att = attendanceList.find(a => a.id === attId);
             if (!att) return;
             
-            let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
+            let choice = prompt("Chọn thông tin muốn sửa:
+1. Sửa tổng số giờ (vd: 8.5)
+2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
             if (choice === "1") {
                 let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
                 if (newHoursStr === null) return;
@@ -836,7 +839,6 @@
             alert("Đã cập nhật ca làm thành công!");
         }
 
-        
         function isViewerRole(accId) {
             if (accId === 'CQ') return false;
             let st = staffList.find(s => s.id === accId);
@@ -950,7 +952,6 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
-                // Chỉ nhân viên bán hàng (không phải viewer) dùng chấm công/kết ca.
                 if(attendanceBtn) attendanceBtn.style.display = isViewer ? 'none' : 'inline-block';
                 if(attendanceStatusBadge) attendanceStatusBadge.style.display = isViewer ? 'none' : 'inline-block';
                 
@@ -1113,27 +1114,6 @@
         let currentViewingBill = null;
         let currentModalToppings = {};
 
-let isCustomerViewMode = false;
-function toggleCustomerMenuMode() {
-    isCustomerViewMode = !isCustomerViewMode;
-    const billSection = document.querySelector('.bill-section');
-    const btn = document.getElementById('customerModeBtn');
-    if (isCustomerViewMode) {
-        billSection.style.display = 'none';
-        document.querySelector('.menu-section').style.flex = '1';
-        btn.innerText = "🔙 Quay lại POS";
-        btn.style.background = "#e74c3c";
-        alert("Đã chuyển sang CHẾ ĐỘ KHÁCH XEM MENU! Toàn bộ tính năng bán hàng và thu ngân đã được ẩn. Đưa máy cho khách xem thoải mái.");
-    } else {
-        billSection.style.display = 'flex';
-        document.querySelector('.menu-section').style.flex = '2';
-        btn.innerText = "👁️ Chế Độ Khách Xem";
-        btn.style.background = "#009688";
-    }
-    renderMenu();
-}
-
-
         function syncToGoogleSheets(typeData, payload) {
             if (!GOOGLE_SCRIPT_URL) return;
             return fetch(GOOGLE_SCRIPT_URL, {
@@ -1161,7 +1141,6 @@ function toggleCustomerMenuMode() {
                 console.log("Auto fetch menu error:", err);
             }
         }
-
         
         async function fetchShiftClosingFromCloud() {
             try {
@@ -1183,7 +1162,7 @@ function toggleCustomerMenuMode() {
             }
         }
     
-async function fetchHistoryFromCloud() {
+        async function fetchHistoryFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getHistory");
                 const data = await response.json();
@@ -1298,7 +1277,6 @@ async function fetchHistoryFromCloud() {
             const menuGrid = document.getElementById('menuGrid');
             menuGrid.innerHTML = '';
 
-            // Danh mục chỉ xem topping; không đưa topping thành món bán độc lập trong giỏ hàng.
             if (currentCategory === 'Topping') {
                 const normalize = value => removeDiacritics(String(value || '')).toLowerCase();
                 const query = normalize(keyword).trim();
@@ -1646,7 +1624,7 @@ async function fetchHistoryFromCloud() {
             const newOrder = {
                 id: Date.now(),
                 billNo: orderHistory.length + 1,
-                account: currentAccount,
+                account: currentAccount || 'CQ',
                 isoDate: now.toISOString().split('T')[0],
                 time: now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                 fullDateStr: now.toLocaleString('vi-VN'),
@@ -1669,11 +1647,14 @@ async function fetchHistoryFromCloud() {
             const historyList = document.getElementById('historyList');
             const todayRevenueEl = document.getElementById('todayRevenue');
             
-            // Lọc các đơn hàng phát sinh SAU thời điểm kết ca gần nhất (lastShiftResetTime)
-            
             lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
-
+            
+            // Lọc độc lập theo tài khoản: Nhân viên chỉ thấy đơn của chính họ, Chủ quán thấy toàn bộ đơn cửa hàng
+            let currentShiftOrders = orderHistory.filter(o => {
+                if (o.id <= lastShiftResetTime) return false;
+                if (currentAccount === 'CQ') return true;
+                return (o.account || 'CQ') === currentAccount;
+            });
 
             if (currentShiftOrders.length === 0) {
                 historyList.innerHTML = '<p style="color: #999; text-align: center;">Chưa có đơn hàng nào trong ca này</p>';
@@ -1718,16 +1699,18 @@ async function fetchHistoryFromCloud() {
 
         function openShiftReport() {
             if (currentAccount !== 'CQ') {
-                let confirmClose = confirm("⚠️ Bạn có chắc chắn muốn kết thúc ca và xem báo cáo kết ca không?");
+                let confirmClose = confirm("⚠️ Bạn có chắc chắn muốn kết thúc ca và xem báo cáo kết ca của bạn không?");
                 if (!confirmClose) return;
             } else {
                 if (!verifyAdminPin()) return;
             }
             
-            // Lấy danh sách đơn hàng trong ca hiện tại (từ sau lần reset cuối)
-            
             lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+            let currentShiftOrders = orderHistory.filter(o => {
+                if (o.id <= lastShiftResetTime) return false;
+                if (currentAccount === 'CQ') return true;
+                return (o.account || 'CQ') === currentAccount;
+            });
 
             let totalRev = 0;
             currentShiftOrders.forEach(o => totalRev += o.total);
@@ -1740,12 +1723,17 @@ async function fetchHistoryFromCloud() {
         }
 
         function confirmAndResetShift() {
-            if (!confirm("Xác nhận chốt kết ca và làm mới doanh thu ca hiện tại về 0 cho ca tiếp theo?")) return;
+            if (!confirm("Xác nhận chốt kết ca và làm mới doanh thu ca hiện tại về 0 cho tài khoản này?")) return;
             const closedAt = new Date().toLocaleString('vi-VN');
             lastShiftResetTime = Date.now();
-            const shiftOrders = orderHistory.filter(o => o.id > getShiftResetTime() && o.id < lastShiftResetTime);
-            const revenue = shiftOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+            
             const active = getActiveShift();
+            const shiftOrders = orderHistory.filter(o => {
+                const shiftStart = active ? active.id : (getShiftResetTime());
+                return o.id > shiftStart && o.id <= lastShiftResetTime && (currentAccount === 'CQ' || (o.account || 'CQ') === currentAccount);
+            });
+            
+            const revenue = shiftOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
             const record = {
                 id: 'close_' + lastShiftResetTime + '_' + (currentAccount || 'global'),
                 account: currentAccount || 'global',
@@ -1758,7 +1746,7 @@ async function fetchHistoryFromCloud() {
                 revenue,
                 openingCash: Number((active && active.openingCash) ?? localStorage.getItem('kimbling_opening_cash_' + (currentAccount || 'global')) ?? 0) || 0
             };
-            // Khi nhân viên bán hàng xác nhận kết ca, đóng chấm công và bật lại nút Vào Ca.
+
             if (currentAccount !== 'CQ' && active && active.staffId === currentAccount) {
                 const end = new Date();
                 const start = new Date(active.checkInIso || end);
@@ -1776,26 +1764,34 @@ async function fetchHistoryFromCloud() {
                 saveActiveShift(null);
                 syncActiveShiftsToCloud();
             }
+
             const history = getShiftClosingHistory();
             history.push(record);
             localStorage.setItem('kimbling_shift_closing_history_' + (currentAccount || 'global'), JSON.stringify(history));
-            // Keep the existing order-history and Google Sheets sync flows intact.
-            // This extra event is sent as a separate type; the current Apps Script may need a matching handler to store it remotely.
             try { syncToGoogleSheets('shiftClosing', { shiftClosing: record }); } catch (e) { console.log('Shift closing sync unavailable:', e); }
-            localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
-            if (currentAccount) localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
-            else localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
+            
+            // Lưu mốc reset riêng biệt theo tài khoản để không ảnh hưởng chéo doanh thu giữa các nhân viên
+            if (currentAccount) {
+                localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+            } else {
+                localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
+                localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
+            }
+
             document.getElementById('shiftClosingHistoryBox').style.display = 'none';
             updateHistoryUI();
             document.getElementById('shiftReportModal').style.display = 'none';
             updateAttendanceUIState();
-            alert(currentAccount !== 'CQ' && active ? 'Đã kết ca thành công, đã chốt chấm công và bật lại nút Vào Ca.' : 'Đã kết ca và lưu lịch sử trên thiết bị này.');
+            alert(currentAccount !== 'CQ' && active ? 'Đã kết ca thành công, đã chốt chấm công và bật lại nút Vào Ca.' : 'Đã kết ca và lưu lịch sử thành công.');
         }
 
         function printShiftReport() {
-            
             lastShiftResetTime = getShiftResetTime();
-            let currentShiftOrders = orderHistory.filter(o => o.id > lastShiftResetTime);
+            let currentShiftOrders = orderHistory.filter(o => {
+                if (o.id <= lastShiftResetTime) return false;
+                if (currentAccount === 'CQ') return true;
+                return (o.account || 'CQ') === currentAccount;
+            });
 
             let totalRev = 0;
             currentShiftOrders.forEach(o => totalRev += o.total);
@@ -1816,11 +1812,8 @@ async function fetchHistoryFromCloud() {
             setTimeout(() => { window.print(); }, 100);
         }
 
-
-
         async function openAdvancedReport() {
             if (!verifyAdminPin()) return;
-            // Giữ nguyên luồng đồng bộ Google Sheets; nếu mạng lỗi vẫn hiển thị lịch sử trên máy.
             try { await fetchHistoryFromCloud(); } catch (err) { console.log("Report history fetch error:", err); }
             try {
                 const localHistory = JSON.parse(localStorage.getItem('kimbling_history') || '[]');
@@ -1835,7 +1828,6 @@ async function fetchHistoryFromCloud() {
                 orderHistory = Array.from(byId.values());
             } catch (err) { console.log("Report local history error:", err); }
 
-            // Mặc định hiển thị toàn bộ khoảng ngày có trong lịch sử; nếu chưa có đơn thì dùng hôm nay.
             const toLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const dates = (Array.isArray(orderHistory) ? orderHistory : []).map(o => {
                 const raw = String((o && (o.isoDate || o.fullDateStr || o.time)) || '').trim();
@@ -1860,7 +1852,6 @@ async function fetchHistoryFromCloud() {
             let totalRev = 0, count = 0, dishes = {}, toppings = {};
             let filteredOrders = [];
 
-            // Chuẩn hóa ngày về YYYY-MM-DD để so sánh nhất quán, kể cả dữ liệu cũ từ Google Sheets.
             const normalizeReportDate = (value) => {
                 if (value === null || value === undefined || value === '') return '';
                 if (value instanceof Date && !isNaN(value.getTime())) {
@@ -1870,19 +1861,16 @@ async function fetchHistoryFromCloud() {
                 const str = String(value).trim();
                 if (!str) return '';
 
-                // Ngày ISO hoặc chuỗi bắt đầu bằng YYYY-MM-DD.
                 let match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
                 if (match) {
                     return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
                 }
 
-                // Ngày dạng Việt Nam: DD/MM/YYYY hoặc DD-MM-YYYY.
                 match = str.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
                 if (match) {
                     return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
                 }
 
-                // Dự phòng cho định dạng ngày khác do nguồn dữ liệu trả về.
                 const parsed = new Date(str);
                 if (!isNaN(parsed.getTime())) {
                     return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
@@ -1891,7 +1879,6 @@ async function fetchHistoryFromCloud() {
             };
 
             const getOrderReportDate = (order) => {
-                // Ưu tiên ngày hiển thị địa phương nếu có để tránh ngày ISO bị lệch UTC.
                 const localDate = normalizeReportDate(order.fullDateStr);
                 if (localDate) return localDate;
                 return normalizeReportDate(order.isoDate || order.time || '');
@@ -1910,7 +1897,6 @@ async function fetchHistoryFromCloud() {
                 return [];
             };
 
-            // Nguồn báo cáo là hợp nhất lịch sử đang chạy và bản lưu cục bộ; không sửa/xóa dữ liệu Google Sheets.
             let reportOrders = Array.isArray(orderHistory) ? orderHistory.slice() : [];
             try {
                 const localOrders = JSON.parse(localStorage.getItem('kimbling_history') || '[]');
@@ -1966,7 +1952,6 @@ async function fetchHistoryFromCloud() {
             renderList(dishes, 'advTopDishes');
             renderList(toppings, 'advTopToppings');
 
-            // Render danh sách đơn hàng chi tiết.
             const ordersContainer = document.getElementById('advOrdersListContainer');
             ordersContainer.innerHTML = '';
             if (filteredOrders.length === 0) {
@@ -2037,7 +2022,6 @@ async function fetchHistoryFromCloud() {
             renderLiveStaffStatus();
             renderPayrollStaffFilter();
             
-            // Nếu là nhân viên/phục vụ, cố định filter đúng tài khoản của họ
             if (currentAccount !== 'CQ') {
                 const filterEl = document.getElementById('payrollStaffFilter');
                 if (filterEl) {
@@ -2356,18 +2340,19 @@ async function fetchHistoryFromCloud() {
         }
 
         function openOnlineMenu() {
-    let menuUrl = localStorage.getItem('kimbling_online_menu_url');
-    if (!menuUrl) {
-        menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
-        if (menuUrl) {
-            localStorage.setItem('kimbling_online_menu_url', menuUrl);
-        } else {
-            return;
+            let menuUrl = localStorage.getItem('kimbling_online_menu_url');
+            if (!menuUrl) {
+                menuUrl = prompt("Nhập đường dẫn trang web menu online của quán (vd: https://sites.google.com/...):", "https://sites.google.com/");
+                if (menuUrl) {
+                    localStorage.setItem('kimbling_online_menu_url', menuUrl);
+                } else {
+                    return;
+                }
+            }
+            window.open(menuUrl, '_blank');
         }
-    }
-    window.open(menuUrl, '_blank');
-}
-fetchStaffFromCloud();
+
+        fetchStaffFromCloud();
         fetchAttendanceFromCloud();
         fetchMenuFromCloud();
         fetchShiftClosingFromCloud();
@@ -2376,56 +2361,5 @@ fetchStaffFromCloud();
         renderCart();
         updateHistoryUI();
     </script>
-
-    <!-- MODAL XEM TRƯỚC GIAO DIỆN KHÁCH QUÉT -->
-    <div class="modal" id="guestPreviewModal">
-        <div class="modal-content" style="width: 380px; max-height: 85vh; padding: 15px; text-align: center; background: #fdfdfd; border-radius: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
-                <h3 style="color: #009688; margin: 0; font-size: 16px;">📱 Giao Diện Khách Quét QR</h3>
-                <button onclick="closeGuestPreviewModal()" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;">✕ Đóng</button>
-            </div>
-            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Đây là những gì khách hàng nhìn thấy trên điện thoại của họ khi quét mã QR tại quầy:</p>
-            
-            <!-- Khung giả lập màn hình điện thoại -->
-            <div style="border: 4px solid #333; border-radius: 12px; background: #f4f6f9; height: 420px; overflow-y: auto; text-align: left; padding: 10px; box-shadow: inset 0 0 8px rgba(0,0,0,0.1);">
-                <div style="text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #bbb; padding-bottom: 6px;">
-                    <h4 style="font-size: 14px; color: #333; margin: 0;">Kim Bling Coffee & Tea</h4>
-                    <span style="font-size: 10px; color: #e91e63; font-weight: bold;">Menu Trực Quan (Takeaway)</span>
-                </div>
-                <div id="guestPreviewGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
-            </div>
-
-            <div style="margin-top: 12px; font-size: 11px; color: #888;">
-                💡 Khách chỉ có thể xem menu, không thể bấm đặt hàng hay can thiệp vào hệ thống thu ngân.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function openGuestPreviewModal() {
-            const guestGrid = document.getElementById('guestPreviewGrid');
-            guestGrid.innerHTML = '';
-            
-            menu.forEach(item => {
-                let imgTag = '';
-                if (item.imageUrl) {
-                    imgTag = `<div style="width: 100%; height: 75px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 4px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
-                }
-                guestGrid.innerHTML += `
-                    <div style="background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                        ${imgTag}
-                        <h5 style="font-size: 11px; margin-bottom: 4px; color: #333; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</h5>
-                        <p style="color: #d32f2f; font-weight: bold; font-size: 11px; margin: 0;">${formatPrice(item.price)}</p>
-                    </div>
-                `;
-            });
-            document.getElementById('guestPreviewModal').style.display = 'flex';
-        }
-
-        function closeGuestPreviewModal() {
-            document.getElementById('guestPreviewModal').style.display = 'none';
-        }
-    </script>
-
 </body>
 </html>
