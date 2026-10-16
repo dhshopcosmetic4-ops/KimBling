@@ -318,10 +318,14 @@
             
             <div style="margin: 8px 0; background: #f4f6f9; padding: 8px; border-radius: 6px;">
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 3px;">Chọn khoảng ngày xem báo cáo:</label>
-                <div style="display: flex; gap: 6px; align-items: center;">
+                <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px;">
                     <input type="date" id="reportStartDate" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" onchange="calculateAdvancedReport()">
                     <span style="font-size: 13px;">đến</span>
                     <input type="date" id="reportEndDate" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" onchange="calculateAdvancedReport()">
+                </div>
+                <div id="advStaffFilterContainer" style="margin-top: 4px;">
+                    <label style="font-size: 12px; font-weight: bold; color: #555; display: block; margin-bottom: 2px;">Lọc Nhân Viên / Chi Nhánh:</label>
+                    <select id="advStaffFilter" style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" onchange="calculateAdvancedReport()"></select>
                 </div>
             </div>
 
@@ -1871,6 +1875,23 @@ async function fetchHistoryFromCloud() {
             const today = toLocalISO(new Date());
             document.getElementById('reportStartDate').value = dates.length ? dates[0] : today;
             document.getElementById('reportEndDate').value = dates.length ? dates[dates.length - 1] : today;
+
+            // Render danh sách nhân viên cho bộ lọc
+            const advFilterEl = document.getElementById('advStaffFilter');
+            if (advFilterEl) {
+                advFilterEl.innerHTML = '<option value="ALL">-- Tất cả nhân viên / chi nhánh --</option>';
+                staffList.forEach(st => {
+                    advFilterEl.innerHTML += `<option value="${st.id}">${st.name} [${st.id}]</option>`;
+                });
+                // Nếu không phải Chủ Quán, cố định theo tài khoản hiện tại
+                if (currentAccount !== 'CQ') {
+                    advFilterEl.value = currentAccount;
+                    advFilterEl.disabled = true;
+                } else {
+                    advFilterEl.disabled = false;
+                }
+            }
+
             calculateAdvancedReport();
             document.getElementById('advancedReportModal').style.display = 'flex';
         }
@@ -1949,9 +1970,14 @@ async function fetchHistoryFromCloud() {
                 }
             } catch (err) { console.log("Report local fallback error:", err); }
 
+            const selectedStaff = document.getElementById('advStaffFilter') ? document.getElementById('advStaffFilter').value : 'ALL';
+
             reportOrders.forEach(o => {
                 const oDate = getOrderReportDate(o);
-                if (oDate && oDate >= start && oDate <= end) {
+                const orderAccount = o.account || 'CQ';
+                const matchStaff = (selectedStaff === 'ALL') || (orderAccount === selectedStaff);
+
+                if (oDate && oDate >= start && oDate <= end && matchStaff) {
                     totalRev += parseFloat(o.total) || 0;
                     count++;
                     filteredOrders.push(o);
