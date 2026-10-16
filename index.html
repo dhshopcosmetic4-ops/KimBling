@@ -954,9 +954,9 @@
                 if(addDishBtn) addDishBtn.style.display = 'none';
                 if(toppingConfigBtn) toppingConfigBtn.style.display = 'none';
                 
-                // Chỉ nhân viên bán hàng (không phải viewer) dùng chấm công/kết ca.
-                if(attendanceBtn) attendanceBtn.style.display = isViewer ? 'none' : 'inline-block';
-                if(attendanceStatusBadge) attendanceStatusBadge.style.display = isViewer ? 'none' : 'inline-block';
+                // Cho phép CẢ Nhân viên Bán hàng và Phục vụ chấm công/vào ca
+                if(attendanceBtn) attendanceBtn.style.display = 'inline-block';
+                if(attendanceStatusBadge) attendanceStatusBadge.style.display = 'inline-block';
                 
                 if (isViewer) {
                     billSection.style.display = 'none';
@@ -1014,10 +1014,6 @@
                 syncActiveShiftsToCloud();
                 alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
             } else {
-                if (staff.role !== 'viewer') {
-                    openShiftReport();
-                    return;
-                }
                 let checkInDate = new Date(currentActiveShift.checkInIso);
                 let diffMs = now - checkInDate;
                 let hours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
@@ -1036,13 +1032,21 @@
                     date: currentActiveShift.date
                 };
 
-                attendanceList.push(record);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                syncAttendanceToCloud(record);
+                if (staff.role === 'viewer') {
+                    if (!confirm(`Xác nhận TAN CA cho phục vụ ${staff.name}?
+Thời gian làm: ${hours} giờ.
+Lương dự kiến: ${formatPrice(totalPay)}`)) return;
+                    attendanceList.push(record);
+                    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+                    syncAttendanceToCloud(record);
 
-                saveActiveShift(null);
-                syncActiveShiftsToCloud();
-                alert(`Đã TAN CA! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                    saveActiveShift(null);
+                    syncActiveShiftsToCloud();
+                    alert(`Đã TAN CA thành công! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                } else {
+                    openShiftReport();
+                    return;
+                }
             }
             updateAttendanceUIState();
         }
