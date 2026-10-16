@@ -283,7 +283,13 @@
 
     <div class="modal" id="shiftReportModal">
         <div class="modal-content">
-            <h3>Báo Cáo Kết Ca Hiện Tại</h3>
+            <h3>Báo Cáo Kết Ca Hiện Tại - V35</h3>
+            <div style="margin:10px 0;padding:10px;background:#fff8e1;border-radius:6px;">
+                <label for="shiftOpeningCash" style="display:block;font-weight:bold;font-size:14px;">Tiền lẻ đầu ca trong két (VNĐ)</label>
+                <input id="shiftOpeningCash" type="number" min="0" step="1000" placeholder="Ví dụ: 200000" style="width:100%;padding:9px;margin-top:5px;border:1px solid #ddd;border-radius:5px;box-sizing:border-box;">
+                <button style="background:#00897b;color:white;margin-top:6px;" onclick="saveShiftOpeningCash()">💵 Lưu tiền lẻ đầu ca</button>
+                <small id="shiftOpeningCashHint" style="display:block;margin-top:5px;color:#666;">Tiền lẻ đầu ca được tính riêng, không cộng vào doanh thu.</small>
+            </div>
             <div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 15px;">
                 <p style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                     <span>Tổng số đơn trong ca:</span>
@@ -296,8 +302,10 @@
             </div>
             <div class="modal-actions" style="margin-top: 15px;">
                 <button style="background: #ff9800; color: white;" onclick="printShiftReport()">🖨️ In Báo Cáo Kết Ca</button>
+                <button style="background:#6a1b9a;color:white;" onclick="showShiftClosingHistory()">📚 Lịch sử kết ca</button>
                 <button style="background: #2196F3; color: white;" onclick="confirmAndResetShift()">✔️ Xác Nhận Kết Ca (Reset Về 0)</button>
                 <button style="background: #ccc;" onclick="document.getElementById('shiftReportModal').style.display='none'">Đóng</button>
+                <div id="shiftClosingHistoryBox" style="display:none;width:100%;text-align:left;margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -530,6 +538,32 @@
         }
         let lastShiftResetTime = getShiftResetTime();
 
+
+        function getShiftClosingHistory() {
+            try { return JSON.parse(localStorage.getItem('kimbling_shift_closing_history_' + (currentAccount || 'global')) || '[]') || []; }
+            catch (e) { return []; }
+        }
+        function saveShiftOpeningCash() {
+            const input = document.getElementById('shiftOpeningCash');
+            const amount = Number(input && input.value);
+            if (!Number.isFinite(amount) || amount < 0) { alert('Vui lòng nhập số tiền lẻ đầu ca hợp lệ.'); return; }
+            const active = getActiveShift() || {};
+            active.openingCash = Math.round(amount);
+            active.openingCashUpdatedAt = new Date().toISOString();
+            active.staffId = active.staffId || currentAccount;
+            active.staffName = active.staffName || (staffList.find(x => x.id === currentAccount)?.name || currentAccount || 'Chủ quán');
+            localStorage.setItem('kimbling_opening_cash_' + (currentAccount || 'global'), String(Math.round(amount)));
+            if (getActiveShift()) saveActiveShift(active);
+            document.getElementById('shiftOpeningCashHint').innerText = 'Đã lưu tiền lẻ đầu ca: ' + formatPrice(Math.round(amount)) + '. Khoản này không tính vào doanh thu.';
+            alert('Đã lưu tiền lẻ đầu ca.');
+        }
+        function showShiftClosingHistory() {
+            const box = document.getElementById('shiftClosingHistoryBox');
+            const rows = getShiftClosingHistory().slice().reverse();
+            box.style.display = 'block';
+            if (!rows.length) { box.innerHTML = '<p style="color:#777;padding:8px 0;">Chưa có lịch sử kết ca trên thiết bị này.</p>'; return; }
+            box.innerHTML = '<h4 style="margin:8px 0;">Lịch sử kết ca (' + rows.length + ')</h4>' + rows.map(r => `<div style="border:1px solid #ddd;border-radius:6px;padding:8px;margin:6px 0;font-size:13px;"><b>${r.closedAt || ''}</b><br>Nhân viên: ${r.staffName || r.account || ''}<br>Số đơn: ${r.orderCount || 0} · Doanh thu: <b>${formatPrice(Number(r.revenue)||0)}</b><br>Tiền lẻ đầu ca: ${formatPrice(Number(r.openingCash)||0)}<br><small>Mã ca: ${r.id || ''}</small></div>`).join('');
+        }
 
         function getActiveShift() {
             if (!currentAccount) return null;
@@ -813,8 +847,14 @@
             let currentActiveShift = getActiveShift();
 
             if (!currentActiveShift) {
+                const openingInput = prompt('Nhập tiền lẻ thối đầu ca trong két (VNĐ). Nhập 0 nếu không có:', localStorage.getItem('kimbling_opening_cash_' + currentAccount) || '0');
+                if (openingInput === null) return;
+                const openingCash = Number(openingInput);
+                if (!Number.isFinite(openingCash) || openingCash < 0) { alert('Số tiền lẻ đầu ca không hợp lệ. Vui lòng thử lại.'); return; }
+                localStorage.setItem('kimbling_opening_cash_' + currentAccount, String(Math.round(openingCash)));
                 currentActiveShift = {
                     id: Date.now(),
+                    openingCash: Math.round(openingCash),
                     staffId: staff.id,
                     staffName: staff.name,
                     checkInTime: now.toLocaleString('vi-VN'),
@@ -1499,24 +1539,45 @@ function toggleCustomerMenuMode() {
             let totalRev = 0;
             currentShiftOrders.forEach(o => totalRev += o.total);
 
+            document.getElementById('shiftOpeningCash').value = String(Number((getActiveShift() && getActiveShift().openingCash) ?? localStorage.getItem('kimbling_opening_cash_' + (currentAccount || 'global')) ?? 0) || 0);
+            document.getElementById('shiftClosingHistoryBox').style.display = 'none';
             document.getElementById('shiftOrderCount').innerText = currentShiftOrders.length;
             document.getElementById('shiftTotalRevenue').innerText = formatPrice(totalRev);
             document.getElementById('shiftReportModal').style.display = 'flex';
         }
 
         function confirmAndResetShift() {
-            if (confirm("Xác nhận chốt kết ca và làm mới doanh thu màn hình về 0 cho ca tiếp theo?")) {
-                lastShiftResetTime = Date.now();
-                localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
-                if (currentAccount) {
-                    localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
-                } else {
-                    localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
-                }
-                updateHistoryUI();
-                document.getElementById('shiftReportModal').style.display = 'none';
-                alert("Đã kết ca và reset doanh thu ca hiện tại về 0 thành công!");
-            }
+            if (!confirm("Xác nhận chốt kết ca và làm mới doanh thu ca hiện tại về 0 cho ca tiếp theo?")) return;
+            const closedAt = new Date().toLocaleString('vi-VN');
+            lastShiftResetTime = Date.now();
+            const shiftOrders = orderHistory.filter(o => o.id > getShiftResetTime() && o.id < lastShiftResetTime);
+            const revenue = shiftOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+            const active = getActiveShift();
+            const record = {
+                id: 'close_' + lastShiftResetTime + '_' + (currentAccount || 'global'),
+                account: currentAccount || 'global',
+                staffId: active && active.staffId ? active.staffId : currentAccount,
+                staffName: active && active.staffName ? active.staffName : (staffList.find(x => x.id === currentAccount)?.name || currentAccount || 'Chủ quán'),
+                openedAt: active && active.checkInTime ? active.checkInTime : '',
+                closedAt,
+                closingTimestamp: lastShiftResetTime,
+                orderCount: shiftOrders.length,
+                revenue,
+                openingCash: Number((active && active.openingCash) ?? localStorage.getItem('kimbling_opening_cash_' + (currentAccount || 'global')) ?? 0) || 0
+            };
+            const history = getShiftClosingHistory();
+            history.push(record);
+            localStorage.setItem('kimbling_shift_closing_history_' + (currentAccount || 'global'), JSON.stringify(history));
+            // Keep the existing order-history and Google Sheets sync flows intact.
+            // This extra event is sent as a separate type; the current Apps Script may need a matching handler to store it remotely.
+            try { syncToGoogleSheets('shiftClosing', { shiftClosing: record }); } catch (e) { console.log('Shift closing sync unavailable:', e); }
+            localStorage.setItem('kimbling_last_shift_reset_global', lastShiftResetTime);
+            if (currentAccount) localStorage.setItem('kimbling_last_shift_reset_' + currentAccount, lastShiftResetTime);
+            else localStorage.setItem('kimbling_last_shift_reset_CQ', lastShiftResetTime);
+            document.getElementById('shiftClosingHistoryBox').style.display = 'none';
+            updateHistoryUI();
+            document.getElementById('shiftReportModal').style.display = 'none';
+            alert('Đã kết ca và lưu lịch sử trên thiết bị này.');
         }
 
         function printShiftReport() {
