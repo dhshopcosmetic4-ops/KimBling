@@ -1051,7 +1051,12 @@ Lương dự kiến: ${formatPrice(totalPay)}`)) return;
             updateAttendanceUIState();
         }
 
-        if (!currentAccount) {
+        // Ưu tiên kiểm tra nếu có tham số guest trên URL thì ép vào chế độ khách ngay lập tức, không bao giờ đòi PIN hay hiện bảng đăng nhập
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'guest' || urlParams.get('guest') === '1' || urlParams.get('menu') === '1') {
+            checkGuestUrlMode();
+            renderMenu();
+        } else if (!currentAccount) {
             renderStaffSelectOptions();
             document.getElementById('loginModal').style.display = 'flex';
         } else {
@@ -1122,6 +1127,35 @@ Lương dự kiến: ${formatPrice(totalPay)}`)) return;
         let currentModalToppings = {};
 
 let isCustomerViewMode = false;
+
+        // Tự động kích hoạt Chế độ Khách xem menu nếu link chứa ?mode=guest hoặc ?guest=1
+        function checkGuestUrlMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'guest' || urlParams.get('guest') === '1' || urlParams.get('menu') === '1') {
+                isCustomerViewMode = true;
+                const loginMdl = document.getElementById('loginModal');
+                if (loginMdl) loginMdl.style.setProperty('display', 'none', 'important');
+                const billSection = document.querySelector('.bill-section');
+                if (billSection) billSection.style.display = 'none';
+                const menuSection = document.querySelector('.menu-section');
+                if (menuSection) menuSection.style.flex = '1';
+                
+                // Ẩn bớt các nút thao tác không cần thiết cho khách
+                const headerActions = document.querySelector('.menu-header-actions');
+                if (headerActions) {
+                    headerActions.innerHTML = '<span style="font-size:13px; font-weight:bold; color:#009688; background:#e0f2f1; padding:6px 12px; border-radius:20px;">📱 Menu Trực Quan Cho Khách</span>';
+                }
+                const accountBadge = document.getElementById('currentAccountBadge');
+                if (accountBadge) {
+                    accountBadge.innerText = '📱 Chế Độ Khách Xem Menu';
+                    accountBadge.style.background = '#e0f2f1';
+                    accountBadge.style.color = '#006064';
+                }
+                return true;
+            }
+            return false;
+        }
+
 function toggleCustomerMenuMode() {
     isCustomerViewMode = !isCustomerViewMode;
     const billSection = document.querySelector('.bill-section');
@@ -1350,7 +1384,7 @@ async function fetchHistoryFromCloud() {
                 const favClass = isFav ? 'menu-item favorite' : 'menu-item';
 
                 let adminActionBtns = '';
-                if (currentAccount === 'CQ') {
+                if (currentAccount === 'CQ' && !isCustomerViewMode) {
                     adminActionBtns = `
                         <div class="menu-item-btns">
                             <button class="btn-dish-action" onclick="event.stopPropagation(); openEditDishModal(${item.id})" title="Sửa">✏️</button>
@@ -1360,7 +1394,7 @@ async function fetchHistoryFromCloud() {
                 }
 
                 let imgTag = '';
-                if (item.imageUrl) {
+                if (item.imageUrl && item.imageUrl.trim() !== '') {
                     imgTag = `<div style="width: 100%; height: 90px; background: #eee; border-radius: 6px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
                 }
                 menuGrid.innerHTML += `
@@ -1368,12 +1402,12 @@ async function fetchHistoryFromCloud() {
                         <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
                         ${adminActionBtns}
                         ${imgTag}
-                        <h4 style="${item.imageUrl ? 'font-size: 13px;' : 'margin-top: 14px;'}">${item.name}</h4>
+                        <h4 style="${imgTag ? 'font-size: 13px;' : 'margin-top: 14px;'}">${item.name}</h4>
                         <p>${formatPrice(item.price)}</p>
                     </div>
                 `;
             });
-        }
+}
 
         function renderModalToppings() {
             const keyword = document.getElementById('toppingSearchInput').value;
@@ -1425,6 +1459,10 @@ async function fetchHistoryFromCloud() {
         }
 
         function openOptionsModal(id) {
+            if (isCustomerViewMode) {
+                alert("ℹ️ Bạn đang ở Chế Độ Khách Xem Menu. Vui lòng báo nhân viên để gọi món!");
+                return;
+            }
             if (isViewerRole(currentAccount)) {
                 alert("ℹ️ Tài khoản Phục Vụ chỉ có quyền xem menu cho khách, không thể tạo đơn hàng (order)!");
                 return;
