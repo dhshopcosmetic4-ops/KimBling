@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kim Bling Coffee & Tea - Menu Đặt Món Online</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding-bottom: 90px; }
+        header { background: #2196F3; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { font-size: 18px; margin-bottom: 2px; }
+        header p { font-size: 12px; opacity: 0.9; }
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; }
+        .search-box { margin-bottom: 12px; }
+        .search-box input { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px; outline: none; background: #fff; }
+        .search-box input:focus { border-color: #2196F3; box-shadow: 0 0 5px rgba(33,150,243,0.3); }
+        .category-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
+        .category-tabs::-webkit-scrollbar { display: none; }
+        .cat-btn { background: #fff; color: #555; border: 1px solid #ddd; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+        .cat-btn.active { background: #2196F3; color: white; border-color: #2196F3; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .menu-item { background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+        .menu-item h4 { font-size: 14px; color: #222; margin-bottom: 4px; line-height: 1.2; font-weight: 600; }
+        .menu-item .price { color: #d32f2f; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+        .btn-add { background: #e3f2fd; color: #1976D2; border: none; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 12px; width: 100%; cursor: pointer; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
+        .modal-content { background: white; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 16px; box-shadow: 0 -4px 10px rgba(0,0,0,0.15); }
+        .option-group { margin-bottom: 12px; border-top: 1px solid #eee; padding-top: 10px; }
+        .option-group label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 6px; color: #444; }
+        .option-list { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+        .topping-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f9f9f9; }
+        .topping-qty-btn { padding: 2px 8px; background: #eee; border: none; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ddd; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); z-index: 90; max-width: 600px; margin: 0 auto; }
+        .cart-info { font-size: 13px; }
+        .cart-info strong { font-size: 16px; color: #d32f2f; }
+        .btn-view-cart { background: #4CAF50; color: white; border: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .checkout-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 200; padding: 10px; }
+        .checkout-card { background: #fff; width: 100%; max-width: 480px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 16px; }
+        .checkout-item { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
+        .checkout-item-title { font-weight: bold; font-size: 14px; }
+        .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
+        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Kim Bling Coffee & Tea</h1>
+        <p>Đặt hàng trực tuyến - Giao hàng & Cửa hàng tiếp nhận</p>
+    </header>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món (vd: 'ts', 'cà phê', 'trà sữa')..." oninput="renderMenu()">
+        </div>
+
+        <div class="category-tabs">
+            <button class="cat-btn active" onclick="filterCategory('All', this)">📋 Tất cả</button>
+            <button class="cat-btn" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
+            <button class="cat-btn" onclick="filterCategory('MilkTea', this)">🧋 Trà Sữa</button>
+            <button class="cat-btn" onclick="filterCategory('Yogurt', this)">🥛 Sữa Chua</button>
+            <button class="cat-btn" onclick="filterCategory('Food', this)">🍢 Ăn Vặt</button>
+            <button class="cat-btn" onclick="filterCategory('Topping', this)">🧋 Topping</button>
+        </div>
+
+        <div class="menu-grid" id="menuGrid">
+            <p style="text-align: center; grid-column: 1/-1; color: #666; padding: 20px;">Đang tải menu từ Google Sheet...</p>
+        </div>
+    </div>
+
+    <!-- Thanh Giỏ Hàng -->
+    <div class="cart-bar" id="cartBar">
+        <div class="cart-info">
+            Giỏ hàng: <span id="cartCount" style="font-weight: bold;">0 món</span><br>
+            Tổng: <strong id="cartTotal">0k</strong>
+        </div>
+        <button class="btn-view-cart" onclick="openCheckoutModal()">🛒 Xem Giỏ Hàng</button>
+    </div>
+
+    <!-- Modal Chọn Option & Topping -->
+    <div class="modal" id="optionsModal">
+        <div class="modal-content">
+            <h3 id="modalDishName">Tên Món</h3>
+            <div style="color: #d32f2f; font-weight: bold; font-size: 16px; margin-bottom: 10px;" id="modalDishPrice">0k</div>
+
+            <div class="option-group" id="sizeGroupContainer">
+                <label>Chọn Size:</label>
+                <div class="option-list">
+                    <label><input type="radio" name="sizeOption" value="Bình thường" checked onchange="updateModalTotal()"> Size bình thường</label>
+                    <label><input type="radio" name="sizeOption" value="Upsize 1 Lít" onchange="updateModalTotal()"> Upsize 1 Lít (+10k)</label>
+                </div>
+            </div>
+
+            <div class="option-group" id="sugarGroupContainer">
+                <label>Lượng Đường:</label>
+                <div class="option-list">
+                    <label><input type="radio" name="sugarOption" value="100% đường" checked> 100% đường</label>
+                    <label><input type="radio" name="sugarOption" value="70% đường"> 70% đường</label>
+                    <label><input type="radio" name="sugarOption" value="50% đường"> 50% đường</label>
+                    <label><input type="radio" name="sugarOption" value="Không đường"> Không đường</label>
+                </div>
+            </div>
+
+            <div class="option-group" id="iceGroupContainer">
+                <label>Lượng Đá:</label>
+                <div class="option-list">
+                    <label><input type="radio" name="iceOption" value="100% đá" checked> 100% đá</label>
+                    <label><input type="radio" name="iceOption" value="Ít đá"> Ít đá</label>
+                    <label><input type="radio" name="iceOption" value="Không đá"> Không đá</label>
+                </div>
+            </div>
+
+            <div class="option-group">
+                <label id="toppingLabelTitle">Topping chọn thêm:</label>
+                <div class="option-list" id="modalToppingList"></div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button style="flex: 1; padding: 10px; border: none; background: #ccc; border-radius: 8px; font-weight: bold;" onclick="closeOptionsModal()">Hủy</button>
+                <button style="flex: 2; padding: 10px; border: none; background: #2196F3; color: white; border-radius: 8px; font-weight: bold;" onclick="confirmAddToCart()">Thêm vào giỏ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem Giỏ Hàng & Gởi Zalo -->
+    <div class="checkout-modal" id="checkoutModal">
+        <div class="checkout-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px;">
+                <h3 style="font-size: 16px;">Chi Tiết Đơn Hàng</h3>
+                <button onclick="closeCheckoutModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
+            </div>
+
+            <div id="checkoutList" style="max-height: 220px; overflow-y: auto; margin-bottom: 10px;"></div>
+
+            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">Thông tin giao hàng / Ghi chú:</label>
+                <input type="text" id="customerName" placeholder="Tên người nhận (*)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
+                <input type="text" id="customerPhone" placeholder="Số điện thoại (*)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
+                <input type="text" id="customerAddress" placeholder="Địa chỉ giao / Số bàn (nếu có)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
+                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
+                <span>TỔNG TIỀN:</span>
+                <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
+            </div>
+
+            <button class="btn-zalo-submit" onclick="sendOrderToZalo()">
+                📲 GỬI ĐƠN QUA ZALO (0862695269)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
+        const ZALO_PHONE = "0862695269";
+
+        let menu = [];
+        let drinkToppings = [];
+        let snackToppings = [];
+        let cart = [];
+        let selectedProduct = null;
+        let currentModalToppings = {};
+        let currentCategory = 'All';
+
+        function formatPrice(val) { return (val / 1000) + 'k'; }
+        function removeDiacritics(str) {
+            return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+        }
+
+        async function fetchMenuFromCloud() {
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
+                const data = await res.json();
+                if (data && data.menu) {
+                    menu = data.menu;
+                    drinkToppings = data.drinkToppings || [];
+                    snackToppings = data.snackToppings || [];
+                    renderMenu();
+                }
+            } catch (e) {
+                console.error("Lỗi tải menu:", e);
+                document.getElementById('menuGrid').innerHTML = '<p style="text-align:center; color:red;">Không thể kết nối đến máy chủ menu.</p>';
+            }
+        }
+
+        function filterCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMenu();
+        }
+
+        function getCategoryType(itemName, assignedCat) {
+            if (assignedCat && ['MilkTea', 'Coffee', 'Yogurt', 'Food'].includes(assignedCat)) return assignedCat;
+            const n = removeDiacritics(itemName || '');
+            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao')) return 'Coffee';
+            if (n.includes('sua chua')) return 'Yogurt';
+            if (n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('mi ')) return 'Food';
+            return 'MilkTea';
+        }
+
+        function renderMenu() {
+            const kw = removeDiacritics(document.getElementById('searchInput').value.trim());
+            const grid = document.getElementById('menuGrid');
+            grid.innerHTML = '';
+
+            let filtered = menu.filter(item => {
+                const nameNorm = removeDiacritics(item.name);
+                const matchKw = !kw || nameNorm.includes(kw);
+                if (!matchKw) return false;
+                if (currentCategory === 'Topping') return false;
+                if (currentCategory !== 'All') {
+                    return getCategoryType(item.name, item.category) === currentCategory;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #888;">Không tìm thấy món phù hợp</p>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                let imgTag = item.imageUrl ? `<img src="${item.imageUrl}" onerror="this.style.display='none'">` : '';
+                grid.innerHTML += `
+                    <div class="menu-item" onclick="openOptionsModal(${item.id})">
+                        ${imgTag}
+                        <h4>${item.name}</h4>
+                        <div class="price">${formatPrice(item.price)}</div>
+                        <button class="btn-add">+ Thêm món</button>
+                    </div>
+                `;
+            });
+        }
+
+        function openOptionsModal(id) {
+            selectedProduct = menu.find(m => m.id === id);
+            if (!selectedProduct) return;
+            document.getElementById('modalDishName').innerText = selectedProduct.name;
+            
+            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
+            document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
+            document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
+
+            currentModalToppings = {};
+            let availableList = isFood ? snackToppings : drinkToppings;
+            
+            const toppingListEl = document.getElementById('modalToppingList');
+            toppingListEl.innerHTML = '';
+            availableList.forEach(t => {
+                currentModalToppings[t.name] = 0;
+                let safeKey = t.name.replace(/[^a-zA-Z0-9]/g, '_');
+                toppingListEl.innerHTML += `
+                    <div class="topping-item">
+                        <span>${t.name} (+${formatPrice(t.price)})</span>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', -1)">-</button>
+                            <span id="top-qty-${safeKey}" style="font-weight:bold;">0</span>
+                            <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            updateModalTotal();
+            document.getElementById('optionsModal').style.display = 'flex';
+        }
+
+        function changeToppingQty(topName, delta) {
+            if (currentModalToppings[topName] === undefined) currentModalToppings[topName] = 0;
+            currentModalToppings[topName] += delta;
+            if (currentModalToppings[topName] < 0) currentModalToppings[topName] = 0;
+            let safeKey = topName.replace(/[^a-zA-Z0-9]/g, '_');
+            const el = document.getElementById(`top-qty-${safeKey}`);
+            if (el) el.innerText = currentModalToppings[topName];
+            updateModalTotal();
+        }
+
+        function updateModalTotal() {
+            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            let price = selectedProduct.price;
+            if (!isFood) {
+                const size = document.querySelector('input[name="sizeOption"]:checked').value;
+                if (size === 'Upsize 1 Lít') price += 10000;
+            }
+            let availableList = isFood ? snackToppings : drinkToppings;
+            for (let [tName, qty] of Object.entries(currentModalToppings)) {
+                if (qty > 0) {
+                    let found = availableList.find(x => x.name === tName);
+                    if (found) price += found.price * qty;
+                }
+            }
+            document.getElementById('modalDishPrice').innerText = formatPrice(price);
+        }
+
+        function closeOptionsModal() { document.getElementById('optionsModal').style.display = 'none'; }
+
+        function confirmAddToCart() {
+            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            let size = "Bình thường", sugar = "", ice = "";
+            let itemPrice = selectedProduct.price;
+
+            if (!isFood) {
+                size = document.querySelector('input[name="sizeOption"]:checked').value;
+                sugar = document.querySelector('input[name="sugarOption"]:checked').value;
+                ice = document.querySelector('input[name="iceOption"]:checked').value;
+                if (size === 'Upsize 1 Lít') itemPrice += 10000;
+            }
+
+            let toppingsText = [];
+            let availableList = isFood ? snackToppings : drinkToppings;
+
+            for (let [tName, qty] of Object.entries(currentModalToppings)) {
+                if (qty > 0) {
+                    let found = availableList.find(x => x.name === tName);
+                    if (found) {
+                        itemPrice += found.price * qty;
+                        toppingsText.push(qty > 1 ? `${tName} x${qty}` : tName);
+                    }
+                }
+            }
+
+            let opts = isFood ? "" : `${size} | ${sugar}, ${ice}`;
+            if (toppingsText.length > 0) opts += (opts ? " | + " : "+ ") + toppingsText.join(', ');
+            if (!opts) opts = "Mặc định";
+
+            cart.push({
+                name: selectedProduct.name,
+                price: itemPrice,
+                options: opts,
+                qty: 1
+            });
+
+            renderCartBar();
+            closeOptionsModal();
+        }
+
+        function renderCartBar() {
+            let total = 0, count = 0;
+            cart.forEach(i => { total += i.price * i.qty; count += i.qty; });
+            document.getElementById('cartCount').innerText = count + " món";
+            document.getElementById('cartTotal').innerText = formatPrice(total);
+        }
+
+        function openCheckoutModal() {
+            if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
+            const listEl = document.getElementById('checkoutList');
+            listEl.innerHTML = '';
+            let total = 0;
+            cart.forEach((item) => {
+                let sum = item.price * item.qty;
+                total += sum;
+                listEl.innerHTML += `
+                    <div class="checkout-item">
+                        <div>
+                            <div class="checkout-item-title">${item.name} (x${item.qty})</div>
+                            <div class="checkout-item-sub">${item.options}</div>
+                        </div>
+                        <div style="font-weight:bold; color:#d32f2f;">${formatPrice(sum)}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('checkoutTotalAmount').innerText = formatPrice(total);
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+
+        function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+        function sendOrderToZalo() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const addr = document.getElementById('customerAddress').value.trim();
+            const note = document.getElementById('customerNote').value.trim();
+
+            if (!name || !phone) {
+                alert("Vui lòng nhập Tên và Số điện thoại nhận hàng!");
+                return;
+            }
+
+            let msg = `☕ *ĐƠN HÀNG MỚI từ Kim Bling Web Menu*\n`;
+            msg += `👤 *Khách hàng:* ${name}\n`;
+            msg += `📞 *SĐT:* ${phone}\n`;
+            if (addr) msg += `📍 *Địa chỉ/Bàn:* ${addr}\n`;
+            if (note) msg += `📝 *Ghi chú:* ${note}\n`;
+            msg += `----------------------------\n`;
+
+            let total = 0;
+            cart.forEach((item, index) => {
+                let subTotal = item.price * item.qty;
+                total += subTotal;
+                msg += `${index + 1}. *${item.name}* (x${item.qty}) - ${formatPrice(subTotal)}\n`;
+                msg += `   └ ${item.options}\n`;
+            });
+
+            msg += `----------------------------\n`;
+            msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}\n`;
+            msg += `⏰ *Thời gian đặt:* ${new Date().toLocaleString('vi-VN')}`;
+
+            const zaloUrl = `https://zalo.me/${ZALO_PHONE}?text=` + encodeURIComponent(msg);
+            window.open(zaloUrl, '_blank');
+        }
+
+        fetchMenuFromCloud();
+    </script>
+</body>
+</html>
