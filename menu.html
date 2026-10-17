@@ -196,7 +196,6 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
 
-        // THÔNG TIN BOT TELEGRAM CỦA KIM BLING COFFEE & TEA
         const TELEGRAM_BOT_TOKEN = "8862119099:AAET55aVccjf7WJFzS3q0YiHiS7uJVUs6HE";
         const TELEGRAM_CHAT_ID = "8945209824";
 
@@ -477,6 +476,8 @@
             document.getElementById('checkoutModal').style.display = 'flex';
 
             document.getElementById('btnSubmitOrder').style.display = 'block';
+            document.getElementById('btnSubmitOrder').innerText = "🚀 BẤM ĐẶT HÀNG NGAY\n(Gửi thông báo tức thì đến quán)";
+            document.getElementById('btnSubmitOrder').disabled = false;
             document.getElementById('successNotify').style.display = 'none';
             document.getElementById('btnZaloOptional').style.display = 'none';
 
@@ -531,8 +532,8 @@
             return msg;
         }
 
-        // TÍNH NĂNG TỰ ĐỘNG BÁO CHUÔNG VỀ TELEGRAM CHỦ QUÁN
-        async function processOrderSubmit() {
+        // SỬA LỖI GỬI NGẦM VÀ LẬP TỨC REFRESH GIAO DIỆN
+        function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -540,35 +541,25 @@
             btnSubmit.innerText = "⏳ Đang gửi đơn...";
             btnSubmit.disabled = true;
 
-            // Copy sẵn nội dung đơn hàng phòng trường hợp khách muốn mở Zalo dán
+            // Copy sẵn nội dung đề phòng khách cần
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(msg).catch(e => console.log(e));
             }
 
-            try {
-                // Gửi đơn hàng tự động về Telegram Bot của chủ quán
-                const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-                await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: msg,
-                        parse_mode: 'Markdown'
-                    })
-                });
-            } catch (e) {
-                console.log("Lỗi gửi Telegram:", e);
-            }
+            // Gửi ngầm sang Telegram bằng Image (bỏ qua CORS hoàn toàn 100%)
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
+            const img = new Image();
+            img.src = url;
 
-            // Cập nhật giao diện sau khi gửi thành công
-            btnSubmit.style.display = 'none';
-            document.getElementById('successNotify').style.display = 'block';
-            document.getElementById('btnZaloOptional').style.display = 'block';
+            // Lập tức hiển thị thành công và reset giỏ hàng ngay lập tức
+            setTimeout(() => {
+                btnSubmit.style.display = 'none';
+                document.getElementById('successNotify').style.display = 'block';
+                document.getElementById('btnZaloOptional').style.display = 'block';
 
-            // Reset giỏ hàng
-            cart = [];
-            renderCartBar();
+                cart = [];
+                renderCartBar();
+            }, 600);
         }
 
         function openZaloChatManual() {
