@@ -486,6 +486,7 @@
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
+        // ĐÃ SẮP XẾP LẠI: ĐƯA LINK THANH TOÁN LÊN ĐẦU TIÊN ĐỂ ZALO KHÔNG BAO GIỜ BỊ CẮT CỤT URL
         function generateOrderMessage() {
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
@@ -498,18 +499,27 @@
                 return null;
             }
 
-            let msg = `☕ *ĐƠN HÀNG MỚI từ Kim Bling Web Menu*\n`;
-            msg += `👤 *Khách hàng:* ${name}\n`;
-            msg += `📞 *SĐT:* ${phone}\n`;
-            if (addr) msg += `📍 *Địa chỉ/Bàn:* ${addr}\n`;
+            let total = 0;
+            cart.forEach((item) => { total += item.price * item.qty; });
+
+            let msg = `☕ *ĐƠN HÀNG MỚI - KIM BLING*\n`;
+
+            // Nếu khách chọn chuyển khoản, đưa link 1-chạm lên ngay trên cùng để không bị trôi
+            if (payMethod === 'Chuyển khoản') {
+                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+                let autoPayUrl = `https://pay.vietqr.io/v2/pay?bank=${BANK_CODE}&account=${ACCOUNT_NO}&amount=${total}&memo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                msg += `💳 *LINK CK 1-CHẠM (${formatPrice(total)}):*\n${autoPayUrl}\n`;
+                msg += `----------------------------\n`;
+            }
+
+            msg += `👤 *Khách:* ${name} - 📞 ${phone}\n`;
+            if (addr) msg += `📍 *Đ/c:* ${addr}\n`;
             if (note) msg += `📝 *Ghi chú:* ${note}\n`;
-            msg += `💳 *Thanh toán:* ${payMethod}\n`;
+            msg += `💵 *TT:* ${payMethod}\n`;
             msg += `----------------------------\n`;
 
-            let total = 0;
             cart.forEach((item, index) => {
                 let subTotal = item.price * item.qty;
-                total += subTotal;
                 msg += `${index + 1}. *${item.name}* (x${item.qty}) - ${formatPrice(subTotal)}\n`;
                 if(item.options && item.options !== "Mặc định") {
                     msg += `   └ ${item.options}\n`;
@@ -517,22 +527,10 @@
             });
 
             msg += `----------------------------\n`;
-            msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}\n`;
-
-            if (payMethod === 'Chuyển khoản') {
-                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
-                let autoPayUrl = `https://pay.vietqr.io/v2/pay?bank=${BANK_CODE}&account=${ACCOUNT_NO}&amount=${total}&memo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-                
-                msg += `----------------------------\n`;
-                msg += `📲 *LINK BẤM MỞ APP NGÂN HÀNG CHUYỂN KHOẢN TỰ ĐỘNG (${formatPrice(total)}):*\n`;
-                msg += `${autoPayUrl}\n`;
-            }
-
-            msg += `⏰ *Thời gian đặt:* ${new Date().toLocaleString('vi-VN')}`;
+            msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}`;
             return msg;
         }
 
-        // SỬA LỖI GỬI NGẦM VÀ LẬP TỨC REFRESH GIAO DIỆN
         function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
@@ -541,17 +539,15 @@
             btnSubmit.innerText = "⏳ Đang gửi đơn...";
             btnSubmit.disabled = true;
 
-            // Copy sẵn nội dung đề phòng khách cần
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(msg).catch(e => console.log(e));
             }
 
-            // Gửi ngầm sang Telegram bằng Image (bỏ qua CORS hoàn toàn 100%)
+            // Gửi ngầm sang Telegram để chuông réo inh ỏi ở máy quán
             const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
             const img = new Image();
             img.src = url;
 
-            // Lập tức hiển thị thành công và reset giỏ hàng ngay lập tức
             setTimeout(() => {
                 btnSubmit.style.display = 'none';
                 document.getElementById('successNotify').style.display = 'block';
