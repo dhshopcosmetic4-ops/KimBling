@@ -933,10 +933,15 @@
             });
         }
 
-        function verifyAdminPin() {
+       function verifyAdminPin() {
+    // Nếu đã đăng nhập Chủ Quán thì cho phép thực hiện ngay, không bắt nhập PIN phụ
     if (currentAccount === 'CQ') return true;
+    
     let pin = prompt("Nhập mã PIN chủ quán:", "");
-    if (pin !== adminPin) {
+    if (pin === null) return false;
+    
+    // So sánh chuẩn kiểu chuỗi (String) để tránh lỗi số vs chuỗi
+    if (String(pin).trim() !== String(adminPin).trim()) {
         alert("Mã PIN không đúng!");
         return false;
     }
