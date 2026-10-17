@@ -44,11 +44,9 @@
         
         .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
         
-        /* Giao diện chọn Ngân hàng mở App 1-chạm */
-        .transfer-box { background: #f0f7ff; border: 1.5px solid #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
-        .bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
-        .bank-btn { background: #fff; border: 1px solid #0288d1; border-radius: 6px; padding: 6px; font-size: 11px; font-weight: bold; color: #0288d1; cursor: pointer; text-align: center; }
-        .bank-btn:active { background: #0288d1; color: #fff; }
+        .transfer-box { background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
+        .transfer-box img { width: 130px; height: 130px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 4px 0; }
+        .btn-share-qr { background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 6px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 6px; }
 
         .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; line-height: 1.2; }
@@ -153,28 +151,23 @@
                 <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
             </div>
 
-            <!-- HÌNH THỨC THANH TOÁN -->
+            <!-- HÌNH THỨC THANH TOÁN KÈM NÚT CHIA SẺ ẢNH MÃ QR -->
             <div class="payment-method-box">
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px;">
                     <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Tiền mặt" checked onchange="updatePaymentUI()"> 💵 Tiền mặt</label>
-                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản (1-Chạm)</label>
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản QR</label>
                 </div>
 
-                <!-- Danh sách Ngân hàng mở App tự động không cần copy -->
                 <div class="transfer-box" id="transferBox">
-                    <span style="font-size: 12px; font-weight: bold; color: #0288d1;">Chạm đúng App Ngân hàng của bạn để mở thanh toán:</span>
-                    <div class="bank-grid">
-                        <button class="bank-btn" onclick="openBankApp('vcb')">Vietcombank</button>
-                        <button class="bank-btn" onclick="openBankApp('mb')">MB Bank</button>
-                        <button class="bank-btn" onclick="openBankApp('tcb')">Techcombank</button>
-                        <button class="bank-btn" onclick="openBankApp('bidv')">BIDV</button>
-                        <button class="bank-btn" onclick="openBankApp('icb')">VietinBank</button>
-                        <button class="bank-btn" onclick="openBankApp('acb')">ACB</button>
-                        <button class="bank-btn" onclick="openBankApp('vba')">Agribank</button>
-                        <button class="bank-btn" onclick="openBankApp('vpb')">VPBank</button>
-                        <button class="bank-btn" onclick="openBankApp('tpb')">TPBank</button>
+                    <div style="font-weight: bold; color: #0288d1; font-size: 12px;">Techcombank: 19076231479012 - LE MINH DUNG</div>
+                    <div>
+                        <img id="vietQRImage" src="" alt="Mã QR Chuyển Khoản">
                     </div>
+                    <!-- NÚT CHIA SẺ ẢNH MÃ QR SANG ZALO -->
+                    <button class="btn-share-qr" onclick="shareQRToZalo()">
+                        📤 GỬI ẢNH MÃ QR QUA ZALO
+                    </button>
                 </div>
             </div>
 
@@ -197,8 +190,9 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
 
-        const BANK_ACCOUNT_NO = "19076231479012";
-        const BANK_ACCOUNT_NAME = "LE MINH DUNG";
+        const BANK_ID = "TCB";
+        const ACCOUNT_NO = "19076231479012";
+        const ACCOUNT_NAME = "LE MINH DUNG";
 
         let menu = [];
         let drinkToppings = [];
@@ -436,23 +430,46 @@
             const method = document.querySelector('input[name="payMethod"]:checked').value;
             const transferBox = document.getElementById('transferBox');
             const totalAmount = calculateCartTotal();
+            const phone = document.getElementById('customerPhone').value.trim();
 
             if (method === 'Chuyển khoản' && totalAmount > 0) {
+                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+                let qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                
+                document.getElementById('vietQRImage').src = qrUrl;
                 transferBox.style.display = 'block';
             } else {
                 transferBox.style.display = 'none';
             }
         }
 
-        // Mở ứng dụng ngân hàng cụ thể theo lựa chọn của khách (App-to-App 1 chạm)
-        function openBankApp(appCode) {
-            const totalAmount = calculateCartTotal();
-            const phone = document.getElementById('customerPhone').value.trim();
-            let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+        // TÍNH NĂNG CHIA SẺ FILE ẢNH MÃ QR TRỰC TIẾP SANG APPS / ZALO
+        async function shareQRToZalo() {
+            const imgEl = document.getElementById('vietQRImage');
+            if (!imgEl.src) return;
 
-            // Cú pháp Deeplink chính xác truyền mã App
-            let payUrl = `https://dl.vietqr.io/pay?app=${appCode}&ba=${BANK_ACCOUNT_NO}@TCB&am=${totalAmount}&tn=${encodeURIComponent(syntax)}&bn=${encodeURIComponent(BANK_ACCOUNT_NAME)}`;
-            window.location.href = payUrl;
+            try {
+                const response = await fetch(imgEl.src);
+                const blob = await response.blob();
+                const file = new File([blob], 'Ma_QR_KimBling.png', { type: 'image/png' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Mã QR Thanh toán Kim Bling',
+                        text: 'Mã QR chuyển khoản cho đơn hàng Kim Bling Coffee & Tea',
+                        files: [file]
+                    });
+                } else {
+                    // Nếu trình duyệt cũ không hỗ trợ Native Share thì tải ảnh về máy
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'Ma_QR_KimBling.png';
+                    a.click();
+                    alert("Đã tải Mã QR về máy! Bạn có thể đính kèm ảnh này gửi qua Zalo.");
+                }
+            } catch (err) {
+                alert("Hãy giữ tay vào ảnh Mã QR 2 giây để Lưu/Chia sẻ qua Zalo.");
+            }
         }
 
         function openCheckoutModal() {
