@@ -186,7 +186,7 @@
             <div class="grid grid-cols-2 gap-2 w-full">
                 <button id="copy-amount-btn" class="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1.5 transition">
                     <i class="fa-regular fa-copy"></i>
-                    <span>Coppy số tiền</span>
+                    <span>Copy số tiền</span>
                 </button>
                 <a id="download-qr-btn" href="#" target="_blank" download="QR_Thanh_Toan.png" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1.5 transition text-center">
                     <i class="fa-solid fa-download"></i>
@@ -219,9 +219,9 @@
                 <div>
                     <label class="block text-gray-400 mb-1 font-medium">Ngân Hàng (Mã/Tên)</label>
                     <select id="cfg-bank-id" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+                        <option value="TCB">Techcombank</option>
                         <option value="MB">MBBank (Ngân Hàng Quân Đội)</option>
                         <option value="VCB">Vietcombank</option>
-                        <option value="TCB">Techcombank</option>
                         <option value="ACB">ACB</option>
                         <option value="VPB">VPBank</option>
                         <option value="ICB">VietinBank</option>
@@ -270,12 +270,12 @@
 
     <!-- JavaScript Xử Lý Logic Máy Tính & VietQR -->
     <script>
-        // --- CẤU HÌNH MẶC ĐỊNH & THÔNG TIN ---
+        // --- CẤU HÌNH MẶC ĐỊNH MỚI (Kim Bling Coffee & Tea) ---
         const DEFAULT_CONFIG = {
-            shopName: 'Cửa Hàng Của Tôi',
-            bankId: 'MB',
-            accountNo: '0987654321',
-            accountName: 'NGUYEN VAN A',
+            shopName: 'Kim Bling Coffee & Tea',
+            bankId: 'TCB',
+            accountNo: '19076231479012',
+            accountName: 'LE MINH DUNG',
             memo: 'Thanh toan bill'
         };
 
@@ -310,6 +310,9 @@
                 } catch (e) {
                     currentConfig = { ...DEFAULT_CONFIG };
                 }
+            } else {
+                // Nếu chưa có trong localStorage thì lưu sẵn cấu hình mặc định này luôn
+                localStorage.setItem('vietqr_calc_config', JSON.stringify(DEFAULT_CONFIG));
             }
             document.getElementById('shop-name-display').textContent = currentConfig.shopName || 'Chưa cài đặt quán';
         }
@@ -331,7 +334,7 @@
 
         function populateConfigForm() {
             document.getElementById('cfg-shop-name').value = currentConfig.shopName || '';
-            document.getElementById('cfg-bank-id').value = currentConfig.bankId || 'MB';
+            document.getElementById('cfg-bank-id').value = currentConfig.bankId || 'TCB';
             document.getElementById('cfg-acc-no').value = currentConfig.accountNo || '';
             document.getElementById('cfg-acc-name').value = currentConfig.accountName || '';
             document.getElementById('cfg-memo').value = currentConfig.memo || '';
@@ -512,7 +515,6 @@
             document.getElementById('qr-memo').textContent = currentConfig.memo;
 
             // Xây dựng VietQR URL bằng API compact2
-            // Format: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-compact2.png?amount=<AMOUNT>&addInfo=<MEMO>&accountName=<NAME>
             const bankId = encodeURIComponent(currentConfig.bankId);
             const accNo = encodeURIComponent(currentConfig.accountNo);
             const amount = totalAmount;
@@ -629,11 +631,10 @@
             // Submit Form Cấu Hình
             document.getElementById('config-form').addEventListener('submit', saveConfig);
 
-            // Coppy Số Tiền
+            // Copy Số Tiền
             document.getElementById('copy-amount-btn').addEventListener('click', () => {
                 const amountStr = getCurrentTotal().toString();
                 
-                // Dùng textarea fallback để đảm bảo hoạt động cả trên iframe
                 const el = document.createElement('textarea');
                 el.value = amountStr;
                 document.body.appendChild(el);
@@ -649,7 +650,7 @@
 
             // Hỗ trợ nhập phím Bàn Phím Cứng (Numpad / Keyboard)
             document.addEventListener('keydown', (e) => {
-                if (!configModal.classList.contains('hidden')) return; // Đang mở cài đặt thì ko bắt phím máy tính
+                if (!configModal.classList.contains('hidden')) return;
 
                 if (e.key >= '0' && e.key <= '9') handleNumber(e.key);
                 if (e.key === '+') handleOperator('+');
