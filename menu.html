@@ -44,9 +44,11 @@
         
         .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
         
-        .transfer-box { background: #e8f4fd; border: 1.5px solid #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
-        .btn-auto-pay { width: 100%; background: #0288d1; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; gap: 6px; }
-        .transfer-sub-info { font-size: 11px; color: #555; background: #fff; padding: 6px; border-radius: 4px; text-align: left; border: 1px solid #e0e0e0; }
+        /* Giao diện chọn Ngân hàng mở App 1-chạm */
+        .transfer-box { background: #f0f7ff; border: 1.5px solid #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
+        .bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+        .bank-btn { background: #fff; border: 1px solid #0288d1; border-radius: 6px; padding: 6px; font-size: 11px; font-weight: bold; color: #0288d1; cursor: pointer; text-align: center; }
+        .bank-btn:active { background: #0288d1; color: #fff; }
 
         .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; line-height: 1.2; }
@@ -151,22 +153,27 @@
                 <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
             </div>
 
-            <!-- HÌNH THỨC THANH TOÁN TỰ ĐỘNG CHUYỂN TIỀN 1-BẤM -->
+            <!-- HÌNH THỨC THANH TOÁN -->
             <div class="payment-method-box">
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px;">
                     <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Tiền mặt" checked onchange="updatePaymentUI()"> 💵 Tiền mặt</label>
-                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản Tự Động</label>
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản (1-Chạm)</label>
                 </div>
 
+                <!-- Danh sách Ngân hàng mở App tự động không cần copy -->
                 <div class="transfer-box" id="transferBox">
-                    <button class="btn-auto-pay" onclick="openAutoPayApp()">
-                        📲 MỞ APP NGÂN HÀNG CHUYỂN TIỀN TỰ ĐỘNG
-                    </button>
-
-                    <div class="transfer-sub-info">
-                        🏦 Techcombank: <strong>19076231479012</strong> - LE MINH DUNG<br>
-                        💰 Số tiền: <strong id="autoAmountText" style="color:#d32f2f;">0đ</strong> | Nội dung: <strong id="autoSyntaxText" style="color:#0288d1;">...</strong>
+                    <span style="font-size: 12px; font-weight: bold; color: #0288d1;">Chạm đúng App Ngân hàng của bạn để mở thanh toán:</span>
+                    <div class="bank-grid">
+                        <button class="bank-btn" onclick="openBankApp('vcb')">Vietcombank</button>
+                        <button class="bank-btn" onclick="openBankApp('mb')">MB Bank</button>
+                        <button class="bank-btn" onclick="openBankApp('tcb')">Techcombank</button>
+                        <button class="bank-btn" onclick="openBankApp('bidv')">BIDV</button>
+                        <button class="bank-btn" onclick="openBankApp('icb')">VietinBank</button>
+                        <button class="bank-btn" onclick="openBankApp('acb')">ACB</button>
+                        <button class="bank-btn" onclick="openBankApp('vba')">Agribank</button>
+                        <button class="bank-btn" onclick="openBankApp('vpb')">VPBank</button>
+                        <button class="bank-btn" onclick="openBankApp('tpb')">TPBank</button>
                     </div>
                 </div>
             </div>
@@ -190,9 +197,8 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
 
-        const BANK_ID = "TCB";
-        const ACCOUNT_NO = "19076231479012";
-        const ACCOUNT_NAME = "LE MINH DUNG";
+        const BANK_ACCOUNT_NO = "19076231479012";
+        const BANK_ACCOUNT_NAME = "LE MINH DUNG";
 
         let menu = [];
         let drinkToppings = [];
@@ -430,24 +436,22 @@
             const method = document.querySelector('input[name="payMethod"]:checked').value;
             const transferBox = document.getElementById('transferBox');
             const totalAmount = calculateCartTotal();
-            const phone = document.getElementById('customerPhone').value.trim();
 
             if (method === 'Chuyển khoản' && totalAmount > 0) {
-                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
-                document.getElementById('autoAmountText').innerText = totalAmount.toLocaleString('vi-VN') + 'đ';
-                document.getElementById('autoSyntaxText').innerText = syntax;
                 transferBox.style.display = 'block';
             } else {
                 transferBox.style.display = 'none';
             }
         }
 
-        function openAutoPayApp() {
+        // Mở ứng dụng ngân hàng cụ thể theo lựa chọn của khách (App-to-App 1 chạm)
+        function openBankApp(appCode) {
             const totalAmount = calculateCartTotal();
             const phone = document.getElementById('customerPhone').value.trim();
             let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
 
-            let payUrl = `https://dl.vietqr.io/pay?app=&ba=${BANK_ID}&acc=${ACCOUNT_NO}&am=${totalAmount}&tn=${encodeURIComponent(syntax)}`;
+            // Cú pháp Deeplink chính xác truyền mã App
+            let payUrl = `https://dl.vietqr.io/pay?app=${appCode}&ba=${BANK_ACCOUNT_NO}@TCB&am=${totalAmount}&tn=${encodeURIComponent(syntax)}&bn=${encodeURIComponent(BANK_ACCOUNT_NAME)}`;
             window.location.href = payUrl;
         }
 
