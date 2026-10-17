@@ -45,13 +45,12 @@
         .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
         
         .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
-        
         .transfer-box { background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
         .transfer-box img { width: 130px; height: 130px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 4px 0; }
-        .qr-hint-text { font-size: 11px; color: #555; margin-top: 4px; line-height: 1.3; }
 
-        .btn-cash-zalo { width: 100%; background: #0068ff; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-qr-zalo { width: 100%; background: #0068ff; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; }
+        .btn-submit-order { width: 100%; background: #28a745; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-zalo-optional { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; display: none; }
+        .success-notify { display: none; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -135,7 +134,7 @@
         </div>
     </div>
 
-    <!-- Modal Xem Giỏ Hàng & Gởi Zalo -->
+    <!-- Modal Xem Giỏ Hàng & Gởi Zalo / Telegram -->
     <div class="checkout-modal" id="checkoutModal">
         <div class="checkout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
@@ -158,7 +157,7 @@
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px;">
                     <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Tiền mặt" checked onchange="updatePaymentUI()"> 💵 Tiền mặt</label>
-                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản QR</label>
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản (1-Chạm)</label>
                 </div>
 
                 <div class="transfer-box" id="transferBox">
@@ -166,7 +165,6 @@
                     <div>
                         <img id="vietQRImage" src="" alt="Mã QR Chuyển Khoản">
                     </div>
-                    <div class="qr-hint-text">✨ <i>Khi bấm gửi Zalo bên dưới, tin nhắn sẽ kèm sẵn link thanh toán chuẩn tự điền đúng số tiền!</i></div>
                 </div>
             </div>
 
@@ -175,16 +173,21 @@
                 <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
             </div>
 
-            <!-- NÚT GỬI TIỀN MẶT -->
-            <button class="btn-cash-zalo" id="btnCashZalo" onclick="redirectToZaloChat()">
-                📲 GỬI ĐƠN ĐẾN ZALO CHỦ QUÁN (0862695269)<br>
-                <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Tự động copy đơn, bạn bấm dán vào chat Zalo)</span>
+            <!-- NÚT XÁC NHẬN ĐẶT HÀNG GỬI NGẦM VỀ TELEGRAM -->
+            <button class="btn-submit-order" id="btnSubmitOrder" onclick="processOrderSubmit()">
+                🚀 BẤM ĐẶT HÀNG NGAY<br>
+                <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Gửi thông báo tức thì đến quán)</span>
             </button>
 
-            <!-- NÚT GỬI CHUYỂN KHOẢN KÈM LINK TỰ ĐIỀN ĐÚNG SỐ TIỀN -->
-            <button class="btn-qr-zalo" id="btnQrZalo" onclick="redirectToZaloChat()">
-                📲 MỞ CHAT ZALO GỬI ĐƠN & LINK CHUYỂN TIỀN<br>
-                <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Đã đính kèm Link thanh toán tự điền đúng số tiền)</span>
+            <!-- KHUNG BÁO ĐẶT HÀNG THÀNH CÔNG -->
+            <div class="success-notify" id="successNotify">
+                ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!<br>
+                <span style="font-size: 11px; font-weight: normal;">Quán đã nhận được đơn và đang xử lý món cho bạn.</span>
+            </div>
+
+            <!-- NÚT TÙY CHỌN GỬI THÊM QUA ZALO KHÔNG BẮT BUỘC -->
+            <button class="btn-zalo-optional" id="btnZaloOptional" onclick="openZaloChatManual()">
+                📲 Mở khung Chat Zalo gửi đơn cho quán (Nếu muốn)
             </button>
         </div>
     </div>
@@ -193,7 +196,12 @@
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
 
+        // THÔNG TIN BOT TELEGRAM CỦA KIM BLING COFFEE & TEA
+        const TELEGRAM_BOT_TOKEN = "8862119099:AAET55aVccjf7WJFzS3q0YiHiS7uJVUs6HE";
+        const TELEGRAM_CHAT_ID = "8945209824";
+
         const BANK_ID = "TCB";
+        const BANK_CODE = "970407";
         const ACCOUNT_NO = "19076231479012";
         const ACCOUNT_NAME = "LE MINH DUNG";
 
@@ -432,8 +440,6 @@
         function updatePaymentUI() {
             const method = document.querySelector('input[name="payMethod"]:checked').value;
             const transferBox = document.getElementById('transferBox');
-            const btnCash = document.getElementById('btnCashZalo');
-            const btnQr = document.getElementById('btnQrZalo');
             const totalAmount = calculateCartTotal();
             const phone = document.getElementById('customerPhone').value.trim();
 
@@ -444,12 +450,8 @@
                     document.getElementById('vietQRImage').src = qrUrl;
                 }
                 transferBox.style.display = 'block';
-                btnCash.style.display = 'none';
-                btnQr.style.display = 'block';
             } else {
                 transferBox.style.display = 'none';
-                btnCash.style.display = 'block';
-                btnQr.style.display = 'none';
             }
         }
 
@@ -473,6 +475,10 @@
             });
             document.getElementById('checkoutTotalAmount').innerText = formatPrice(total);
             document.getElementById('checkoutModal').style.display = 'flex';
+
+            document.getElementById('btnSubmitOrder').style.display = 'block';
+            document.getElementById('successNotify').style.display = 'none';
+            document.getElementById('btnZaloOptional').style.display = 'none';
 
             updatePaymentUI();
         }
@@ -512,13 +518,12 @@
             msg += `----------------------------\n`;
             msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}\n`;
 
-            // LINK THANH TOÁN CHUẨN TRỰC TIẾP TỪ CỔNG VIETQR (KHÔNG BAO GIỜ BỊ NOT FOUND)
             if (payMethod === 'Chuyển khoản') {
                 let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
-                let autoPayUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                let autoPayUrl = `https://pay.vietqr.io/v2/pay?bank=${BANK_CODE}&account=${ACCOUNT_NO}&amount=${total}&memo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
                 
                 msg += `----------------------------\n`;
-                msg += `📲 *XEM MÃ QR CHUYỂN KHOẢN TỰ ĐIỀN ĐÚNG (${formatPrice(total)}):*\n`;
+                msg += `📲 *LINK BẤM MỞ APP NGÂN HÀNG CHUYỂN KHOẢN TỰ ĐỘNG (${formatPrice(total)}):*\n`;
                 msg += `${autoPayUrl}\n`;
             }
 
@@ -526,19 +531,48 @@
             return msg;
         }
 
-        function redirectToZaloChat() {
+        // TÍNH NĂNG TỰ ĐỘNG BÁO CHUÔNG VỀ TELEGRAM CHỦ QUÁN
+        async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+            btnSubmit.innerText = "⏳ Đang gửi đơn...";
+            btnSubmit.disabled = true;
+
+            // Copy sẵn nội dung đơn hàng phòng trường hợp khách muốn mở Zalo dán
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(msg).then(() => {
-                    window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
-                }).catch(() => {
-                    window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
-                });
-            } else {
-                window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
+                navigator.clipboard.writeText(msg).catch(e => console.log(e));
             }
+
+            try {
+                // Gửi đơn hàng tự động về Telegram Bot của chủ quán
+                const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: msg,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            } catch (e) {
+                console.log("Lỗi gửi Telegram:", e);
+            }
+
+            // Cập nhật giao diện sau khi gửi thành công
+            btnSubmit.style.display = 'none';
+            document.getElementById('successNotify').style.display = 'block';
+            document.getElementById('btnZaloOptional').style.display = 'block';
+
+            // Reset giỏ hàng
+            cart = [];
+            renderCartBar();
+        }
+
+        function openZaloChatManual() {
+            window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
         fetchMenuFromCloud();
