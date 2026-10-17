@@ -14,10 +14,12 @@
         .search-box { margin-bottom: 12px; }
         .search-box input { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px; outline: none; background: #fff; }
         .search-box input:focus { border-color: #2196F3; box-shadow: 0 0 5px rgba(33,150,243,0.3); }
-        .category-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
-        .category-tabs::-webkit-scrollbar { display: none; }
-        .cat-btn { background: #fff; color: #555; border: 1px solid #ddd; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+        
+        /* Danh mục hiển thị đầy đủ (dạng lưới) */
+        .category-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+        .cat-btn { background: #fff; color: #555; border: 1px solid #ddd; padding: 8px 6px; border-radius: 8px; font-size: 12px; font-weight: bold; text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cat-btn.active { background: #2196F3; color: white; border-color: #2196F3; }
+
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
         .menu-item { background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
         .menu-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
@@ -40,7 +42,10 @@
         .checkout-item { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
         .checkout-item-title { font-weight: bold; font-size: 14px; }
         .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
-        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        
+        /* Nút Sao chép ở trên, Nút Zalo ở dưới */
+        .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
@@ -52,7 +57,7 @@
 
     <div class="container">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món (vd: 'ts', 'cà phê', 'trà sữa')..." oninput="renderMenu()">
+            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món..." oninput="renderMenu()">
         </div>
 
         <div class="category-tabs">
@@ -131,7 +136,7 @@
                 <button onclick="closeCheckoutModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
             </div>
 
-            <div id="checkoutList" style="max-height: 220px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <div id="checkoutList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
 
             <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">Thông tin giao hàng / Ghi chú:</label>
@@ -146,8 +151,13 @@
                 <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
             </div>
 
+            <!-- Nút 1: Sao chép thủ công -->
+            <button class="btn-copy-clipboard" onclick="copyOrderContent()">
+                📋 1. SAO CHÉP ĐƠN HÀNG
+            </button>
+            <!-- Nút 2: Vừa copy ngầm vừa mở Zalo -->
             <button class="btn-zalo-submit" onclick="sendOrderToZalo()">
-                📲 GỬI ĐƠN QUA ZALO (0862695269)
+                📲 2. MỞ ZALO GỬI ĐƠN (0862695269)
             </button>
         </div>
     </div>
@@ -195,9 +205,11 @@
         function getCategoryType(itemName, assignedCat) {
             if (assignedCat && ['MilkTea', 'Coffee', 'Yogurt', 'Food'].includes(assignedCat)) return assignedCat;
             const n = removeDiacritics(itemName || '');
-            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao')) return 'Coffee';
+            if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ') || n.includes('sua sot') || n.includes('an vat')) {
+                return 'Food';
+            }
             if (n.includes('sua chua')) return 'Yogurt';
-            if (n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('mi ')) return 'Food';
+            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso') || n.includes('cafe')) return 'Coffee';
             return 'MilkTea';
         }
 
@@ -206,11 +218,25 @@
             const grid = document.getElementById('menuGrid');
             grid.innerHTML = '';
 
+            if (currentCategory === 'Topping') {
+                const renderGroup = (title, items, icon) => {
+                    const visible = (Array.isArray(items) ? items : []).filter(t => t && t.name && removeDiacritics(t.name).includes(kw));
+                    if (!visible.length) return '';
+                    return `<div style="grid-column:1/-1; margin:4px 0; font-weight:bold; font-size:14px; color:#333; border-bottom:1px solid #ddd; padding-bottom:4px;">${icon} ${title}</div>` + visible.map(t => `
+                        <div class="menu-item" style="cursor:default; padding:10px 8px;">
+                            <h4 style="font-size:13px;">${t.name}</h4>
+                            <div class="price" style="margin-top:4px;">${Number(t.price || 0).toLocaleString('vi-VN')}đ</div>
+                        </div>`).join('');
+                };
+                grid.innerHTML = renderGroup('Topping Thức Uống', drinkToppings, '🥤') + renderGroup('Topping Ăn Vặt', snackToppings, '🍟');
+                if (!grid.innerHTML) grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; color:#777;">Không tìm thấy topping phù hợp</p>';
+                return;
+            }
+
             let filtered = menu.filter(item => {
                 const nameNorm = removeDiacritics(item.name);
                 const matchKw = !kw || nameNorm.includes(kw);
                 if (!matchKw) return false;
-                if (currentCategory === 'Topping') return false;
                 if (currentCategory !== 'All') {
                     return getCategoryType(item.name, item.category) === currentCategory;
                 }
@@ -240,10 +266,12 @@
             if (!selectedProduct) return;
             document.getElementById('modalDishName').innerText = selectedProduct.name;
             
-            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
+            
             document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
+            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị:' : '🥤 Topping Thức Uống:';
 
             currentModalToppings = {};
             let availableList = isFood ? snackToppings : drinkToppings;
@@ -280,7 +308,7 @@
         }
 
         function updateModalTotal() {
-            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
             let price = selectedProduct.price;
             if (!isFood) {
                 const size = document.querySelector('input[name="sizeOption"]:checked').value;
@@ -299,7 +327,7 @@
         function closeOptionsModal() { document.getElementById('optionsModal').style.display = 'none'; }
 
         function confirmAddToCart() {
-            const isFood = getCategoryType(selectedProduct.name) === 'Food';
+            const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
             let size = "Bình thường", sugar = "", ice = "";
             let itemPrice = selectedProduct.price;
 
@@ -369,7 +397,7 @@
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
-        function sendOrderToZalo() {
+        function generateOrderMessage() {
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
             const addr = document.getElementById('customerAddress').value.trim();
@@ -377,7 +405,7 @@
 
             if (!name || !phone) {
                 alert("Vui lòng nhập Tên và Số điện thoại nhận hàng!");
-                return;
+                return null;
             }
 
             let msg = `☕ *ĐƠN HÀNG MỚI từ Kim Bling Web Menu*\n`;
@@ -392,14 +420,43 @@
                 let subTotal = item.price * item.qty;
                 total += subTotal;
                 msg += `${index + 1}. *${item.name}* (x${item.qty}) - ${formatPrice(subTotal)}\n`;
-                msg += `   └ ${item.options}\n`;
+                if(item.options && item.options !== "Mặc định") {
+                    msg += `   └ ${item.options}\n`;
+                }
             });
 
             msg += `----------------------------\n`;
             msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}\n`;
             msg += `⏰ *Thời gian đặt:* ${new Date().toLocaleString('vi-VN')}`;
+            return msg;
+        }
 
-            const zaloUrl = `https://zalo.me/${ZALO_PHONE}?text=` + encodeURIComponent(msg);
+        // Nút 1: Sao chép thủ công rõ ràng
+        function copyOrderContent() {
+            const msg = generateOrderMessage();
+            if (!msg) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(msg).then(() => {
+                    alert("✅ Đã sao chép thành công nội dung đơn hàng!");
+                }).catch(() => {
+                    alert("Không thể sao chép tự động trên trình duyệt này.");
+                });
+            }
+        }
+
+        // Nút 2: Vừa copy ngầm vừa mở Zalo để khách bấm dán vô cùng tiện lợi
+        function sendOrderToZalo() {
+            const msg = generateOrderMessage();
+            if (!msg) return;
+
+            // Thực hiện copy ngầm vào bộ nhớ tạm
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(msg).catch(err => console.log(err));
+            }
+
+            // Mở Zalo số 0862695269
+            const zaloUrl = `https://zalo.me/${ZALO_PHONE}`;
             window.open(zaloUrl, '_blank');
         }
 
