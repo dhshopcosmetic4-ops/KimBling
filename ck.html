@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Máy Tính Chuyển Khoản Quick QR - Phong Cách iOS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font SF Pro Display Alternative (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        ios: {
+                            bg: '#000000',
+                            card: '#1c1c1e',
+                            btnLight: '#a5a5a5',
+                            btnDark: '#333333',
+                            btnOrange: '#ff9f0a',
+                            btnOrangeActive: '#cc7f08',
+                            grayText: '#8e8e93',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0d0d0d;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Hiệu ứng bấm nút kiểu iOS */
+        .calc-btn {
+            transition: filter 0.15s ease, transform 0.08s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .calc-btn:active {
+            filter: brightness(1.3);
+            transform: scale(0.95);
+        }
+
+        /* Custom Scrollbar cho modal */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-white font-sans min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <!-- Khung Máy Tính iPhone -->
+    <div class="w-full max-w-sm sm:max-w-md bg-black rounded-[40px] p-5 sm:p-6 shadow-2xl border border-gray-800 relative flex flex-col justify-between overflow-hidden my-auto min-h-[680px]">
+        
+        <!-- Header / Nút Cài Đặt -->
+        <div class="flex justify-between items-center mb-2 z-10 pt-2">
+            <div class="flex items-center space-x-2 text-xs text-ios-grayText font-medium">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span id="shop-name-display">Chưa cài đặt quán</span>
+            </div>
+            <button id="open-config-btn" class="text-ios-grayText hover:text-white p-2 rounded-full hover:bg-gray-800 transition">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Màn Hình Hiển Thị Máy Tính -->
+        <div class="flex flex-col justify-end text-right px-2 my-2 min-h-[140px]">
+            <!-- Biểu thức tính toán toán học -->
+            <div id="calc-expression" class="text-ios-grayText text-lg sm:text-xl h-7 overflow-x-auto whitespace-nowrap tracking-wide font-light"></div>
+            
+            <!-- Hiển thị phép tính / Con số đang nhập -->
+            <div id="calc-display" class="text-white text-4xl sm:text-5xl font-light tracking-tight truncate my-1">0</div>
+            
+            <!-- Dòng TỔNG TIỀN VNĐ rõ ràng -->
+            <div class="pt-2 border-t border-gray-800 flex justify-between items-baseline mt-1">
+                <span class="text-xs uppercase tracking-wider text-ios-grayText font-semibold">Tổng Tiền:</span>
+                <span id="total-vnd" class="text-xl sm:text-2xl font-bold text-emerald-400">0 đ</span>
+            </div>
+        </div>
+
+        <!-- Bàn Phím Máy Tính iOS -->
+        <div class="grid grid-cols-4 gap-3 sm:gap-3.5 my-2">
+            <!-- Hàng 1 -->
+            <button data-action="clear" id="btn-clear" class="calc-btn bg-ios-btnLight text-black font-semibold text-xl sm:text-2xl rounded-full aspect-square flex items-center justify-center">AC</button>
+            <button data-action="toggle-sign" class="calc-btn bg-ios-btnLight text-black font-semibold text-xl sm:text-2xl rounded-full aspect-square flex items-center justify-center">+/-</button>
+            <button data-action="percent" class="calc-btn bg-ios-btnLight text-black font-semibold text-xl sm:text-2xl rounded-full aspect-square flex items-center justify-center">%</button>
+            <button data-operator="/" class="calc-btn bg-ios-btnOrange text-white font-medium text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center pb-1">÷</button>
+
+            <!-- Hàng 2 -->
+            <button data-num="7" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">7</button>
+            <button data-num="8" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">8</button>
+            <button data-num="9" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">9</button>
+            <button data-operator="*" class="calc-btn bg-ios-btnOrange text-white font-medium text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center pb-1">×</button>
+
+            <!-- Hàng 3 -->
+            <button data-num="4" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">4</button>
+            <button data-num="5" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">5</button>
+            <button data-num="6" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">6</button>
+            <button data-operator="-" class="calc-btn bg-ios-btnOrange text-white font-medium text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center pb-1">−</button>
+
+            <!-- Hàng 4 -->
+            <button data-num="1" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">1</button>
+            <button data-num="2" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">2</button>
+            <button data-num="3" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">3</button>
+            <button data-operator="+" class="calc-btn bg-ios-btnOrange text-white font-medium text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center pb-1">+</button>
+
+            <!-- Hàng 5 -->
+            <button data-num="000" class="calc-btn bg-ios-btnDark text-white font-medium text-lg sm:text-xl rounded-full aspect-square flex items-center justify-center">.000</button>
+            <button data-num="0" class="calc-btn bg-ios-btnDark text-white font-normal text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center">0</button>
+            <button data-action="backspace" class="calc-btn bg-ios-btnDark text-white font-normal text-xl sm:text-2xl rounded-full aspect-square flex items-center justify-center">
+                <i class="fa-solid fa-delete-left"></i>
+            </button>
+            <button data-action="equals" class="calc-btn bg-ios-btnOrange text-white font-medium text-2xl sm:text-3xl rounded-full aspect-square flex items-center justify-center pb-1">=</button>
+        </div>
+
+        <!-- Nút Tạo Mã QR Chuyển Khoản -->
+        <button id="generate-qr-btn" class="w-full mt-3 py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-[0.98] transition text-white font-semibold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-base">
+            <i class="fa-solid fa-qrcode text-xl"></i>
+            <span>TẠO MÃ QR CHUYỂN KHOẢN</span>
+        </button>
+    </div>
+
+    <!-- MODAL / POPUP MÃ QR VIETQR -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-3xl p-6 flex flex-col items-center shadow-2xl relative transform scale-95 transition-transform duration-300" id="qr-modal-content">
+            
+            <!-- Nút Đóng Popup -->
+            <button id="close-qr-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-white mb-1">Thanh Toán Chuyển Khoản</h3>
+            <p id="qr-shop-title" class="text-xs text-gray-400 mb-3">Quét mã để thanh toán</p>
+
+            <!-- Số Tiền Nổi Bật -->
+            <div class="bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-4 py-2 mb-4 text-center w-full">
+                <div class="text-xs text-emerald-400 font-medium">Số tiền cần thanh toán</div>
+                <div id="qr-amount-display" class="text-2xl font-extrabold text-emerald-300">0 đ</div>
+            </div>
+
+            <!-- Khung Chứa Mã QR VietQR -->
+            <div class="bg-white p-3 rounded-2xl shadow-inner mb-4 relative min-h-[220px] w-[220px] flex items-center justify-center">
+                <div id="qr-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-2xl">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-600 mb-2"></i>
+                    <span class="text-xs text-gray-600 font-medium">Đang tạo mã QR...</span>
+                </div>
+                <img id="vietqr-img" class="w-full h-auto rounded-lg hidden" alt="Mã QR Thanh Toán" />
+            </div>
+
+            <!-- Thông Tin Chi Tiết CK -->
+            <div class="w-full bg-gray-800/60 rounded-xl p-3 mb-4 text-xs space-y-1.5 text-gray-300 border border-gray-700/50">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Ngân hàng:</span>
+                    <span id="qr-bank-name" class="font-semibold text-white">---</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Số tài khoản:</span>
+                    <span id="qr-acc-num" class="font-semibold text-white">---</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Chủ tài khoản:</span>
+                    <span id="qr-acc-name" class="font-semibold text-white uppercase">---</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Nội dung:</span>
+                    <span id="qr-memo" class="font-semibold text-emerald-400">---</span>
+                </div>
+            </div>
+
+            <!-- Thao tác: Tải / Chia sẻ / Sao chép -->
+            <div class="grid grid-cols-2 gap-2 w-full">
+                <button id="copy-amount-btn" class="py-2.5 px-3 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold rounded-xl flex items-center justify-center space-x-1.5 transition">
+                    <i class="fa-regular fa-copy"></i>
+                    <span>Coppy số tiền</span>
+                </button>
+                <a id="download-qr-btn" href="#" target="_blank" download="QR_Thanh_Toan.png" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center space-x-1.5 transition text-center">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Tải mã QR</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CẤU HÌNH THÔNG TIN CHỦ QUÁN -->
+    <div id="config-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative transform scale-95 transition-transform duration-300" id="config-modal-content">
+            
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-800">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-emerald-400"></i>
+                    <span>Cấu Hình VietQR</span>
+                </h3>
+                <button id="close-config-btn" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="config-form" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-gray-400 mb-1 font-medium">Tên Quán / Cửa hàng</label>
+                    <input type="text" id="cfg-shop-name" placeholder="Ví dụ: Quán Cà Phê Mây" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1 font-medium">Ngân Hàng (Mã/Tên)</label>
+                    <select id="cfg-bank-id" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+                        <option value="MB">MBBank (Ngân Hàng Quân Đội)</option>
+                        <option value="VCB">Vietcombank</option>
+                        <option value="TCB">Techcombank</option>
+                        <option value="ACB">ACB</option>
+                        <option value="VPB">VPBank</option>
+                        <option value="ICB">VietinBank</option>
+                        <option value="BIDV">BIDV</option>
+                        <option value="TPB">TPBank</option>
+                        <option value="STB">Sacombank</option>
+                        <option value="VIB">VIB</option>
+                        <option value="MSB">MSB</option>
+                        <option value="LPB">LienVietPostBank / LPBank</option>
+                        <option value="OCB">OCB</option>
+                        <option value="SHB">SHB</option>
+                        <option value="HDB">HDBank</option>
+                        <option value="SeAB">SeABank</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1 font-medium">Số Tài Khoản</label>
+                    <input type="text" id="cfg-acc-no" required placeholder="Nhập số tài khoản ngân hàng" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1 font-medium">Tên Chủ Tài Khoản (Không dấu)</label>
+                    <input type="text" id="cfg-acc-name" required placeholder="NGUYEN VAN A" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500 uppercase">
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 mb-1 font-medium">Nội dung chuyển khoản mặc định</label>
+                    <input type="text" id="cfg-memo" placeholder="Thanh toan tien nuoc" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition shadow-lg text-sm">
+                        Lưu Cấu Hình
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thông báo Toast (thay cho alert) -->
+    <div id="toast-msg" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800/95 border border-gray-700 text-white px-4 py-2.5 rounded-2xl text-xs font-medium shadow-xl opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center space-x-2">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-emerald-400"></i>
+        <span id="toast-text">Thông báo</span>
+    </div>
+
+    <!-- JavaScript Xử Lý Logic Máy Tính & VietQR -->
+    <script>
+        // --- CẤU HÌNH MẶC ĐỊNH & THÔNG TIN ---
+        const DEFAULT_CONFIG = {
+            shopName: 'Cửa Hàng Của Tôi',
+            bankId: 'MB',
+            accountNo: '0987654321',
+            accountName: 'NGUYEN VAN A',
+            memo: 'Thanh toan bill'
+        };
+
+        let currentConfig = { ...DEFAULT_CONFIG };
+
+        // --- TRẠNG THÁI MÁY TÍNH ---
+        let currentInput = '0';
+        let previousInput = '';
+        let operator = null;
+        let waitingForSecondOperand = false;
+        let expressionHistory = '';
+
+        // DOM Elements
+        const calcDisplay = document.getElementById('calc-display');
+        const calcExpression = document.getElementById('calc-expression');
+        const totalVndDisplay = document.getElementById('total-vnd');
+        const btnClear = document.getElementById('btn-clear');
+
+        // Modal Elements
+        const qrModal = document.getElementById('qr-modal');
+        const qrModalContent = document.getElementById('qr-modal-content');
+        const configModal = document.getElementById('config-modal');
+        const configModalContent = document.getElementById('config-modal-content');
+        const toastMsg = document.getElementById('toast-msg');
+
+        // --- TẢI & LƯU CẤU HÌNH ---
+        function loadConfig() {
+            const saved = localStorage.getItem('vietqr_calc_config');
+            if (saved) {
+                try {
+                    currentConfig = JSON.parse(saved);
+                } catch (e) {
+                    currentConfig = { ...DEFAULT_CONFIG };
+                }
+            }
+            document.getElementById('shop-name-display').textContent = currentConfig.shopName || 'Chưa cài đặt quán';
+        }
+
+        function saveConfig(e) {
+            e.preventDefault();
+            currentConfig.shopName = document.getElementById('cfg-shop-name').value.trim() || 'Cửa Hàng';
+            currentConfig.bankId = document.getElementById('cfg-bank-id').value;
+            currentConfig.accountNo = document.getElementById('cfg-acc-no').value.trim();
+            currentConfig.accountName = document.getElementById('cfg-acc-name').value.trim();
+            currentConfig.memo = document.getElementById('cfg-memo').value.trim() || 'Thanh toan';
+
+            localStorage.setItem('vietqr_calc_config', JSON.stringify(currentConfig));
+            document.getElementById('shop-name-display').textContent = currentConfig.shopName;
+            
+            closeModal(configModal, configModalContent);
+            showToast('Lưu cấu hình thành công!', 'fa-circle-check');
+        }
+
+        function populateConfigForm() {
+            document.getElementById('cfg-shop-name').value = currentConfig.shopName || '';
+            document.getElementById('cfg-bank-id').value = currentConfig.bankId || 'MB';
+            document.getElementById('cfg-acc-no').value = currentConfig.accountNo || '';
+            document.getElementById('cfg-acc-name').value = currentConfig.accountName || '';
+            document.getElementById('cfg-memo').value = currentConfig.memo || '';
+        }
+
+        // --- ĐỊNH DẠNG SỐ VÀ TIỀN TỆ ---
+        function formatNumber(numStr) {
+            if (numStr === 'Error' || numStr === 'NaN') return 'Lỗi';
+            const num = parseFloat(numStr);
+            if (isNaN(num)) return '0';
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        function formatCurrency(amount) {
+            const num = parseFloat(amount);
+            if (isNaN(num) || num < 0) return '0 đ';
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace('₫', 'đ');
+        }
+
+        function getCurrentTotal() {
+            const val = parseFloat(currentInput);
+            return isNaN(val) ? 0 : Math.max(0, Math.round(val));
+        }
+
+        // --- CẬP NHẬT MÀN HÌNH MÁY TÍNH ---
+        function updateDisplay() {
+            calcDisplay.textContent = formatNumber(currentInput);
+            calcExpression.textContent = expressionHistory;
+            totalVndDisplay.textContent = formatCurrency(getCurrentTotal());
+
+            // Đổi nhãn nút Clear C / AC
+            if (currentInput !== '0' || previousInput !== '') {
+                btnClear.textContent = 'C';
+            } else {
+                btnClear.textContent = 'AC';
+            }
+        }
+
+        // --- LOGIC TÍNH TOÁN ---
+        function handleNumber(num) {
+            if (waitingForSecondOperand) {
+                currentInput = num === '000' ? '0' : num;
+                waitingForSecondOperand = false;
+            } else {
+                if (num === '000') {
+                    if (currentInput !== '0') {
+                        currentInput += '000';
+                    }
+                } else {
+                    currentInput = currentInput === '0' ? num : currentInput + num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function handleOperator(nextOperator) {
+            const inputValue = parseFloat(currentInput);
+
+            if (operator && waitingForSecondOperand) {
+                operator = nextOperator;
+                expressionHistory = `${formatNumber(previousInput)} ${getOperatorSymbol(operator)}`;
+                updateDisplay();
+                return;
+            }
+
+            if (previousInput === '') {
+                previousInput = currentInput;
+            } else if (operator) {
+                const result = performCalculation();
+                currentInput = String(result);
+                previousInput = currentInput;
+            }
+
+            waitingForSecondOperand = true;
+            operator = nextOperator;
+            expressionHistory = `${formatNumber(previousInput)} ${getOperatorSymbol(operator)}`;
+            updateDisplay();
+        }
+
+        function getOperatorSymbol(op) {
+            switch(op) {
+                case '+': return '+';
+                case '-': return '−';
+                case '*': return '×';
+                case '/': return '÷';
+                default: return '';
+            }
+        }
+
+        function performCalculation() {
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+            if (isNaN(prev) || isNaN(current)) return current;
+
+            let result = 0;
+            switch (operator) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/': 
+                    result = current === 0 ? 'Error' : prev / current; 
+                    break;
+                default: return current;
+            }
+            return typeof result === 'number' ? Math.round(result * 100) / 100 : result;
+        }
+
+        function handleEquals() {
+            if (!operator || waitingForSecondOperand) return;
+
+            const result = performCalculation();
+            expressionHistory = `${formatNumber(previousInput)} ${getOperatorSymbol(operator)} ${formatNumber(currentInput)} =`;
+            currentInput = String(result);
+            previousInput = '';
+            operator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+        function handleClear() {
+            if (btnClear.textContent === 'C' && currentInput !== '0') {
+                currentInput = '0';
+            } else {
+                // AC - Reset toàn bộ
+                currentInput = '0';
+                previousInput = '';
+                operator = null;
+                waitingForSecondOperand = false;
+                expressionHistory = '';
+            }
+            updateDisplay();
+        }
+
+        function handleBackspace() {
+            if (waitingForSecondOperand) return;
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function handleToggleSign() {
+            if (currentInput === '0') return;
+            currentInput = String(parseFloat(currentInput) * -1);
+            updateDisplay();
+        }
+
+        function handlePercent() {
+            const current = parseFloat(currentInput);
+            if (isNaN(current)) return;
+            currentInput = String(current / 100);
+            updateDisplay();
+        }
+
+        // --- XỬ LÝ MÃ QR VIETQR ---
+        function generateVietQR() {
+            const totalAmount = getCurrentTotal();
+
+            if (!currentConfig.accountNo || !currentConfig.accountName) {
+                showToast('Vui lòng cấu hình tài khoản ngân hàng trước!', 'fa-triangle-exclamation');
+                openConfigModal();
+                return;
+            }
+
+            if (totalAmount <= 0) {
+                showToast('Tổng số tiền phải lớn hơn 0đ để tạo mã QR', 'fa-circle-exclamation');
+                return;
+            }
+
+            // Gán dữ liệu lên Modal QR
+            document.getElementById('qr-shop-title').textContent = currentConfig.shopName || 'Quét mã để thanh toán';
+            document.getElementById('qr-amount-display').textContent = formatCurrency(totalAmount);
+            document.getElementById('qr-bank-name').textContent = currentConfig.bankId;
+            document.getElementById('qr-acc-num').textContent = currentConfig.accountNo;
+            document.getElementById('qr-acc-name').textContent = currentConfig.accountName;
+            document.getElementById('qr-memo').textContent = currentConfig.memo;
+
+            // Xây dựng VietQR URL bằng API compact2
+            // Format: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-compact2.png?amount=<AMOUNT>&addInfo=<MEMO>&accountName=<NAME>
+            const bankId = encodeURIComponent(currentConfig.bankId);
+            const accNo = encodeURIComponent(currentConfig.accountNo);
+            const amount = totalAmount;
+            const memo = encodeURIComponent(currentConfig.memo);
+            const accName = encodeURIComponent(currentConfig.accountName);
+
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accNo}-compact2.png?amount=${amount}&addInfo=${memo}&accountName=${accName}`;
+
+            const qrImg = document.getElementById('vietqr-img');
+            const qrLoading = document.getElementById('qr-loading');
+            const downloadBtn = document.getElementById('download-qr-btn');
+
+            qrLoading.classList.remove('hidden');
+            qrImg.classList.add('hidden');
+
+            qrImg.onload = function() {
+                qrLoading.classList.add('hidden');
+                qrImg.classList.remove('hidden');
+            };
+
+            qrImg.onerror = function() {
+                qrLoading.innerHTML = '<span class="text-xs text-red-500 font-medium">Lỗi tải mã QR. Vui lòng thử lại.</span>';
+            };
+
+            qrImg.src = qrUrl;
+            downloadBtn.href = qrUrl;
+
+            openModal(qrModal, qrModalContent);
+        }
+
+        // --- TOAST NOTIFICATION ---
+        function showToast(message, iconClass = 'fa-circle-info') {
+            const toastText = document.getElementById('toast-text');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastText.textContent = message;
+            toastIcon.className = `fa-solid ${iconClass} text-emerald-400`;
+
+            toastMsg.classList.remove('opacity-0', 'pointer-events-none');
+            toastMsg.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toastMsg.classList.remove('opacity-100');
+                toastMsg.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // --- CÁC HÀM MỞ/ĐÓNG MODAL ---
+        function openModal(modal, content) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal(modal, content) {
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function openConfigModal() {
+            populateConfigForm();
+            openModal(configModal, configModalContent);
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            updateDisplay();
+
+            // SỰ KIỆN CLICK CÁC NÚT MÁY TÍNH
+            document.querySelectorAll('.calc-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const num = button.getAttribute('data-num');
+                    const op = button.getAttribute('data-operator');
+                    const action = button.getAttribute('data-action');
+
+                    if (num !== null) handleNumber(num);
+                    if (op !== null) handleOperator(op);
+                    if (action) {
+                        switch (action) {
+                            case 'clear': handleClear(); break;
+                            case 'equals': handleEquals(); break;
+                            case 'backspace': handleBackspace(); break;
+                            case 'toggle-sign': handleToggleSign(); break;
+                            case 'percent': handlePercent(); break;
+                        }
+                    }
+                });
+            });
+
+            // Nút Tạo Mã QR
+            document.getElementById('generate-qr-btn').addEventListener('click', generateVietQR);
+
+            // Nút Đóng Modal QR
+            document.getElementById('close-qr-btn').addEventListener('click', () => closeModal(qrModal, qrModalContent));
+            qrModal.addEventListener('click', (e) => {
+                if (e.target === qrModal) closeModal(qrModal, qrModalContent);
+            });
+
+            // Nút Mở & Đóng Cấu Hình
+            document.getElementById('open-config-btn').addEventListener('click', openConfigModal);
+            document.getElementById('close-config-btn').addEventListener('click', () => closeModal(configModal, configModalContent));
+            configModal.addEventListener('click', (e) => {
+                if (e.target === configModal) closeModal(configModal, configModalContent);
+            });
+
+            // Submit Form Cấu Hình
+            document.getElementById('config-form').addEventListener('submit', saveConfig);
+
+            // Coppy Số Tiền
+            document.getElementById('copy-amount-btn').addEventListener('click', () => {
+                const amountStr = getCurrentTotal().toString();
+                
+                // Dùng textarea fallback để đảm bảo hoạt động cả trên iframe
+                const el = document.createElement('textarea');
+                el.value = amountStr;
+                document.body.appendChild(el);
+                el.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Đã sao chép số tiền: ' + formatCurrency(getCurrentTotal()), 'fa-check');
+                } catch (err) {
+                    showToast('Không thể sao chép!', 'fa-xmark');
+                }
+                document.body.removeChild(el);
+            });
+
+            // Hỗ trợ nhập phím Bàn Phím Cứng (Numpad / Keyboard)
+            document.addEventListener('keydown', (e) => {
+                if (!configModal.classList.contains('hidden')) return; // Đang mở cài đặt thì ko bắt phím máy tính
+
+                if (e.key >= '0' && e.key <= '9') handleNumber(e.key);
+                if (e.key === '+') handleOperator('+');
+                if (e.key === '-') handleOperator('-');
+                if (e.key === '*') handleOperator('*');
+                if (e.key === '/') handleOperator('/');
+                if (e.key === 'Enter' || e.key === '=') {
+                    e.preventDefault();
+                    handleEquals();
+                }
+                if (e.key === 'Backspace') handleBackspace();
+                if (e.key === 'Escape') handleClear();
+            });
+        });
+    </script>
+</body>
+</html>
