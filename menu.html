@@ -15,7 +15,6 @@
         .search-box input { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px; outline: none; background: #fff; }
         .search-box input:focus { border-color: #2196F3; box-shadow: 0 0 5px rgba(33,150,243,0.3); }
         
-        /* Danh mục hiển thị dạng lưới đầy đủ */
         .category-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
         .cat-btn { background: #fff; color: #555; border: 1px solid #ddd; padding: 8px 6px; border-radius: 8px; font-size: 12px; font-weight: bold; text-align: center; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cat-btn.active { background: #2196F3; color: white; border-color: #2196F3; }
@@ -43,8 +42,15 @@
         .checkout-item-title { font-weight: bold; font-size: 14px; }
         .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
         
-        .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+        
+        .transfer-box { background: #e8f4fd; border: 1.5px solid #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
+        .btn-auto-pay { width: 100%; background: #0288d1; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .transfer-sub-info { font-size: 11px; color: #555; background: #fff; padding: 6px; border-radius: 4px; text-align: left; border: 1px solid #e0e0e0; }
+
+        .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; line-height: 1.2; }
+        .btn-zalo-subtext { font-size: 11px; font-weight: normal; opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -130,33 +136,52 @@
     <!-- Modal Xem Giỏ Hàng & Gởi Zalo -->
     <div class="checkout-modal" id="checkoutModal">
         <div class="checkout-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px;">
-                <h3 style="font-size: 16px;">Chi Tiết Đơn Hàng</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
+                <h3 style="font-size: 15px;">Chi Tiết Đơn Hàng & Thanh Toán</h3>
                 <button onclick="closeCheckoutModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
             </div>
 
-            <div id="checkoutList" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <div id="checkoutList" style="max-height: 140px; overflow-y: auto; margin-bottom: 6px;"></div>
 
-            <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 4px;">Thông tin giao hàng / Ghi chú:</label>
-                <input type="text" id="customerName" placeholder="Tên người nhận (*)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
-                <input type="text" id="customerPhone" placeholder="Số điện thoại (*)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
-                <input type="text" id="customerAddress" placeholder="Địa chỉ giao / Số bàn (nếu có)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 6px;">
-                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+            <div style="background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 6px;">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 3px;">Thông tin giao hàng / Ghi chú:</label>
+                <input type="text" id="customerName" placeholder="Tên người nhận (*)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
+                <input type="text" id="customerPhone" placeholder="Số điện thoại (*)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;" oninput="updatePaymentUI()">
+                <input type="text" id="customerAddress" placeholder="Địa chỉ giao / Số bàn (nếu có)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
+                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
             </div>
 
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
+            <!-- HÌNH THỨC THANH TOÁN TỰ ĐỘNG CHUYỂN TIỀN 1-BẤM -->
+            <div class="payment-method-box">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
+                <div style="display: flex; gap: 15px; font-size: 13px;">
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Tiền mặt" checked onchange="updatePaymentUI()"> 💵 Tiền mặt</label>
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản Tự Động</label>
+                </div>
+
+                <div class="transfer-box" id="transferBox">
+                    <button class="btn-auto-pay" onclick="openAutoPayApp()">
+                        📲 MỞ APP NGÂN HÀNG CHUYỂN TIỀN TỰ ĐỘNG
+                    </button>
+
+                    <div class="transfer-sub-info">
+                        🏦 Techcombank: <strong>19076231479012</strong> - LE MINH DUNG<br>
+                        💰 Số tiền: <strong id="autoAmountText" style="color:#d32f2f;">0đ</strong> | Nội dung: <strong id="autoSyntaxText" style="color:#0288d1;">...</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; margin-bottom: 6px;">
                 <span>TỔNG TIỀN:</span>
                 <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
             </div>
 
-            <!-- Nút 1: Sao chép thủ công -->
             <button class="btn-copy-clipboard" onclick="copyOrderContent()">
                 📋 1. SAO CHÉP ĐƠN HÀNG
             </button>
-            <!-- Nút 2: Vừa copy ngầm vừa mở Zalo -->
             <button class="btn-zalo-submit" onclick="sendOrderToZalo()">
-                📲 2. MỞ ZALO GỬI ĐƠN (0862695269)
+                <div>📲 2. MỞ ZALO GỬI ĐƠN (0862695269)</div>
+                <div class="btn-zalo-subtext">(Dán nội dung đã copy vào ô chat Zalo)</div>
             </button>
         </div>
     </div>
@@ -164,6 +189,10 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
+
+        const BANK_ID = "TCB";
+        const ACCOUNT_NO = "19076231479012";
+        const ACCOUNT_NAME = "LE MINH DUNG";
 
         let menu = [];
         let drinkToppings = [];
@@ -178,7 +207,6 @@
             return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
         }
 
-        // Tối ưu tốc độ mở trang: Load ngay từ bộ nhớ trong (nếu có) để hiện menu lập tức, sau đó gọi ngầm cập nhật mới từ Sheet
         async function fetchMenuFromCloud() {
             try {
                 const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
@@ -392,6 +420,37 @@
             document.getElementById('cartTotal').innerText = formatPrice(total);
         }
 
+        function calculateCartTotal() {
+            let total = 0;
+            cart.forEach(item => { total += item.price * item.qty; });
+            return total;
+        }
+
+        function updatePaymentUI() {
+            const method = document.querySelector('input[name="payMethod"]:checked').value;
+            const transferBox = document.getElementById('transferBox');
+            const totalAmount = calculateCartTotal();
+            const phone = document.getElementById('customerPhone').value.trim();
+
+            if (method === 'Chuyển khoản' && totalAmount > 0) {
+                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+                document.getElementById('autoAmountText').innerText = totalAmount.toLocaleString('vi-VN') + 'đ';
+                document.getElementById('autoSyntaxText').innerText = syntax;
+                transferBox.style.display = 'block';
+            } else {
+                transferBox.style.display = 'none';
+            }
+        }
+
+        function openAutoPayApp() {
+            const totalAmount = calculateCartTotal();
+            const phone = document.getElementById('customerPhone').value.trim();
+            let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+
+            let payUrl = `https://dl.vietqr.io/pay?app=&ba=${BANK_ID}&acc=${ACCOUNT_NO}&am=${totalAmount}&tn=${encodeURIComponent(syntax)}`;
+            window.location.href = payUrl;
+        }
+
         function openCheckoutModal() {
             if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
             const listEl = document.getElementById('checkoutList');
@@ -412,6 +471,8 @@
             });
             document.getElementById('checkoutTotalAmount').innerText = formatPrice(total);
             document.getElementById('checkoutModal').style.display = 'flex';
+
+            updatePaymentUI();
         }
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
@@ -421,6 +482,7 @@
             const phone = document.getElementById('customerPhone').value.trim();
             const addr = document.getElementById('customerAddress').value.trim();
             const note = document.getElementById('customerNote').value.trim();
+            const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
 
             if (!name || !phone) {
                 alert("Vui lòng nhập Tên và Số điện thoại nhận hàng!");
@@ -432,6 +494,7 @@
             msg += `📞 *SĐT:* ${phone}\n`;
             if (addr) msg += `📍 *Địa chỉ/Bàn:* ${addr}\n`;
             if (note) msg += `📝 *Ghi chú:* ${note}\n`;
+            msg += `💳 *Thanh toán:* ${payMethod}\n`;
             msg += `----------------------------\n`;
 
             let total = 0;
@@ -450,7 +513,6 @@
             return msg;
         }
 
-        // Nút 1: Sao chép thủ công rõ ràng
         function copyOrderContent() {
             const msg = generateOrderMessage();
             if (!msg) return;
@@ -464,7 +526,6 @@
             }
         }
 
-        // Nút 2: Vừa copy ngầm vừa mở Zalo để khách bấm dán vô cùng tiện lợi
         function sendOrderToZalo() {
             const msg = generateOrderMessage();
             if (!msg) return;
