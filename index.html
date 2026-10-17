@@ -536,7 +536,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEOe1hjnItCwnMLYrTP-z4B-oH72Xvx_ss2N7skcFfrkkEGCy4-1AtbX7fdaCTF3FaZA/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -807,49 +807,58 @@
         }
 
         function deleteAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
-                attendanceList = attendanceList.filter(a => a.id !== attId);
-                localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                calculatePayroll();
-                alert("Đã xóa log ca làm thành công!");
-            }
-        }
+    if (!verifyAdminPin()) return;
+    if (confirm("Bạn có chắc chắn muốn xóa log ca làm này không?")) {
+        attendanceList = attendanceList.filter(a => String(a.id) !== String(attId));
+        localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+        
+        // Gửi lệnh xóa lên Google Sheets
+        syncToGoogleSheets('deleteAttendance', { id: attId });
+        
+        calculatePayroll();
+        alert("Đã xóa log ca làm thành công!");
+    }
+}
 
-        function editAttendanceRecord(attId) {
-            if (!verifyAdminPin()) return;
-            let att = attendanceList.find(a => a.id === attId);
-            if (!att) return;
-            
-            let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
-            if (choice === "1") {
-                let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
-                if (newHoursStr === null) return;
-                let newHours = parseFloat(newHoursStr);
-                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-                att.hours = newHours;
-                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-            } else if (choice === "2") {
-                let newIn = prompt("Nhập giờ vào mới (vd: 08:00):", att.checkInTime);
-                if (newIn === null) return;
-                let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
-                if (newOut === null) return;
-                let newHoursStr = prompt("Nhập lại tổng số giờ tính lương tương ứng:", att.hours);
-                if (newHoursStr === null) return;
-                let newHours = parseFloat(newHoursStr);
-                if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-                att.checkInTime = newIn;
-                att.checkOutTime = newOut;
-                att.hours = newHours;
-                att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-            } else {
-                return;
-            }
+function editAttendanceRecord(attId) {
+    if (!verifyAdminPin()) return;
+    let att = attendanceList.find(a => String(a.id) === String(attId));
+    if (!att) return;
+    
+    let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
+    if (choice === "1") {
+        let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
+        if (newHoursStr === null) return;
+        let newHours = parseFloat(newHoursStr);
+        if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
+        att.hours = newHours;
+        att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+    } else if (choice === "2") {
+        let newIn = prompt("Nhập giờ vào mới (vd: 08:00):", att.checkInTime);
+        if (newIn === null) return;
+        let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
+        if (newOut === null) return;
+        let newHoursStr = prompt("Nhập lại tổng số giờ tính lương tương ứng:", att.hours);
+        if (newHoursStr === null) return;
+        let newHours = parseFloat(newHoursStr);
+        if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
+        att.checkInTime = newIn;
+        att.checkOutTime = newOut;
+        att.hours = newHours;
+        att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
+    } else {
+        return;
+    }
 
-            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-            calculatePayroll();
-            alert("Đã cập nhật ca làm thành công!");
-        }
+    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+    
+    // Cập nhật lại bản ghi đã sửa lên Google Sheets
+    syncAttendanceToCloud(att);
+    
+    calculatePayroll();
+    alert("Đã cập nhật ca làm thành công!");
+}
+
 
         
         function isViewerRole(accId) {
