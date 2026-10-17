@@ -7,9 +7,12 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 90px; }
-        header { background: #2196F3; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* HEADER CẬP NHẬT ĐỊA CHỈ & SĐT */
+        header { background: #2196F3; color: white; padding: 12px 10px; text-align: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         header h1 { font-size: 18px; margin-bottom: 2px; }
-        header p { font-size: 12px; opacity: 0.9; }
+        header p { font-size: 11px; opacity: 0.95; line-height: 1.3; }
+
         .container { padding: 12px; max-width: 600px; margin: 0 auto; }
         .search-box { margin-bottom: 12px; }
         .search-box input { width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px; outline: none; background: #fff; }
@@ -46,18 +49,18 @@
         
         .transfer-box { background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
         .transfer-box img { width: 130px; height: 130px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 4px 0; }
-        .btn-share-qr { background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 6px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 6px; }
 
-        .btn-copy-clipboard { width: 100%; background: #28a745; color: white; border: none; padding: 11px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-zalo-submit { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; text-align: center; line-height: 1.2; }
-        .btn-zalo-subtext { font-size: 11px; font-weight: normal; opacity: 0.9; }
+        /* Nút gửi cho từng trường hợp */
+        .btn-cash-zalo { width: 100%; background: #0068ff; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-qr-zalo { width: 100%; background: #ff9800; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Kim Bling Coffee & Tea</h1>
-        <p>Đặt hàng trực tuyến - Giao hàng & Cửa hàng tiếp nhận</p>
+        <p>📞 086.269.5.269</p>
+        <p>📍 M9 cư xá Phú Lâm A, Phường Phú Lâm, HCM</p>
     </header>
 
     <div class="container">
@@ -151,7 +154,7 @@
                 <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
             </div>
 
-            <!-- HÌNH THỨC THANH TOÁN KÈM NÚT CHIA SẺ ẢNH MÃ QR -->
+            <!-- HÌNH THỨC THANH TOÁN -->
             <div class="payment-method-box">
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px;">
@@ -164,10 +167,6 @@
                     <div>
                         <img id="vietQRImage" src="" alt="Mã QR Chuyển Khoản">
                     </div>
-                    <!-- NÚT CHIA SẺ ẢNH MÃ QR SANG ZALO -->
-                    <button class="btn-share-qr" onclick="shareQRToZalo()">
-                        📤 GỬI ẢNH MÃ QR QUA ZALO
-                    </button>
                 </div>
             </div>
 
@@ -176,12 +175,15 @@
                 <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
             </div>
 
-            <button class="btn-copy-clipboard" onclick="copyOrderContent()">
-                📋 1. SAO CHÉP ĐƠN HÀNG
+            <!-- NÚT GỬI TIỀN MẶT (CHỈ HIỆN KHI CHỌN TIỀN MẶT) -->
+            <button class="btn-cash-zalo" id="btnCashZalo" onclick="sendCashOrderToZalo()">
+                📲 GỬI ĐƠN ĐẾN ZALO CHỦ QUÁN<br>
+                <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Bạn bấm dán đơn vào mục chat Zalo)</span>
             </button>
-            <button class="btn-zalo-submit" onclick="sendOrderToZalo()">
-                <div>📲 2. MỞ ZALO GỬI ĐƠN (0862695269)</div>
-                <div class="btn-zalo-subtext">(Dán nội dung đã copy vào ô chat Zalo)</div>
+
+            <!-- NÚT GỬI CHUYỂN KHOẢN QR (CHỈ HIỆN KHI CHỌN CHUYỂN KHOẢN) -->
+            <button class="btn-qr-zalo" id="btnQrZalo" onclick="shareOrderAndQRToZalo()">
+                📤 GỬI ĐƠN HÀNG & MÃ QR QUA ZALO
             </button>
         </div>
     </div>
@@ -426,49 +428,28 @@
             return total;
         }
 
+        // TỰ ĐỘNG ẨN / HIỆN GIAO DIỆN THEO HÌNH THỨC THANH TOÁN
         function updatePaymentUI() {
             const method = document.querySelector('input[name="payMethod"]:checked').value;
             const transferBox = document.getElementById('transferBox');
+            const btnCash = document.getElementById('btnCashZalo');
+            const btnQr = document.getElementById('btnQrZalo');
             const totalAmount = calculateCartTotal();
             const phone = document.getElementById('customerPhone').value.trim();
 
-            if (method === 'Chuyển khoản' && totalAmount > 0) {
-                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
-                let qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-                
-                document.getElementById('vietQRImage').src = qrUrl;
+            if (method === 'Chuyển khoản') {
+                if (totalAmount > 0) {
+                    let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+                    let qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                    document.getElementById('vietQRImage').src = qrUrl;
+                }
                 transferBox.style.display = 'block';
+                btnCash.style.display = 'none';
+                btnQr.style.display = 'block';
             } else {
                 transferBox.style.display = 'none';
-            }
-        }
-
-        // TÍNH NĂNG CHIA SẺ FILE ẢNH MÃ QR TRỰC TIẾP SANG APPS / ZALO
-        async function shareQRToZalo() {
-            const imgEl = document.getElementById('vietQRImage');
-            if (!imgEl.src) return;
-
-            try {
-                const response = await fetch(imgEl.src);
-                const blob = await response.blob();
-                const file = new File([blob], 'Ma_QR_KimBling.png', { type: 'image/png' });
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: 'Mã QR Thanh toán Kim Bling',
-                        text: 'Mã QR chuyển khoản cho đơn hàng Kim Bling Coffee & Tea',
-                        files: [file]
-                    });
-                } else {
-                    // Nếu trình duyệt cũ không hỗ trợ Native Share thì tải ảnh về máy
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'Ma_QR_KimBling.png';
-                    a.click();
-                    alert("Đã tải Mã QR về máy! Bạn có thể đính kèm ảnh này gửi qua Zalo.");
-                }
-            } catch (err) {
-                alert("Hãy giữ tay vào ảnh Mã QR 2 giây để Lưu/Chia sẻ qua Zalo.");
+                btnCash.style.display = 'block';
+                btnQr.style.display = 'none';
             }
         }
 
@@ -534,29 +515,55 @@
             return msg;
         }
 
-        function copyOrderContent() {
+        // LUỒNG THANH TOÁN TIỀN MẶT: TỰ SAO CHÉP NGẦM & MỞ CHAT ZALO
+        function sendCashOrderToZalo() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(msg).then(() => {
-                    alert("✅ Đã sao chép thành công nội dung đơn hàng!");
+                    window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
                 }).catch(() => {
-                    alert("Không thể sao chép tự động trên trình duyệt này.");
+                    window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
                 });
+            } else {
+                window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
             }
         }
 
-        function sendOrderToZalo() {
+        // LUỒNG THANH TOÁN CHUYỂN KHOẢN: CHIA SẺ FILE ẢNH MÃ QR + CHỮ ĐƠN HÀNG
+        async function shareOrderAndQRToZalo() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
+            const imgEl = document.getElementById('vietQRImage');
+
+            // Sao chép trước nội dung vào clipboard phòng trường hợp Zalo lược bớt chữ khi nhận file
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(msg).catch(err => console.log(err));
             }
 
-            const zaloUrl = `https://zalo.me/${ZALO_PHONE}`;
-            window.open(zaloUrl, '_blank');
+            if (imgEl && imgEl.src) {
+                try {
+                    const response = await fetch(imgEl.src);
+                    const blob = await response.blob();
+                    const file = new File([blob], 'Ma_QR_ThanhToan_KimBling.png', { type: 'image/png' });
+
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: 'Đơn Hàng Kim Bling Coffee & Tea',
+                            text: msg,
+                            files: [file]
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.log("Lỗi chia sẻ file ảnh:", e);
+                }
+            }
+
+            // Mở thẳng Zalo nếu không chia sẻ file được
+            window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
         fetchMenuFromCloud();
