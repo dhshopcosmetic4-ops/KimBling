@@ -22,11 +22,13 @@
 
         .container { padding: 12px; max-width: 600px; margin: 0 auto; }
         
-        .search-box { margin-bottom: 12px; }
-        .search-box input { width: 100%; padding: 10px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; background: #fff; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
+        .search-box { margin-bottom: 10px; display: flex; gap: 8px; }
+        .search-box input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; background: #fff; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
         .search-box input:focus { border-color: #2196F3; box-shadow: 0 0 5px rgba(33,150,243,0.3); }
         
-        /* Cải tiến: Danh mục dạng lưới (Grid) hiển thị đầy đủ trên mọi màn hình nhỏ */
+        .btn-history-top { background: #fff; color: #1976D2; border: 1px solid #2196F3; padding: 0 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+        /* Danh mục dạng lưới (Grid) hiển thị đầy đủ */
         .category-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
         .cat-btn { background: #fff; color: #555; border: 1px solid #e0e0e0; padding: 8px 6px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cat-btn.active { background: #2196F3; color: white; border-color: #2196F3; }
@@ -75,8 +77,8 @@
         .cart-info strong { font-size: 16px; color: #d32f2f; }
         .btn-view-cart { background: #4CAF50; color: white; border: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         
-        .checkout-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 200; padding: 10px; }
-        .checkout-card { background: #fff; width: 100%; max-width: 480px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 16px; }
+        .checkout-modal, .history-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 200; padding: 10px; }
+        .checkout-card, .history-card { background: #fff; width: 100%; max-width: 480px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 16px; }
         .checkout-item { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
         .checkout-item-title { font-weight: bold; font-size: 14px; }
         .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
@@ -107,9 +109,10 @@
     <div class="container">
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món ngon..." oninput="renderMenu()">
+            <button class="btn-history-top" onclick="openHistoryModal()">📜 Lịch sử</button>
         </div>
 
-        <!-- Danh mục dạng lưới (Grid) hiển thị toàn bộ không cần trượt ngang -->
+        <!-- Danh mục dạng lưới (Grid) hiển thị đầy đủ -->
         <div class="category-tabs">
             <button class="cat-btn active" onclick="filterCategory('All', this)">📋 Tất cả</button>
             <button class="cat-btn" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
@@ -121,6 +124,19 @@
 
         <div class="menu-grid" id="menuGrid">
             <p style="text-align: center; grid-column: 1/-1; color: #666; padding: 20px;">Đang tải menu...</p>
+        </div>
+    </div>
+
+    <!-- MODAL LỊCH SỬ ĐƠN HÀNG -->
+    <div class="history-modal" id="historyModal">
+        <div class="history-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px;">
+                <h3 style="font-size: 15px;">📜 Lịch sử đơn hàng của bạn</h3>
+                <button onclick="closeHistoryModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
+            </div>
+            <div id="historyListContainer" style="max-height: 350px; overflow-y: auto;">
+                <p style="text-align: center; color: #666; font-size: 13px; padding: 20px;">Chưa có lịch sử đơn hàng nào trên thiết bị này.</p>
+            </div>
         </div>
     </div>
 
@@ -641,7 +657,6 @@
         function openCheckoutModal() {
             if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
 
-            // Tự động load thông tin đã lưu từ lần trước
             const savedName = localStorage.getItem('kimbling_cust_name');
             const savedPhone = localStorage.getItem('kimbling_cust_phone');
             const savedAddr = localStorage.getItem('kimbling_cust_addr');
@@ -677,6 +692,78 @@
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
+        /* --- TÍNH NĂNG LỊCH SỬ ĐƠN HÀNG & ĐẶT LẠI --- */
+        function openHistoryModal() {
+            const container = document.getElementById('historyListContainer');
+            let historyData = [];
+            try {
+                historyData = JSON.parse(localStorage.getItem('kimbling_order_history') || '[]');
+            } catch(e) { historyData = []; }
+
+            if (historyData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; font-size: 13px; padding: 20px;">Chưa có lịch sử đơn hàng nào trên thiết bị này.</p>';
+            } else {
+                container.innerHTML = historyData.map((order, idx) => `
+                    <div style="background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; color: #333; margin-bottom: 4px;">
+                            <span> đơn #${historyData.length - idx} - ${order.time}</span>
+                            <span style="color: #d32f2f;">${order.totalStr}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #555; margin-bottom: 6px;">
+                            ${order.items.map(i => `• ${i.name} (x${i.qty}) [${i.options}]`).join('<br>')}
+                        </div>
+                        <button onclick="reorderItems(${idx})" style="width: 100%; background: #2196F3; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;">🛒 Đặt lại đơn này</button>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        function saveOrderToHistory(items, totalStr) {
+            try {
+                let historyData = JSON.parse(localStorage.getItem('kimbling_order_history') || '[]');
+                const now = new Date();
+                const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}`;
+                
+                historyData.unshift({
+                    time: timeStr,
+                    items: items,
+                    totalStr: totalStr
+                });
+
+                // Chỉ giữ lại tối đa 5 đơn hàng gần nhất
+                if (historyData.length > 5) historyData.pop();
+
+                localStorage.setItem('kimbling_order_history', JSON.stringify(historyData));
+            } catch(e) { console.error("Lỗi lưu lịch sử:", e); }
+        }
+
+        function reorderItems(index) {
+            try {
+                let historyData = JSON.parse(localStorage.getItem('kimbling_order_history') || '[]');
+                if (historyData[index] && historyData[index].items) {
+                    historyData[index].items.forEach(oldItem => {
+                        cart.push({
+                            name: oldItem.name,
+                            price: oldItem.price,
+                            options: oldItem.options,
+                            qty: oldItem.qty
+                        });
+                    });
+                    renderCartBar();
+                    closeHistoryModal();
+                    alert("Đã thêm các món từ đơn cũ vào giỏ hàng!");
+                }
+            } catch(e) {
+                alert("Không thể đặt lại đơn hàng này.");
+            }
+        }
+        /* ------------------------------------------- */
+
         function generateOrderMessage() {
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
@@ -690,7 +777,6 @@
                 return null;
             }
 
-            // Lưu thông tin khách hàng lại cho các lần sau
             localStorage.setItem('kimbling_cust_name', name);
             localStorage.setItem('kimbling_cust_phone', phone);
             localStorage.setItem('kimbling_cust_addr', addr);
@@ -716,6 +802,10 @@
             msg += `----------------------------\n`;
             msg += `🛵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}\n`;
             msg += `💰 TỔNG CỘNG: ${formatPrice(total)}`;
+
+            // Lưu vào lịch sử đơn hàng
+            saveOrderToHistory(cart, formatPrice(total));
+
             return msg;
         }
 
