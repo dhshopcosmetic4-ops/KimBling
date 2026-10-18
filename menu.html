@@ -17,6 +17,8 @@
         header h1 { font-size: 18px; margin-bottom: 2px; }
         header p { font-size: 11px; opacity: 0.95; line-height: 1.3; }
         
+        .admin-trigger-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.25); color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; backdrop-filter: blur(4px); }
+
         .store-info-card { background: #fff; margin: 10px 12px 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 12px; color: #444; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #2196F3; line-height: 1.4; max-width: 600px; margin-left: auto; margin-right: auto; }
         .store-info-card span { font-weight: bold; color: #d32f2f; }
 
@@ -45,8 +47,9 @@
         .menu-item .price { color: #d32f2f; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
         .btn-add { background: #e3f2fd; color: #1976D2; border: none; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 12px; width: 100%; cursor: pointer; }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
-        .modal-content { background: white; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 16px; box-shadow: 0 -4px 10px rgba(0,0,0,0.15); }
+        .modal, .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
+        .modal-content, .admin-card { background: white; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 16px; box-shadow: 0 -4px 10px rgba(0,0,0,0.15); }
+        
         .option-group { margin-bottom: 12px; border-top: 1px solid #eee; padding-top: 10px; }
         .option-group label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 6px; color: #444; }
         .option-list { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
@@ -82,23 +85,26 @@
 
         .checkout-modal, .history-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 200; padding: 10px; }
         .checkout-card, .history-card { background: #fff; width: 100%; max-width: 480px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 16px; }
-        .checkout-item { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
-        .checkout-item-title { font-weight: bold; font-size: 14px; }
-        .checkout-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
+        
+        .checkout-item-row { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         
         .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
         .transfer-box { background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
         .transfer-box img { width: 150px; height: 150px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 6px 0; }
 
         .btn-submit-order { width: 100%; background: #28a745; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-cancel-checkout { width: 100%; background: #f44336; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; }
+        .btn-cancel-checkout { width: 100%; background: #ff9800; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; }
         .btn-zalo-optional { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; display: none; }
         .success-notify { display: none; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; text-align: center; font-weight: bold; }
+        
+        .admin-option-btn { width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; margin-bottom: 8px; font-size: 13px; }
+        .admin-option-btn.active { background: #e3f2fd; border-color: #2196F3; color: #1976D2; }
     </style>
 </head>
 <body>
 
     <header>
+        <button class="admin-trigger-btn" onclick="openAdminModal()">👑 Chủ quán</button>
         <h1>Kim Bling Coffee & Tea</h1>
         <p>📞 086.269.5.269</p>
         <p>📍 <a href="https://maps.google.com/?q=M9+Cư+Xá+Phú+Lâm+A+Phường+Phú+Lâm+Hồ+Chí+Minh" target="_blank" style="color: #fff; text-decoration: underline;">M9 cư xá Phú Lâm A, Phường Phú Lâm, HCM (Bấm xem bản đồ)</a></p>
@@ -135,6 +141,40 @@
     </div>
 
     <a href="https://zalo.me/0862695269" target="_blank" class="floating-zalo" title="Chat Zalo với quán">💬</a>
+
+    <!-- POPUP ĐĂNG NHẬP CHỦ QUÁN -->
+    <div class="checkout-modal" id="adminModal">
+        <div class="checkout-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">
+                <h3 style="font-size: 15px;">👑 Quản Lý Trạng Thái Quán</h3>
+                <button onclick="closeAdminModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Khung Nhập PIN -->
+            <div id="adminPinBox">
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px;">Nhập Mã PIN Chủ Quán:</label>
+                <input type="password" id="adminPinInput" placeholder="Nhập PIN..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-bottom: 8px; text-align: center; letter-spacing: 2px;">
+                <button onclick="verifyAdminPin()" style="width: 100%; background: #2196F3; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">🔑 XÁC NHẬN PIN</button>
+            </div>
+
+            <!-- Khung Thao Tác Quản Lý (Ẩn cho đến khi đúng PIN) -->
+            <div id="adminControlsBox" style="display: none;">
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Chọn trạng thái hoạt động hiện tại cho web đặt món:</p>
+                
+                <button class="admin-option-btn" id="btnModeAuto" onclick="setStoreOverride('AUTO')">
+                    ⏰ Tự Động (Theo giờ mở cửa 8h - 21h)
+                </button>
+                <button class="admin-option-btn" id="btnModeForceOpen" onclick="setStoreOverride('FORCE_OPEN')">
+                    🟢 Ép Buộc MỞ CỬA (Giao hàng/Làm muộn quá 21h)
+                </button>
+                <button class="admin-option-btn" id="btnModeForceClosed" onclick="setStoreOverride('FORCE_CLOSED')">
+                    🔴 Ép Buộc ĐÓNG CỬA (Nghỉ đột xuất cả ngày)
+                </button>
+
+                <button onclick="closeAdminModal()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px;">Đóng Bảng Quản Lý</button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL LỊCH SỬ ĐƠN HÀNG -->
     <div class="history-modal" id="historyModal">
@@ -231,30 +271,37 @@
     <div class="checkout-modal" id="checkoutModal">
         <div class="checkout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
-                <h3 style="font-size: 15px;">Chi Tiết Đơn Hàng & Thanh Toán</h3>
+                <h3 style="font-size: 15px;">Chi Tiết Giỏ Hàng & Thanh Toán</h3>
                 <button onclick="closeCheckoutModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
             </div>
 
-            <!-- Lưu ý quan trọng cho khách -->
             <div style="background: #fff3f3; border: 1px solid #ffcdd2; color: #c62828; padding: 8px; border-radius: 6px; font-size: 12px; margin-bottom: 8px; line-height: 1.3;">
                 ⚠️ <b>Lưu ý:</b> Quán sẽ tiến hành làm món ngay sau khi nhận đơn. Vui lòng kiểm tra kỹ danh sách món trước khi bấm đặt!
             </div>
 
-            <div id="checkoutList" style="max-height: 120px; overflow-y: auto; margin-bottom: 6px;"></div>
+            <div id="checkoutList" style="max-height: 150px; overflow-y: auto; margin-bottom: 8px; border: 1px solid #eee; border-radius: 6px; padding: 4px 8px;"></div>
 
             <div style="background: #f9f9f9; padding: 8px; border-radius: 8px; margin-bottom: 6px;">
-                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 3px;">Thông tin giao hàng / Ghi chú:</label>
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Hình thức nhận hàng:</label>
+                <div style="display: flex; gap: 15px; font-size: 13px; margin-bottom: 8px;">
+                    <label style="cursor: pointer;"><input type="radio" name="orderType" value="Giao hàng" checked onchange="toggleOrderTypeUI()"> 🛵 Giao hàng tận nơi</label>
+                    <label style="cursor: pointer;"><input type="radio" name="orderType" value="Tự ra lấy" onchange="toggleOrderTypeUI()"> 🚶 Tự ra quán lấy</label>
+                </div>
+
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 3px;">Thông tin khách hàng:</label>
                 <input type="text" id="customerName" placeholder="Tên người nhận (*)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
                 <input type="text" id="customerPhone" placeholder="Số điện thoại (*)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;" oninput="updatePaymentUI()">
                 <input type="text" id="customerAddress" placeholder="Địa chỉ giao / Số bàn (nếu có) (*)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-bottom: 4px;">
                 
-                <div style="font-size: 12px; font-weight: bold; margin-top: 4px; margin-bottom: 2px; color: #333;">Khoảng cách giao hàng:</div>
-                <div style="display: flex; gap: 12px; font-size: 12px; margin-bottom: 4px;">
-                    <label style="cursor: pointer;"><input type="radio" name="shippingFeeOption" value="0" checked onchange="updateCartDisplay()"> Dưới 1km (Freeship 0đ)</label>
-                    <label style="cursor: pointer;"><input type="radio" name="shippingFeeOption" value="10000" onchange="updateCartDisplay()"> Trên 1km (Phí ship 10k)</label>
+                <div id="shippingSection">
+                    <div style="font-size: 12px; font-weight: bold; margin-top: 4px; margin-bottom: 2px; color: #333;">Khoảng cách giao hàng:</div>
+                    <div style="display: flex; gap: 12px; font-size: 12px; margin-bottom: 4px;">
+                        <label style="cursor: pointer;"><input type="radio" name="shippingFeeOption" value="0" checked onchange="updateCartDisplay()"> Dưới 1km (Freeship 0đ)</label>
+                        <label style="cursor: pointer;"><input type="radio" name="shippingFeeOption" value="10000" onchange="updateCartDisplay()"> Trên 1km (Phí ship 10k)</label>
+                    </div>
                 </div>
 
-                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-top: 4px;">
             </div>
 
             <div class="payment-method-box">
@@ -277,7 +324,7 @@
                 <span>Tiền món:</span>
                 <span id="foodSubtotal">0k</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #666;">
+            <div id="shippingRowUI" style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #666;">
                 <span>Phí ship:</span>
                 <span id="shippingFeeText">0k</span>
             </div>
@@ -291,9 +338,8 @@
                 <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Gửi thông báo tức thì đến quán)</span>
             </button>
 
-            <!-- Nút hủy/sửa giỏ hàng -->
             <button class="btn-cancel-checkout" onclick="closeCheckoutModal()">
-                ❌ Quay lại / Sửa giỏ hàng
+                ➕ Chọn thêm món khác
             </button>
 
             <div class="success-notify" id="successNotify" style="text-align: center;">
@@ -309,6 +355,9 @@
     </div>
 
     <script>
+        // Biến lưu mã PIN đồng bộ từ Google Sheets / LocalStorage
+        let cloudAdminPin = "1234";
+
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
         const ZALO_PHONE = "0862695269";
         const TELEGRAM_BOT_TOKEN = "8862119099:AAH9UC0RZmiYnTLk4ytHbmgLDxMoW0xruds";
@@ -328,24 +377,107 @@
         let currentModalToppings = {};
         let currentCategory = 'All';
 
+        // Tải mã PIN chủ quán đồng bộ từ Google Sheets / Cloud
+        async function fetchAdminPinFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getStaff");
+                const data = await response.json();
+                if (data && data.adminPin) {
+                    cloudAdminPin = data.adminPin;
+                    localStorage.setItem('kimbling_admin_pin', cloudAdminPin);
+                }
+            } catch (err) {
+                console.log("Lỗi tải mã PIN từ cloud:", err);
+            }
+        }
+
+        /* --- TÍNH NĂNG ĐĂNG NHẬP CHỦ QUÁN VÀ QUẢN LÝ TRẠNG THÁI --- */
+        function openAdminModal() {
+            document.getElementById('adminPinInput').value = '';
+            document.getElementById('adminPinBox').style.display = 'block';
+            document.getElementById('adminControlsBox').style.display = 'none';
+            document.getElementById('adminModal').style.display = 'flex';
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+        }
+
+        function verifyAdminPin() {
+            const enteredPin = document.getElementById('adminPinInput').value.trim();
+            if (enteredPin === "") return;
+
+            let currentAdminPin = localStorage.getItem('kimbling_admin_pin') || cloudAdminPin;
+
+            if (enteredPin === currentAdminPin) {
+                document.getElementById('adminPinBox').style.display = 'none';
+                document.getElementById('adminControlsBox').style.display = 'block';
+                updateAdminUIButtons();
+            } else {
+                alert("Mã PIN không đúng! Vui lòng thử lại.");
+            }
+        }
+
+        function updateAdminUIButtons() {
+            const currentOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
+            document.getElementById('btnModeAuto').classList.toggle('active', currentOverride === 'AUTO');
+            document.getElementById('btnModeForceOpen').classList.toggle('active', currentOverride === 'FORCE_OPEN');
+            document.getElementById('btnModeForceClosed').classList.toggle('active', currentOverride === 'FORCE_CLOSED');
+        }
+
+        function setStoreOverride(mode) {
+            localStorage.setItem('kimbling_store_override', mode);
+            updateAdminUIButtons();
+            checkStoreOpenStatus();
+            alert("Đã cập nhật trạng thái hoạt động của quán!");
+        }
+
         function checkStoreOpenStatus() {
-            const now = new Date();
-            const hour = now.getHours();
             const btnSubmit = document.getElementById('btnSubmitOrder');
             const statusText = document.getElementById('storeStatusText');
+            const now = new Date();
+            const hour = now.getHours();
 
-            if (hour < 8 || hour >= 21) {
+            const storeOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
+
+            let isClosed = false;
+            let closeReason = "";
+
+            if (storeOverride === 'FORCE_CLOSED') {
+                isClosed = true;
+                closeReason = "Quán tạm nghỉ hôm nay (Nghỉ đột xuất)";
+            } else if (storeOverride === 'FORCE_OPEN') {
+                isClosed = false;
+            } else {
+                if (hour < 8 || hour >= 21) {
+                    isClosed = true;
+                    closeReason = "Đang đóng cửa (Mở lại lúc 8:00 sáng)";
+                }
+            }
+
+            if (isClosed) {
                 if (btnSubmit) {
                     btnSubmit.style.background = "#9e9e9e";
                     btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = "🔒 QUÁN ĐÃ ĐÓNG CỬA<br><span style='font-size:11px;'>Mở cửa từ 8:00 đến 21:00 hàng ngày</span>";
+                    btnSubmit.innerHTML = `🔒 QUÁN ĐÃ ĐÓNG CỬA<br><span style='font-size:11px;'>${closeReason}</span>`;
                 }
                 if (statusText) {
-                    statusText.innerText = "Đang đóng cửa (Mở lại lúc 8:00 sáng)";
+                    statusText.innerText = closeReason;
                     statusText.style.color = "#d32f2f";
+                }
+            } else {
+                if (btnSubmit) {
+                    btnSubmit.style.background = "#28a745";
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = "🚀 BẤM ĐẶT HÀNG NGAY<br><span style='font-size: 11px; font-weight: normal; opacity: 0.9;'>(Gửi thông báo tức thì đến quán)</span>";
+                }
+                if (statusText) {
+                    statusText.innerText = storeOverride === 'FORCE_OPEN' ? "Mở cửa nhận đơn (Chủ quán bật thêm giờ)" : "8:00 - 21:00 (Cả tuần)";
+                    statusText.style.color = "#388E3C";
                 }
             }
         }
+        /* ------------------------------------------------------------- */
 
         function formatPrice(val) { return (val / 1000) + 'k'; }
         function removeDiacritics(str) {
@@ -354,6 +486,8 @@
 
         async function fetchMenuFromCloud() {
             checkStoreOpenStatus();
+            await fetchAdminPinFromCloud();
+
             try {
                 const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
                 const cachedDrinks = localStorage.getItem('kimbling_online_cached_drinks');
@@ -670,8 +804,33 @@
         }
 
         function getShippingFee() {
+            const orderType = document.querySelector('input[name="orderType"]:checked').value;
+            if (orderType === 'Tự ra lấy') return 0;
+
             const shipOption = document.querySelector('input[name="shippingFeeOption"]:checked');
             return shipOption ? parseInt(shipOption.value) : 0;
+        }
+
+        function toggleOrderTypeUI() {
+            const orderType = document.querySelector('input[name="orderType"]:checked').value;
+            const shippingSection = document.getElementById('shippingSection');
+            const shippingRowUI = document.getElementById('shippingRowUI');
+            const addrInput = document.getElementById('customerAddress');
+
+            if (orderType === 'Tự ra lấy') {
+                shippingSection.style.display = 'none';
+                shippingRowUI.style.display = 'none';
+                addrInput.value = 'Khách đến quán lấy';
+                addrInput.disabled = true;
+            } else {
+                shippingSection.style.display = 'block';
+                shippingRowUI.style.display = 'flex';
+                if (addrInput.value === 'Khách đến quán lấy') {
+                    addrInput.value = localStorage.getItem('kimbling_cust_addr') || '';
+                }
+                addrInput.disabled = false;
+            }
+            updateCartDisplay();
         }
 
         function updateCartDisplay() {
@@ -680,10 +839,56 @@
             let grandTotal = foodTotal + shipFee;
 
             document.getElementById('foodSubtotal').innerText = formatPrice(foodTotal);
-            document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "Freeship (0đ)" : formatPrice(shipFee);
+            document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
             document.getElementById('checkoutTotalAmount').innerText = formatPrice(grandTotal);
 
+            const listEl = document.getElementById('checkoutList');
+            listEl.innerHTML = '';
+            
+            if (cart.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:#888; padding:10px;">Giỏ hàng trống</div>';
+            } else {
+                cart.forEach((item, index) => {
+                    let sum = item.price * item.qty;
+                    listEl.innerHTML += `
+                        <div class="checkout-item-row">
+                            <div style="flex:1; padding-right:6px;">
+                                <div style="font-weight:bold;">${item.name}</div>
+                                <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatPrice(sum)}</span></div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <button onclick="changeCartItemQty(${index}, -1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
+                                <span style="font-weight:bold; min-width:16px; text-align:center;">${item.qty}</span>
+                                <button onclick="changeCartItemQty(${index}, 1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button>
+                                <button onclick="removeCartItem(${index})" style="padding:2px 6px; background:#ffebee; color:#c62828; border:none; border-radius:4px; font-weight:bold; cursor:pointer; margin-left:4px;">✕</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
             updatePaymentUI();
+        }
+
+        function changeCartItemQty(index, delta) {
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            renderCartBar();
+            updateCartDisplay();
+            if (cart.length === 0) {
+                closeCheckoutModal();
+            }
+        }
+
+        function removeCartItem(index) {
+            cart.splice(index, 1);
+            renderCartBar();
+            updateCartDisplay();
+            if (cart.length === 0) {
+                closeCheckoutModal();
+            }
         }
 
         function updatePaymentUI() {
@@ -715,22 +920,11 @@
 
             if (savedName) document.getElementById('customerName').value = savedName;
             if (savedPhone) document.getElementById('customerPhone').value = savedPhone;
-            if (savedAddr) document.getElementById('customerAddress').value = savedAddr;
-
-            const listEl = document.getElementById('checkoutList');
-            listEl.innerHTML = '';
-            cart.forEach((item) => {
-                let sum = item.price * item.qty;
-                listEl.innerHTML += `
-                    <div class="checkout-item">
-                        <div>
-                            <div class="checkout-item-title">${item.name} (x${item.qty})</div>
-                            <div class="checkout-item-sub">${item.options}</div>
-                        </div>
-                        <div style="font-weight:bold; color:#d32f2f;">${formatPrice(sum)}</div>
-                    </div>
-                `;
-            });
+            
+            const orderType = document.querySelector('input[name="orderType"]:checked').value;
+            if (orderType === 'Giao hàng' && savedAddr) {
+                document.getElementById('customerAddress').value = savedAddr;
+            }
 
             updateCartDisplay();
             document.getElementById('checkoutModal').style.display = 'flex';
@@ -738,7 +932,6 @@
             checkStoreOpenStatus();
             document.getElementById('successNotify').style.display = 'none';
             document.getElementById('btnZaloOptional').style.display = 'none';
-            document.getElementById('btnSubmitOrder').style.display = 'block';
         }
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
@@ -812,9 +1005,10 @@
         }
 
         function generateOrderMessage() {
+            const orderType = document.querySelector('input[name="orderType"]:checked').value;
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
-            const addr = document.getElementById('customerAddress').value.trim();
+            let addr = document.getElementById('customerAddress').value.trim();
             const note = document.getElementById('customerNote').value.trim();
             const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
             let shipFee = getShippingFee();
@@ -824,16 +1018,26 @@
                 return null;
             }
 
-            localStorage.setItem('kimbling_cust_name', name);
-            localStorage.setItem('kimbling_cust_phone', phone);
-            localStorage.setItem('kimbling_cust_addr', addr);
+            if (orderType === 'Giao hàng') {
+                localStorage.setItem('kimbling_cust_name', name);
+                localStorage.setItem('kimbling_cust_phone', phone);
+                localStorage.setItem('kimbling_cust_addr', addr);
+            } else {
+                localStorage.setItem('kimbling_cust_name', name);
+                localStorage.setItem('kimbling_cust_phone', phone);
+            }
 
             let foodTotal = calculateFoodSubtotal();
             let total = foodTotal + shipFee;
 
             let msg = `☕ ĐƠN HÀNG MỚI - KIM BLING\n`;
+            msg += `📌 Hình thức: ${orderType === 'Giao hàng' ? '🛵 Giao tận nơi' : '🚶 Khách tự ra lấy'}\n`;
             msg += `👤 Khách: ${name} - 📞 ${phone}\n`;
-            msg += `📍 Đ/c: ${addr} (${shipFee === 0 ? 'Freeship <1km' : 'Phí ship 10k'})\n`;
+            if (orderType === 'Giao hàng') {
+                msg += `📍 Đ/c: ${addr} (${shipFee === 0 ? 'Freeship <1km' : 'Phí ship 10k'})\n`;
+            } else {
+                msg += `📍 Địa chỉ: Khách đến quán lấy (M9 cư xá Phú Lâm A)\n`;
+            }
             if (note) msg += `📝 Ghi chú: ${note}\n`;
             msg += `💵 Thanh toán: ${payMethod}\n`;
             msg += `----------------------------\n`;
@@ -911,11 +1115,11 @@
                 await sendTelegramMessage(`⚠️ NHẮC NHỞ: Vui lòng xử lý và hoàn thành sớm đơn hàng này cho khách!`);
             }, 3000);
 
-            const timeString = new Date(Date.now() + 25*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+            const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
             setTimeout(() => {
                 btnSubmit.style.display = 'none';
-                document.getElementById('estimatedTimeNotice').innerText = `⏱️ Dự kiến giao đến bạn vào khoảng: ${timeString}`;
+                document.getElementById('estimatedTimeNotice').innerText = `⏱️ Dự kiến sẵn sàng lúc: ${timeString}`;
                 document.getElementById('successNotify').style.display = 'block';
                 document.getElementById('btnZaloOptional').style.display = 'block';
 
