@@ -46,7 +46,7 @@
         
         .payment-method-box { background: #fdfdfd; border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
         .transfer-box { background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; text-align: center; }
-        .transfer-box img { width: 130px; height: 130px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 4px 0; }
+        .transfer-box img { width: 150px; height: 150px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 6px 0; }
 
         .btn-submit-order { width: 100%; background: #28a745; color: white; border: none; padding: 12px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-zalo-optional { width: 100%; background: #0068ff; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; display: none; }
@@ -134,7 +134,7 @@
         </div>
     </div>
 
-    <!-- Modal Xem Giỏ Hàng & Gởi Zalo / Telegram -->
+    <!-- Modal Xem Giỏ Hàng -->
     <div class="checkout-modal" id="checkoutModal">
         <div class="checkout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px;">
@@ -157,14 +157,16 @@
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #333;">Hình thức thanh toán:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px;">
                     <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Tiền mặt" checked onchange="updatePaymentUI()"> 💵 Tiền mặt</label>
-                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản (1-Chạm)</label>
+                    <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản qua Ngân hàng</label>
                 </div>
 
+                <!-- HIỂN THỊ MÃ QR TỰ ĐIỀN ĐÚNG SỐ TIỀN TRỰC TIẾP TRÊN WEB -->
                 <div class="transfer-box" id="transferBox">
                     <div style="font-weight: bold; color: #0288d1; font-size: 12px;">Techcombank: 19076231479012 - LE MINH DUNG</div>
                     <div>
                         <img id="vietQRImage" src="" alt="Mã QR Chuyển Khoản">
                     </div>
+                    <div style="font-size: 11px; color: #666;">Quét mã QR bằng App Ngân Hàng để chuyển khoản chính xác số tiền</div>
                 </div>
             </div>
 
@@ -173,19 +175,16 @@
                 <span id="checkoutTotalAmount" style="color: #d32f2f;">0k</span>
             </div>
 
-            <!-- NÚT XÁC NHẬN ĐẶT HÀNG GỬI NGẦM VỀ TELEGRAM -->
             <button class="btn-submit-order" id="btnSubmitOrder" onclick="processOrderSubmit()">
                 🚀 BẤM ĐẶT HÀNG NGAY<br>
                 <span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Gửi thông báo tức thì đến quán)</span>
             </button>
 
-            <!-- KHUNG BÁO ĐẶT HÀNG THÀNH CÔNG -->
             <div class="success-notify" id="successNotify">
                 ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!<br>
                 <span style="font-size: 11px; font-weight: normal;">Quán đã nhận được đơn và đang xử lý món cho bạn.</span>
             </div>
 
-            <!-- NÚT TÙY CHỌN GỬI THÊM QUA ZALO KHÔNG BẮT BUỘC -->
             <button class="btn-zalo-optional" id="btnZaloOptional" onclick="openZaloChatManual()">
                 📲 Mở khung Chat Zalo gửi đơn cho quán (Nếu muốn)
             </button>
@@ -200,7 +199,6 @@
         const TELEGRAM_CHAT_ID = "8945209824";
 
         const BANK_ID = "TCB";
-        const BANK_CODE = "970407";
         const ACCOUNT_NO = "19076231479012";
         const ACCOUNT_NAME = "LE MINH DUNG";
 
@@ -436,6 +434,7 @@
             return total;
         }
 
+        // TỰ ĐỘNG TẠO ẢNH MÃ QR CÓ ĐÚNG SỐ TIỀN VÀ NỘI DUNG CHUYỂN KHOẢN
         function updatePaymentUI() {
             const method = document.querySelector('input[name="payMethod"]:checked').value;
             const transferBox = document.getElementById('transferBox');
@@ -444,7 +443,7 @@
 
             if (method === 'Chuyển khoản') {
                 if (totalAmount > 0) {
-                    let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
+                    let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
                     let qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
                     document.getElementById('vietQRImage').src = qrUrl;
                 }
@@ -486,7 +485,6 @@
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
-        // ĐÃ SẮP XẾP LẠI: ĐƯA LINK THANH TOÁN LÊN ĐẦU TIÊN ĐỂ ZALO KHÔNG BAO GIỜ BỊ CẮT CỤT URL
         function generateOrderMessage() {
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
@@ -502,32 +500,23 @@
             let total = 0;
             cart.forEach((item) => { total += item.price * item.qty; });
 
-            let msg = `☕ *ĐƠN HÀNG MỚI - KIM BLING*\n`;
-
-            // Nếu khách chọn chuyển khoản, đưa link 1-chạm lên ngay trên cùng để không bị trôi
-            if (payMethod === 'Chuyển khoản') {
-                let syntax = phone ? `THANH TOAN ${phone}` : `THANH TOAN KIM BLING`;
-                let autoPayUrl = `https://pay.vietqr.io/v2/pay?bank=${BANK_CODE}&account=${ACCOUNT_NO}&amount=${total}&memo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-                msg += `💳 *LINK CK 1-CHẠM (${formatPrice(total)}):*\n${autoPayUrl}\n`;
-                msg += `----------------------------\n`;
-            }
-
-            msg += `👤 *Khách:* ${name} - 📞 ${phone}\n`;
-            if (addr) msg += `📍 *Đ/c:* ${addr}\n`;
-            if (note) msg += `📝 *Ghi chú:* ${note}\n`;
-            msg += `💵 *TT:* ${payMethod}\n`;
+            let msg = `☕ ĐƠN HÀNG MỚI - KIM BLING\n`;
+            msg += `👤 Khách: ${name} - 📞 ${phone}\n`;
+            if (addr) msg += `📍 Đ/c: ${addr}\n`;
+            if (note) msg += `📝 Ghi chú: ${note}\n`;
+            msg += `💵 Thanh toán: ${payMethod}\n`;
             msg += `----------------------------\n`;
 
             cart.forEach((item, index) => {
                 let subTotal = item.price * item.qty;
-                msg += `${index + 1}. *${item.name}* (x${item.qty}) - ${formatPrice(subTotal)}\n`;
+                msg += `${index + 1}. ${item.name} (x${item.qty}) - ${formatPrice(subTotal)}\n`;
                 if(item.options && item.options !== "Mặc định") {
                     msg += `   └ ${item.options}\n`;
                 }
             });
 
             msg += `----------------------------\n`;
-            msg += `💰 *TỔNG CỘNG:* ${formatPrice(total)}`;
+            msg += `💰 TỔNG CỘNG: ${formatPrice(total)}`;
             return msg;
         }
 
@@ -535,18 +524,29 @@
             const msg = generateOrderMessage();
             if (!msg) return;
 
+            const phone = document.getElementById('customerPhone').value.trim();
+            const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
             const btnSubmit = document.getElementById('btnSubmitOrder');
+            
             btnSubmit.innerText = "⏳ Đang gửi đơn...";
             btnSubmit.disabled = true;
 
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(msg).catch(e => console.log(e));
-            }
+            let total = calculateCartTotal();
 
-            // Gửi ngầm sang Telegram để chuông réo inh ỏi ở máy quán
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`;
-            const img = new Image();
-            img.src = url;
+            // Nếu Chuyển khoản -> Gửi Ảnh Mã QR + Chi tiết đơn về Telegram
+            if (payMethod === 'Chuyển khoản') {
+                let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
+                let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+                
+                const telePhotoUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto?chat_id=${TELEGRAM_CHAT_ID}&photo=${encodeURIComponent(qrImageUrl)}&caption=${encodeURIComponent(msg)}`;
+                const img = new Image();
+                img.src = telePhotoUrl;
+            } else {
+                // Tiền mặt -> Gửi Tin nhắn văn bản về Telegram
+                const teleMsgUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}`;
+                const img = new Image();
+                img.src = teleMsgUrl;
+            }
 
             setTimeout(() => {
                 btnSubmit.style.display = 'none';
