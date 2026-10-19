@@ -1307,14 +1307,18 @@ async function fetchHistoryFromCloud() {
             }
         }
 
-        function toggleFavorite(id, event) {
+                function toggleFavorite(id, event) {
             event.stopPropagation();
             const index = favorites.indexOf(id);
             if (index > -1) favorites.splice(index, 1);
             else favorites.push(id);
             localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
             renderMenu();
+            
+            // Đồng bộ ngay lập tức danh sách món mới lên Google Sheets để bên menu online cập nhật
+            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings, favorites: favorites });
         }
+
 
         let currentCategory = 'All';
 
