@@ -536,7 +536,7 @@
     <div id="printable-area"></div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVvN73kuu0i805gO-e2f_Kf1G8m0xhGjyn2CwCIQlCwpm8tI63Eck2PUo2eUuFR28wyw/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -1206,23 +1206,7 @@ function toggleCustomerMenuMode() {
             }).catch(err => { console.log("Sync error:", err); throw err; });
         }
 
-        async function fetchMenuFromCloud() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
-                const data = await response.json();
-                if (data && data.menu && data.menu.length > 0) {
-                    menu = data.menu;
-                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
-                    if (data.snackToppings) snackToppings = data.snackToppings;
-                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
-                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
-                    renderMenu();
-                }
-            } catch (err) {
-                console.log("Auto fetch menu error:", err);
-            }
-        }
+        fetchMenuFromCloud()
 
         
         async function fetchShiftClosingFromCloud() {
