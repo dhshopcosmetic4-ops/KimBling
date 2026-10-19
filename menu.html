@@ -1160,57 +1160,32 @@
         }
 
         async function fetchMenuFromCloud() {
-            try {
-                const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
-                const cachedDrinks = localStorage.getItem('kimbling_online_cached_drinks');
-                const cachedSnacks = localStorage.getItem('kimbling_online_cached_snacks');
-                const cachedOverride = localStorage.getItem('kimbling_online_cached_override');
-                const cachedFavs = localStorage.getItem('kimbling_favorites');
-                
-                if (cachedMenu) {
-                    menu = JSON.parse(cachedMenu);
-                    drinkToppings = cachedDrinks ? JSON.parse(cachedDrinks) : [];
-                    snackToppings = cachedSnacks ? JSON.parse(cachedSnacks) : [];
-                    favorites = cachedFavs ? JSON.parse(cachedFavs) : [];
-                    if (cachedOverride) {
-                        localStorage.setItem('kimbling_store_override', cachedOverride);
-                    }
-                    checkStoreOpenStatus();
-                    renderMenu();
-                }
-            } catch (err) {
-                console.log("Lỗi đọc cache cục bộ:", err);
+    try {
+        const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
+        const data = await res.json();
+        
+        if (data && data.menu && data.menu.length > 0) {
+            menu = data.menu;
+            drinkToppings = data.drinkToppings || [];
+            snackToppings = data.snackToppings || [];
+            
+            // Nhận danh sách Món Mới / Yêu thích từ Google Sheets đồng bộ sang
+            if (data.favorites && Array.isArray(data.favorites)) {
+                favorites = data.favorites;
+                localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
             }
+            
+            localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
+            localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
+            localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
 
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
-                const data = await res.json();
-                
-                if (data && data.menu && data.menu.length > 0) {
-                    menu = data.menu;
-                    drinkToppings = data.drinkToppings || [];
-                    snackToppings = data.snackToppings || [];
-                    if (data.favorites) {
-                        favorites = data.favorites;
-                        localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
-                    }
-                    
-                    if (data.storeOverride) {
-                        localStorage.setItem('kimbling_store_override', data.storeOverride);
-                        localStorage.setItem('kimbling_online_cached_override', data.storeOverride);
-                    }
-                    
-                    localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
-                    localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
-                    localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
-
-                    checkStoreOpenStatus();
-                    renderMenu();
-                }
-            } catch (e) {
-                console.error("Lỗi đồng bộ ngầm từ cloud:", e);
-            }
+            checkStoreOpenStatus();
+            renderMenu();
         }
+    } catch (e) {
+        console.error("Lỗi đồng bộ ngầm từ cloud:", e);
+    }
+}
 
         setInterval(() => {
             fetchMenuFromCloud();
