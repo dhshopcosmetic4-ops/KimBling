@@ -1206,10 +1206,16 @@ function toggleCustomerMenuMode() {
             }).catch(err => { console.log("Sync error:", err); throw err; });
         }
 
-        async function fetchMenuFromCloud() {
+                        async function fetchMenuFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await response.json();
+                
+                // Đồng bộ trạng thái cửa hàng từ Cloud
+                if (data && data.storeOverride !== undefined) {
+                    localStorage.setItem('kimbling_store_override', data.storeOverride);
+                }
+
                 if (data && data.menu && data.menu.length > 0) {
                     menu = data.menu;
                     if (data.drinkToppings) drinkToppings = data.drinkToppings;
@@ -1223,6 +1229,7 @@ function toggleCustomerMenuMode() {
                 console.log("Auto fetch menu error:", err);
             }
         }
+
 
         
         async function fetchShiftClosingFromCloud() {
