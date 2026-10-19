@@ -137,7 +137,7 @@
                     <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-600 mb-2"></i>
                     <span class="text-xs text-gray-600 font-medium">Đang tạo mã QR...</span>
                 </div>
-                <img id="vietqr-img" class="w-full h-auto rounded-lg hidden" alt="Mã QR Thanh Toán" />
+                <img id="vietqr-img" class="w-full h-auto rounded-lg hidden" alt="Mã QR Thanh Toán" loading="lazy" decoding="async" />
             </div>
 
             <!-- Thông Tin Chi Tiết CK -->
@@ -246,9 +246,8 @@
         <span id="toast-text">Thông báo</span>
     </div>
 
-    <!-- JavaScript Xử Lý -->
+    <!-- JavaScript Tối Ưu Tốc Độ -->
     <script>
-        // CẤU HÌNH MẶC ĐỊNH
         const DEFAULT_CONFIG = {
             shopName: 'Kim Bling Coffee & Tea',
             bankId: 'TCB',
@@ -258,9 +257,8 @@
         };
 
         let currentConfig = { ...DEFAULT_CONFIG };
-        let rawAmount = 0; // Lưu số tiền dạng nguyên (number)
+        let rawAmount = 0;
 
-        // DOM Elements
         const amountInput = document.getElementById('amount-input');
         const clearAmountBtn = document.getElementById('clear-amount-btn');
         const qrModal = document.getElementById('qr-modal');
@@ -269,17 +267,17 @@
         const configModalContent = document.getElementById('config-modal-content');
         const toastMsg = document.getElementById('toast-msg');
 
-        // TẢI & LƯU CẤU HÌNH
+        // Tải cấu hình tức thì từ localStorage (Stale-While-Revalidate pattern)
         function loadConfig() {
-            const saved = localStorage.getItem('vietqr_calc_config');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('vietqr_calc_config');
+                if (saved) {
                     currentConfig = JSON.parse(saved);
-                } catch (e) {
-                    currentConfig = { ...DEFAULT_CONFIG };
+                } else {
+                    localStorage.setItem('vietqr_calc_config', JSON.stringify(DEFAULT_CONFIG));
                 }
-            } else {
-                localStorage.setItem('vietqr_calc_config', JSON.stringify(DEFAULT_CONFIG));
+            } catch (e) {
+                currentConfig = { ...DEFAULT_CONFIG };
             }
             document.getElementById('shop-name-display').textContent = currentConfig.shopName || 'Kim Bling Coffee & Tea';
         }
@@ -307,7 +305,6 @@
             document.getElementById('cfg-memo').value = currentConfig.memo || '';
         }
 
-        // XỬ LÝ NHẬP VÀ ĐỊNH DẠNG SỐ TIỀN
         function formatFormattedNumber(val) {
             if (!val) return '';
             return new Intl.NumberFormat('vi-VN').format(val);
@@ -324,13 +321,11 @@
         }
 
         amountInput.addEventListener('input', (e) => {
-            // Lọc chỉ lấy chữ số
             const cleanVal = e.target.value.replace(/\D/g, '');
             rawAmount = cleanVal ? parseInt(cleanVal, 10) : 0;
             updateAmountDisplay();
         });
 
-        // Nút Xóa Nhanh
         clearAmountBtn.addEventListener('click', () => {
             rawAmount = 0;
             updateAmountDisplay();
@@ -343,7 +338,6 @@
             amountInput.focus();
         });
 
-        // Nút phím tắt +000
         document.getElementById('btn-add-000').addEventListener('click', () => {
             if (rawAmount > 0) {
                 rawAmount = rawAmount * 1000;
@@ -351,7 +345,6 @@
             }
         });
 
-        // Các Nút Cộng Nhanh Mệnh Giá (+10k, +20k, ...)
         document.querySelectorAll('.quick-add-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const addVal = parseInt(btn.getAttribute('data-add'), 10);
@@ -360,7 +353,6 @@
             });
         });
 
-        // TẠO MÃ VIETQR
         function generateVietQR() {
             if (!currentConfig.accountNo || !currentConfig.accountName) {
                 showToast('Vui lòng cấu hình tài khoản ngân hàng trước!', 'fa-triangle-exclamation');
@@ -374,7 +366,6 @@
                 return;
             }
 
-            // Gán dữ liệu lên Modal QR
             document.getElementById('qr-shop-title').textContent = currentConfig.shopName || 'Quét mã để thanh toán';
             document.getElementById('qr-amount-display').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(rawAmount).replace('₫', 'đ');
             document.getElementById('qr-bank-name').textContent = currentConfig.bankId;
@@ -382,7 +373,6 @@
             document.getElementById('qr-acc-name').textContent = currentConfig.accountName;
             document.getElementById('qr-memo').textContent = currentConfig.memo;
 
-            // VietQR API Link (compact2)
             const bankId = encodeURIComponent(currentConfig.bankId);
             const accNo = encodeURIComponent(currentConfig.accountNo);
             const amount = rawAmount;
@@ -413,7 +403,6 @@
             openModal(qrModal, qrModalContent);
         }
 
-        // TOAST NOTIFICATION
         function showToast(message, iconClass = 'fa-circle-info') {
             const toastText = document.getElementById('toast-text');
             const toastIcon = document.getElementById('toast-icon');
@@ -430,7 +419,6 @@
             }, 2500);
         }
 
-        // CÁC HÀM MỞ/ĐÓNG MODAL
         function openModal(modal, content) {
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -454,30 +442,25 @@
             openModal(configModal, configModalContent);
         }
 
-        // EVENT LISTENERS
-        document.addEventListener('DOMContentLoaded', () => {
-            loadConfig();
+        // Khởi chạy ngay lập tức khi trang vừa load
+        loadConfig();
 
-            // Nút Tạo Mã QR
+        document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('generate-qr-btn').addEventListener('click', generateVietQR);
 
-            // Đóng Modal QR
             document.getElementById('close-qr-btn').addEventListener('click', () => closeModal(qrModal, qrModalContent));
             qrModal.addEventListener('click', (e) => {
                 if (e.target === qrModal) closeModal(qrModal, qrModalContent);
             });
 
-            // Mở & Đóng Cấu Hình
             document.getElementById('open-config-btn').addEventListener('click', openConfigModal);
             document.getElementById('close-config-btn').addEventListener('click', () => closeModal(configModal, configModalContent));
             configModal.addEventListener('click', (e) => {
                 if (e.target === configModal) closeModal(configModal, configModalContent);
             });
 
-            // Submit Cấu Hình
             document.getElementById('config-form').addEventListener('submit', saveConfig);
 
-            // Copy Số Tiền
             document.getElementById('copy-amount-btn').addEventListener('click', () => {
                 const amountStr = rawAmount.toString();
                 const el = document.createElement('textarea');
@@ -493,7 +476,6 @@
                 document.body.removeChild(el);
             });
 
-            // Nhấn Enter ở ô nhập tiền để tạo QR luôn
             amountInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
