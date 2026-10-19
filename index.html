@@ -1206,7 +1206,23 @@ function toggleCustomerMenuMode() {
             }).catch(err => { console.log("Sync error:", err); throw err; });
         }
 
-        fetchMenuFromCloud()
+        async function fetchMenuFromCloud() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
+                const data = await response.json();
+                if (data && data.menu && data.menu.length > 0) {
+                    menu = data.menu;
+                    if (data.drinkToppings) drinkToppings = data.drinkToppings;
+                    if (data.snackToppings) snackToppings = data.snackToppings;
+                    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+                    localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
+                    localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
+                    renderMenu();
+                }
+            } catch (err) {
+                console.log("Auto fetch menu error:", err);
+            }
+        }
 
         
         async function fetchShiftClosingFromCloud() {
