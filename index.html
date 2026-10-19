@@ -139,15 +139,21 @@
         </div>
     </div>
 
-    <div class="menu-section">
-        <div class="menu-header">
-            <div>
-                <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V37]</span></h2>
-                <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
-                    <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
-                    <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
+           <div class="menu-section">
+            <div class="menu-header">
+                <div>
+                    <!-- Nút Mở/Tắt Quán chèn mới vào đây -->
+                    <div style="margin-bottom: 6px;">
+                        <button id="storeToggleBtn" onclick="toggleStoreStatus()" style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; transition: 0.2s;">🟢 Quán Đang Mở Cửa</button>
+                    </div>
+
+                    <h2>Kim Bling Coffee & Tea <span style='font-size:11px; color:#e91e63;'>[V37]</span></h2>
+                    <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
+                        <span id="currentAccountBadge" style="font-size: 12px; background: #e3f2fd; color: #1976D2; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Đang dùng: Chủ Quán [CQ]</span>
+                        <span id="attendanceStatusBadge" style="font-size: 11px; background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: none;">Chưa vào ca</span>
+                    </div>
                 </div>
-            </div>
+
             <div class="menu-header-actions">
                 <button class="btn-action" style="background: #ff9800; display: none;" id="attendanceBtn" onclick="toggleAttendance()">⏱️ Vào Ca</button>
                 <button class="btn-action" style="background: #e91e63;" onclick="refreshAllData()" title="Làm mới & đồng bộ dữ liệu">🔄 Refresh</button>
@@ -537,6 +543,39 @@
 
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec"; // Dán URL Web App mới sau khi triển khai Apps Script V36.
+
+        // ==========================================
+        // CODE QUẢN LÝ ON/OFF QUÁN (MỞ/ĐÓNG QUÁN)
+        // ==========================================
+        let isStoreOpen = (localStorage.getItem('kimbling_store_override') ?? 'true') === 'true';
+
+        function updateStoreStatusUI() {
+            const btn = document.getElementById('storeToggleBtn');
+            if (!btn) return;
+            if (isStoreOpen) {
+                btn.innerText = "🟢 Quán Đang Mở Cửa";
+                btn.style.background = "#4CAF50";
+            } else {
+                btn.innerText = "🔴 Quán Đang Tạm Nghỉ";
+                btn.style.background = "#e74c3c";
+            }
+        }
+
+        function toggleStoreStatus() {
+            if (!verifyAdminPin()) return; // Hỏi mã PIN Chủ Quán
+            isStoreOpen = !isStoreOpen;
+            localStorage.setItem('kimbling_store_override', String(isStoreOpen));
+            updateStoreStatusUI();
+            
+            // Đẩy trạng thái mới lên Google Sheets để menu.html của khách nhận được
+            syncToGoogleSheets('storeOverride', { storeOverride: isStoreOpen });
+            
+            alert(isStoreOpen 
+                ? "🟢 Đã MỞ CỬA HÀNG thành công!" 
+                : "🔴 Đã ĐÓNG CỬA HÀNG! Khách quét QR sẽ thấy thông báo quán tạm nghỉ."
+            );
+        }
+        // ==========================================
 
         let currentAccount = localStorage.getItem('kimbling_account') || '';
         let adminPin = localStorage.getItem('kimbling_admin_pin') || '0';
@@ -1206,14 +1245,19 @@ function toggleCustomerMenuMode() {
             }).catch(err => { console.log("Sync error:", err); throw err; });
         }
 
-                        async function fetchMenuFromCloud() {
+                                async function fetchMenuFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await response.json();
                 
                 // Đồng bộ trạng thái cửa hàng từ Cloud
                 if (data && data.storeOverride !== undefined) {
-                    localStorage.setItem('kimbling_store_override', data.storeOverride);
+                    // Chuyển đổi giá trị nhận được thành kiểu boolean chính xác
+                    isStoreOpen = (data.storeOverride === true || data.storeOverride === 'true');
+                    localStorage.setItem('kimbling_store_override', String(isStoreOpen));
+                    
+                    // THÊM DÒNG NÀY ĐỂ GIAO DIỆN CẬP NHẬT NGAY LẬP TỨC:
+                    updateStoreStatusUI();
                 }
 
                 if (data && data.menu && data.menu.length > 0) {
@@ -1229,6 +1273,7 @@ function toggleCustomerMenuMode() {
                 console.log("Auto fetch menu error:", err);
             }
         }
+
 
 
         
