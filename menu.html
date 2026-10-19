@@ -285,7 +285,7 @@
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px;">Hình thức nhận hàng:</label>
                 <div style="display: flex; gap: 15px; font-size: 13px; margin-bottom: 8px;">
                     <label style="cursor: pointer;"><input type="radio" name="orderType" value="Giao hàng" checked onchange="toggleOrderTypeUI()"> 🛵 Giao hàng tận nơi</label>
-                    <label style="cursor: pointer;"><input type="radio" name="orderType" value="Tự ra lấy" onchange="toggleOrderTypeUI()"> 🥤Dùng tại quán</label>
+                    <label style="cursor: pointer;"><input type="radio" name="orderType" value="Tự ra lấy" onchange="toggleOrderTypeUI()"> 🚶 Tự ra quán lấy</label>
                 </div>
 
                 <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 3px;">Thông tin khách hàng:</label>
@@ -480,44 +480,6 @@
             return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
         }
 
-        async function fetchMenuFromCloud() {
-            checkStoreOpenStatus();
-            await fetchAdminPinFromCloud();
-
-            try {
-                const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
-                const cachedDrinks = localStorage.getItem('kimbling_online_cached_drinks');
-                const cachedSnacks = localStorage.getItem('kimbling_online_cached_snacks');
-                
-                if (cachedMenu) {
-                    menu = JSON.parse(cachedMenu);
-                    drinkToppings = cachedDrinks ? JSON.parse(cachedDrinks) : [];
-                    snackToppings = cachedSnacks ? JSON.parse(cachedSnacks) : [];
-                    renderMenu();
-                }
-            } catch (err) {
-                console.log("Lỗi đọc cache:", err);
-            }
-
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
-                const data = await res.json();
-                if (data && data.menu && data.menu.length > 0) {
-                    menu = data.menu;
-                    drinkToppings = data.drinkToppings || [];
-                    snackToppings = data.snackToppings || [];
-                    
-                    localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
-                    localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
-                    localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
-
-                    renderMenu();
-                }
-            } catch (e) {
-                console.error("Lỗi đồng bộ từ cloud:", e);
-            }
-        }
-
         function shareStoreWebsite() {
             if (navigator.share) {
                 navigator.share({
@@ -588,7 +550,6 @@
                 const catType = getCategoryType(item.name, item.category);
                 let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
                 
-                // Đã thêm loading="lazy" và decoding="async" để tải nhanh hơn
                 let imgContent = item.imageUrl 
                     ? `<img src="${item.imageUrl}" loading="lazy" decoding="async" alt="${item.name}" onerror="this.onerror=null; this.parentNode.innerHTML='${fallbackIcon}';">` 
                     : fallbackIcon;
@@ -1136,8 +1097,61 @@
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
-        fetchMenuFromCloud();
+        async function fetchMenuFromCloud() {
+            try {
+                const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
+                const cachedDrinks = localStorage.getItem('kimbling_online_cached_drinks');
+                const cachedSnacks = localStorage.getItem('kimbling_online_cached_snacks');
+                const cachedOverride = localStorage.getItem('kimbling_online_cached_override');
+                
+                if (cachedMenu) {
+                    menu = JSON.parse(cachedMenu);
+                    drinkToppings = cachedDrinks ? JSON.parse(cachedDrinks) : [];
+                    snackToppings = cachedSnacks ? JSON.parse(cachedSnacks) : [];
+                    if (cachedOverride) {
+                        localStorage.setItem('kimbling_store_override', cachedOverride);
+                    }
+                    checkStoreOpenStatus();
+                    renderMenu();
+                }
+            } catch (err) {
+                console.log("Lỗi đọc cache cục bộ:", err);
+            }
 
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
+                const data = await res.json();
+                
+                if (data && data.menu && data.menu.length > 0) {
+                    menu = data.menu;
+                    drinkToppings = data.drinkToppings || [];
+                    snackToppings = data.snackToppings || [];
+                    
+                    if (data.storeOverride) {
+                        localStorage.setItem('kimbling_store_override', data.storeOverride);
+                        localStorage.setItem('kimbling_online_cached_override', data.storeOverride);
+                    }
+                    
+                    localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
+                    localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
+                    localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
+
+                    checkStoreOpenStatus();
+                    renderMenu();
+                }
+            } catch (e) {
+                console.error("Lỗi đồng bộ ngầm từ cloud:", e);
+            }
+        }
+
+        // Tự động kiểm tra đồng bộ trạng thái quán định kỳ mỗi 30 giây
+        setInterval(() => {
+            fetchMenuFromCloud();
+        }, 30000);
+
+        // Kích hoạt chạy ngay khi mở trang
+        fetchAdminPinFromCloud();
+        fetchMenuFromCloud();
     </script>
 </body>
 </html>
