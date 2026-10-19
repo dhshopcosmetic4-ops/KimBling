@@ -1159,15 +1159,24 @@
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
-                async function fetchMenuFromCloud() {
+                        async function fetchMenuFromCloud() {
             try {
+                // Ưu tiên load từ cache máy trước để hiển thị siêu nhanh
+                const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
+                if (cachedMenu && menu.length === 0) {
+                    menu = JSON.parse(cachedMenu);
+                    drinkToppings = JSON.parse(localStorage.getItem('kimbling_online_cached_drinks') || '[]');
+                    snackToppings = JSON.parse(localStorage.getItem('kimbling_online_cached_snacks') || '[]');
+                    renderMenu();
+                }
+
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await res.json();
                 
-                // --- ĐỒNG BỘ TRẠNG THÁI TẮT/MỞ QUÁN TỪ CLOUD ---
+                // Đồng bộ trạng thái quán ngay lập tức
                 if (data && data.storeOverride !== undefined) {
                     localStorage.setItem('kimbling_store_override', data.storeOverride);
-                    checkStoreOpenStatus(); // Gọi kiểm tra và cập nhật giao diện nút đặt món ngay
+                    checkStoreOpenStatus();
                 }
                 
                 if (data && data.menu && data.menu.length > 0) {
@@ -1175,7 +1184,6 @@
                     drinkToppings = data.drinkToppings || [];
                     snackToppings = data.snackToppings || [];
                     
-                    // Nhận danh sách Món Mới / Yêu thích từ Google Sheets đồng bộ sang
                     if (data.favorites && Array.isArray(data.favorites)) {
                         favorites = data.favorites;
                         localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
@@ -1186,12 +1194,13 @@
                     localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
 
                     checkStoreOpenStatus();
-                    renderMenu();
+                    renderMenu(); // Chỉ render lại khi có dữ liệu mới thực sự từ cloud
                 }
             } catch (e) {
                 console.error("Lỗi đồng bộ ngầm từ cloud:", e);
             }
         }
+
 
 
         setInterval(() => {
