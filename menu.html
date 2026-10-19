@@ -355,7 +355,6 @@
     </div>
 
     <script>
-        // Biến lưu mã PIN đồng bộ từ Google Sheets / LocalStorage
         let cloudAdminPin = "1234";
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby81LSm7ntUOtjKoXyPrmJLXzHWNSd91OOUIc6uEu4XQhT8NLMPf6fVuDdiowH3Kz3Oyg/exec";
@@ -377,7 +376,6 @@
         let currentModalToppings = {};
         let currentCategory = 'All';
 
-        // Tải mã PIN chủ quán đồng bộ từ Google Sheets / Cloud
         async function fetchAdminPinFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getStaff");
@@ -391,7 +389,6 @@
             }
         }
 
-        /* --- TÍNH NĂNG ĐĂNG NHẬP CHỦ QUÁN VÀ QUẢN LÝ TRẠNG THÁI --- */
         function openAdminModal() {
             document.getElementById('adminPinInput').value = '';
             document.getElementById('adminPinBox').style.display = 'block';
@@ -477,7 +474,6 @@
                 }
             }
         }
-        /* ------------------------------------------------------------- */
 
         function formatPrice(val) { return (val / 1000) + 'k'; }
         function removeDiacritics(str) {
@@ -924,6 +920,14 @@
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
             if (orderType === 'Giao hàng' && savedAddr) {
                 document.getElementById('customerAddress').value = savedAddr;
+            }
+
+            // 🟢 Khôi phục hiển thị nút bấm đặt hàng khi mở lại giỏ hàng cho lần tiếp theo
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+            if (btnSubmit) {
+                btnSubmit.style.display = 'block';
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '🚀 BẤM ĐẶT HÀNG NGAY<br><span style="font-size: 11px; font-weight: normal; opacity: 0.9;">(Gửi thông báo tức thì đến quán)</span>';
             }
 
             updateCartDisplay();
