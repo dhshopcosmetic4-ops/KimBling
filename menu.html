@@ -99,6 +99,11 @@
         
         .admin-option-btn { width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; margin-bottom: 8px; font-size: 13px; }
         .admin-option-btn.active { background: #e3f2fd; border-color: #2196F3; color: #1976D2; }
+
+        /* Lịch sử món */
+        .history-item-detail { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 0; border-bottom: 1px dashed #eee; cursor: pointer; }
+        .history-item-thumb { width: 42px; height: 42px; border-radius: 6px; overflow: hidden; background: #f0f4f8; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .history-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
@@ -128,6 +133,7 @@
 
         <div class="category-tabs">
             <button class="cat-btn active" onclick="filterCategory('All', this)">📋 Tất cả</button>
+            <button class="cat-btn" onclick="filterCategory('Favorite', this)" style="background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9;">🆕 Món Mới</button>
             <button class="cat-btn" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
             <button class="cat-btn" onclick="filterCategory('MilkTea', this)">🧋 Trà Sữa</button>
             <button class="cat-btn" onclick="filterCategory('Yogurt', this)">🥛 Sữa Chua</button>
@@ -157,7 +163,7 @@
                 <button onclick="verifyAdminPin()" style="width: 100%; background: #2196F3; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">🔑 XÁC NHẬN PIN</button>
             </div>
 
-            <!-- Khung Thao Tác Quản Lý (Ẩn cho đến khi đúng PIN) -->
+            <!-- Khung Thao Tác Quản Lý -->
             <div id="adminControlsBox" style="display: none;">
                 <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Chọn trạng thái hoạt động hiện tại cho web đặt món:</p>
                 
@@ -183,7 +189,7 @@
                 <h3 style="font-size: 15px;">📜 Lịch sử đơn hàng của bạn</h3>
                 <button onclick="closeHistoryModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
             </div>
-            <div id="historyListContainer" style="max-height: 350px; overflow-y: auto;">
+            <div id="historyListContainer" style="max-height: 400px; overflow-y: auto;">
                 <p style="text-align: center; color: #666; font-size: 13px; padding: 20px;">Chưa có lịch sử đơn hàng nào trên thiết bị này.</p>
             </div>
         </div>
@@ -368,6 +374,7 @@
 
         let menu = [];
         let filteredMenu = [];
+        let favorites = [];
         let currentTiktokIndex = 0;
         let drinkToppings = [];
         let snackToppings = [];
@@ -516,6 +523,11 @@
             const grid = document.getElementById('menuGrid');
             grid.innerHTML = '';
 
+            // Đọc lại danh sách món mới / yêu thích
+            try {
+                favorites = JSON.parse(localStorage.getItem('kimbling_favorites') || '[]');
+            } catch(e) { favorites = []; }
+
             if (currentCategory === 'Topping') {
                 const renderGroup = (title, items, icon) => {
                     const visible = (Array.isArray(items) ? items : []).filter(t => t && t.name && removeDiacritics(t.name).includes(kw));
@@ -535,6 +547,12 @@
                 const nameNorm = removeDiacritics(item.name);
                 const matchKw = !kw || nameNorm.includes(kw);
                 if (!matchKw) return false;
+
+                // Lọc danh mục Món Mới ⭐
+                if (currentCategory === 'Favorite') {
+                    return favorites.includes(item.id) || item.isFavorite === true;
+                }
+
                 if (currentCategory !== 'All') {
                     return getCategoryType(item.name, item.category) === currentCategory;
                 }
@@ -575,6 +593,25 @@
             renderTiktokCard();
             document.body.classList.add('no-scroll');
             document.getElementById('tiktokModal').style.display = 'flex';
+        }
+
+        function openTiktokFromHistory(dishId, dishName) {
+            closeHistoryModal();
+            let index = filteredMenu.findIndex(m => m.id === dishId || removeDiacritics(m.name) === removeDiacritics(dishName));
+            
+            if (index === -1) {
+                let foundInMenu = menu.find(m => m.id === dishId || removeDiacritics(m.name) === removeDiacritics(dishName));
+                if (foundInMenu) {
+                    filteredMenu = [foundInMenu];
+                    index = 0;
+                }
+            }
+
+            if (index !== -1) {
+                openTiktokModal(index);
+            } else {
+                alert("Món này hiện không có sẵn trên menu online.");
+            }
         }
 
         function closeTiktokModal() {
@@ -738,7 +775,10 @@
             if (!opts) opts = "Mặc định";
 
             cart.push({
+                id: selectedProduct.id,
                 name: selectedProduct.name,
+                imageUrl: selectedProduct.imageUrl || '',
+                category: selectedProduct.category || '',
                 price: itemPrice,
                 options: opts,
                 qty: 1
@@ -918,9 +958,28 @@
                             <span style="color: #d32f2f;">${order.totalStr}</span>
                         </div>
                         <div style="font-size: 12px; color: #555; margin-bottom: 6px;">
-                            ${order.items.map(i => `• ${i.name} (x${i.qty}) [${i.options}]`).join('<br>')}
+                            ${order.items.map(i => {
+                                let catType = getCategoryType(i.name, i.category);
+                                let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
+                                let imgHtml = i.imageUrl ? `<img src="${i.imageUrl}" alt="${i.name}" onerror="this.parentNode.innerHTML='${fallbackIcon}';">` : fallbackIcon;
+                                
+                                let foundMenuObj = menu.find(m => m.id === i.id || removeDiacritics(m.name) === removeDiacritics(i.name));
+                                let targetId = foundMenuObj ? foundMenuObj.id : (i.id || 0);
+                                let safeDishName = i.name.replace(/'/g, "\\'");
+
+                                return `
+                                    <div class="history-item-detail" onclick="openTiktokFromHistory(${targetId}, '${safeDishName}')" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 0; border-bottom: 1px dashed #eee; cursor: pointer;" title="Bấm vào để xem hình ảnh món">
+                                        <div class="history-item-thumb" style="width: 42px; height: 42px; border-radius: 6px; overflow: hidden; background: #f0f4f8; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px;">${imgHtml}</div>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: bold; color: #1976D2;">${i.name} (x${i.qty})</div>
+                                            <div style="font-size: 11px; color: #666;">${i.options}</div>
+                                        </div>
+                                        <div style="font-size: 11px; color: #2196F3; font-weight: bold;">🖼️ Xem hình</div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
-                        <button onclick="reorderItems(${idx})" style="width: 100%; background: #2196F3; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;">🛒 Đặt lại đơn này</button>
+                        <button onclick="reorderItems(${idx})" style="width: 100%; background: #2196F3; color: white; border: none; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 4px;">🛒 Đặt lại đơn này</button>
                     </div>
                 `).join('');
             }
@@ -954,7 +1013,10 @@
                 if (historyData[index] && historyData[index].items) {
                     historyData[index].items.forEach(oldItem => {
                         cart.push({
+                            id: oldItem.id || 0,
                             name: oldItem.name,
+                            imageUrl: oldItem.imageUrl || '',
+                            category: oldItem.category || '',
                             price: oldItem.price,
                             options: oldItem.options,
                             qty: oldItem.qty
@@ -1103,11 +1165,13 @@
                 const cachedDrinks = localStorage.getItem('kimbling_online_cached_drinks');
                 const cachedSnacks = localStorage.getItem('kimbling_online_cached_snacks');
                 const cachedOverride = localStorage.getItem('kimbling_online_cached_override');
+                const cachedFavs = localStorage.getItem('kimbling_favorites');
                 
                 if (cachedMenu) {
                     menu = JSON.parse(cachedMenu);
                     drinkToppings = cachedDrinks ? JSON.parse(cachedDrinks) : [];
                     snackToppings = cachedSnacks ? JSON.parse(cachedSnacks) : [];
+                    favorites = cachedFavs ? JSON.parse(cachedFavs) : [];
                     if (cachedOverride) {
                         localStorage.setItem('kimbling_store_override', cachedOverride);
                     }
@@ -1126,6 +1190,10 @@
                     menu = data.menu;
                     drinkToppings = data.drinkToppings || [];
                     snackToppings = data.snackToppings || [];
+                    if (data.favorites) {
+                        favorites = data.favorites;
+                        localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
+                    }
                     
                     if (data.storeOverride) {
                         localStorage.setItem('kimbling_store_override', data.storeOverride);
@@ -1144,12 +1212,10 @@
             }
         }
 
-        // Tự động kiểm tra đồng bộ trạng thái quán định kỳ mỗi 30 giây
         setInterval(() => {
             fetchMenuFromCloud();
         }, 30000);
 
-        // Kích hoạt chạy ngay khi mở trang
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
     </script>
