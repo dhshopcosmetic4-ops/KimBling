@@ -155,7 +155,7 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
 
-        /* 3. KHUNG ẢNH TRÀN VIỀN & HIỆU ỨNG NHÚN NHẢY */
+                /* KHUNG CHỨA ẢNH & CÁC HIỆU ỨNG SỐNG ĐỘNG */
         .tiktok-img-box { 
             position: absolute !important;
             top: 0 !important;
@@ -169,20 +169,69 @@
             z-index: 1 !important; 
             overflow: hidden !important;
         }
-        
+
+        /* 1. HIỆU ỨNG VỆT SÁNG LƯỚT QUA THÂN LY (BÓNG BẨY) */
+        .tiktok-img-box::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.25) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shimmerEffect 4.5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes shimmerEffect {
+            0% { transform: translateY(-100%) rotate(30deg); }
+            25% { transform: translateY(100%) rotate(30deg); }
+            100% { transform: translateY(100%) rotate(30deg); }
+        }
+
+        /* 2. HIỆU ỨNG HẠT SƯƠNG & ĐÁ LẠNH BAY LÊN */
+        .tiktok-img-box::before {
+            content: '✨  🧊     ✨  🧊';
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+            letter-spacing: 12px;
+            opacity: 0.7;
+            animation: bubbleFloatUp 3s linear infinite;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        @keyframes bubbleFloatUp {
+            0% { transform: translateY(15px); opacity: 0; }
+            50% { opacity: 0.9; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+
+        /* 3. ẢNH CHÍNH NHÚN NHẢY HÍT THỞ SỐNG ĐỘNG */
         .tiktok-img-box img { 
             width: 100% !important; 
             height: 100% !important; 
             object-fit: cover !important; 
             border-radius: 0 !important; 
             filter: none !important; 
-            animation: tiktoksmoothFloat 4s ease-in-out infinite !important; 
+            animation: tiktoksmoothFloat 3.5s ease-in-out infinite !important; 
         }
 
         @keyframes tiktoksmoothFloat {
             0%, 100% { transform: scale(1) translateY(0); }
-            50% { transform: scale(1.03) translateY(-4px); }
+            50% { transform: scale(1.04) translateY(-5px); }
         }
+
 
         /* 4. KHUNG CHỨA THÔNG TIN ĐẶT NỔI Ở DƯỚI */
 .tiktok-footer {
