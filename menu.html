@@ -61,7 +61,6 @@
         .option-group { margin-bottom: 12px; border-top: 1px solid #eee; padding-top: 10px; }
         .option-group label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 6px; color: #444; }
         
-        /* Bỏ khung cuộn riêng ở mục topping để hiển thị trải dài không chồng chéo */
         .option-list { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
         
         .topping-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f9f9f9; }
@@ -398,10 +397,8 @@
         let currentModalToppings = {};
         let currentCategory = 'All';
 
-        // Chặn sự kiện cuộn lan ra ngoài nền khi chạm vào popup topping
         const optionsModalEl = document.getElementById('optionsModal');
         optionsModalEl.addEventListener('touchmove', function(e) {
-            // Cho phép cuộn bên trong nội dung modal-content, chặn các vùng nền mờ bên ngoài
             if (!document.getElementById('optionsModalContent').contains(e.target)) {
                 e.preventDefault();
             }
@@ -1219,7 +1216,7 @@
                 
                 if (data && data.storeOverride !== undefined) {
                     localStorage.setItem('kimbling_store_override', data.storeOverride);
-                    checkStoreOpenStatus();
+                    checkStoreOpenStatus(); // Cập nhật ngay trạng thái mở/đóng cửa khi fetch cloud thành công
                 }
                 
                 if (data && data.menu && data.menu.length > 0) {
@@ -1227,13 +1224,15 @@
                     drinkToppings = data.drinkToppings || [];
                     snackToppings = data.snackToppings || [];
                     
-                    (data.favorites && Array.isArray(data.favorites)) && (favorites = data.favorites, localStorage.setItem('kimbling_favorites', JSON.stringify(favorites)));
+                    if (data.favorites && Array.isArray(data.favorites)) {
+                        favorites = data.favorites;
+                        localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
+                    }
                     
                     localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
                     localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
                     localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
 
-                    checkStoreOpenStatus();
                     renderMenu();
                 }
             } catch (e) {
@@ -1241,12 +1240,15 @@
             }
         }
 
+        // Kiểm tra trạng thái đóng/mở định kỳ mỗi phút để cập nhật theo thời gian thực (ví dụ qua 21:00)
         setInterval(() => {
             fetchMenuFromCloud();
+            checkStoreOpenStatus();
         }, 30000);
 
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
+        checkStoreOpenStatus(); // Kiểm tra ngay khi tải trang
 
         let deferredPrompt;
 
