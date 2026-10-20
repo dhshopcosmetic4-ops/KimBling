@@ -217,20 +217,33 @@
             100% { transform: translateY(-100px); opacity: 0; }
         }
 
-        /* 3. ẢNH CHÍNH NHÚN NHẢY HÍT THỞ SỐNG ĐỘNG */
+                        /* TỐI ƯU HÓA PHẦN CỨNG GIÚP HIỆU ỨNG LẮC VÀ THỞ SIÊU MƯỢT MÀ */
         .tiktok-img-box img { 
             width: 100% !important; 
             height: 100% !important; 
             object-fit: cover !important; 
             border-radius: 0 !important; 
             filter: none !important; 
-            animation: tiktoksmoothFloat 3.5s ease-in-out infinite !important; 
+            will-change: transform; /* Báo cho trình duyệt tối ưu hóa bằng GPU */
+            animation: tiktokSmoothWobble 5s ease-in-out infinite !important; 
         }
 
-        @keyframes tiktoksmoothFloat {
-            0%, 100% { transform: scale(1) translateY(0); }
-            50% { transform: scale(1.04) translateY(-5px); }
+        @keyframes tiktokSmoothWobble {
+            0%, 100% { 
+                transform: translate3d(0, 0, 0) scale(1) rotate(0deg); 
+            }
+            25% { 
+                transform: translate3d(0, -3px, 0) scale(1.02) rotate(-1deg); 
+            }
+            50% { 
+                transform: translate3d(0, -6px, 0) scale(1.04) rotate(0deg); 
+            }
+            75% { 
+                transform: translate3d(0, -3px, 0) scale(1.02) rotate(1deg); 
+            }
         }
+
+
 
 
         /* 4. KHUNG CHỨA THÔNG TIN ĐẶT NỔI Ở DƯỚI */
