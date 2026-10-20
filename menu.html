@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kim Bling Coffee & Tea - Menu Đặt Món Online</title>
 
+    <!-- Khai báo Icon và Manifest PWA -->
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
-    <link rel="shortcut icon" href="logo.jpg">
+    <link rel="manifest" href="manifest.json">
+</head>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -232,13 +235,13 @@
         </div>
     </div>
 
-    <!-- Thanh Giỏ Hàng -->
+        <!-- Thanh Giỏ Hàng -->
     <div class="cart-bar" id="cartBar">
         <div class="cart-info">
             Giỏ hàng: <span id="cartCount" style="font-weight: bold;">0 món</span><br>
             Tổng: <strong id="cartTotal">0k</strong>
         </div>
-        <button class="btn-view-cart" onclick="openCheckoutModal()">🛒 Xem Giỏ Hàng</button>
+        <button class="btn-view-cart" onclick="openCheckoutModal()">🚀 Thanh toán ngay</button>
     </div>
 
     <!-- Modal Chọn Option & Topping -->
@@ -1231,25 +1234,35 @@
         });
 
         function showInstallPrompt() {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            
-            if (isIOS) {
-                alert("📌 HƯỚNG DẪN TẠO LỐI TẮT TRÊN IPHONE:\n\n1. Bấm vào biểu tượng 'Chia sẻ' (hình vuông có mũi tên hướng lên ở thanh công cụ Safari).\n2. Cuộn xuống chọn 'Thêm vào Màn hình chính' (Add to Home Screen).\n3. Bấm 'Thêm' ở góc trên bên phải.");
-                return;
-            }
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isZalo = userAgent.includes("Zalo");
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
 
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('Khách đã đồng ý thêm ra màn hình chính');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                alert("💡 HƯỚNG DẪN TẠO LỐI TẮT TẠI TRÌNH DUYỆT:\n\nBạn hãy bấm vào biểu tượng 3 chấm (⋮) ở góc trên bên phải trình duyệt, chọn 'Thêm vào màn hình chính' (Add to Home screen) để truy cập 1-chạm lần sau!");
+    // Nếu khách đang mở link bên trong ứng dụng Zalo
+    if (isZalo) {
+        alert("📲 BẠN ĐANG MỞ TỪ ZALO:\n\n1. Vui lòng bấm vào dấu 3 chấm (⋮ hoặc ...) ở góc trên bên phải màn hình.\n2. Chọn 'Mở bằng trình duyệt' (Chrome hoặc Safari).\n3. Sau đó bấm nút này lại để thêm Icon ra màn hình chính dễ dàng!");
+        return;
+    }
+
+    // Nếu là iPhone mở bằng Safari
+    if (isIOS) {
+        alert("📌 TẠO ICON TRÊN IPHONE:\n\n1. Bấm nút 'Chia sẻ' (hình vuông có mũi tên指 lên ở thanh dưới Safari).\n2. Cuộn xuống chọn 'Thêm vào Màn hình chính'.\n3. Bấm 'Thêm' ở góc phải trên.");
+        return;
+    }
+
+    // Nếu là Android mở bằng Chrome
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('Đã cài icon thành công!');
             }
-        }
+            deferredPrompt = null;
+        });
+    } else {
+        alert("💡 Bạn đã thêm Icon hoặc hãy bấm dấu 3 chấm ở góc trên bên phải trình duyệt Chrome ➔ chọn 'Thêm vào màn hình chính' nhé!");
+    }
+}
     </script>
 </body>
 </html>
