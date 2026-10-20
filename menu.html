@@ -56,7 +56,33 @@
         .btn-add { background: #e3f2fd; color: #1976D2; border: none; padding: 8px; border-radius: 8px; font-weight: bold; font-size: 12px; width: 100%; cursor: pointer; }
         
         .modal, .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
-        .modal-content, .admin-card { background: white; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 16px; box-shadow: 0 -4px 10px rgba(0,0,0,0.15); }
+     .modal, .admin-modal { 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background: rgba(0,0,0,0.6); 
+    justify-content: center; 
+    align-items: flex-end; 
+    z-index: 1000; 
+    overscroll-behavior: contain; /* Ngăn cuộn trôi trang nền */
+}
+
+.modal-content, .admin-card { 
+    background: white; 
+    border-top-left-radius: 18px; 
+    border-top-right-radius: 18px; 
+    width: 100%; 
+    max-width: 600px; 
+    max-height: 80vh; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt trên iPhone/Safari */
+    padding: 16px 16px 24px 16px; 
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.25); 
+    position: relative;
+}
         
         .option-group { margin-bottom: 12px; border-top: 1px solid #eee; padding-top: 10px; }
         .option-group label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 6px; color: #444; }
@@ -696,69 +722,51 @@
         }
 
         function openOptionsModal(id) {
-            selectedProduct = menu.find(m => m.id === id);
-            if (!selectedProduct) return;
-            document.getElementById('modalDishName').innerText = selectedProduct.name;
-            
-            const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
-            
-            document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
-            document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị:' : '🥤 Topping Thức Uống:';
+    selectedProduct = menu.find(m => m.id === id);
+    if (!selectedProduct) return;
+    
+    // Khóa cuộn trang chính ở dưới khi mở popup
+    document.body.classList.add('no-scroll');
 
-            currentModalToppings = {};
-            let availableList = isFood ? snackToppings : drinkToppings;
-            
-            const toppingListEl = document.getElementById('modalToppingList');
-            toppingListEl.innerHTML = '';
-            availableList.forEach(t => {
-                currentModalToppings[t.name] = 0;
-                let safeKey = t.name.replace(/[^a-zA-Z0-9]/g, '_');
-                toppingListEl.innerHTML += `
-                    <div class="topping-item">
-                        <span>${t.name} (+${formatPrice(t.price)})</span>
-                        <div style="display: flex; gap: 6px; align-items: center;">
-                            <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', -1)">-</button>
-                            <span id="top-qty-${safeKey}" style="font-weight:bold;">0</span>
-                            <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', 1)">+</button>
-                        </div>
-                    </div>
-                `;
-            });
+    document.getElementById('modalDishName').innerText = selectedProduct.name;
+    
+    const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
+    
+    document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
+    document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
+    document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
+    document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị:' : '🥤 Topping Thức Uống:';
 
-            updateModalTotal();
-            document.getElementById('optionsModal').style.display = 'flex';
-        }
+    currentModalToppings = {};
+    let availableList = isFood ? snackToppings : drinkToppings;
+    
+    const toppingListEl = document.getElementById('modalToppingList');
+    toppingListEl.innerHTML = '';
+    availableList.forEach(t => {
+        currentModalToppings[t.name] = 0;
+        let safeKey = t.name.replace(/[^a-zA-Z0-9]/g, '_');
+        toppingListEl.innerHTML += `
+            <div class="topping-item">
+                <span>${t.name} (+${formatPrice(t.price)})</span>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', -1)">-</button>
+                    <span id="top-qty-${safeKey}" style="font-weight:bold;">0</span>
+                    <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', 1)">+</button>
+                </div>
+            </div>
+        `;
+    });
 
-        function changeToppingQty(topName, delta) {
-            if (currentModalToppings[topName] === undefined) currentModalToppings[topName] = 0;
-            currentModalToppings[topName] += delta;
-            if (currentModalToppings[topName] < 0) currentModalToppings[topName] = 0;
-            let safeKey = topName.replace(/[^a-zA-Z0-9]/g, '_');
-            const el = document.getElementById(`top-qty-${safeKey}`);
-            if (el) el.innerText = currentModalToppings[topName];
-            updateModalTotal();
-        }
+    updateModalTotal();
+    document.getElementById('optionsModal').style.display = 'flex';
+}
 
-        function updateModalTotal() {
-            const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
-            let price = selectedProduct.price;
-            if (!isFood) {
-                const size = document.querySelector('input[name="sizeOption"]:checked').value;
-                if (size === 'Upsize 1 Lít') price += 10000;
-            }
-            let availableList = isFood ? snackToppings : drinkToppings;
-            for (let [tName, qty] of Object.entries(currentModalToppings)) {
-                if (qty > 0) {
-                    let found = availableList.find(x => x.name === tName);
-                    if (found) price += found.price * qty;
-                }
-            }
-            document.getElementById('modalDishPrice').innerText = formatPrice(price);
-        }
+function closeOptionsModal() { 
+    // Mở lại cuộn trang chính khi đóng popup
+    document.body.classList.remove('no-scroll');
+    document.getElementById('optionsModal').style.display = 'none'; 
+}
 
-        function closeOptionsModal() { document.getElementById('optionsModal').style.display = 'none'; }
 
         function confirmAddToCart() {
             const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
