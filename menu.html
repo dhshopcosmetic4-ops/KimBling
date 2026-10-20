@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kim Bling Coffee & Tea - Menu Đặt Món Online</title>
+
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="shortcut icon" href="logo.jpg">
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 90px; }
@@ -115,11 +120,18 @@
         <p>📍 <a href="https://maps.google.com/?q=M9+Cư+Xá+Phú+Lâm+A+Phường+Phú+Lâm+Hồ+Chí+Minh" target="_blank" style="color: #fff; text-decoration: underline;">M9 cư xá Phú Lâm A, Phường Phú Lâm, HCM (Bấm xem bản đồ)</a></p>
     </header>
 
-    <div class="store-info-card">
+        <div class="store-info-card">
         ⏰ Mở cửa: <span id="storeStatusText" style="color: #388E3C;">8:00 - 21:00 (Cả tuần)</span><br>
         ⏱️ Thời gian chuẩn bị: Nước khoảng <span>10 phút</span> | Đồ ăn khoảng <span>15 phút</span><br>
         🚚 Phí ship: <span>Freeship</span> bán kính 1km (Xa hơn phụ thu 10k)
     </div>
+
+    <div style="text-align: center; margin: 10px 0 2px 0;">
+        <button onclick="showInstallPrompt()" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; gap: 6px;">
+            📱 Thêm Kim Bling Ra Màn Hình Chính
+        </button>
+    </div>
+
 
     <div class="container">
         <div class="search-box">
@@ -1209,6 +1221,35 @@
 
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
+
+        let deferredPrompt;
+
+        // Bắt sự kiện tạo lối tắt / cài ứng dụng trên Android & Chrome
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function showInstallPrompt() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
+            if (isIOS) {
+                alert("📌 HƯỚNG DẪN TẠO LỐI TẮT TRÊN IPHONE:\n\n1. Bấm vào biểu tượng 'Chia sẻ' (hình vuông có mũi tên hướng lên ở thanh công cụ Safari).\n2. Cuộn xuống chọn 'Thêm vào Màn hình chính' (Add to Home Screen).\n3. Bấm 'Thêm' ở góc trên bên phải.");
+                return;
+            }
+
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Khách đã đồng ý thêm ra màn hình chính');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert("💡 HƯỚNG DẪN TẠO LỐI TẮT TẠI TRÌNH DUYỆT:\n\nBạn hãy bấm vào biểu tượng 3 chấm (⋮) ở góc trên bên phải trình duyệt, chọn 'Thêm vào màn hình chính' (Add to Home screen) để truy cập 1-chạm lần sau!");
+            }
+        }
     </script>
 </body>
 </html>
