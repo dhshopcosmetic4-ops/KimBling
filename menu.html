@@ -120,14 +120,14 @@
 <body>
 
     <header>
-        <button class="admin-trigger-btn" onclick="openAdminModal()">👑 Chủ quán</button>
+        <button class="admin-trigger-btn" onclick="openAdminModal()">👑 Cài đặt Web</button>
         <h1>Kim Bling Coffee & Tea</h1>
         <p>📞 086.269.5.269</p>
         <p>📍 <a href="https://maps.google.com/?q=M9+Cư+Xá+Phú+Lâm+A+Phường+Phú+Lâm+Hồ+Chí+Minh" target="_blank" style="color: #fff; text-decoration: underline;">M9 cư xá Phú Lâm A, Phường Phú Lâm, HCM (Bấm xem bản đồ)</a></p>
     </header>
 
     <div class="store-info-card">
-        ⏰ Mở cửa: <span id="storeStatusText" style="color: #388E3C;">8:00 - 21:00 (Cả tuần)</span><br>
+        ⏰ Trạng thái web: <span id="storeStatusText" style="color: #388E3C;">8:00 - 21:00 (Cả tuần)</span><br>
         ⏱️ Thời gian chuẩn bị: Nước khoảng <span>10 phút</span> | Đồ ăn khoảng <span>15 phút</span><br>
         🚚 Phí ship: <span>Freeship</span> bán kính 1km (Xa hơn phụ thu 10k)
     </div>
@@ -168,30 +168,30 @@
     <div class="checkout-modal" id="adminModal">
         <div class="checkout-card">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px;">
-                <h3 style="font-size: 15px;">👑 Quản Lý Trạng Thái Quán</h3>
+                <h3 style="font-size: 15px;">👑 Đóng / Mở Nhận Đơn Web Online</h3>
                 <button onclick="closeAdminModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
             </div>
 
             <div id="adminPinBox">
-                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px;">Nhập Mã PIN Chủ Quán:</label>
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px;">Nhập Mã PIN Xác Thực:</label>
                 <input type="password" id="adminPinInput" placeholder="Nhập PIN..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; margin-bottom: 8px; text-align: center; letter-spacing: 2px;">
                 <button onclick="verifyAdminPin()" style="width: 100%; background: #2196F3; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">🔑 XÁC NHẬN PIN</button>
             </div>
 
             <div id="adminControlsBox" style="display: none;">
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Chọn trạng thái hoạt động hiện tại cho web đặt món:</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Cấu hình nhận đơn gửi về Telegram cho web này:</p>
                 
                 <button class="admin-option-btn" id="btnModeAuto" onclick="setStoreOverride('AUTO')">
                     ⏰ Tự Động (Theo giờ mở cửa 8h - 21h)
                 </button>
                 <button class="admin-option-btn" id="btnModeForceOpen" onclick="setStoreOverride('FORCE_OPEN')">
-                    🟢 Ép Buộc MỞ CỬA (Giao hàng/Làm muộn quá 21h)
+                    🟢 Ép Buộc MỞ CỬA (Bật nhận đơn qua Telegram)
                 </button>
                 <button class="admin-option-btn" id="btnModeForceClosed" onclick="setStoreOverride('FORCE_CLOSED')">
-                    🔴 Ép Buộc ĐÓNG CỬA (Nghỉ đột xuất cả ngày)
+                    🔴 Ép Buộc ĐÓNG CỬA (Tắt nhận đơn qua Telegram)
                 </button>
 
-                <button onclick="closeAdminModal()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px;">Đóng Bảng Quản Lý</button>
+                <button onclick="closeAdminModal()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px;">Đóng Bảng Cài Đặt</button>
             </div>
         </div>
     </div>
@@ -444,17 +444,18 @@
         }
 
         function updateAdminUIButtons() {
-            const currentOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
+            const currentOverride = localStorage.getItem('kimbling_menu_web_override') || 'AUTO';
             document.getElementById('btnModeAuto').classList.toggle('active', currentOverride === 'AUTO');
             document.getElementById('btnModeForceOpen').classList.toggle('active', currentOverride === 'FORCE_OPEN');
             document.getElementById('btnModeForceClosed').classList.toggle('active', currentOverride === 'FORCE_CLOSED');
         }
 
         function setStoreOverride(mode) {
-            localStorage.setItem('kimbling_store_override', mode);
+            // ĐỔI KHÓA RIÊNG THÀNH kimbling_menu_web_override ĐỂ ĐỘC LẬP HOÀN TOÀN
+            localStorage.setItem('kimbling_menu_web_override', mode);
             updateAdminUIButtons();
             checkStoreOpenStatus();
-            alert("Đã cập nhật trạng thái hoạt động của quán!");
+            alert("Đã cập nhật trạng thái hoạt động riêng của Web Online!");
         }
 
         function checkStoreOpenStatus() {
@@ -463,20 +464,21 @@
             const now = new Date();
             const hour = now.getHours();
 
-            const storeOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
+            // ĐỌC TRẠNG THÁI TỪ KHÓA LƯU CỤC BỘ DÀNH RIÊNG CHO WEB MENU
+            const storeOverride = localStorage.getItem('kimbling_menu_web_override') || 'AUTO';
 
             let isClosed = false;
             let closeReason = "";
 
             if (storeOverride === 'FORCE_CLOSED') {
                 isClosed = true;
-                closeReason = "Quán tạm nghỉ hôm nay (Nghỉ đột xuất)";
+                closeReason = "Web tạm ngưng nhận đơn hôm nay";
             } else if (storeOverride === 'FORCE_OPEN') {
                 isClosed = false;
             } else {
                 if (hour < 8 || hour >= 21) {
                     isClosed = true;
-                    closeReason = "Đang đóng cửa (Mở lại lúc 8:00 sáng)";
+                    closeReason = "Đang đóng cửa (Nhận đơn online từ 8:00 - 21:00)";
                 }
             }
 
@@ -484,7 +486,7 @@
                 if (btnSubmit) {
                     btnSubmit.style.background = "#9e9e9e";
                     btnSubmit.disabled = true;
-                    btnSubmit.innerHTML = `🔒 QUÁN ĐÃ ĐÓNG CỬA<br><span style='font-size:11px;'>${closeReason}</span>`;
+                    btnSubmit.innerHTML = `🔒 TẠM NGƯNG NHẬN ĐƠN WEB<br><span style='font-size:11px;'>${closeReason}</span>`;
                 }
                 if (statusText) {
                     statusText.innerText = closeReason;
@@ -1214,10 +1216,8 @@
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await res.json();
                 
-                if (data && data.storeOverride !== undefined) {
-                    localStorage.setItem('kimbling_store_override', data.storeOverride);
-                    checkStoreOpenStatus(); // Cập nhật ngay trạng thái mở/đóng cửa khi fetch cloud thành công
-                }
+                // ĐÃ BỎ XÓA ĐOẠN ĐỒNG BỘ STORE OVERRIDE TỪ GOOGLE SHEET
+                // GIÚP MENU.HTML ĐỘC LẬP HOÀN TOÀN TẮT/MỞ VÀ BẮN ĐƠN VỀ TELEGRAM
                 
                 if (data && data.menu && data.menu.length > 0) {
                     menu = data.menu;
@@ -1240,7 +1240,6 @@
             }
         }
 
-        // Kiểm tra trạng thái đóng/mở định kỳ mỗi phút để cập nhật theo thời gian thực (ví dụ qua 21:00)
         setInterval(() => {
             fetchMenuFromCloud();
             checkStoreOpenStatus();
@@ -1248,7 +1247,7 @@
 
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
-        checkStoreOpenStatus(); // Kiểm tra ngay khi tải trang
+        checkStoreOpenStatus();
 
         let deferredPrompt;
 
