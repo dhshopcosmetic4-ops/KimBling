@@ -1140,7 +1140,7 @@
             }
         }
 
-        async function processOrderSubmit() {
+                async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -1158,12 +1158,15 @@
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
+            // 1. LUÔN GỬI NỘI DUNG ĐƠN HÀNG DẠNG CHỮ TRƯỚC (Dù là Tiền mặt hay Chuyển khoản)
+            await sendTelegramMessage(msg);
+
+            // 2. NẾU LÀ CHUYỂN KHOẢN, GỬI THÊM LINK QR CHO CHỦ QUÁN XEM
             if (payMethod === 'Chuyển khoản') {
-                await sendTelegramMessage(msg, qrImageUrl);
-            } else {
-                await sendTelegramMessage(msg);
+                await sendTelegramMessage(`💳 Khách chọn Chuyển khoản. Link mã QR thanh toán của đơn trên:\n${qrImageUrl}`);
             }
 
+            // Gửi các chuông báo nhắc nhở
             setTimeout(async () => {
                 await sendTelegramMessage(`🔔 CÓ ĐƠN HÀNG MỚI! (Chuông báo #2)`);
             }, 1000);
@@ -1198,6 +1201,7 @@
                 renderCartBar();
             }, 600);
         }
+
 
         function openZaloChatManual() {
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
