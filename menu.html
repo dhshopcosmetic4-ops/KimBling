@@ -11,6 +11,71 @@
     <link rel="manifest" href="manifest.json">
 
     <style>
+
+                           /* HIỆU ỨNG KHÓI RỘNG, BỐC CAO VÀ PHỦ ĐỀU KHẮP KHUNG HÌNH */
+        .tiktok-img-box.hot-food::before,
+        .tiktok-img-box.hot-food::after {
+            content: '' !important;
+            position: absolute !important;
+            bottom: 100px !important;
+            width: 200px !important; /* Mở rộng bề ngang của dải khói */
+            height: 480px !important; /* Kéo dài chiều cao phủ kín khung */
+            background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 30%, rgba(255, 255, 255, 0.4) 70%, rgba(255, 255, 255, 0) 100%) !important;
+            filter: blur(14px) !important;
+            border-radius: 50% !important;
+            pointer-events: none !important;
+            z-index: 10 !important;
+            opacity: 0;
+        }
+
+        /* Phủ rộng từ trái qua phải để khói ôm trọn đĩa ăn */
+        .tiktok-img-box.hot-food::before {
+            left: 5% !important;
+            animation: wideSteam1 3.5s ease-in-out infinite !important;
+        }
+
+        .tiktok-img-box.hot-food::after {
+            right: 5% !important;
+            animation: wideSteam2 4.1s ease-in-out infinite 0.7s !important;
+        }
+
+        @keyframes wideSteam1 {
+            0% { 
+                transform: translateY(30px) scaleX(0.8) scaleY(0.4) skewX(0deg); 
+                opacity: 0; 
+            }
+            30% { 
+                opacity: 0.8; 
+            }
+            70% { 
+                transform: translateY(-280px) scaleX(2.2) scaleY(1.8) skewX(-12deg); 
+                opacity: 0.55; 
+            }
+            100% { 
+                transform: translateY(-560px) scaleX(3.5) scaleY(2.5) skewX(8deg); 
+                opacity: 0; /* Bay vút lên tận đỉnh cao nhất và tan dần */
+            }
+        }
+
+        @keyframes wideSteam2 {
+            0% { 
+                transform: translateY(40px) scaleX(0.7) scaleY(0.4) skewX(0deg); 
+                opacity: 0; 
+            }
+            35% { 
+                opacity: 0.75; 
+            }
+            75% { 
+                transform: translateY(-320px) scaleX(2.5) scaleY(2) skewX(15deg); 
+                opacity: 0.5; 
+            }
+            100% { 
+                transform: translateY(-600px) scaleX(3.8) scaleY(2.6) skewX(-10deg); 
+                opacity: 0; 
+            }
+        }
+
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding-bottom: 90px; }
         
@@ -217,33 +282,20 @@
             100% { transform: translateY(-100px); opacity: 0; }
         }
 
-                        /* TỐI ƯU HÓA PHẦN CỨNG GIÚP HIỆU ỨNG LẮC VÀ THỞ SIÊU MƯỢT MÀ */
-        .tiktok-img-box img { 
+                           .tiktok-img-box img { 
             width: 100% !important; 
             height: 100% !important; 
             object-fit: cover !important; 
             border-radius: 0 !important; 
             filter: none !important; 
-            will-change: transform; /* Báo cho trình duyệt tối ưu hóa bằng GPU */
-            animation: tiktokSmoothWobble 5s ease-in-out infinite !important; 
+            will-change: transform; 
+            animation: imageBreath 3.5s ease-in-out infinite !important; 
         }
 
-        @keyframes tiktokSmoothWobble {
-            0%, 100% { 
-                transform: translate3d(0, 0, 0) scale(1) rotate(0deg); 
-            }
-            25% { 
-                transform: translate3d(0, -3px, 0) scale(1.02) rotate(-1deg); 
-            }
-            50% { 
-                transform: translate3d(0, -6px, 0) scale(1.04) rotate(0deg); 
-            }
-            75% { 
-                transform: translate3d(0, -3px, 0) scale(1.02) rotate(1deg); 
-            }
+        @keyframes imageBreath {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); /* Thở mạnh hơn một chút (phóng to 4%) nhưng vẫn giữ nguyên độ mượt */ }
         }
-
-
 
 
         /* 4. KHUNG CHỨA THÔNG TIN ĐẶT NỔI Ở DƯỚI */
@@ -843,6 +895,20 @@
     </div>
 
     <script>
+
+                function isHotFoodItem(itemName) {
+            const nameNorm = removeDiacritics(itemName || '');
+            
+            // Bổ sung đầy đủ các từ khóa món ăn nóng của quán
+            const hotKeywords = ['mi', 'lau', 'chien', 'ran', 'tokbokki', 'nong', 'sot bo', 'nuong', 'ca vien', 'lap xuong', 'com', 'ha cao', 'xien'];
+            
+            // Ngoại lệ: Món nguội/lạnh như chân gà sốt thái
+            if (nameNorm.includes('chan ga')) return false; 
+
+            return hotKeywords.some(keyword => nameNorm.includes(keyword));
+        }
+
+
         let cloudAdminPin = "1234";
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
@@ -1138,7 +1204,7 @@
             document.getElementById('tiktokModal').style.display = 'none';
         }
 
-        function renderTiktokCard() {
+                        function renderTiktokCard() {
             const item = filteredMenu[currentTiktokIndex];
             if (!item) return;
 
@@ -1147,14 +1213,23 @@
 
             const box = document.getElementById('tiktokImgBox');
             if (item.imageUrl) {
-                box.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='<div class=\'tiktok-fallback-icon\'>${fallbackIcon}</div>';">`;
+                box.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'tiktok-fallback-icon\'>${fallbackIcon}</div>';">`;
             } else {
                 box.innerHTML = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
             }
 
+            // --- TỰ ĐỘNG PHÂN LOẠI HIỆU ỨNG NÓNG / LẠNH ---
+            if (isHotFoodItem(item.name)) {
+                box.classList.add('hot-food');     // Nếu là đồ nóng thực sự ➔ Hiển thị khói (♨️)
+            } else {
+                box.classList.remove('hot-food');  // Nếu là nước, sữa chua hoặc chân gà sốt thái ➔ Giữ đá lạnh & sương (✨ 🧊)
+            }
+            // ---------------------------------------------
+
             document.getElementById('tiktokTitle').innerText = item.name;
             document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
         }
+
 
         function navigateTiktok(direction) {
             currentTiktokIndex += direction;
