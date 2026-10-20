@@ -9,7 +9,6 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
     <link rel="manifest" href="manifest.json">
-</head>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -107,7 +106,7 @@
         .btn-zalo-optional { width: 100%; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; text-align: center; display: none; box-shadow: 0 2px 6px rgba(0,104,255,0.3); }
         .btn-pay-online { width: 100%; background: #2196F3; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: inline-block; }
         
-        .success-notify { display: none; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; text-align: center; font-weight: bold; }
+        .success-notify { display: none; }
         
         .admin-option-btn { width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; margin-bottom: 8px; font-size: 13px; }
         .admin-option-btn.active { background: #e3f2fd; border-color: #2196F3; color: #1976D2; }
@@ -179,16 +178,16 @@
             </div>
 
             <div id="adminControlsBox" style="display: none;">
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Cấu hình nhận đơn gửi về Telegram cho web này:</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Cấu hình nhận đơn gửi về Telegram (Cập nhật cho tất cả máy khách):</p>
                 
                 <button class="admin-option-btn" id="btnModeAuto" onclick="setStoreOverride('AUTO')">
                     ⏰ Tự Động (Theo giờ mở cửa 8h - 21h)
                 </button>
                 <button class="admin-option-btn" id="btnModeForceOpen" onclick="setStoreOverride('FORCE_OPEN')">
-                    🟢 Ép Buộc MỞ CỬA (Bật nhận đơn qua Telegram)
+                    🟢 Ép Buộc MỞ CỬA (Mọi máy khách đều thấy Mở)
                 </button>
                 <button class="admin-option-btn" id="btnModeForceClosed" onclick="setStoreOverride('FORCE_CLOSED')">
-                    🔴 Ép Buộc ĐÓNG CỬA (Tắt nhận đơn qua Telegram)
+                    🔴 Ép Buộc ĐÓNG CỬA (Mọi máy khách đều thấy Khóa)
                 </button>
 
                 <button onclick="closeAdminModal()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px;">Đóng Bảng Cài Đặt</button>
@@ -316,7 +315,7 @@
                     </div>
                 </div>
 
-                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-top: 4px;">
+                <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán (Ví dụ: Hẹn giao lúc 12h30...)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-top: 4px;">
             </div>
 
             <div class="payment-method-box">
@@ -362,10 +361,17 @@
                 📲 MỞ ZALO GỬI ẢNH CHUYỂN KHOẢN CHO QUÁN
             </button>
 
-            <div class="success-notify" id="successNotify" style="text-align: center;">
-                ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!<br>
-                <span id="estimatedTimeNotice" style="font-size: 12px; font-weight: bold; color: #d32f2f; display: block; margin-top: 4px;"></span>
-                <span style="font-size: 11px; font-weight: normal;">Quán đã nhận được đơn và đang xử lý món cho bạn.</span>
+            <div class="success-notify" id="successNotify" style="text-align: center; background: #e8f5e9; border: 1.5px solid #2e7d32; border-radius: 10px; padding: 12px; margin-top: 10px; box-shadow: 0 2px 8px rgba(46,125,50,0.15);">
+                <div style="font-size: 15px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;">
+                    ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!
+                </div>
+                <div style="background: #ffffff; border: 1px dashed #4caf50; border-radius: 8px; padding: 8px; margin: 6px 0;">
+                    <span style="font-size: 13px; font-weight: bold; color: #2e7d32; display: block;">
+                        👩‍🍳 QUÁN ĐÃ NHẬN ĐƠN VÀ ĐANG CHUẨN BỊ MÓN!
+                    </span>
+                    <span id="estimatedTimeNotice" style="font-size: 12px; font-weight: bold; color: #d32f2f; display: block; margin-top: 2px;"></span>
+                </div>
+                <span style="font-size: 11px; color: #555;">Cảm ơn quý khách! Quán sẽ giao món đến bạn sớm nhất.</span>
             </div>
 
             <button class="btn-cancel-checkout" id="btnBuyMore" onclick="closeCheckoutModal()">
@@ -444,18 +450,32 @@
         }
 
         function updateAdminUIButtons() {
-            const currentOverride = localStorage.getItem('kimbling_menu_web_override') || 'AUTO';
+            const currentOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
             document.getElementById('btnModeAuto').classList.toggle('active', currentOverride === 'AUTO');
-            document.getElementById('btnModeForceOpen').classList.toggle('active', currentOverride === 'FORCE_OPEN');
-            document.getElementById('btnModeForceClosed').classList.toggle('active', currentOverride === 'FORCE_CLOSED');
+            document.getElementById('btnModeForceOpen').classList.toggle('active', currentOverride === 'FORCE_OPEN' || currentOverride === 'true' || currentOverride === true);
+            document.getElementById('btnModeForceClosed').classList.toggle('active', currentOverride === 'FORCE_CLOSED' || currentOverride === 'false' || currentOverride === false);
         }
 
-        function setStoreOverride(mode) {
-            // ĐỔI KHÓA RIÊNG THÀNH kimbling_menu_web_override ĐỂ ĐỘC LẬP HOÀN TOÀN
-            localStorage.setItem('kimbling_menu_web_override', mode);
+        async function setStoreOverride(mode) {
+            let valToSend = mode;
+            if (mode === 'FORCE_OPEN') valToSend = true;
+            if (mode === 'FORCE_CLOSED') valToSend = false;
+
+            localStorage.setItem('kimbling_store_override', String(mode));
             updateAdminUIButtons();
             checkStoreOpenStatus();
-            alert("Đã cập nhật trạng thái hoạt động riêng của Web Online!");
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({ type: 'storeOverride', storeOverride: valToSend })
+                });
+                alert("Đã cập nhật trạng thái hoạt động lên Cloud! Tất cả máy khách sẽ tự động chuyển đổi.");
+            } catch (e) {
+                alert("Đã lưu trạng thái trên máy này (Lỗi đồng bộ Cloud).");
+            }
         }
 
         function checkStoreOpenStatus() {
@@ -464,16 +484,15 @@
             const now = new Date();
             const hour = now.getHours();
 
-            // ĐỌC TRẠNG THÁI TỪ KHÓA LƯU CỤC BỘ DÀNH RIÊNG CHO WEB MENU
-            const storeOverride = localStorage.getItem('kimbling_menu_web_override') || 'AUTO';
+            const storeOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
 
             let isClosed = false;
             let closeReason = "";
 
-            if (storeOverride === 'FORCE_CLOSED') {
+            if (storeOverride === 'FORCE_CLOSED' || storeOverride === 'false' || storeOverride === false) {
                 isClosed = true;
-                closeReason = "Web tạm ngưng nhận đơn hôm nay";
-            } else if (storeOverride === 'FORCE_OPEN') {
+                closeReason = "Quán tạm ngưng nhận đơn hôm nay";
+            } else if (storeOverride === 'FORCE_OPEN' || storeOverride === 'true' || storeOverride === true) {
                 isClosed = false;
             } else {
                 if (hour < 8 || hour >= 21) {
@@ -499,7 +518,7 @@
                     updateSubmitButtonText();
                 }
                 if (statusText) {
-                    statusText.innerText = storeOverride === 'FORCE_OPEN' ? "Mở cửa nhận đơn (Chủ quán bật thêm giờ)" : "8:00 - 21:00 (Cả tuần)";
+                    statusText.innerText = (storeOverride === 'FORCE_OPEN' || storeOverride === 'true' || storeOverride === true) ? "Mở cửa nhận đơn (Chủ quán bật thêm giờ)" : "8:00 - 21:00 (Cả tuần)";
                     statusText.style.color = "#388E3C";
                 }
             }
@@ -1064,6 +1083,7 @@
             }
         }
 
+        // TẠO NỘI DUNG ĐƠN HÀNG VỚI MÃ HÓA AN TOÀN TRÁNH LỖI PARSER TELEGRAM
         function generateOrderMessage() {
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
             const name = document.getElementById('customerName').value.trim();
@@ -1089,58 +1109,93 @@
 
             let foodTotal = calculateFoodSubtotal();
             let total = foodTotal + shipFee;
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
 
-            let msg = `☕ ĐƠN HÀNG MỚI - KIM BLING\n`;
+            let safeName = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            let safeAddr = addr.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            let safeNote = note.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            let msg = `☕ <b>ĐƠN HÀNG MỚI - KIM BLING</b>\n`;
             msg += `📌 Hình thức: ${orderType === 'Giao hàng' ? '🛵 Giao tận nơi' : '🚶 Khách tự ra lấy'}\n`;
-            msg += `👤 Khách: ${name} - 📞 ${phone}\n`;
+            msg += `👤 Khách: <b>${safeName}</b> - 📞 <code>${phone}</code>\n`;
+            msg += `💬 Link Zalo: https://zalo.me/${cleanPhone}\n`;
             if (orderType === 'Giao hàng') {
-                msg += `📍 Đ/c: ${addr} (${shipFee === 0 ? 'Freeship <1km' : 'Phí ship 10k'})\n`;
+                msg += `📍 Đ/c: ${safeAddr} (${shipFee === 0 ? 'Freeship &lt;1km' : 'Phí ship 10k'})\n`;
             } else {
                 msg += `📍 Địa chỉ: Khách đến quán lấy (M9 cư xá Phú Lâm A)\n`;
             }
-            if (note) msg += `📝 Ghi chú: ${note}\n`;
+            if (safeNote) msg += `📝 Ghi chú: ${safeNote}\n`;
             msg += `💵 Thanh toán: ${payMethod}\n`;
             msg += `----------------------------\n`;
 
             cart.forEach((item, index) => {
                 let subTotal = item.price * item.qty;
-                msg += `${index + 1}. ${item.name} (x${item.qty}) - ${formatPrice(subTotal)}\n`;
-                if(item.options && item.options !== "Mặc định") {
-                    msg += `   └ ${item.options}\n`;
+                let safeItemName = item.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                let safeOptions = (item.options || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                msg += `${index + 1}. <b>${safeItemName}</b> (x${item.qty}) - ${formatPrice(subTotal)}\n`;
+                if(safeOptions && safeOptions !== "Mặc định") {
+                    msg += `   └ <i>${safeOptions}</i>\n`;
                 }
             });
 
             msg += `----------------------------\n`;
             msg += `🛵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}\n`;
-            msg += `💰 TỔNG CỘNG: ${formatPrice(total)}`;
+            msg += `💰 <b>TỔNG CỘNG: ${formatPrice(total)}</b>`;
 
             saveOrderToHistory(cart, formatPrice(total));
             return msg;
         }
 
+        // HÀM GỬI TELEGRAM CÓ BẢO VỆ CHỐNG TRÔI ĐƠN (FALLBACK CHỮ THUẦN)
         async function sendTelegramMessage(text, photoUrl = null) {
             try {
                 if (photoUrl) {
                     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
-                    await fetch(url, {
+                    let res = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, photo: photoUrl, caption: text })
+                        body: JSON.stringify({ 
+                            chat_id: TELEGRAM_CHAT_ID, 
+                            photo: photoUrl, 
+                            caption: text,
+                            parse_mode: 'HTML'
+                        })
                     });
+                    
+                    if (!res.ok) {
+                        await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, photo: photoUrl, caption: text.replace(/<[^>]*>/g, '') })
+                        });
+                    }
                 } else {
                     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-                    await fetch(url, {
+                    let res = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text })
+                        body: JSON.stringify({ 
+                            chat_id: TELEGRAM_CHAT_ID, 
+                            text: text,
+                            parse_mode: 'HTML'
+                        })
                     });
+
+                    if (!res.ok) {
+                        await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text.replace(/<[^>]*>/g, '') })
+                        });
+                    }
                 }
             } catch (err) {
                 console.error("Lỗi gửi Telegram:", err);
             }
         }
 
-                async function processOrderSubmit() {
+        async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -1158,12 +1213,12 @@
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
-            // 1. LUÔN GỬI NỘI DUNG ĐƠN HÀNG DẠNG CHỮ TRƯỚC (Dù là Tiền mặt hay Chuyển khoản)
+            // 1. GỬI NỘI DUNG ĐƠN HÀNG DẠNG CHỮ TRƯỚC
             await sendTelegramMessage(msg);
 
-            // 2. NẾU LÀ CHUYỂN KHOẢN, GỬI THÊM LINK QR CHO CHỦ QUÁN XEM
+            // 2. NẾU LÀ CHUYỂN KHOẢN, GỬI THÊM LINK MÃ QR CHO QUÁN
             if (payMethod === 'Chuyển khoản') {
-                await sendTelegramMessage(`💳 Khách chọn Chuyển khoản. Link mã QR thanh toán của đơn trên:\n${qrImageUrl}`);
+                await sendTelegramMessage(`💳 <b>THÔNG TIN CHUYỂN KHOẢN ĐƠN TRÊN</b>:\nLink mã QR tương ứng: ${qrImageUrl}`);
             }
 
             // Gửi các chuông báo nhắc nhở
@@ -1202,7 +1257,6 @@
             }, 600);
         }
 
-
         function openZaloChatManual() {
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
@@ -1220,8 +1274,10 @@
                 const res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await res.json();
                 
-                // ĐÃ BỎ XÓA ĐOẠN ĐỒNG BỘ STORE OVERRIDE TỪ GOOGLE SHEET
-                // GIÚP MENU.HTML ĐỘC LẬP HOÀN TOÀN TẮT/MỞ VÀ BẮN ĐƠN VỀ TELEGRAM
+                if (data && data.storeOverride !== undefined) {
+                    localStorage.setItem('kimbling_store_override', String(data.storeOverride));
+                    checkStoreOpenStatus();
+                }
                 
                 if (data && data.menu && data.menu.length > 0) {
                     menu = data.menu;
@@ -1247,7 +1303,7 @@
         setInterval(() => {
             fetchMenuFromCloud();
             checkStoreOpenStatus();
-        }, 30000);
+        }, 15000);
 
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
