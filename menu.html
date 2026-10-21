@@ -984,75 +984,74 @@
             document.getElementById('btnModeForceClosed').classList.toggle('active', currentOverride === 'FORCE_CLOSED' || currentOverride === 'false' || currentOverride === false);
         }
 
-        async function setStoreOverride(mode) {
-            let valToSend = mode;
-            if (mode === 'FORCE_OPEN') valToSend = true;
-            if (mode === 'FORCE_CLOSED') valToSend = false;
+async function setStoreOverride(mode) {
+    // Lưu thẳng chuỗi mode ('AUTO', 'FORCE_OPEN', 'FORCE_CLOSED') vào localStorage và gửi đi
+    localStorage.setItem('kimbling_store_override', mode);
+    updateAdminUIButtons();
+    checkStoreOpenStatus();
 
-            localStorage.setItem('kimbling_store_override', String(mode));
-            updateAdminUIButtons();
-            checkStoreOpenStatus();
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({ type: 'storeOverride', storeOverride: mode })
+        });
+        alert("Đã cập nhật trạng thái hoạt động lên Cloud! Tất cả máy khách sẽ tự động chuyển đổi.");
+    } catch (e) {
+        alert("Đã lưu trạng thái trên máy này.");
+    }
+}
 
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                    body: JSON.stringify({ type: 'storeOverride', storeOverride: valToSend })
-                });
-                alert("Đã cập nhật trạng thái hoạt động lên Cloud! Tất cả máy khách sẽ tự động chuyển đổi.");
-            } catch (e) {
-                alert("Đã lưu trạng thái trên máy này (Lỗi đồng bộ Cloud).");
-            }
-        }
 
         function checkStoreOpenStatus() {
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-            const statusText = document.getElementById('storeStatusText');
-            const now = new Date();
-            const hour = now.getHours();
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    const statusText = document.getElementById('storeStatusText');
+    const now = new Date();
+    const hour = now.getHours();
 
-            const storeOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
+    const storeOverride = localStorage.getItem('kimbling_store_override') || 'AUTO';
 
-            let isClosed = false;
-            let closeReason = "";
+    let isClosed = false;
+    let closeReason = "";
 
-            if (storeOverride === 'FORCE_CLOSED' || storeOverride === 'false' || storeOverride === false) {
-                isClosed = true;
-                closeReason = "Quán tạm ngưng nhận đơn hôm nay";
-            } else if (storeOverride === 'FORCE_OPEN' || storeOverride === 'true' || storeOverride === true) {
-                isClosed = false;
-            } else {
-                if (hour < 8 || hour >= 21) {
-                    isClosed = true;
-                    closeReason = "Đang đóng cửa (Nhận đơn online từ 8:00 - 21:00)";
-                }
-            }
-
-            if (isClosed) {
-                if (btnSubmit) {
-                    btnSubmit.style.background = "#9e9e9e";
-                    btnSubmit.disabled = true;
-                    btnSubmit.classList.remove('pulse-attention');
-                    btnSubmit.innerHTML = `🔒 TẠM NGƯNG NHẬN ĐƠN WEB<br><span style='font-size:11px;'>${closeReason}</span>`;
-                }
-                if (statusText) {
-                    statusText.innerText = closeReason;
-                    statusText.style.color = "#d32f2f";
-                }
-            } else {
-                if (btnSubmit) {
-                    btnSubmit.style.background = "#28a745";
-                    btnSubmit.disabled = false;
-                    btnSubmit.classList.add('pulse-attention');
-                    updateSubmitButtonText();
-                }
-                if (statusText) {
-                    statusText.innerText = (storeOverride === 'FORCE_OPEN' || storeOverride === 'true' || storeOverride === true) ? "Mở cửa nhận đơn (Chủ quán bật thêm giờ)" : "8:00 - 21:00 (Cả tuần)";
-                    statusText.style.color = "#388E3C";
-                }
-            }
+    if (storeOverride === 'FORCE_CLOSED') {
+        isClosed = true;
+        closeReason = "Quán tạm ngưng nhận đơn hôm nay";
+    } else if (storeOverride === 'FORCE_OPEN') {
+        isClosed = false;
+    } else {
+        // Tự động theo giờ (8h - 21h)
+        if (hour < 8 || hour >= 21) {
+            isClosed = true;
+            closeReason = "Đang đóng cửa (Nhận đơn online từ 8:00 - 21:00)";
         }
+    }
+
+    if (isClosed) {
+        if (btnSubmit) {
+            btnSubmit.style.background = "#9e9e9e";
+            btnSubmit.disabled = true;
+            btnSubmit.classList.remove('pulse-attention');
+            btnSubmit.innerHTML = `🔒 TẠM NGƯNG NHẬN ĐƠN WEB<br><span style='font-size:11px;'>${closeReason}</span>`;
+        }
+        if (statusText) {
+            statusText.innerText = closeReason;
+            statusText.style.color = "#d32f2f";
+        }
+    } else {
+        if (btnSubmit) {
+            btnSubmit.style.background = "#28a745";
+            btnSubmit.disabled = false;
+            btnSubmit.classList.add('pulse-attention');
+            updateSubmitButtonText();
+        }
+        if (statusText) {
+            statusText.innerText = (storeOverride === 'FORCE_OPEN') ? "Mở cửa nhận đơn (Chủ quán bật thêm giờ)" : "8:00 - 21:00 (Cả tuần)";
+            statusText.style.color = "#388E3C";
+        }
+    }
+}
 
         function updateSubmitButtonText() {
             const btnSubmit = document.getElementById('btnSubmitOrder');
