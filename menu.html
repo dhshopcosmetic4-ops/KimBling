@@ -919,7 +919,7 @@
         }
 
         // Gọi về Google Sheets kiểm tra chéo chống gian lận
-        async function verifyCouponFromCloud() {
+                async function verifyCouponFromCloud() {
             let codeInput = document.getElementById('couponCodeInput').value.trim().toUpperCase();
             let phoneInput = document.getElementById('customerPhone').value.trim();
             let msgEl = document.getElementById('couponMsg');
@@ -956,7 +956,7 @@
                 if (result && result.valid) {
                     msgEl.style.color = "#388E3C";
                     msgEl.innerText = result.message;
-                    discountAmount = result.discount || 10000;
+                    discountAmount = result.discount || 3000; // Đảm bảo gán đúng mức giảm 3k
                     appliedCouponName = codeInput;
                 } else {
                     msgEl.style.color = "#d32f2f";
@@ -964,12 +964,13 @@
                     discountAmount = 0;
                     appliedCouponName = "";
                 }
-                updateCartDisplay();
+                updateCartDisplay(); // Cập nhật lại giao diện giỏ hàng ngay lập tức
             } catch (e) {
                 msgEl.style.color = "#d32f2f";
                 msgEl.innerText = "Lỗi kết nối kiểm tra mã. Vui lòng thử lại!";
             }
         }
+
 
                 function isHotFoodItem(itemName) {
             const nameNorm = removeDiacritics(itemName || '');
@@ -1520,14 +1521,13 @@ async function setStoreOverride(mode) {
     let foodTotal = calculateFoodSubtotal();
     let shipFee = getShippingFee();
     
-    // Trừ số tiền giảm giá nếu hợp lệ
+    // Bắt buộc phải trừ đi discountAmount ở đây
     let grandTotal = foodTotal + shipFee - discountAmount;
     if (grandTotal < 0) grandTotal = 0;
 
     document.getElementById('foodSubtotal').innerText = formatPrice(foodTotal);
     document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
     
-    // Hiển thị giá sau khi đã giảm
     if (discountAmount > 0) {
         document.getElementById('checkoutTotalAmount').innerHTML = `<span style="text-decoration: line-through; font-size: 13px; color: #888;">${formatPrice(foodTotal + shipFee)}</span> <span style="color: #d32f2f;">${formatPrice(grandTotal)}</span>`;
     } else {
@@ -1536,6 +1536,7 @@ async function setStoreOverride(mode) {
 
     updatePaymentUI();
 }
+
 
 
         function changeCartItemQty(index, delta) {
@@ -1718,7 +1719,10 @@ async function setStoreOverride(mode) {
             }
 
             let foodTotal = calculateFoodSubtotal();
-            let total = foodTotal + shipFee;
+let shipFee = getShippingFee();
+let total = foodTotal + shipFee - (typeof discountAmount !== 'undefined' ? discountAmount : 0);
+if (total < 0) total = 0;
+
             let cleanPhone = phone.replace(/[^0-9]/g, '');
 
             let safeName = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -1750,8 +1754,14 @@ async function setStoreOverride(mode) {
             });
 
             msg += `----------------------------\n`;
-            msg += `🛵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}\n`;
-            msg += `💰 <b>TỔNG CỘNG: ${formatPrice(total)}</b>`;
+msg += `🛵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}`;
+if (typeof discountAmount !== 'undefined' && discountAmount > 0) {
+    msg += ` | Giảm: -${formatPrice(discountAmount)}\n`;
+} else {
+    msg += `\n`;
+}
+msg += `💰 <b>TỔNG CỘNG: ${formatPrice(total)}</b>`;
+
 
             saveOrderToHistory(cart, formatPrice(total));
             return msg;
@@ -1804,7 +1814,7 @@ async function setStoreOverride(mode) {
             }
         }
 
-        async function processOrderSubmit() {
+               async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -1817,32 +1827,30 @@ async function setStoreOverride(mode) {
             btnSubmit.classList.remove('pulse-attention');
 
             let foodTotal = calculateFoodSubtotal();
-
-    // Lấy deviceId và đính kèm mã giảm giá đã dùng
-    let currentDeviceId = getOrCreateDeviceID();
-    
-    // Gửi lịch sử đơn hàng kèm mã giảm giá để khóa vĩnh viễn thiết bị
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
-                type: 'history',
-                id: 'ORDER_' + Date.now(),
-                phone: phone,
-                deviceId: currentDeviceId,
-                couponCode: appliedCouponName,
-                items: cart,
-                totalStr: formatPrice(total)
-            })
-        });
-    } catch(e) {
-        console.log("Lỗi lưu lịch sử giảm giá:", e);
-    }
-
             let shipFee = getShippingFee();
-            let total = foodTotal + shipFee;
+            let total = foodTotal + shipFee - (typeof discountAmount !== 'undefined' ? discountAmount : 0);
+            if (total < 0) total = 0;
+
+            let currentDeviceId = getOrCreateDeviceID();
+            
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({
+                        type: 'history',
+                        id: 'ORDER_' + Date.now(),
+                        phone: phone,
+                        deviceId: currentDeviceId,
+                        couponCode: appliedCouponName,
+                        items: cart,
+                        totalStr: formatPrice(total)
+                    })
+                });
+            } catch(e) {
+                console.log("Lỗi lưu lịch sử giảm giá:", e);
+            }
 
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
@@ -1888,11 +1896,12 @@ async function setStoreOverride(mode) {
             }, 600);
         }
 
+
         function openZaloChatManual() {
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
-        async function fetchMenuFromCloud() {
+                async function fetchMenuFromCloud() {
             try {
                 const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
                 if (cachedMenu && menu.length === 0) {
@@ -1914,22 +1923,22 @@ async function setStoreOverride(mode) {
                     menu = data.menu;
                     drinkToppings = data.drinkToppings || [];
                     snackToppings = data.snackToppings || [];
-                    
+
                     if (data.favorites && Array.isArray(data.favorites)) {
                         favorites = data.favorites;
                         localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
                     }
                     
+                    renderMenu();
                     localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
                     localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
                     localStorage.setItem('kimbling_online_cached_snacks', JSON.stringify(snackToppings));
-
-                    renderMenu();
                 }
             } catch (e) {
                 console.error("Lỗi đồng bộ ngầm từ cloud:", e);
             }
         }
+
 
         setInterval(() => {
             fetchMenuFromCloud();
