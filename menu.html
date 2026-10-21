@@ -830,6 +830,15 @@
                 </div>
 
                 <input type="text" id="customerNote" placeholder="Ghi chú thêm cho quán (Ví dụ: Hẹn giao lúc 12h30...)" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; margin-top: 4px;">
+
+            <!-- Ô NHẬP MÃ GIẢM GIÁ ĐƠN ĐẦU TIÊN -->
+            <div style="margin: 8px 0; background: #fdfdfd; border: 1.5px dashed #2196F3; border-radius: 8px; padding: 8px;" id="couponSection">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; color: #1976D2;">🎟️ Mã Giảm Giá Đơn Đầu Tiên:</label>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="couponCodeInput" placeholder="Nhập mã (VD: GIAMMOI)" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; text-transform: uppercase;">
+                    <button type="button" onclick="verifyCouponFromCloud()" style="background: #2196F3; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer;">Áp dụng</button>
+                </div>
+                <div id="couponMsg" style="font-size: 11px; margin-top: 4px; color: #d32f2f;"></div>
             </div>
 
             <div class="payment-method-box">
@@ -895,6 +904,72 @@
     </div>
 
     <script>
+
+        let discountAmount = 0;
+        let appliedCouponName = "";
+
+        // Lấy hoặc tự động tạo ID thiết bị vĩnh viễn trên máy khách
+        function getOrCreateDeviceID() {
+            let deviceId = localStorage.getItem('kimbling_device_unique_id');
+            if (!deviceId) {
+                deviceId = 'DEV_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+                localStorage.setItem('kimbling_device_unique_id', deviceId);
+            }
+            return deviceId;
+        }
+
+        // Gọi về Google Sheets kiểm tra chéo chống gian lận
+        async function verifyCouponFromCloud() {
+            let codeInput = document.getElementById('couponCodeInput').value.trim().toUpperCase();
+            let phoneInput = document.getElementById('customerPhone').value.trim();
+            let msgEl = document.getElementById('couponMsg');
+
+            if (!codeInput) {
+                msgEl.style.color = "#d32f2f";
+                msgEl.innerText = "Vui lòng nhập mã giảm giá!";
+                return;
+            }
+            if (!phoneInput) {
+                msgEl.style.color = "#d32f2f";
+                msgEl.innerText = "Vui lòng nhập số điện thoại trước khi áp dụng mã!";
+                return;
+            }
+
+            msgEl.style.color = "#555";
+            msgEl.innerText = "⏳ Đang kiểm tra mã...";
+
+            let deviceId = getOrCreateDeviceID();
+
+            try {
+                let response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({
+                        type: 'checkAndApplyCoupon',
+                        deviceId: deviceId,
+                        phone: phoneInput,
+                        couponCode: codeInput
+                    })
+                });
+                let result = await response.json();
+
+                if (result && result.valid) {
+                    msgEl.style.color = "#388E3C";
+                    msgEl.innerText = result.message;
+                    discountAmount = result.discount || 10000;
+                    appliedCouponName = codeInput;
+                } else {
+                    msgEl.style.color = "#d32f2f";
+                    msgEl.innerText = result.message || "Mã không hợp lệ hoặc đã được sử dụng.";
+                    discountAmount = 0;
+                    appliedCouponName = "";
+                }
+                updateCartDisplay();
+            } catch (e) {
+                msgEl.style.color = "#d32f2f";
+                msgEl.innerText = "Lỗi kết nối kiểm tra mã. Vui lòng thử lại!";
+            }
+        }
 
                 function isHotFoodItem(itemName) {
             const nameNorm = removeDiacritics(itemName || '');
@@ -1442,41 +1517,26 @@ async function setStoreOverride(mode) {
         }
 
         function updateCartDisplay() {
-            let foodTotal = calculateFoodSubtotal();
-            let shipFee = getShippingFee();
-            let grandTotal = foodTotal + shipFee;
+    let foodTotal = calculateFoodSubtotal();
+    let shipFee = getShippingFee();
+    
+    // Trừ số tiền giảm giá nếu hợp lệ
+    let grandTotal = foodTotal + shipFee - discountAmount;
+    if (grandTotal < 0) grandTotal = 0;
 
-            document.getElementById('foodSubtotal').innerText = formatPrice(foodTotal);
-            document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
-            document.getElementById('checkoutTotalAmount').innerText = formatPrice(grandTotal);
+    document.getElementById('foodSubtotal').innerText = formatPrice(foodTotal);
+    document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
+    
+    // Hiển thị giá sau khi đã giảm
+    if (discountAmount > 0) {
+        document.getElementById('checkoutTotalAmount').innerHTML = `<span style="text-decoration: line-through; font-size: 13px; color: #888;">${formatPrice(foodTotal + shipFee)}</span> <span style="color: #d32f2f;">${formatPrice(grandTotal)}</span>`;
+    } else {
+        document.getElementById('checkoutTotalAmount').innerText = formatPrice(grandTotal);
+    }
 
-            const listEl = document.getElementById('checkoutList');
-            listEl.innerHTML = '';
-            
-            if (cart.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#888; padding:10px;">Giỏ hàng trống</div>';
-            } else {
-                cart.forEach((item, index) => {
-                    let sum = item.price * item.qty;
-                    listEl.innerHTML += `
-                        <div class="checkout-item-row">
-                            <div style="flex:1; padding-right:6px;">
-                                <div style="font-weight:bold;">${item.name}</div>
-                                <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatPrice(sum)}</span></div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <button onclick="changeCartItemQty(${index}, -1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
-                                <span style="font-weight:bold; min-width:16px; text-align:center;">${item.qty}</span>
-                                <button onclick="changeCartItemQty(${index}, 1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button>
-                                <button onclick="removeCartItem(${index})" style="padding:2px 6px; background:#ffebee; color:#c62828; border:none; border-radius:4px; font-weight:bold; cursor:pointer; margin-left:4px;">✕</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+    updatePaymentUI();
+}
 
-            updatePaymentUI();
-        }
 
         function changeCartItemQty(index, delta) {
             cart[index].qty += delta;
@@ -1757,6 +1817,30 @@ async function setStoreOverride(mode) {
             btnSubmit.classList.remove('pulse-attention');
 
             let foodTotal = calculateFoodSubtotal();
+
+    // Lấy deviceId và đính kèm mã giảm giá đã dùng
+    let currentDeviceId = getOrCreateDeviceID();
+    
+    // Gửi lịch sử đơn hàng kèm mã giảm giá để khóa vĩnh viễn thiết bị
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({
+                type: 'history',
+                id: 'ORDER_' + Date.now(),
+                phone: phone,
+                deviceId: currentDeviceId,
+                couponCode: appliedCouponName,
+                items: cart,
+                totalStr: formatPrice(total)
+            })
+        });
+    } catch(e) {
+        console.log("Lỗi lưu lịch sử giảm giá:", e);
+    }
+
             let shipFee = getShippingFee();
             let total = foodTotal + shipFee;
 
@@ -1850,7 +1934,7 @@ async function setStoreOverride(mode) {
         setInterval(() => {
             fetchMenuFromCloud();
             checkStoreOpenStatus();
-        }, 15000);
+        }, 60000);
 
         fetchAdminPinFromCloud();
         fetchMenuFromCloud();
