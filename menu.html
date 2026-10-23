@@ -1402,18 +1402,46 @@
             return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
         }
 
-        function shareStoreWebsite() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Kim Bling Coffee & Tea',
-                    text: 'Đặt nước và ăn vặt ngon giao tận nơi tại Kim Bling Coffee & Tea!',
-                    url: window.location.href
-                }).catch(() => {});
+                function shareStoreWebsite() {
+            // Kiểm tra xem đang mở màn hình chi tiết món (TikTok modal) hay ở ngoài trang chủ
+            const tiktokModal = document.getElementById('tiktokModal');
+            const isTiktokOpen = tiktokModal && tiktokModal.style.display === 'flex';
+
+            if (isTiktokOpen && filteredMenu[currentTiktokIndex]) {
+                const item = filteredMenu[currentTiktokIndex];
+                const desc = getItemDescription(item.name);
+                const priceStr = formatPrice(item.price);
+                
+                const shareText = `🔥 ${item.name} (${priceStr})\n📝 ${desc}\n\n👉 Đặt món ngay tại Kim Bling Coffee & Tea: ${window.location.href}`;
+
+                if (navigator.share) {
+                    // Nếu trình duyệt hỗ trợ chia sẻ nâng cao (kèm text chi tiết)
+                    navigator.share({
+                        title: item.name + ' - Kim Bling Coffee & Tea',
+                        text: shareText,
+                        url: window.location.href
+                    }).catch(() => {});
+                } else {
+                    // Dự phòng sao chép vào bộ nhớ tạm nếu không hỗ trợ
+                    navigator.clipboard.writeText(shareText);
+                    alert("Đã sao chép thông tin món và link quán vào bộ nhớ tạm!");
+                }
             } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert("Đã sao chép đường dẫn quán vào bộ nhớ tạm!");
+                // Chia sẻ chung website quán khi ở ngoài trang chủ
+                const generalText = 'Đặt nước và ăn vặt ngon giao tận nơi tại Kim Bling Coffee & Tea! Menu đa dạng, freeship nhanh chóng.';
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Kim Bling Coffee & Tea',
+                        text: generalText,
+                        url: window.location.href
+                    }).catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert("Đã sao chép đường dẫn quán vào bộ nhớ tạm!");
+                }
             }
         }
+
 
         function filterCategory(cat, btn) {
             currentCategory = cat;
