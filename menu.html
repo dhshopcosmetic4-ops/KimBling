@@ -2310,7 +2310,7 @@
 
             const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
-                        setTimeout(() => {
+                                    setTimeout(() => {
                 btnSubmit.style.display = 'none';
                 document.getElementById('estimatedTimeNotice').innerText = `⏱️ Dự kiến sẵn sàng lúc: ${timeString}`;
                 document.getElementById('successNotify').style.display = 'block';
@@ -2326,14 +2326,22 @@
                     document.getElementById('btnZaloOptional').style.display = 'none';
                 }
 
-                // XÓA SẠCH MÃ GIẢM GIÁ SAU KHI ĐẶT HÀNG THÀNH CÔNG
+                // 1. Xóa sạch mã cũ đã dùng
                 localStorage.removeItem('kimbling_applied_discount_code');
                 localStorage.removeItem('kimbling_applied_discount_value');
                 localStorage.removeItem('kimbling_applied_discount_id');
-                
-                // Ẩn khung thông báo mã giảm giá trên màn hình
                 const noticeBox = document.getElementById('appliedDiscountNotice');
                 if (noticeBox) noticeBox.style.display = 'none';
+
+                // 2. PHÁT TÍN HIỆU CỘNG 5 LƯỢT CHO TRÒ CHƠI
+                const iframe = document.getElementById('gameIframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*');
+                }
+
+                // 3. HIỆN POPUP CHÚC MỪNG & TẶNG LƯỢT MỞ HỘP QUÀ
+                alert("🎉 ĐÃ GỬI ĐƠN THÀNH CÔNG!\n\nQuán tặng bạn thêm 5 lượt mở Hộp Quà May Mắn để nhận mã giảm giá cho đơn tiếp theo!");
+                openLuckyGiftPopup();
 
                 cart = [];
                 renderCartBar();
@@ -2553,16 +2561,18 @@ function closeGamePopup() {
 
                 // Lắng nghe tín hiệu đóng popup và nhận mã giảm giá từ trò chơi
         window.addEventListener('message', function(event) {
-            if (event.data === 'CLOSE_GAME_POPUP') {
-                closeGamePopup();
-            }
-            if (event.data && event.data.type === 'APPLY_DISCOUNT') {
-                localStorage.setItem('kimbling_applied_discount_code', event.data.code);
-                localStorage.setItem('kimbling_applied_discount_value', event.data.value);
-                checkAndApplyDiscountCode();
-            }
-        });
-
+    if (event.data === 'CLOSE_GAME_POPUP') {
+        closeGamePopup();
+    }
+    if (event.data && event.data.type === 'APPLY_DISCOUNT') {
+        // Xóa ID cũ để nhận mã 1K mới ở lượt quay tiếp theo
+        localStorage.removeItem('kimbling_applied_discount_id');
+        
+        localStorage.setItem('kimbling_applied_discount_code', event.data.code);
+        localStorage.setItem('kimbling_applied_discount_value', event.data.value);
+        checkAndApplyDiscountCode();
+    }
+});
 
 
         // Tự động áp mã giảm giá từ trò chơi và hiển thị minh bạch lên giao diện
