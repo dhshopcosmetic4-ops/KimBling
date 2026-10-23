@@ -146,7 +146,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v24');
+            const savedState = localStorage.getItem('kimbling_game_state_v25');
             
             if (savedState) {
                 try {
@@ -157,18 +157,22 @@
                 } catch(e) {}
             }
 
+            // CHỌN NGẪU NHIÊN 1 GAME TRÚNG TRONG SỐ 5 GAME (Từ game 1 đến game 5)
+            const randomWinningGame = Math.floor(Math.random() * MAX_GAMES) + 1;
+
             const newState = {
                 date: today,
                 gamesPlayed: 0,
+                winningGameTurn: randomWinningGame, // Lượt ngẫu nhiên được phép trúng
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null,
-                hasWonToday: false, // Kiểm tra xem hôm nay đã trúng 1K lần nào chưa
+                hasWonToday: false,
                 unusedPrizes: [],
                 lastWonPrize: null
             };
 
-            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v25', JSON.stringify(newState));
             return newState;
         }
 
@@ -230,36 +234,34 @@
 
             let item = gameState.currentBoard[index];
 
-            // 1. Quà FAKE (Bao gồm 30K, 20K, Kính, Ly, 10K) -> Đổi thành Ngon miệng và swap vị trí
-            if (item.type === 'FAKE') {
-                const fakeItemCopy = { ...item };
-                let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
-                if (missIndex !== -1) {
-                    gameState.currentBoard[missIndex] = fakeItemCopy;
+            // KIỂM TRA XEM LƯỢT HIỆN TẠI CÓ PHẢI LÀ LƯỢT TRÚNG NGẪU NHIÊN KHÔNG:
+            const isWinningTurn = (gameState.gamesPlayed === gameState.winningGameTurn) && !gameState.hasWonToday;
+
+            if (isWinningTurn) {
+                // ĐÚNG LƯỢT TRÚNG NGẪU NHIÊN -> Ép mở trúng Mã 1K!
+                let rewardIndex = gameState.currentBoard.findIndex(b => b.type === 'REWARD');
+                if (rewardIndex !== -1 && rewardIndex !== index) {
+                    // Tráo Mã 1K về đúng ô khách vừa chọn
+                    const oldItem = gameState.currentBoard[index];
+                    gameState.currentBoard[rewardIndex] = oldItem;
                 }
-                item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-            }
-
-            // 2. GIỚI HẠN CHỈ TRÚNG 1 LẦN 1K TRONG NGÀY:
-            // Nếu hôm nay đã trúng rồi mà khách chọn trúng ô REWARD -> ép hạ thành Ngon miệng luôn
-            if (item.type === 'REWARD' && gameState.hasWonToday) {
-                item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-            }
-
-            // 3. KÍCH CẦU GAME 5: Nếu đến game cuối (game 5) mà hôm nay chưa trúng mã nào -> ép trúng 1K
-            if (gameState.gamesPlayed >= MAX_GAMES && !gameState.hasWonToday && item.type !== 'REWARD') {
                 item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️', id: 'KB1K_' + Date.now() };
-            }
-
-            // Gán ID duy nhất nếu thực sự trúng thưởng
-            if (item.type === 'REWARD' && !item.id) {
-                item.id = item.code + '_' + Date.now();
+            } else {
+                // CÁC LƯỢT KHÁC -> Ép trượt hoàn toàn (Swap quà ảo/thật thành Ngon miệng!)
+                if (item.type === 'FAKE' || item.type === 'REWARD') {
+                    const originalItem = { ...item };
+                    let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
+                    if (missIndex !== -1) {
+                        gameState.currentBoard[missIndex] = originalItem;
+                    }
+                    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+                }
             }
 
             gameState.currentBoard[index] = item;
 
             if (item.type === 'REWARD') {
-                gameState.hasWonToday = true; // Đánh dấu hôm nay đã trúng rồi
+                gameState.hasWonToday = true;
                 gameState.unusedPrizes.push(item);
                 gameState.lastWonPrize = item;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -273,7 +275,7 @@
                 autoApplyBestAvailablePrize();
             }
 
-            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v25', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -327,7 +329,7 @@
             gameState.unusedPrizes = [];
             gameState.lastWonPrize = null;
 
-            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v25', JSON.stringify(gameState));
             
             alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
             closeGame();
@@ -350,7 +352,7 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v25', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -362,7 +364,7 @@
 
         window.addEventListener('message', function(event) {
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v24');
+                localStorage.removeItem('kimbling_game_state_v25');
                 location.reload();
             }
         });
