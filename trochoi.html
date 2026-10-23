@@ -144,7 +144,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v28');
+            const savedState = localStorage.getItem('kimbling_game_state_v29');
             
             if (savedState) {
                 try {
@@ -155,21 +155,32 @@
                 } catch(e) {}
             }
 
-            const newState = {
+            // Khởi tạo chuỗi 5 lượt đầu tiên với cấu hình random hoàn toàn
+            return initNewBatchState(today, 5);
+        }
+
+        function initNewBatchState(today, totalTurnsAllowed) {
+            // 1. Random xem chuỗi 5 lượt này có được phép trúng hay không (Tỷ lệ 50%)
+            const willWinInThisBatch = Math.random() < 0.5;
+            
+            // 2. Nếu được phép trúng, random xem sẽ trúng ở lượt thứ mấy trong 5 lượt (từ 1 đến 5)
+            let winningTurnIndex = -1;
+            if (willWinInThisBatch) {
+                winningTurnIndex = Math.floor(Math.random() * 5) + 1;
+            }
+
+            return {
                 date: today,
-                maxTurnsAllowed: 5,
+                maxTurnsAllowed: totalTurnsAllowed,
                 gamesPlayed: 0,
+                winningTurn: winningTurnIndex, // Lượt chính xác được trúng (ví dụ: lượt 3, còn lại hụt hết)
                 hasWonInThisBatch: false,
-                batchHadAnyWin: false, // Theo dõi xem chuỗi lượt này đã có ai trúng chưa
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null,
                 unusedPrizes: [],
                 lastWonPrize: null
             };
-
-            localStorage.setItem('kimbling_game_state_v28', JSON.stringify(newState));
-            return newState;
         }
 
         let gameState = getGameState();
@@ -230,27 +241,17 @@
 
             let item = gameState.currentBoard[index];
 
-            let isWinThisTurn = false;
+            // KIỂM TRA XEM LƯỢT HIỆN TẠI CÓ PHẢI LƯỢT ĐƯỢC CHỈ ĐỊNH TRÚNG KHÔNG
+            // (Tính tương đối theo chuỗi 5 lượt của từng big game)
+            const currentTurnInBatch = ((gameState.gamesPlayed - 1) % 5) + 1;
+            const isThisTurnAWin = (currentTurnInBatch === gameState.winningTurn) && !gameState.hasWonInThisBatch;
 
-            if (!gameState.hasWonInThisBatch) {
-                // Kiểm tra xem đây có phải là lượt cuối cùng của chuỗi (ví dụ lượt thứ 5) 
-                // và từ đầu chuỗi đến giờ khách toàn hụt không?
-                const isLastTurnOfBatch = (gameState.gamesPlayed % 5 === 0) || (gameState.gamesPlayed >= gameState.maxTurnsAllowed);
-                
-                if (isLastTurnOfBatch && !gameState.batchHadAnyWin) {
-                    // BẢO HIỂM 100%: Nếu các lượt trước hụt sạch, lượt cuối cùng này ép trúng luôn!
-                    isWinThisTurn = true;
-                } else {
-                    // Các lượt thông thường: Random xác suất 50%
-                    isWinThisTurn = Math.random() < 0.5;
-                }
-            }
-
-            if (isWinThisTurn) {
+            if (isThisTurnAWin) {
+                // Đúng lượt được chỉ định trúng -> Trao mã 1K
                 item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️', id: 'KB1K_' + Date.now() };
                 gameState.hasWonInThisBatch = true;
-                gameState.batchHadAnyWin = true;
             } else {
+                // Các lượt còn lại hoặc chuỗi bị quy định hụt -> Đổi thành Ngon miệng!
                 if (item.type === 'FAKE' || item.type === 'REWARD') {
                     const originalItem = { ...item };
                     let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
@@ -273,7 +274,7 @@
                 showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
             }
 
-            localStorage.setItem('kimbling_game_state_v28', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -314,7 +315,7 @@
             gameState.unusedPrizes = [];
             gameState.lastWonPrize = null;
 
-            localStorage.setItem('kimbling_game_state_v28', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
             
             alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
             closeGame();
@@ -337,7 +338,7 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v28', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -347,20 +348,25 @@
             }
         }
 
-        // KHI KHÁCH ĐẶT ĐƠN THÀNH CÔNG VÀ NHẬN THÊM 5 LƯỢT MỚI
+        // KHI KHÁCH ĐẶT ĐƠN THÀNH CÔNG VÀ NHẬN THÊM 5 LƯỢT MỚI (BIG GAME MỚI)
         window.addEventListener('message', function(event) {
             if (event.data === 'ADD_BONUS_TURNS') {
-                gameState.maxTurnsAllowed += 5; // Tăng thêm 5 lượt
-                gameState.hasWonInThisBatch = false; // Reset cờ trúng thưởng cho chuỗi mới
-                gameState.batchHadAnyWin = false;    // Reset cờ kiểm tra hụt để chuỗi mới kích hoạt bảo hiểm
+                const newTotalTurns = gameState.maxTurnsAllowed + 5;
+                const freshBatch = initNewBatchState(getTodayString(), newTotalTurns);
+                
+                // Giữ lại số lượt tối đa mới và kế thừa trạng thái random hoàn toàn cho big game này
+                gameState.maxTurnsAllowed = newTotalTurns;
+                gameState.winningTurn = freshBatch.winningTurn; 
+                gameState.hasWonInThisBatch = false;
                 gameState.isCurrentGameFinished = false;
                 gameState.selectedBoxIndex = null;
                 gameState.currentBoard = createNewBoard();
-                localStorage.setItem('kimbling_game_state_v28', JSON.stringify(gameState));
+
+                localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
                 updateUI();
             }
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v28');
+                localStorage.removeItem('kimbling_game_state_v29');
                 location.reload();
             }
         });
