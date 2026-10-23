@@ -88,7 +88,7 @@
         <h2>🎁 HỘP QUÀ MAY MẮN</h2>
         <p class="subtitle">Mỗi ngày 5 game - Mở 1 ô nhận ưu đãi cực hot!</p>
         <div class="turn-badge" id="turnBadge">Hôm nay: Còn 5/5 game</div>
-        <div id="wonPrizesDisplay" style="font-size: 12px; color: #2e7d32; font-weight: bold; margin-bottom: 8px;">Kho mã đã trúng: Trống</div>
+        <div id="wonPrizesDisplay" style="font-size: 12px; color: #2e7d32; font-weight: bold; margin-bottom: 8px;">Mã chưa dùng: Trống</div>
 
         <div class="grid-boxes" id="gridBoxes">
             <div class="box-item" onclick="openBox(0)">🎁</div>
@@ -105,10 +105,10 @@
         <div class="result-box" id="resultBox">
             <div id="resultText" style="font-size: 13px; line-height: 1.4;"></div>
             <div class="action-choice-row" id="choiceRow" style="display: none;">
-                <button class="btn-choice-apply" id="btnApplyReward" onclick="applyWonRewardNow()">✅ Áp dụng mã ngay</button>
+                <button class="btn-choice-apply" id="btnApplyReward" onclick="applyWonRewardNow()">✅ Áp dụng ngay</button>
                 <button class="btn-choice-next" id="btnNextGameText" onclick="startNextGame()">🎮 Chơi tiếp game sau</button>
             </div>
-            <button class="btn-close-game" id="btnCloseGameAction" onclick="closeGame()">🛵 ĐẶT MÓN NGAY (ĐÃ ÁP MÃ)</button>
+            <button class="btn-close-game" id="btnCloseGameAction" onclick="closeGame()">🛵 ĐẶT MÓN NGAY</button>
         </div>
     </div>
 
@@ -146,7 +146,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v19');
+            const savedState = localStorage.getItem('kimbling_game_state_v22');
             
             if (savedState) {
                 try {
@@ -163,10 +163,11 @@
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null,
-                wonPrizes: []
+                unusedPrizes: [], // Kho chứa các mã trúng chưa sử dụng trong ngày
+                lastWonPrize: null // Lưu vết mã trúng gần nhất
             };
 
-            localStorage.setItem('kimbling_game_state_v19', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(newState));
             return newState;
         }
 
@@ -176,11 +177,11 @@
             const gamesLeft = Math.max(0, MAX_GAMES - gameState.gamesPlayed);
             document.getElementById('turnBadge').innerText = `Hôm nay: Còn ${gamesLeft}/${MAX_GAMES} game`;
 
-            let wonText = "Trống";
-            if (gameState.wonPrizes && gameState.wonPrizes.length > 0) {
-                wonText = gameState.wonPrizes.map(p => `${p.text}`).join(', ');
+            let unusedText = "Trống";
+            if (gameState.unusedPrizes && gameState.unusedPrizes.length > 0) {
+                unusedText = gameState.unusedPrizes.map(p => `${p.text}`).join(', ');
             }
-            document.getElementById('wonPrizesDisplay').innerText = `Kho mã đã trúng: ${wonText}`;
+            document.getElementById('wonPrizesDisplay').innerText = `Mã chưa dùng: ${unusedText}`;
 
             const boxElements = document.querySelectorAll('.box-item');
 
@@ -201,10 +202,9 @@
                     }
                 });
 
-                // Nếu là trạng thái vừa quay xong, khôi phục lại bảng thông báo kết quả
                 const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
                 if (selectedItem.type === 'REWARD') {
-                    showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${selectedItem.text.toUpperCase()}!</b><br>Đã hé lộ 8 ô còn lại. Bạn muốn áp mã dùng ngay hay chơi tiếp game sau?`, true);
+                    showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${selectedItem.text.toUpperCase()}!</b><br>Bạn muốn áp mã vào đơn ngay hay chơi tiếp?`, true);
                 } else {
                     showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
                 }
@@ -229,37 +229,48 @@
 
             let item = gameState.currentBoard[index];
 
-            // 1. Quà FAKE -> Đổi thành Ngon miệng
+            // 1. Swap Quà FAKE sang ô MISS
             if (item.type === 'FAKE') {
+                const fakeItemCopy = { ...item };
+                let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
+                if (missIndex !== -1) {
+                    gameState.currentBoard[missIndex] = fakeItemCopy;
+                }
                 item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
-            // 2. Nếu đã từng trúng mã cao hơn -> Đổi các giải sau thành 1K
-            if (item.type === 'REWARD') {
-                const hasHighPrize = gameState.wonPrizes.some(p => p.value >= item.value);
-                if (gameState.wonPrizes.length > 0 && hasHighPrize && item.value > 1) {
+            // 2. Tỉ lệ 3K siêu hiếm (1%)
+            if (item.code === 'KB3K') {
+                const isSuperLucky = Math.random() < 0.01;
+                if (!isSuperLucky) {
                     item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' };
                 }
             }
 
-            // 3. Game 5 nếu chưa trúng gì -> Ép trúng Mã 1K
-            if (gameState.gamesPlayed >= MAX_GAMES && gameState.wonPrizes.length === 0 && item.type !== 'REWARD') {
+            // 3. Game 5 ép trúng Mã 1K nếu chưa có mã nào
+            if (gameState.gamesPlayed >= MAX_GAMES && gameState.unusedPrizes.length === 0 && item.type !== 'REWARD') {
                 item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' };
             }
 
             gameState.currentBoard[index] = item;
 
             if (item.type === 'REWARD') {
-                gameState.wonPrizes.push(item);
+                // Thêm vào danh sách mã chưa dùng
+                gameState.unusedPrizes.push(item);
+                gameState.lastWonPrize = item;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                saveBestDiscountToStorage();
 
-                showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${item.text.toUpperCase()}!</b><br>Đã hé lộ 8 ô còn lại. Bạn muốn áp mã dùng ngay hay chơi tiếp game sau?`, true);
+                showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${item.text.toUpperCase()}!</b><br>Bạn muốn áp mã vào đơn ngay hay chơi tiếp?`, true);
             } else {
                 showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
             }
 
-            localStorage.setItem('kimbling_game_state_v19', JSON.stringify(gameState));
+            // TỰ ĐỘNG BẢO TOÀN MÃ CAO NHẤT KHI HẾT 5 LƯỢT MÀ CHƯA ÁP DỤNG
+            if (gameState.gamesPlayed >= MAX_GAMES && gameState.unusedPrizes.length > 0) {
+                autoApplyBestAvailablePrize();
+            }
+
+            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -277,21 +288,66 @@
                 btnCloseGame.style.display = 'none';
 
                 if (isReward) {
-                    // TRÚNG THƯỞNG: Hiện nút Áp dụng + Chơi tiếp
                     btnApply.style.display = 'block';
                     btnNext.style.width = 'auto';
                 } else {
-                    // TRƯỢT (NGON MIỆNG): Ẩn hoàn toàn nút Áp dụng mã
                     btnApply.style.display = 'none';
                     btnNext.style.width = '100%';
                 }
             } else {
-                // ĐÃ CHƠI ĐỦ 5 GAME
+                // Khi hết 5 lượt
                 choiceRow.style.display = 'none';
                 btnCloseGame.style.display = 'block';
-                document.getElementById('resultText').innerHTML += `<br><small style="color:#d32f2f; font-weight:bold;">Đã chơi đủ 5 game hôm nay!</small>`;
             }
             resultBox.style.display = 'block';
+        }
+
+        // Tự động tìm mã cao nhất chưa dùng để add vào đơn hàng khi kết thúc game
+        function autoApplyBestAvailablePrize() {
+            if (gameState.unusedPrizes.length === 0) return;
+
+            let best = gameState.unusedPrizes.reduce((prev, current) => (prev.value > current.value) ? prev : current);
+            
+            // Gửi mã tốt nhất về đơn hàng
+            dispatchDiscountToMenu(best.code, best.value);
+
+            // Cập nhật thông báo rõ ràng cho khách
+            setTimeout(() => {
+                const resultText = document.getElementById('resultText');
+                if (resultText) {
+                    resultText.innerHTML += `<br><div style="background:#d4edda; color:#155724; padding:8px; border-radius:8px; margin-top:6px; font-weight:bold; font-size:12px;">🌟 Đã tự động áp dụng mã tốt nhất (${best.text}) từ các lượt chơi cho đơn hàng của bạn!</div>`;
+                }
+            }, 100);
+        }
+
+        function applyWonRewardNow() {
+            if (!gameState.lastWonPrize) return;
+
+            const appliedItem = gameState.lastWonPrize;
+
+            // 1. Áp dụng mã vừa trúng cho đơn hàng
+            dispatchDiscountToMenu(appliedItem.code, appliedItem.value);
+
+            // 2. XÓA MÃ NÀY KHỎI KHO CHƯA DÙNG (Mã biến mất sau khi áp dụng)
+            const idx = gameState.unusedPrizes.findIndex(p => p.code === appliedItem.code);
+            if (idx !== -1) {
+                gameState.unusedPrizes.splice(idx, 1);
+            }
+            gameState.lastWonPrize = null;
+
+            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
+            
+            alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
+            closeGame();
+        }
+
+        function dispatchDiscountToMenu(code, value) {
+            localStorage.setItem('kimbling_applied_discount_code', code);
+            localStorage.setItem('kimbling_applied_discount_value', value);
+
+            if (window.parent) {
+                window.parent.postMessage({ type: 'APPLY_DISCOUNT', code: code, value: value }, '*');
+            }
         }
 
         function startNextGame() {
@@ -301,25 +357,8 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v19', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
             updateUI();
-        }
-
-        function saveBestDiscountToStorage() {
-            if (gameState.wonPrizes.length > 0) {
-                let best = gameState.wonPrizes.reduce((prev, current) => (prev.value > current.value) ? prev : current);
-                localStorage.setItem('kimbling_applied_discount_code', best.code);
-                localStorage.setItem('kimbling_applied_discount_value', best.value);
-
-                if (window.parent) {
-                    window.parent.postMessage({ type: 'APPLY_DISCOUNT', code: best.code, value: best.value }, '*');
-                }
-            }
-        }
-
-        function applyWonRewardNow() {
-            saveBestDiscountToStorage();
-            closeGame();
         }
 
         function closeGame() {
@@ -328,10 +367,9 @@
             }
         }
 
-        // Lắng nghe lệnh reset test từ Admin
         window.addEventListener('message', function(event) {
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v19');
+                localStorage.removeItem('kimbling_game_state_v22');
                 location.reload();
             }
         });
