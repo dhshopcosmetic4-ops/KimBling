@@ -771,6 +771,13 @@
         </div>
     </div>
 
+    <!-- POPUP TRÒ CHƠI HỘP QUÀ MAY MẮN (DÁN NGAY DƯỚI BANNER CŨ) -->
+    <div class="banner-popup-overlay" id="gamePopupModal" style="display: none;">
+        <div class="banner-popup-card" style="background: transparent; box-shadow: none; max-width: 400px; padding: 0;">
+            <iframe src="trochoi.html" id="gameIframe" style="width: 100%; height: 540px; border: none; border-radius: 20px;"></iframe>
+        </div>
+    </div>
+
     <header>
         <button class="admin-trigger-btn" onclick="openAdminModal()">👑 Cài đặt Web</button>
         <h1>Kim Bling Coffee & Tea</h1>
@@ -784,11 +791,19 @@
         🚚 Phí ship: <span>Freeship</span> bán kính 1km (Xa hơn phụ thu 10k)
     </div>
 
-    <div style="text-align: center; margin: 10px 0 2px 0;">
-        <button onclick="showInstallPrompt()" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; gap: 6px;">
-            📱 Thêm Kim Bling Ra Màn Hình Chính
+       <!-- HÀNG NÚT CÀI ỨNG DỤNG & MỞ HỘP QUÀ MAY MẮN -->
+    <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 12px 2px 12px;">
+        <!-- Nút 1: Cài App Kim Bling -->
+        <button onclick="showInstallPrompt()" style="flex: 1; background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+            📱 Cài App Kim Bling
+        </button>
+
+        <!-- Nút 2: Mở Popup Hộp Quà May Mắn -->
+        <button onclick="openLuckyGiftPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #e91e63, #d81b60); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(233, 30, 99, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+            🎁 Hộp Quà May Mắn
         </button>
     </div>
+
 
     <div class="container">
         <div class="search-box" style="position: relative;">
@@ -862,9 +877,15 @@
                 <button class="admin-option-btn" id="btnModeForceOpen" onclick="setStoreOverride('FORCE_OPEN')">
                     🟢 Ép Buộc MỞ CỬA
                 </button>
-                <button class="admin-option-btn" id="btnModeForceClosed" onclick="setStoreOverride('FORCE_CLOSED')">
+                                <button class="admin-option-btn" id="btnModeForceClosed" onclick="setStoreOverride('FORCE_CLOSED')">
                     🔴 Ép Buộc ĐÓNG CỬA
                 </button>
+
+                <!-- NÚT RESET LƯỢT CHƠI DÀNH CHO CHỦ QUÁN TEST -->
+                <button onclick="adminResetGameData()" style="width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; border: 1px dashed #d32f2f; background: #fff3f3; color: #d32f2f; cursor: pointer; margin-top: 12px; margin-bottom: 8px; font-size: 13px;">
+                    🔄 Reset Lượt Chơi Trò Chơi (Test Game)
+                </button>
+
 
                 <button onclick="closeAdminModal()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px;">Đóng Bảng Cài Đặt</button>
             </div>
@@ -1035,6 +1056,17 @@
                 <span>Tiền món:</span>
                 <span id="foodSubtotal">0k</span>
             </div>
+
+    <!-- KHUNG HIỂN THỊ MINH BẠCH MÃ GIẢM GIÁ TRÚNG THƯỞNG -->
+    <div id="appliedDiscountNotice" style="display: none; background: #e8f5e9; border: 1.5px dashed #2e7d32; padding: 10px 14px; border-radius: 10px; margin: 10px 0; justify-content: space-between; align-items: center;">
+        <div>
+            <span style="font-size: 12px; color: #2e7d32; font-weight: bold;">🎉 Đã áp dụng mã quà tặng:</span>
+            <div id="appliedCodeText" style="font-size: 14px; font-weight: bold; color: #d32f2f;"></div>
+        </div>
+        <button onclick="removeDiscountCode()" style="background: none; border: none; color: #757575; font-size: 12px; cursor: pointer; text-decoration: underline;">Xóa mã</button>
+    </div>
+
+
             <div id="shippingRowUI" style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #666;">
                 <span>Phí ship:</span>
                 <span id="shippingFeeText">0k</span>
@@ -1943,14 +1975,21 @@
             updateCartDisplay();
         }
 
-        function updateCartDisplay() {
+                function updateCartDisplay() {
             let foodTotal = calculateFoodSubtotal();
             let shipFee = getShippingFee();
-            let grandTotal = foodTotal + shipFee;
+
+            // Lấy tiền giảm giá từ trò chơi Hộp Quà May Mắn (nếu có)
+            let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0');
+            let discountAmount = discountValK * 1000;
+
+            // Tính tổng tiền sau khi trừ giảm giá
+            let grandTotal = Math.max(0, foodTotal + shipFee - discountAmount);
 
             document.getElementById('foodSubtotal').innerText = formatPrice(foodTotal);
             document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
             document.getElementById('checkoutTotalAmount').innerText = formatPrice(grandTotal);
+
 
             const listEl = document.getElementById('checkoutList');
             listEl.innerHTML = '';
@@ -2005,9 +2044,14 @@
             document.getElementById('transferBox').style.display = 'none';
         }
 
-        function openCheckoutModal() {
+                function openCheckoutModal() {
             if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
             document.body.classList.add('no-scroll');
+
+            // Gọi kiểm tra và hiển thị mã giảm giá từ trò chơi ngay khi mở giỏ hàng
+            if (typeof checkAndApplyDiscountCode === 'function') {
+                checkAndApplyDiscountCode();
+            }
 
             const savedName = localStorage.getItem('kimbling_cust_name');
             const savedPhone = localStorage.getItem('kimbling_cust_phone');
@@ -2036,6 +2080,7 @@
             document.getElementById('checkoutModal').style.display = 'flex';
             checkStoreOpenStatus();
         }
+
 
         function closeCheckoutModal() {
             document.body.classList.remove('no-scroll');
@@ -2133,7 +2178,7 @@
             }
         }
 
-        function generateOrderMessage() {
+                function generateOrderMessage() {
             const orderType = document.querySelector('input[name="orderType"]:checked').value;
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
@@ -2157,7 +2202,13 @@
             }
 
             let foodTotal = calculateFoodSubtotal();
-            let total = foodTotal + shipFee;
+            
+            // Lấy thông tin mã giảm giá từ trò chơi
+            const discountCode = localStorage.getItem('kimbling_applied_discount_code') || '';
+            const discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0');
+            let discountAmount = discountValK * 1000;
+
+            let total = Math.max(0, foodTotal + shipFee - discountAmount);
             let cleanPhone = phone.replace(/[^0-9]/g, '');
 
             let safeName = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -2189,12 +2240,19 @@
             });
 
             msg += `----------------------------\n`;
-            msg += `🛵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}\n`;
+            msg += `💵 Tiền món: ${formatPrice(foodTotal)} | Ship: ${formatPrice(shipFee)}\n`;
+            
+            // Thêm dòng báo mã giảm giá vào Telegram
+            if (discountCode && discountValK > 0) {
+                msg += `🎁 <b>Khách trúng thưởng: Giảm ${discountValK}K (Mã: ${discountCode})</b>\n`;
+            }
+
             msg += `💰 <b>TỔNG CỘNG: ${formatPrice(total)}</b>`;
 
             saveOrderToHistory(cart, formatPrice(total));
             return msg;
         }
+
 
         async function sendTelegramMessage(text, photoUrl = null) {
             try {
@@ -2465,6 +2523,99 @@ if (!urlParamsCheck.get('tiktok')) {
                 document.getElementById('contactModal').style.display = 'none';
             }
         }
+
+                // Mở Popup Trò Chơi Hộp Quà
+        function openLuckyGiftPopup() {
+            const modal = document.getElementById('gamePopupModal');
+            const iframe = document.getElementById('gameIframe');
+            if (iframe) iframe.src = iframe.src; // Refresh trò chơi
+            if (modal) modal.style.display = 'flex';
+        }
+
+        // Đóng Popup Trò Chơi
+function closeGamePopup() {
+    const gameModal = document.getElementById('gamePopupModal');
+    if (gameModal) {
+        gameModal.style.display = 'none';
+    }
+    checkAndApplyDiscountCode();
+}
+
+                // Lắng nghe tín hiệu đóng popup và nhận mã giảm giá từ trò chơi
+        window.addEventListener('message', function(event) {
+            if (event.data === 'CLOSE_GAME_POPUP') {
+                closeGamePopup();
+            }
+            if (event.data && event.data.type === 'APPLY_DISCOUNT') {
+                localStorage.setItem('kimbling_applied_discount_code', event.data.code);
+                localStorage.setItem('kimbling_applied_discount_value', event.data.value);
+                checkAndApplyDiscountCode();
+            }
+        });
+
+
+
+        // Tự động áp mã giảm giá từ trò chơi và hiển thị minh bạch lên giao diện
+function checkAndApplyDiscountCode() {
+    const appliedCode = localStorage.getItem('kimbling_applied_discount_code');
+    const appliedValue = localStorage.getItem('kimbling_applied_discount_value');
+
+    const noticeBox = document.getElementById('appliedDiscountNotice');
+    const codeText = document.getElementById('appliedCodeText');
+
+    if (appliedCode && appliedValue) {
+        // Hiển thị khung minh bạch ra màn hình thanh toán
+        if (noticeBox && codeText) {
+            codeText.innerText = `${appliedCode} (Giảm ngay ${appliedValue}K vào đơn hàng)`;
+            noticeBox.style.display = 'flex';
+        }
+
+        // Tự động gán vào ô nhập mã (nếu có)
+        const discountInput = document.getElementById('discountCodeInput'); 
+        if (discountInput) {
+            discountInput.value = appliedCode;
+        }
+    }
+}
+
+// Nút cho phép khách bấm xóa mã nếu muốn
+function removeDiscountCode() {
+    localStorage.removeItem('kimbling_applied_discount_code');
+    localStorage.removeItem('kimbling_applied_discount_value');
+    
+    const noticeBox = document.getElementById('appliedDiscountNotice');
+    if (noticeBox) noticeBox.style.display = 'none';
+    
+    const discountInput = document.getElementById('discountCodeInput'); 
+    if (discountInput) discountInput.value = '';
+
+    // Cập nhật lại tổng tiền nếu có hàm tính tiền
+    if (typeof updateOrderTotal === 'function') {
+        updateOrderTotal();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', checkAndApplyDiscountCode);
+
+        function adminResetGameData() {
+            if (confirm("Chủ quán muốn reset lại lượt trò chơi để test?")) {
+                // Xóa dữ liệu game ở localStorage của trang menu chính
+                localStorage.removeItem('kimbling_game_state_v17');
+                localStorage.removeItem('kimbling_applied_discount_code');
+                localStorage.removeItem('kimbling_applied_discount_value');
+                
+                // Đồng thời gửi tín hiệu reset sang iframe trò chơi
+                const iframe = document.getElementById('gameIframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('RESET_GAME_DATA', '*');
+                }
+
+                alert("Đã reset trò chơi thành công! Bạn có thể mở lại hộp quà để test tiếp.");
+                closeAdminModal();
+            }
+        }
+
+
     </script>
 
 </body>
