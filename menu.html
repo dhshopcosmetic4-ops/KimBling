@@ -2310,7 +2310,7 @@
 
             const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
-            setTimeout(() => {
+                        setTimeout(() => {
                 btnSubmit.style.display = 'none';
                 document.getElementById('estimatedTimeNotice').innerText = `⏱️ Dự kiến sẵn sàng lúc: ${timeString}`;
                 document.getElementById('successNotify').style.display = 'block';
@@ -2326,9 +2326,19 @@
                     document.getElementById('btnZaloOptional').style.display = 'none';
                 }
 
+                // XÓA SẠCH MÃ GIẢM GIÁ SAU KHI ĐẶT HÀNG THÀNH CÔNG
+                localStorage.removeItem('kimbling_applied_discount_code');
+                localStorage.removeItem('kimbling_applied_discount_value');
+                localStorage.removeItem('kimbling_applied_discount_id');
+                
+                // Ẩn khung thông báo mã giảm giá trên màn hình
+                const noticeBox = document.getElementById('appliedDiscountNotice');
+                if (noticeBox) noticeBox.style.display = 'none';
+
                 cart = [];
                 renderCartBar();
             }, 600);
+
         }
 
 

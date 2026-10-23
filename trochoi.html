@@ -146,7 +146,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v22');
+            const savedState = localStorage.getItem('kimbling_game_state_v23');
             
             if (savedState) {
                 try {
@@ -163,11 +163,11 @@
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null,
-                unusedPrizes: [], // Kho chứa các mã trúng chưa sử dụng trong ngày
-                lastWonPrize: null // Lưu vết mã trúng gần nhất
+                unusedPrizes: [],
+                lastWonPrize: null
             };
 
-            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(newState));
             return newState;
         }
 
@@ -229,7 +229,7 @@
 
             let item = gameState.currentBoard[index];
 
-            // 1. Swap Quà FAKE sang ô MISS
+            // 1. Swap Quà FAKE
             if (item.type === 'FAKE') {
                 const fakeItemCopy = { ...item };
                 let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
@@ -247,15 +247,19 @@
                 }
             }
 
+            // GÁN ID DUY NHẤT CHO MÃ TRÚNG (DÙNG TIME STAMP KHÔNG TRÙNG LẶP)
+            if (item.type === 'REWARD') {
+                item.id = item.code + '_' + Date.now();
+            }
+
             // 3. Game 5 ép trúng Mã 1K nếu chưa có mã nào
             if (gameState.gamesPlayed >= MAX_GAMES && gameState.unusedPrizes.length === 0 && item.type !== 'REWARD') {
-                item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' };
+                item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️', id: 'KB1K_' + Date.now() };
             }
 
             gameState.currentBoard[index] = item;
 
             if (item.type === 'REWARD') {
-                // Thêm vào danh sách mã chưa dùng
                 gameState.unusedPrizes.push(item);
                 gameState.lastWonPrize = item;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -265,12 +269,11 @@
                 showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
             }
 
-            // TỰ ĐỘNG BẢO TOÀN MÃ CAO NHẤT KHI HẾT 5 LƯỢT MÀ CHƯA ÁP DỤNG
             if (gameState.gamesPlayed >= MAX_GAMES && gameState.unusedPrizes.length > 0) {
                 autoApplyBestAvailablePrize();
             }
 
-            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -295,27 +298,23 @@
                     btnNext.style.width = '100%';
                 }
             } else {
-                // Khi hết 5 lượt
                 choiceRow.style.display = 'none';
                 btnCloseGame.style.display = 'block';
             }
             resultBox.style.display = 'block';
         }
 
-        // Tự động tìm mã cao nhất chưa dùng để add vào đơn hàng khi kết thúc game
         function autoApplyBestAvailablePrize() {
             if (gameState.unusedPrizes.length === 0) return;
 
             let best = gameState.unusedPrizes.reduce((prev, current) => (prev.value > current.value) ? prev : current);
             
-            // Gửi mã tốt nhất về đơn hàng
-            dispatchDiscountToMenu(best.code, best.value);
+            dispatchDiscountToMenu(best.code, best.value, best.id);
 
-            // Cập nhật thông báo rõ ràng cho khách
             setTimeout(() => {
                 const resultText = document.getElementById('resultText');
                 if (resultText) {
-                    resultText.innerHTML += `<br><div style="background:#d4edda; color:#155724; padding:8px; border-radius:8px; margin-top:6px; font-weight:bold; font-size:12px;">🌟 Đã tự động áp dụng mã tốt nhất (${best.text}) từ các lượt chơi cho đơn hàng của bạn!</div>`;
+                    resultText.innerHTML += `<br><div style="background:#d4edda; color:#155724; padding:8px; border-radius:8px; margin-top:6px; font-weight:bold; font-size:12px;">🌟 Đã tự động áp dụng mã tốt nhất (${best.text}) cho đơn hàng!</div>`;
                 }
             }, 100);
         }
@@ -325,28 +324,28 @@
 
             const appliedItem = gameState.lastWonPrize;
 
-            // 1. Áp dụng mã vừa trúng cho đơn hàng
-            dispatchDiscountToMenu(appliedItem.code, appliedItem.value);
+            dispatchDiscountToMenu(appliedItem.code, appliedItem.value, appliedItem.id);
 
-            // 2. XÓA MÃ NÀY KHỎI KHO CHƯA DÙNG (Mã biến mất sau khi áp dụng)
-            const idx = gameState.unusedPrizes.findIndex(p => p.code === appliedItem.code);
+            // Xóa mã đã dùng khỏi danh sách chưa dùng
+            const idx = gameState.unusedPrizes.findIndex(p => p.id === appliedItem.id);
             if (idx !== -1) {
                 gameState.unusedPrizes.splice(idx, 1);
             }
             gameState.lastWonPrize = null;
 
-            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
             
             alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
             closeGame();
         }
 
-        function dispatchDiscountToMenu(code, value) {
+        function dispatchDiscountToMenu(code, value, id) {
             localStorage.setItem('kimbling_applied_discount_code', code);
             localStorage.setItem('kimbling_applied_discount_value', value);
+            localStorage.setItem('kimbling_applied_discount_id', id);
 
             if (window.parent) {
-                window.parent.postMessage({ type: 'APPLY_DISCOUNT', code: code, value: value }, '*');
+                window.parent.postMessage({ type: 'APPLY_DISCOUNT', code: code, value: value, id: id }, '*');
             }
         }
 
@@ -357,7 +356,7 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v22', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -369,7 +368,7 @@
 
         window.addEventListener('message', function(event) {
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v22');
+                localStorage.removeItem('kimbling_game_state_v23');
                 location.reload();
             }
         });
