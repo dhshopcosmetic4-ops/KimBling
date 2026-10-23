@@ -1402,8 +1402,7 @@
             return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
         }
 
-                function shareStoreWebsite() {
-            // Kiểm tra xem đang mở màn hình chi tiết món (TikTok modal) hay ở ngoài trang chủ
+                    async function shareStoreWebsite() {
             const tiktokModal = document.getElementById('tiktokModal');
             const isTiktokOpen = tiktokModal && tiktokModal.style.display === 'flex';
 
@@ -1412,22 +1411,55 @@
                 const desc = getItemDescription(item.name);
                 const priceStr = formatPrice(item.price);
                 
-                const shareText = `🔥 ${item.name} (${priceStr})\n📝 ${desc}\n\n👉 Đặt món ngay tại Kim Bling Coffee & Tea: ${window.location.href}`;
+                // Đường dẫn trỏ thẳng tham số tiktok để mở đúng popup sản phẩm
+                const baseUrl = window.location.href.split('?')[0];
+                const productShareUrl = `${baseUrl}?tiktok=${encodeURIComponent(item.name)}`;
 
-                if (navigator.share) {
-                    // Nếu trình duyệt hỗ trợ chia sẻ nâng cao (kèm text chi tiết)
-                    navigator.share({
-                        title: item.name + ' - Kim Bling Coffee & Tea',
-                        text: shareText,
-                        url: window.location.href
-                    }).catch(() => {});
+                const shareText = `🔥 ${item.name} (${priceStr})\n📝 ${desc}\n\n👉 Xem và đặt món ngay tại đây: ${productShareUrl}`;
+
+                if (item.imageUrl) {
+                    try {
+                        const response = await fetch(item.imageUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], `${removeDiacritics(item.name)}.jpg`, { type: blob.type || 'image/jpeg' });
+
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: item.name,
+                                text: shareText
+                            });
+                            return;
+                        }
+                    } catch (e) {
+                        console.log("Không tải được file ảnh trực tiếp, dùng cách gửi kèm link ảnh.");
+                    }
+
+                    const shareTextWithImg = `🔥 ${item.name} (${priceStr})\n📝 ${desc}\n🖼️ Hình ảnh món: ${item.imageUrl}\n\n👉 Bấm vào link để xem TikTok và đặt món: ${productShareUrl}`;
+                    
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: item.name,
+                            text: shareTextWithImg,
+                            url: productShareUrl
+                        }).catch(() => {});
+                    } else {
+                        navigator.clipboard.writeText(shareTextWithImg);
+                        alert("Đã sao chép thông tin và link sản phẩm vào bộ nhớ tạm!");
+                    }
                 } else {
-                    // Dự phòng sao chép vào bộ nhớ tạm nếu không hỗ trợ
-                    navigator.clipboard.writeText(shareText);
-                    alert("Đã sao chép thông tin món và link quán vào bộ nhớ tạm!");
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: item.name,
+                            text: shareText,
+                            url: productShareUrl
+                        }).catch(() => {});
+                    } else {
+                        navigator.clipboard.writeText(shareText);
+                        alert("Đã sao chép thông tin món vào bộ nhớ tạm!");
+                    }
                 }
             } else {
-                // Chia sẻ chung website quán khi ở ngoài trang chủ
                 const generalText = 'Đặt nước và ăn vặt ngon giao tận nơi tại Kim Bling Coffee & Tea! Menu đa dạng, freeship nhanh chóng.';
                 if (navigator.share) {
                     navigator.share({
@@ -1441,6 +1473,25 @@
                 }
             }
         }
+
+        // Đoạn code tự động mở đúng giao diện TikTok của sản phẩm khi có người bấm vào link chia sẻ
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedDish = urlParams.get('tiktok');
+            if (sharedDish) {
+                const checkMenuInterval = setInterval(() => {
+                    if (menu && menu.length > 0) {
+                        clearInterval(checkMenuInterval);
+                        filteredMenu = [...menu];
+                        const foundIndex = filteredMenu.findIndex(m => removeDiacritics(m.name) === removeDiacritics(sharedDish));
+                        if (foundIndex !== -1) {
+                            openTiktokModal(foundIndex);
+                        }
+                    }
+                }, 200);
+            }
+        });
+
 
 
         function filterCategory(cat, btn) {
