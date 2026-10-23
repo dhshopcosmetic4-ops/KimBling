@@ -86,7 +86,7 @@
     <div class="game-card">
         <button class="close-btn" onclick="closeGame()">✕</button>
         <h2>🎁 HỘP QUÀ MAY MẮN</h2>
-        <p class="subtitle">Mỗi ngày 5 game - Mở 1 ô nhận ưu đãi cực hot!</p>
+        <p class="subtitle">Mỗi ngày 5 game - Săn mã ưu đãi liền tay!</p>
         <div class="turn-badge" id="turnBadge">Hôm nay: Còn 5/5 game</div>
         <div id="wonPrizesDisplay" style="font-size: 12px; color: #2e7d32; font-weight: bold; margin-bottom: 8px;">Mã chưa dùng: Trống</div>
 
@@ -131,13 +131,13 @@
 
         function createNewBoard() {
             let board = [
+                { type: 'FAKE', text: 'Mã 30K', icon: '🎟️' },
+                { type: 'FAKE', text: 'Mã 20K', icon: '🎟️' },
                 { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' },
                 { type: 'FAKE', text: 'Ly free', icon: '🥤' },
                 { type: 'FAKE', text: 'Mã 10K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Mã 8K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB3K', value: 3, text: 'Mã Giảm 3K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB2K', value: 2, text: 'Mã Giảm 2K', icon: '🎟️' },
                 { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
+                { type: 'MISS', text: 'Ngon miệng!', icon: '😋' },
                 { type: 'MISS', text: 'Ngon miệng!', icon: '😋' },
                 { type: 'MISS', text: 'Ngon miệng!', icon: '😋' }
             ];
@@ -146,7 +146,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v23');
+            const savedState = localStorage.getItem('kimbling_game_state_v24');
             
             if (savedState) {
                 try {
@@ -163,11 +163,12 @@
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null,
+                hasWonToday: false, // Kiểm tra xem hôm nay đã trúng 1K lần nào chưa
                 unusedPrizes: [],
                 lastWonPrize: null
             };
 
-            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(newState));
             return newState;
         }
 
@@ -229,7 +230,7 @@
 
             let item = gameState.currentBoard[index];
 
-            // 1. Swap Quà FAKE
+            // 1. Quà FAKE (Bao gồm 30K, 20K, Kính, Ly, 10K) -> Đổi thành Ngon miệng và swap vị trí
             if (item.type === 'FAKE') {
                 const fakeItemCopy = { ...item };
                 let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
@@ -239,27 +240,26 @@
                 item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
-            // 2. Tỉ lệ 3K siêu hiếm (1%)
-            if (item.code === 'KB3K') {
-                const isSuperLucky = Math.random() < 0.01;
-                if (!isSuperLucky) {
-                    item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' };
-                }
+            // 2. GIỚI HẠN CHỈ TRÚNG 1 LẦN 1K TRONG NGÀY:
+            // Nếu hôm nay đã trúng rồi mà khách chọn trúng ô REWARD -> ép hạ thành Ngon miệng luôn
+            if (item.type === 'REWARD' && gameState.hasWonToday) {
+                item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
-            // GÁN ID DUY NHẤT CHO MÃ TRÚNG (DÙNG TIME STAMP KHÔNG TRÙNG LẶP)
-            if (item.type === 'REWARD') {
-                item.id = item.code + '_' + Date.now();
-            }
-
-            // 3. Game 5 ép trúng Mã 1K nếu chưa có mã nào
-            if (gameState.gamesPlayed >= MAX_GAMES && gameState.unusedPrizes.length === 0 && item.type !== 'REWARD') {
+            // 3. KÍCH CẦU GAME 5: Nếu đến game cuối (game 5) mà hôm nay chưa trúng mã nào -> ép trúng 1K
+            if (gameState.gamesPlayed >= MAX_GAMES && !gameState.hasWonToday && item.type !== 'REWARD') {
                 item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️', id: 'KB1K_' + Date.now() };
+            }
+
+            // Gán ID duy nhất nếu thực sự trúng thưởng
+            if (item.type === 'REWARD' && !item.id) {
+                item.id = item.code + '_' + Date.now();
             }
 
             gameState.currentBoard[index] = item;
 
             if (item.type === 'REWARD') {
+                gameState.hasWonToday = true; // Đánh dấu hôm nay đã trúng rồi
                 gameState.unusedPrizes.push(item);
                 gameState.lastWonPrize = item;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -273,7 +273,7 @@
                 autoApplyBestAvailablePrize();
             }
 
-            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -307,14 +307,13 @@
         function autoApplyBestAvailablePrize() {
             if (gameState.unusedPrizes.length === 0) return;
 
-            let best = gameState.unusedPrizes.reduce((prev, current) => (prev.value > current.value) ? prev : current);
-            
+            let best = gameState.unusedPrizes[0];
             dispatchDiscountToMenu(best.code, best.value, best.id);
 
             setTimeout(() => {
                 const resultText = document.getElementById('resultText');
                 if (resultText) {
-                    resultText.innerHTML += `<br><div style="background:#d4edda; color:#155724; padding:8px; border-radius:8px; margin-top:6px; font-weight:bold; font-size:12px;">🌟 Đã tự động áp dụng mã tốt nhất (${best.text}) cho đơn hàng!</div>`;
+                    resultText.innerHTML += `<br><div style="background:#d4edda; color:#155724; padding:8px; border-radius:8px; margin-top:6px; font-weight:bold; font-size:12px;">🌟 Đã tự động áp dụng ${best.text} cho đơn hàng!</div>`;
                 }
             }, 100);
         }
@@ -323,17 +322,12 @@
             if (!gameState.lastWonPrize) return;
 
             const appliedItem = gameState.lastWonPrize;
-
             dispatchDiscountToMenu(appliedItem.code, appliedItem.value, appliedItem.id);
 
-            // Xóa mã đã dùng khỏi danh sách chưa dùng
-            const idx = gameState.unusedPrizes.findIndex(p => p.id === appliedItem.id);
-            if (idx !== -1) {
-                gameState.unusedPrizes.splice(idx, 1);
-            }
+            gameState.unusedPrizes = [];
             gameState.lastWonPrize = null;
 
-            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
             
             alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
             closeGame();
@@ -356,7 +350,7 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v23', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v24', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -368,7 +362,7 @@
 
         window.addEventListener('message', function(event) {
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v23');
+                localStorage.removeItem('kimbling_game_state_v24');
                 location.reload();
             }
         });
