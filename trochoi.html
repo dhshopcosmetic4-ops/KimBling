@@ -76,9 +76,8 @@
 
         .result-box { display: none; background: #e8f5e9; border: 1.5px dashed #2e7d32; padding: 10px 12px; border-radius: 12px; margin-top: 6px; text-align: center; }
         .action-choice-row { display: flex; gap: 8px; margin-top: 8px; justify-content: center; }
-        .btn-choice-apply { flex: 1; background: #28a745; color: #fff; border: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; display: none; }
+        .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 11px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -86,9 +85,9 @@
     <div class="game-card">
         <button class="close-btn" onclick="closeGame()">✕</button>
         <h2>🎁 HỘP QUÀ MAY MẮN</h2>
-        <p class="subtitle">Mở 1 ô nhận ưu đãi - Đặt đơn nhận thêm lượt!</p>
+        <p class="subtitle">Mở ô tìm ưu đãi - Đặt đơn nhận thêm lượt chơi!</p>
         <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
-        <div id="wonPrizesDisplay" style="font-size: 12px; color: #2e7d32; font-weight: bold; margin-bottom: 8px;">Mã chưa dùng: Trống</div>
+        <div id="wonPrizesDisplay" style="font-size: 12px; color: #e65100; font-weight: bold; margin-bottom: 8px;">🎁 Mở hộp quà nhận ưu đãi ngay!</div>
 
         <div class="grid-boxes" id="gridBoxes">
             <div class="box-item" onclick="openBox(0)">🎁</div>
@@ -105,10 +104,9 @@
         <div class="result-box" id="resultBox">
             <div id="resultText" style="font-size: 13px; line-height: 1.4;"></div>
             <div class="action-choice-row" id="choiceRow" style="display: none;">
-                <button class="btn-choice-apply" id="btnApplyReward" onclick="applyWonRewardNow()">✅ Áp dụng ngay</button>
-                <button class="btn-choice-next" id="btnNextGameText" onclick="startNextGame()">🎮 Chơi tiếp game sau</button>
+                <button class="btn-choice-next" onclick="startNextGame()">🎮 Mở lượt tiếp theo</button>
             </div>
-            <button class="btn-close-game" id="btnCloseGameAction" onclick="closeGame()">🛵 ĐẶT MÓN NGAY</button>
+            <button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY</button>
         </div>
     </div>
 
@@ -127,24 +125,25 @@
             return arr;
         }
 
+        // TỔNG CỘNG 9 Ô: 4 Ô MÃ 1K THẬT + 5 Ô QUÀ FAKE (ẨN NGON MIỆNG)
         function createNewBoard() {
             let board = [
+                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
+                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
+                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
+                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
                 { type: 'FAKE', text: 'Mã 30K', icon: '🎟️' },
                 { type: 'FAKE', text: 'Mã 20K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' },
-                { type: 'FAKE', text: 'Ly free', icon: '🥤' },
                 { type: 'FAKE', text: 'Mã 10K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
-                { type: 'MISS', text: 'Ngon miệng!', icon: '😋' },
-                { type: 'MISS', text: 'Ngon miệng!', icon: '😋' },
-                { type: 'MISS', text: 'Ngon miệng!', icon: '😋' }
+                { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' },
+                { type: 'FAKE', text: 'Ly free', icon: '🥤' }
             ];
             return shuffleArray(board);
         }
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v29');
+            const savedState = localStorage.getItem('kimbling_game_state_v35');
             
             if (savedState) {
                 try {
@@ -155,32 +154,18 @@
                 } catch(e) {}
             }
 
-            // Khởi tạo chuỗi 5 lượt đầu tiên với cấu hình random hoàn toàn
-            return initNewBatchState(today, 5);
-        }
-
-        function initNewBatchState(today, totalTurnsAllowed) {
-            // 1. Random xem chuỗi 5 lượt này có được phép trúng hay không (Tỷ lệ 50%)
-            const willWinInThisBatch = Math.random() < 0.5;
-            
-            // 2. Nếu được phép trúng, random xem sẽ trúng ở lượt thứ mấy trong 5 lượt (từ 1 đến 5)
-            let winningTurnIndex = -1;
-            if (willWinInThisBatch) {
-                winningTurnIndex = Math.floor(Math.random() * 5) + 1;
-            }
-
-            return {
+            const newState = {
                 date: today,
-                maxTurnsAllowed: totalTurnsAllowed,
+                maxTurnsAllowed: 5,
                 gamesPlayed: 0,
-                winningTurn: winningTurnIndex, // Lượt chính xác được trúng (ví dụ: lượt 3, còn lại hụt hết)
-                hasWonInThisBatch: false,
+                wonCount1K: 0,
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
-                selectedBoxIndex: null,
-                unusedPrizes: [],
-                lastWonPrize: null
+                selectedBoxIndex: null
             };
+
+            localStorage.setItem('kimbling_game_state_v35', JSON.stringify(newState));
+            return newState;
         }
 
         let gameState = getGameState();
@@ -189,11 +174,14 @@
             const turnsLeft = Math.max(0, gameState.maxTurnsAllowed - gameState.gamesPlayed);
             document.getElementById('turnBadge').innerText = `Lượt chơi còn lại: ${turnsLeft} lượt`;
 
-            let unusedText = "Trống";
-            if (gameState.unusedPrizes && gameState.unusedPrizes.length > 0) {
-                unusedText = gameState.unusedPrizes.map(p => `${p.text}`).join(', ');
+            const wonDisplay = document.getElementById('wonPrizesDisplay');
+            if (gameState.wonCount1K > 0) {
+                wonDisplay.innerText = `🎉 ĐÃ NHẬN MÃ GIẢM 1K (Tự động trừ khi chốt đơn)`;
+                wonDisplay.style.color = `#2e7d32`;
+            } else {
+                wonDisplay.innerText = `🎁 Mở hộp quà - Nhận ưu đãi may mắn ngay!`;
+                wonDisplay.style.color = `#e65100`;
             }
-            document.getElementById('wonPrizesDisplay').innerText = `Mã chưa dùng: ${unusedText}`;
 
             const boxElements = document.querySelectorAll('.box-item');
 
@@ -214,12 +202,7 @@
                     }
                 });
 
-                const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
-                if (selectedItem.type === 'REWARD') {
-                    showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${selectedItem.text.toUpperCase()}!</b><br>Bạn muốn áp mã vào đơn ngay hay chơi tiếp?`, true);
-                } else {
-                    showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
-                }
+                showResultBox();
 
             } else {
                 boxElements.forEach(box => {
@@ -241,83 +224,67 @@
 
             let item = gameState.currentBoard[index];
 
-            // KIỂM TRA XEM LƯỢT HIỆN TẠI CÓ PHẢI LƯỢT ĐƯỢC CHỈ ĐỊNH TRÚNG KHÔNG
-            // (Tính tương đối theo chuỗi 5 lượt của từng big game)
-            const currentTurnInBatch = ((gameState.gamesPlayed - 1) % 5) + 1;
-            const isThisTurnAWin = (currentTurnInBatch === gameState.winningTurn) && !gameState.hasWonInThisBatch;
-
-            if (isThisTurnAWin) {
-                // Đúng lượt được chỉ định trúng -> Trao mã 1K
-                item = { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️', id: 'KB1K_' + Date.now() };
-                gameState.hasWonInThisBatch = true;
+            if (item.type === 'REWARD') {
+                gameState.wonCount1K++;
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             } else {
-                // Các lượt còn lại hoặc chuỗi bị quy định hụt -> Đổi thành Ngon miệng!
-                if (item.type === 'FAKE' || item.type === 'REWARD') {
-                    const originalItem = { ...item };
-                    let missIndex = gameState.currentBoard.findIndex((b, i) => i !== index && b.type === 'MISS');
-                    if (missIndex !== -1) {
-                        gameState.currentBoard[missIndex] = originalItem;
-                    }
-                    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-                }
+                // ĐỔI Ô FAKE THÀNH NGON MIỆNG KHI KHÁCH BẤM TRÚNG
+                item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
             gameState.currentBoard[index] = item;
-
-            if (item.type === 'REWARD') {
-                gameState.unusedPrizes.push(item);
-                gameState.lastWonPrize = item;
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
-                showResultBox(`🎉 <b>CHÚC MỪNG BẠN TRÚNG ${item.text.toUpperCase()}!</b><br>Bạn muốn áp mã vào đơn ngay hay chơi tiếp?`, true);
-            } else {
-                showResultBox(`😋 <b>Chúc bạn ngon miệng!</b> Trượt mất rồi.<br>Đã hé lộ vị trí 8 ô còn lại trên bàn cờ.`, false);
-            }
-
-            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v35', JSON.stringify(gameState));
             updateUI();
         }
 
-        function showResultBox(htmlText, isReward) {
+        function showResultBox() {
             const resultBox = document.getElementById('resultBox');
-            document.getElementById('resultText').innerHTML = htmlText;
-
+            const resultText = document.getElementById('resultText');
             const choiceRow = document.getElementById('choiceRow');
-            const btnApply = document.getElementById('btnApplyReward');
-            const btnNext = document.getElementById('btnNextGameText');
             const btnCloseGame = document.getElementById('btnCloseGameAction');
+
+            const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
+
+            let htmlMsg = "";
+            if (selectedItem.type === 'REWARD') {
+                htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG MÃ GIẢM 1K!</b><br>`;
+            } else {
+                htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Thử vận may ở ô tiếp theo nhé!<br>`;
+            }
 
             if (gameState.gamesPlayed < gameState.maxTurnsAllowed) {
                 choiceRow.style.display = 'flex';
                 btnCloseGame.style.display = 'none';
-
-                if (isReward) {
-                    btnApply.style.display = 'block';
-                    btnNext.style.width = 'auto';
-                } else {
-                    btnApply.style.display = 'none';
-                    btnNext.style.width = '100%';
-                }
             } else {
                 choiceRow.style.display = 'none';
                 btnCloseGame.style.display = 'block';
-                document.getElementById('resultText').innerHTML += `<br><small style="color:#d32f2f; font-weight:bold;">Đã hết lượt! Đặt đơn hàng thành công để nhận thêm 5 lượt chơi nhé!</small>`;
+
+                if (gameState.wonCount1K > 0) {
+                    htmlMsg += `<br>🎉 <b>MÃ GIẢM 1K ĐÃ ĐƯỢC KÍCH HOẠT!</b><br>Tự động áp dụng vào đơn hàng ngay bên dưới!`;
+                } else {
+                    htmlMsg += `<br>🛵 <b>HOÀN THÀNH ĐƠN HÀNG NGAY</b><br>Để nhận thêm 5 lượt mở hộp quà mới nhé!`;
+                }
             }
+
+            resultText.innerHTML = htmlMsg;
             resultBox.style.display = 'block';
         }
 
-        function applyWonRewardNow() {
-            if (!gameState.lastWonPrize) return;
-
-            const appliedItem = gameState.lastWonPrize;
-            dispatchDiscountToMenu(appliedItem.code, appliedItem.value, appliedItem.id);
-
-            gameState.unusedPrizes = [];
-            gameState.lastWonPrize = null;
-
-            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
+        function startNextGame() {
+            if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
             
-            alert(`✅ Đã áp dụng ${appliedItem.text} vào đơn hàng thành công!`);
+            gameState.isCurrentGameFinished = false;
+            gameState.selectedBoxIndex = null;
+            gameState.currentBoard = createNewBoard();
+            
+            localStorage.setItem('kimbling_game_state_v35', JSON.stringify(gameState));
+            updateUI();
+        }
+
+        function finishFiveTurnsAndCheckout() {
+            if (gameState.wonCount1K > 0) {
+                dispatchDiscountToMenu('KB1K', 1, 'KB1K_' + Date.now());
+            }
             closeGame();
         }
 
@@ -331,42 +298,25 @@
             }
         }
 
-        function startNextGame() {
-            if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
-            
-            gameState.isCurrentGameFinished = false;
-            gameState.selectedBoxIndex = null;
-            gameState.currentBoard = createNewBoard();
-            
-            localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
-            updateUI();
-        }
-
         function closeGame() {
             if (window.parent) {
                 window.parent.postMessage('CLOSE_GAME_POPUP', '*');
             }
         }
 
-        // KHI KHÁCH ĐẶT ĐƠN THÀNH CÔNG VÀ NHẬN THÊM 5 LƯỢT MỚI (BIG GAME MỚI)
         window.addEventListener('message', function(event) {
             if (event.data === 'ADD_BONUS_TURNS') {
-                const newTotalTurns = gameState.maxTurnsAllowed + 5;
-                const freshBatch = initNewBatchState(getTodayString(), newTotalTurns);
-                
-                // Giữ lại số lượt tối đa mới và kế thừa trạng thái random hoàn toàn cho big game này
-                gameState.maxTurnsAllowed = newTotalTurns;
-                gameState.winningTurn = freshBatch.winningTurn; 
-                gameState.hasWonInThisBatch = false;
+                gameState.maxTurnsAllowed += 5; 
+                gameState.wonCount1K = 0;
                 gameState.isCurrentGameFinished = false;
                 gameState.selectedBoxIndex = null;
                 gameState.currentBoard = createNewBoard();
-
-                localStorage.setItem('kimbling_game_state_v29', JSON.stringify(gameState));
+                
+                localStorage.setItem('kimbling_game_state_v35', JSON.stringify(gameState));
                 updateUI();
             }
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v29');
+                localStorage.removeItem('kimbling_game_state_v35');
                 location.reload();
             }
         });
