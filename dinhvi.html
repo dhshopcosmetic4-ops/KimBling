@@ -3,249 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Tính Phí Ship Bằng GPS & Google Maps (Xe Máy)</title>
+    <title>Kiểm Tra Định Vị & Phí Ship Xe Máy - Kim Bling</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #f4f6f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
         
-        .ship-card {
+        .card {
             background: #ffffff;
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             border-radius: 16px;
-            padding: 20px;
+            padding: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e2e8f0;
         }
 
-        .title { font-size: 18px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
-        .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
-
-        .btn-group {
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 12px;
             display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-gps {
-            flex: 2;
+            width: 100%;
             background: #2196F3;
-            color: #ffffff;
+            color: #fff;
             border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 10px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 13px;
             cursor: pointer;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
-            transition: background 0.2s;
         }
-        .btn-gps:hover { background: #1976D2; }
 
         .btn-reset {
-            flex: 1;
             background: #ff9800;
-            color: #ffffff;
+            color: #fff;
             border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 13px;
+            padding: 10px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 13px;
             cursor: pointer;
             display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
-            transition: background 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
         }
-        .btn-reset:hover { background: #f57c00; }
+
+        .input-group {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #475569;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            border-color: #2196F3;
+        }
+
+        .btn-manual {
+            width: 100%;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
 
         .status-box {
             font-size: 12px;
-            color: #555;
-            margin-bottom: 14px;
-            padding: 8px 12px;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 8px 10px;
             border-radius: 6px;
-            background: #f9f9f9;
             border-left: 3px solid #2196F3;
-        }
-
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 6px; }
-        .form-group input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
         .result-box {
-            margin-top: 14px;
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            padding: 12px;
+            display: none;
+            background: #fffbe3;
+            border: 1px solid #ffe58f;
             border-radius: 8px;
-            display: none;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 10px;
+            line-height: 1.5;
         }
-        .result-item { font-size: 13px; color: #333; margin-bottom: 4px; }
-        .result-item span { font-weight: bold; color: #d32f2f; }
 
-        .map-wrapper {
-            margin-top: 14px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #ddd;
+        .map-box {
             display: none;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .map-caption {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+            padding: 6px;
+            background: #f8fafc;
         }
     </style>
 </head>
 <body>
 
-    <div class="ship-card">
-        <div class="title">🚚 Lấy Vị Trí & Tính Phí Ship</div>
-        <div class="subtitle">Bấm nút bên dưới để tự động định vị và tính khoảng cách đến quán Kim Bling.</div>
+    <div class="card">
+        <div class="title">🛵 Định Vị & Tính Phí Ship (Xe Máy)</div>
 
-        <div class="btn-group">
-            <button class="btn-gps" id="btnSpin" onclick="detectGPSAndCalculate()">
-                📍 Bật định vị để lấy địa chỉ
-            </button>
-            <button class="btn-reset" id="btnReset" onclick="resetCheck()">
-                🔄 Kiểm tra lại
-            </button>
+        <!-- BẬT GPS -->
+        <button type="button" class="btn-gps" id="btnGetLocation" onclick="autoDetectLocationAndCalculate()">
+            🛰️ Bật định vị GPS tự động
+        </button>
+        <button type="button" class="btn-reset" id="btnResetLocation" onclick="resetLocationCheck()">
+            🔄 Làm lại / Bật định vị lại
+        </button>
+
+        <div class="status-box" id="gpsStatusText">
+            💡 Bạn có thể bấm bật GPS hoặc tự nhập địa chỉ vào ô bên dưới rồi bấm nút màu xanh lá để tính phí ship.
         </div>
 
-        <div id="statusText" class="status-box">Sẵn sàng nhận lệnh định vị...</div>
-
-        <div class="form-group">
+        <!-- Ô NHẬP ĐỊA CHỈ THANH TOÁN (TỰ ĐỘNG GÁN VÀO ĐÂY) -->
+        <div class="input-group">
             <label>Địa chỉ nhận hàng (Khách hàng):</label>
-            <input type="text" id="customerAddress" placeholder="Địa chỉ sẽ tự động điền vào đây...">
+            <input type="text" id="customerAddress" placeholder="Nhập địa chỉ nhà của bạn (Ví dụ: 123 Hậu Giang, P.11)...">
         </div>
 
-        <div class="form-group">
+        <button type="button" class="btn-manual" onclick="calculateDistanceManual()">
+            🔍 Tính phí theo ô địa chỉ trên
+        </button>
+
+        <div class="input-group">
             <label>Địa chỉ điểm đến (Quán):</label>
-            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" readonly style="background: #eee;">
+            <input type="text" value="M9 Cư xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #64748b;">
         </div>
 
-        <div id="resultBox" class="result-box">
-            <div class="result-item">🛵 Phương tiện: <span>Xe Mô Tô / Xe Máy</span></div>
-            <div class="result-item">📏 Khoảng cách ước tính: <span id="distVal">0 km</span></div>
-            <div class="result-item">💰 Phí ship áp dụng: <span id="shipVal">0 đ</span></div>
-        </div>
+        <!-- KHUNG HIỂN THỊ KẾT QUẢ KHOẢNG CÁCH -->
+        <div class="result-box" id="distanceResultBox"></div>
 
-        <div id="mapWrapper" class="map-wrapper">
-            <iframe id="googleMapIframe" width="100%" height="240" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
-            <div style="font-size: 11px; color: #666; text-align: center; padding: 6px; background: #fafafa;">
-                🛵 Đường đi được tối ưu hóa cho xe mô tô / xe máy
-            </div>
+        <!-- NHÚNG BẢN ĐỒ GOOGLE MAPS XE MÁY -->
+        <div class="map-box" id="mapContainer">
+            <iframe id="googleMapIframe" width="100%" height="200" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+            <div class="map-caption">🛵 Tuyến đường đi được tối ưu hóa dành riêng cho xe mô tô / xe máy</div>
         </div>
     </div>
 
     <script>
-        // Tọa độ địa lý của Quán Kim Bling (M9 cư xá Phú Lâm A, Q.6)
+        // Tọa độ quán Kim Bling (M9 Cư Xá Phú Lâm A)
         const STORE_LAT = 10.7485; 
         const STORE_LNG = 106.6182;
 
-        async function detectGPSAndCalculate() {
-            const statusText = document.getElementById('statusText');
-            const resultBox = document.getElementById('resultBox');
-            const distVal = document.getElementById('distVal');
-            const shipVal = document.getElementById('shipVal');
-            const mapWrapper = document.getElementById('mapWrapper');
-            const iframeMap = document.getElementById('googleMapIframe');
+        // 1. Định vị GPS tự động
+        function autoDetectLocationAndCalculate() {
+            const statusText = document.getElementById('gpsStatusText');
             const addressInput = document.getElementById('customerAddress');
-            const btnReset = document.getElementById('btnReset');
-            const btnSpin = document.getElementById('btnSpin');
+            const btnGet = document.getElementById('btnGetLocation');
+            const btnReset = document.getElementById('btnResetLocation');
 
             if (!navigator.geolocation) {
                 alert("Trình duyệt không hỗ trợ định vị GPS!");
                 return;
             }
 
-            btnSpin.innerText = "⏳ Đang lấy vị trí...";
-            statusText.innerText = "⏳ Đang xin quyền GPS và lấy tọa độ hiện tại...";
+            btnGet.innerText = "⏳ Đang lấy vị trí...";
+            statusText.innerText = "⏳ Đang xin quyền GPS và định vị vị trí hiện tại...";
 
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    statusText.innerText = "🎉 Hoàn tất tính phí ship thành công!";
-                    btnSpin.innerText = "📍 Đã định vị";
-                    btnReset.style.display = 'flex'; // Hiện nút kiểm tra lại
+                    statusText.innerText = "✅ Định vị GPS thành công!";
+                    btnGet.style.display = 'none';
+                    btnReset.style.display = 'block';
 
-                    // 1. Phân giải tọa độ sang tên đường
+                    // Chuyển tọa độ sang tên đường thực tế
                     try {
                         let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
                         let data = await res.json();
                         if (data && data.display_name) {
                             addressInput.value = data.display_name;
                         } else {
-                            addressInput.value = `Vĩ độ: ${userLat.toFixed(5)}, Kinh độ: ${userLng.toFixed(5)}`;
+                            addressInput.value = `Tọa độ: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
                         }
-                    } catch (e) {
-                        addressInput.value = `Tọa độ: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    } catch(e) {
+                        addressInput.value = `Tọa độ: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
                     }
 
-                    // 2. Tính khoảng cách (km)
-                    let distKm = calculateDistanceKm(userLat, userLng, STORE_LAT, STORE_LNG);
-                    distVal.innerText = distKm.toFixed(1) + " km";
-
-                    // 3. Quy tắc tính phí ship
-                    let shipFee = 0;
-                    if (distKm <= 1.0) {
-                        shipFee = 0; // Bán kính <= 1km Freeship
-                        shipVal.innerText = "0đ (Miễn phí ship dưới 1km)";
-                    } else if (distKm <= 3.0) {
-                        shipFee = 10000;
-                        shipVal.innerText = "10.000đ";
-                    } else if (distKm <= 5.0) {
-                        shipFee = 15000;
-                        shipVal.innerText = "15.000đ";
-                    } else {
-                        // Trên 5km: 20k + 5k cho mỗi km tiếp theo
-                        shipFee = 20000 + Math.ceil(distKm - 5) * 5000;
-                        shipVal.innerText = shipFee.toLocaleString('vi-VN') + "đ";
-                    }
-
-                    resultBox.style.display = 'block';
-
-                    // 4. Nhúng Google Map đường đi cho Xe Máy (dirflg=m)
-                    mapWrapper.style.display = 'block';
-                    iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&dirflg=m&output=embed`;
+                    processDistanceAndMap(userLat, userLng);
                 },
                 (error) => {
-                    alert("Không thể lấy vị trí! Bạn hãy kiểm tra xem đã cho phép quyền vị trí (Location) trên trình duyệt chưa.");
-                    statusText.innerText = "❌ Không lấy được định vị GPS.";
-                    btnSpin.innerText = "📍 Bật định vị để lấy địa chỉ";
+                    alert("Không thể bật GPS (vui lòng kiểm tra quyền truy cập). Bạn có thể tự gõ địa chỉ vào ô bên dưới rồi bấm nút 'Tính phí theo ô địa chỉ'!");
+                    statusText.innerText = "❌ Không lấy được định vị. Hãy tự gõ địa chỉ thủ công bên dưới.";
+                    btnGet.innerText = "🛰️ Bật định vị GPS tự động";
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        // Hàm Reset lại trạng thái ban đầu
-        function resetCheck() {
-            document.getElementById('customerAddress').value = '';
-            document.getElementById('resultBox').style.display = 'none';
-            document.getElementById('mapWrapper').style.display = 'none';
-            document.getElementById('btnReset').style.display = 'none';
-            
-            const btnSpin = document.getElementById('btnSpin');
-            btnSpin.innerText = "📍 Bật định vị lại";
-            
-            document.getElementById('statusText').innerText = "Đã làm mới. Bấm lại nút định vị để kiểm tra.";
+        // 2. Tính khoảng cách thủ công theo nội dung gõ trong ô địa chỉ
+        async function calculateDistanceManual() {
+            const addressInput = document.getElementById('customerAddress');
+            const query = addressInput.value.trim();
+            const statusText = document.getElementById('gpsStatusText');
+
+            if (!query || query.length < 4) {
+                alert("Vui lòng gõ cụ thể địa chỉ nhận hàng vào ô trước!");
+                addressInput.focus();
+                return;
+            }
+
+            statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
+
+            try {
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=vi`);
+                let data = await res.json();
+
+                if (data && data.length > 0) {
+                    const userLat = parseFloat(data[0].lat);
+                    const userLng = parseFloat(data[0].lon);
+
+                    statusText.innerText = "✅ Đã tìm thấy vị trí và tính khoảng cách thành công!";
+                    processDistanceAndMap(userLat, userLng);
+                } else {
+                    alert("Không tìm thấy địa chỉ này trên bản đồ. Vui lòng nhập thêm Tên đường, Phường/Quận cụ thể hơn!");
+                    statusText.innerText = "❌ Không tìm thấy địa chỉ.";
+                }
+            } catch(e) {
+                alert("Lỗi kết nối mạng khi tìm kiếm địa chỉ.");
+            }
         }
 
-        // Công thức tính khoảng cách giữa 2 điểm tọa độ GPS (Haversine Formula)
+        // 3. Hàm tính km, tính phí ship & nhúng Google Maps chế độ Xe máy
+        function processDistanceAndMap(userLat, userLng) {
+            const distanceBox = document.getElementById('distanceResultBox');
+            const mapContainer = document.getElementById('mapContainer');
+            const iframeMap = document.getElementById('googleMapIframe');
+
+            let distanceKm = calculateDistanceKm(userLat, userLng, STORE_LAT, STORE_LNG);
+            let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship dưới 1km)' : '10.000đ (Phụ thu trên 1km)';
+
+            distanceBox.style.display = 'block';
+            distanceBox.innerHTML = `
+                🛵 Phương tiện: <span style="color:#1e293b;">Xe Mô Tô / Xe Máy</span><br>
+                📐 Khoảng cách ước tính: <span style="color:#d32f2f;">${distanceKm.toFixed(1)} km</span><br>
+                💰 Phí ship áp dụng: <span style="color:#d32f2f;">${shipFeeText}</span>
+            `;
+
+            // Nhúng Google Maps bắt buộc chỉ đường bằng xe máy (&dirflg=m)
+            mapContainer.style.display = 'block';
+            iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&dirflg=m&output=embed`;
+        }
+
+        // Reset để làm lại
+        function resetLocationCheck() {
+            document.getElementById('btnGetLocation').style.display = 'block';
+            document.getElementById('btnGetLocation').innerText = "🛰️ Bật định vị GPS tự động";
+            document.getElementById('btnResetLocation').style.display = 'none';
+            document.getElementById('gpsStatusText').innerText = "💡 Đã reset. Bạn có thể bật GPS hoặc tự gõ địa chỉ mới.";
+            document.getElementById('distanceResultBox').style.display = 'none';
+            document.getElementById('mapContainer').style.display = 'none';
+        }
+
+        // Công thức tính khoảng cách Haversine giữa 2 tọa độ (km)
         function calculateDistanceKm(lat1, lon1, lat2, lon2) {
-            function toRad(value) { return value * Math.PI / 180; }
-            let R = 6371; // Bán kính Trái Đất (km)
+            function toRad(x) { return x * Math.PI / 180; }
+            let R = 6371;
             let dLat = toRad(lat2 - lat1);
             let dLon = toRad(lon2 - lon1);
             let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
