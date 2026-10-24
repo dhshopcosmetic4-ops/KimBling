@@ -65,6 +65,9 @@
             outline: none;
             box-sizing: border-box;
         }
+        .input-group input:focus {
+            border-color: #4285F4;
+        }
 
         .btn-manual {
             width: 100%;
@@ -135,7 +138,7 @@
         </button>
 
         <div class="status-box" id="statusText">
-            💡 Bấm nút GPS hoặc nhập địa chỉ bên dưới để tính phí ship tức thì!
+            💡 Bấm nút GPS hoặc nhập địa chỉ để hệ thống tự động đo đường và tính phí ship!
         </div>
 
         <!-- CÁCH 2: NHẬP ĐỊA CHỈ BẰNG TAY -->
@@ -161,7 +164,6 @@
         // TỌA ĐỘ CHUẨN XÁC CỦA QUÁN KIM BLING
         const STORE_LAT = 10.74955; 
         const STORE_LNG = 106.63099;
-        const STORE_ADDR = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
 
         // BẢNG GIÁ SHIP CỦA QUÁN
         function calculateShippingFee(distanceKm) {
@@ -205,13 +207,11 @@
             );
         }
 
-        // 2. TRƯỜNG HỢP NHẬP ĐỊA CHỈ BẰNG TAY (Dùng Google Maps trực tiếp, không qua trung gian lỗi)
-        function calculateManualAddress() {
+        // 2. TRƯỜNG HỢP NHẬP ĐỊA CHỈ BẰNG TAY (Dùng Photon API chống lỗi kết nối trên GitHub)
+        async function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('statusText');
-            const resultBox = document.getElementById('distanceResultBox');
-            const googleBtn = document.getElementById('btnGoogleMap');
 
             if (!query || query.length < 3) {
                 alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
@@ -219,26 +219,35 @@
                 return;
             }
 
-            statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
+            statusText.innerText = "⏳ Đang định vị địa chỉ khách...";
 
             let fullAddress = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
                 fullAddress += ", Hồ Chí Minh";
             }
 
-            // Mở trực tiếp Google Maps chế độ đi bộ
-            googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
-            googleBtn.style.display = 'block';
+            try {
+                let res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullAddress)}&limit=1`);
+                let data = await res.json();
 
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = `
-                📌 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling</span><br>
-                📍 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
-                💡 Bấm nút xanh bên dưới để mở Google Maps xem tuyến đường chi tiết!
-            `;
+                if (data && data.features && data.features.length > 0) {
+                    let coords = data.features[0].geometry.coordinates;
+                    let destLng = coords[0];
+                    let destLat = coords[1];
+
+                    statusText.innerText = "✅ Đã tìm thấy địa chỉ!";
+                    calculateOSRMAndShow(destLat, destLng);
+                } else {
+                    alert("Không tìm thấy tọa độ địa chỉ này. Khách vui lòng bấm nút 'Lấy GPS' để tính ship chính xác nhất nhé!");
+                    statusText.innerText = "⚠️ Hãy thử bấm nút Lấy GPS tự động.";
+                }
+            } catch (e) {
+                alert("Lỗi kết nối. Khách vui lòng bấm nút Lấy GPS tự động nhé!");
+                statusText.innerText = "❌ Lỗi tra cứu địa chỉ.";
+            }
         }
 
-        // 3. TÍNH KHOẢNG CÁCH OSRM (ĐI BỘ QUA HẺM) KHI DÙNG GPS
+        // 3. TÍNH KHOẢNG CÁCH OSRM (ĐI BỘ QUA HẺM) & TÍNH PHÍ SHIP
         async function calculateOSRMAndShow(lat, lng) {
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
