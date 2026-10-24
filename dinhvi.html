@@ -101,7 +101,7 @@
             padding: 12px;
             font-size: 13px;
             font-weight: bold;
-            color: #d32f2f;
+            color: #1e293b;
             margin-bottom: 10px;
             line-height: 1.6;
         }
@@ -126,7 +126,7 @@
     <div class="card">
         <div class="title">🛵 Tính Phí Ship - Kim Bling Coffee</div>
 
-        <!-- CỐ ĐỊNH TỌA ĐỘ / ĐỊA CHỈ QUÁN -->
+        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling):</label>
             <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
@@ -162,10 +162,26 @@
 
     <script>
         // ==========================================
-        // TỌA ĐỘ CHUẨN XÁC CỦA QUÁN KIM BLING
+        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING
         // ==========================================
         const STORE_LAT = 10.74955; 
         const STORE_LNG = 106.63099;
+
+        // ==========================================
+        // BẢNG GIÁ SHIP QUÁN KIM BLING
+        // ==========================================
+        function calculateShippingFee(distanceKm) {
+            if (distanceKm <= 1.0) {
+                return 0; // Freeship dưới 1km (Ví dụ: 500m -> 0đ)
+            } else if (distanceKm <= 2.0) {
+                return 10000; // 1km - 2km -> 10k
+            } else if (distanceKm <= 3.0) {
+                return 15000; // 2km - 3km -> 15k
+            } else {
+                let extraKm = Math.ceil(distanceKm - 3.0);
+                return 15000 + (extraKm * 5000); // Trên 3km: +5k mỗi km
+            }
+        }
 
         // 1. Trường hợp BẬT GPS TỰ ĐỘNG
         function detectGPSAndCalculate() {
@@ -197,7 +213,7 @@
             );
         }
 
-        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Dùng Google Maps đi bộ)
+        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY
         function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -222,7 +238,7 @@
             resultBox.innerHTML = `
                 📌 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
                 📍 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
-                💡 Bấm nút xanh lá bên dưới để kiểm tra tuyến đường Google Maps (đi bộ/hẻm)!
+                💡 Bấm nút xanh bên dưới để xem đường đi trên Google Maps!
             `;
 
             // Mở trực tiếp Google Maps chế độ đi bộ (travelmode=walking)
@@ -230,7 +246,7 @@
             googleBtn.style.display = 'block';
         }
 
-        // 3. Tính khoảng cách đi bộ OSRM từ tọa độ chuẩn của quán
+        // 3. Tính khoảng cách OSRM đi bộ & Tính phí ship tự động
         async function calculateOSRMAndShow(lat, lng) {
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
@@ -247,14 +263,23 @@
                     distanceKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 }
 
-                let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
+                // Gọi hàm tính phí ship
+                let shipFee = calculateShippingFee(distanceKm);
+                let shipFeeText = shipFee === 0 
+                    ? "0đ (🎉 Miễn phí ship bán kính < 1km)" 
+                    : shipFee.toLocaleString('vi-VN') + "đ";
+
+                // Đổi ra mét nếu dưới 1km (Ví dụ: 500m)
+                let distanceText = distanceKm < 1.0 
+                    ? `${(distanceKm * 1000).toFixed(0)} m` 
+                    : `${distanceKm.toFixed(2)} km`;
 
                 statusText.innerText = "✅ Tính phí ship thành công!";
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
-                    🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
-                    📐 Khoảng cách đi bộ/hẻm: <span style="color:#d32f2f;">~${distanceKm.toFixed(2)} km</span><br>
-                    💰 Phí giao hàng (Ship): <span style="color:#d32f2f;">${shipFeeText}</span>
+                    🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling</span><br>
+                    📐 Khoảng cách qua hẻm: <span style="color:#d32f2f;">~${distanceText}</span><br>
+                    💰 Phí giao hàng (Ship): <span style="color:#d32f2f; font-size:15px;">${shipFeeText}</span>
                 `;
 
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
@@ -262,7 +287,8 @@
 
             } catch(e) {
                 let fallbackKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
-                let shipFeeText = fallbackKm <= 1.0 ? '0đ (Freeship < 1km)' : '10.000đ';
+                let shipFee = calculateShippingFee(fallbackKm);
+                let shipFeeText = shipFee === 0 ? "0đ (Freeship < 1km)" : shipFee.toLocaleString('vi-VN') + "đ";
 
                 statusText.innerText = "✅ Đã tính khoảng cách ước tính!";
                 resultBox.style.display = 'block';
