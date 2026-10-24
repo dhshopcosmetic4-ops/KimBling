@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tính Phí Ship Bằng GPS & Google Maps</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #f4f6f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        .ship-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+        }
+
+        .title { font-size: 18px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
+        .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .btn-gps {
+            width: 100%;
+            background: #2196F3;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
+            transition: background 0.2s;
+        }
+        .btn-gps:hover { background: #1976D2; }
+
+        .status-box {
+            font-size: 12px;
+            color: #555;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            border-left: 3px solid #2196F3;
+        }
+
+        .result-box {
+            margin-top: 14px;
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result-item { font-size: 13px; color: #333; margin-bottom: 4px; }
+        .result-item span { font-weight: bold; color: #d32f2f; }
+
+        .map-wrapper {
+            margin-top: 14px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ship-card">
+        <div class="title">🚚 Lấy Vị Trí & Tính Phí Ship</div>
+        <div class="subtitle">Bấm nút bên dưới để tự động định vị và tính khoảng cách đến quán Kim Bling.</div>
+
+        <button class="btn-gps" onclick="detectGPSAndCalculate()">
+            📍 Bật định vị để lấy địa chỉ
+        </button>
+
+        <div id="statusText" class="status-box">Sẵn sàng nhận lệnh định vị...</div>
+
+        <div class="form-group" style="margin-top: 14px;">
+            <label>Địa chỉ nhận hàng (Khách hàng):</label>
+            <input type="text" id="customerAddress" placeholder="Địa chỉ sẽ tự động điền vào đây...">
+        </div>
+
+        <div class="form-group">
+            <label>Địa chỉ điểm đến (Quán):</label>
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" readonly style="background: #eee;">
+        </div>
+
+        <div id="resultBox" class="result-box">
+            <div class="result-item">📏 Khoảng cách ước tính: <span id="distVal">0 km</span></div>
+            <div class="result-item">💰 Phí ship áp dụng: <span id="shipVal">0 đ</span></div>
+        </div>
+
+        <div id="mapWrapper" class="map-wrapper">
+            <iframe id="googleMapIframe" width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Tọa độ địa lý của Quán Kim Bling (M9 cư xá Phú Lâm A, Q.6)
+        const STORE_LAT = 10.7485; 
+        const STORE_LNG = 106.6182;
+
+        async function detectGPSAndCalculate() {
+            const statusText = document.getElementById('statusText');
+            const resultBox = document.getElementById('resultBox');
+            const distVal = document.getElementById('distVal');
+            const shipVal = document.getElementById('shipVal');
+            const mapWrapper = document.getElementById('mapWrapper');
+            const iframeMap = document.getElementById('googleMapIframe');
+            const addressInput = document.getElementById('customerAddress');
+
+            if (!navigator.geolocation) {
+                alert("Trình duyệt không hỗ trợ định vị GPS!");
+                return;
+            }
+
+            statusText.innerText = "⏳ Đang xin quyền GPS và lấy tọa độ hiện tại...";
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    statusText.innerText = "✅ Đã lấy xong tọa độ! Đang giải mã địa chỉ...";
+
+                    // 1. Phân giải tọa độ sang tên đường
+                    try {
+                        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
+                        let data = await res.json();
+                        if (data && data.display_name) {
+                            addressInput.value = data.display_name;
+                        } else {
+                            addressInput.value = `Vĩ độ: ${userLat.toFixed(5)}, Kinh độ: ${userLng.toFixed(5)}`;
+                        }
+                    } catch (e) {
+                        addressInput.value = `Tọa độ: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    }
+
+                    // 2. Tính khoảng cách (km)
+                    let distKm = calculateDistanceKm(userLat, userLng, STORE_LAT, STORE_LNG);
+                    distVal.innerText = distKm.toFixed(1) + " km";
+
+                    // 3. Quy tắc tính phí ship
+                    let shipFee = 0;
+                    if (distKm <= 1.0) {
+                        shipFee = 0; // Bán kính <= 1km Freeship
+                        shipVal.innerText = "0đ (Miễn phí ship dưới 1km)";
+                    } else if (distKm <= 3.0) {
+                        shipFee = 10000;
+                        shipVal.innerText = "10.000đ";
+                    } else if (distKm <= 5.0) {
+                        shipFee = 15000;
+                        shipVal.innerText = "15.000đ";
+                    } else {
+                        // Trên 5km: 20k + 5k cho mỗi km tiếp theo
+                        shipFee = 20000 + Math.ceil(distKm - 5) * 5000;
+                        shipVal.innerText = shipFee.toLocaleString('vi-VN') + "đ";
+                    }
+
+                    resultBox.style.display = 'block';
+                    statusText.innerText = "🎉 Hoàn tất tính phí ship thành công!";
+
+                    // 4. Nhúng Google Map đường đi sẵn
+                    mapWrapper.style.display = 'block';
+                    iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&output=embed`;
+                },
+                (error) => {
+                    alert("Không thể lấy vị trí! Bạn hãy kiểm tra xem đã cho phép quyền vị trí (Location) trên trình duyệt/điện thoại chưa.");
+                    statusText.innerText = "❌ Không lấy được định vị GPS.";
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        // Công thức tính khoảng cách giữa 2 điểm tọa độ GPS (Haversine Formula)
+        function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+            function toRad(value) { return value * Math.PI / 180; }
+            let R = 6371; // Bán kính Trái Đất (km)
+            let dLat = toRad(lat2 - lat1);
+            let dLon = toRad(lon2 - lon1);
+            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+    </script>
+</body>
+</html>
