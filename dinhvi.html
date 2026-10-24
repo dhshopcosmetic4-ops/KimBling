@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Tính Phí Ship Bằng GPS & Google Maps</title>
+    <title>Test Tính Phí Ship Bằng GPS & Google Maps (Xe Máy)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #f4f6f8; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -21,19 +21,14 @@
         .title { font-size: 18px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
         .subtitle { font-size: 13px; color: #666; margin-bottom: 16px; }
 
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 6px; }
-        .form-group input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .btn-gps {
-            width: 100%;
+            flex: 2;
             background: #2196F3;
             color: #ffffff;
             border: none;
@@ -45,20 +40,50 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
             transition: background 0.2s;
         }
         .btn-gps:hover { background: #1976D2; }
 
+        .btn-reset {
+            flex: 1;
+            background: #ff9800;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
+            transition: background 0.2s;
+        }
+        .btn-reset:hover { background: #f57c00; }
+
         .status-box {
             font-size: 12px;
             color: #555;
-            margin-top: 10px;
-            padding: 8px;
+            margin-bottom: 14px;
+            padding: 8px 12px;
             border-radius: 6px;
             background: #f9f9f9;
             border-left: 3px solid #2196F3;
+        }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
         }
 
         .result-box {
@@ -87,13 +112,18 @@
         <div class="title">🚚 Lấy Vị Trí & Tính Phí Ship</div>
         <div class="subtitle">Bấm nút bên dưới để tự động định vị và tính khoảng cách đến quán Kim Bling.</div>
 
-        <button class="btn-gps" onclick="detectGPSAndCalculate()">
-            📍 Bật định vị để lấy địa chỉ
-        </button>
+        <div class="btn-group">
+            <button class="btn-gps" id="btnSpin" onclick="detectGPSAndCalculate()">
+                📍 Bật định vị để lấy địa chỉ
+            </button>
+            <button class="btn-reset" id="btnReset" onclick="resetCheck()">
+                🔄 Kiểm tra lại
+            </button>
+        </div>
 
         <div id="statusText" class="status-box">Sẵn sàng nhận lệnh định vị...</div>
 
-        <div class="form-group" style="margin-top: 14px;">
+        <div class="form-group">
             <label>Địa chỉ nhận hàng (Khách hàng):</label>
             <input type="text" id="customerAddress" placeholder="Địa chỉ sẽ tự động điền vào đây...">
         </div>
@@ -104,12 +134,16 @@
         </div>
 
         <div id="resultBox" class="result-box">
+            <div class="result-item">🛵 Phương tiện: <span>Xe Mô Tô / Xe Máy</span></div>
             <div class="result-item">📏 Khoảng cách ước tính: <span id="distVal">0 km</span></div>
             <div class="result-item">💰 Phí ship áp dụng: <span id="shipVal">0 đ</span></div>
         </div>
 
         <div id="mapWrapper" class="map-wrapper">
-            <iframe id="googleMapIframe" width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+            <iframe id="googleMapIframe" width="100%" height="240" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+            <div style="font-size: 11px; color: #666; text-align: center; padding: 6px; background: #fafafa;">
+                🛵 Đường đi được tối ưu hóa cho xe mô tô / xe máy
+            </div>
         </div>
     </div>
 
@@ -126,12 +160,15 @@
             const mapWrapper = document.getElementById('mapWrapper');
             const iframeMap = document.getElementById('googleMapIframe');
             const addressInput = document.getElementById('customerAddress');
+            const btnReset = document.getElementById('btnReset');
+            const btnSpin = document.getElementById('btnSpin');
 
             if (!navigator.geolocation) {
                 alert("Trình duyệt không hỗ trợ định vị GPS!");
                 return;
             }
 
+            btnSpin.innerText = "⏳ Đang lấy vị trí...";
             statusText.innerText = "⏳ Đang xin quyền GPS và lấy tọa độ hiện tại...";
 
             navigator.geolocation.getCurrentPosition(
@@ -139,7 +176,9 @@
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    statusText.innerText = "✅ Đã lấy xong tọa độ! Đang giải mã địa chỉ...";
+                    statusText.innerText = "🎉 Hoàn tất tính phí ship thành công!";
+                    btnSpin.innerText = "📍 Đã định vị";
+                    btnReset.style.display = 'flex'; // Hiện nút kiểm tra lại
 
                     // 1. Phân giải tọa độ sang tên đường
                     try {
@@ -176,18 +215,31 @@
                     }
 
                     resultBox.style.display = 'block';
-                    statusText.innerText = "🎉 Hoàn tất tính phí ship thành công!";
 
-                    // 4. Nhúng Google Map đường đi sẵn
+                    // 4. Nhúng Google Map đường đi cho Xe Máy (dirflg=m)
                     mapWrapper.style.display = 'block';
-                    iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&output=embed`;
+                    iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&dirflg=m&output=embed`;
                 },
                 (error) => {
-                    alert("Không thể lấy vị trí! Bạn hãy kiểm tra xem đã cho phép quyền vị trí (Location) trên trình duyệt/điện thoại chưa.");
+                    alert("Không thể lấy vị trí! Bạn hãy kiểm tra xem đã cho phép quyền vị trí (Location) trên trình duyệt chưa.");
                     statusText.innerText = "❌ Không lấy được định vị GPS.";
+                    btnSpin.innerText = "📍 Bật định vị để lấy địa chỉ";
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
+        }
+
+        // Hàm Reset lại trạng thái ban đầu
+        function resetCheck() {
+            document.getElementById('customerAddress').value = '';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('mapWrapper').style.display = 'none';
+            document.getElementById('btnReset').style.display = 'none';
+            
+            const btnSpin = document.getElementById('btnSpin');
+            btnSpin.innerText = "📍 Bật định vị lại";
+            
+            document.getElementById('statusText').innerText = "Đã làm mới. Bấm lại nút định vị để kiểm tra.";
         }
 
         // Công thức tính khoảng cách giữa 2 điểm tọa độ GPS (Haversine Formula)
