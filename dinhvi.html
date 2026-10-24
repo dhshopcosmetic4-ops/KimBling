@@ -133,22 +133,22 @@
         <!-- ĐỊA CHỈ QUÁN CỐ ĐỊNH -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling - Cố định):</label>
-            <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
-        <!-- BẬT GPS -->
+        <!-- CÁCH 1: LẤY GPS TỰ ĐỘNG -->
         <button type="button" class="btn-gps" onclick="detectGPSAndCalculate()">
             🛰️ Lấy vị trí GPS của bạn (Tự động)
         </button>
 
         <div class="status-box" id="statusText">
-            💡 Bấm nút GPS hoặc nhập địa chỉ để tính ship xuất phát từ Quán Kim Bling!
+            💡 Bấm nút GPS hoặc nhập địa chỉ bên dưới để hệ thống tính tiền ship xuất phát từ Quán Kim Bling!
         </div>
 
-        <!-- NHẬP ĐỊA CHỈ HÀNG -->
+        <!-- CÁCH 2: NHẬP ĐỊA CHỈ HÀNG -->
         <div class="input-group">
             <label>🏠 Nhập địa chỉ nhận hàng:</label>
-            <input type="text" id="customerAddress" placeholder="Ví dụ: 628 Hậu Giang, Phường Phú Lâm...">
+            <input type="text" id="customerAddress" placeholder="Ví dụ: 628/62 Hậu Giang, Phường Phú Lâm...">
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateManualAddress()">
@@ -158,7 +158,7 @@
         <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NÚT MỞ BẢN ĐỒ CHẾ ĐỘ ĐI BỘ / HẺM -->
+        <!-- NÚT MỞ BẢN ĐỒ DẪN ĐƯỜNG ĐI BỘ / HẺM -->
         <div class="map-buttons" id="mapButtonsGroup">
             <a id="btnAppleMap" href="#" target="_blank" class="btn-map-app btn-apple">🍏 Xem Apple Maps</a>
             <a id="btnGoogleMap" href="#" target="_blank" class="btn-map-app btn-google">🗺️ Xem Google Maps</a>
@@ -171,7 +171,6 @@
         // ==========================================
         const STORE_LAT = 10.74955; 
         const STORE_LNG = 106.63099;
-        const STORE_ADDR = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
 
         // 1. Trường hợp BẬT GPS TỰ ĐỘNG
         function detectGPSAndCalculate() {
@@ -203,8 +202,8 @@
             );
         }
 
-        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Xuất phát từ tọa độ chuẩn của quán)
-        function calculateManualAddress() {
+        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Xử lý riêng cho Apple Maps & Google Maps)
+        async function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('statusText');
@@ -219,35 +218,59 @@
                 return;
             }
 
-            statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
+            statusText.innerText = "⏳ Đang xác định tọa độ địa chỉ...";
 
             let fullAddress = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
                 fullAddress += ", Hồ Chí Minh";
             }
 
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = `
-                📌 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
-                📍 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
-                💡 Bấm nút bản đồ bên dưới để mở chế độ đi bộ/hẻm chính xác nhất!
-            `;
-
-            // Khóa chặt điểm đi (saddr) là tọa độ chuẩn của Quán Kim Bling, điểm đến (daddr) là địa chỉ khách nhập (chế độ đi bộ w / walking)
-            appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${encodeURIComponent(fullAddress)}&dirflg=w`;
+            // Google Maps: Giữ nguyên cách truyền chuỗi chữ đã chạy chuẩn của bạn
             googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
-            mapGroup.style.display = 'flex';
+
+            // Apple Maps: Tìm tọa độ chính xác trước để ghim chuẩn 100%, không bị nhảy điểm linh tinh
+            try {
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`);
+                let data = await res.json();
+
+                if (data && data.length > 0) {
+                    let destLat = data[0].lat;
+                    let destLng = data[0].lon;
+
+                    // Mở Apple Maps bằng tọa độ gốc đến tọa độ đích
+                    appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${destLat},${destLng}&dirflg=w`;
+                    
+                    // Tính khoảng cách OSRM đi bộ chính xác luôn
+                    calculateOSRMAndShow(destLat, destLng);
+                } else {
+                    // Dự phòng nếu không tìm ra tọa độ thô thì truyền dạng văn bản
+                    appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${encodeURIComponent(fullAddress)}&dirflg=w`;
+                    statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = `
+                        📌 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling</span><br>
+                        📍 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
+                        💡 Bấm nút bản đồ bên dưới để kiểm tra chỉ đường!
+                    `;
+                    mapGroup.style.display = 'flex';
+                }
+            } catch (e) {
+                appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${encodeURIComponent(fullAddress)}&dirflg=w`;
+                statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
+                resultBox.style.display = 'block';
+                mapGroup.style.display = 'flex';
+            }
         }
 
-        // 3. Tính khoảng cách đi bộ OSRM từ tọa độ cố định của quán khi bật GPS
+        // 3. Tính khoảng cách đi bộ OSRM (chế độ foot/hẻm) từ tọa độ chuẩn của quán
         async function calculateOSRMAndShow(lat, lng) {
+            const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
             const mapGroup = document.getElementById('mapButtonsGroup');
             const appleBtn = document.getElementById('btnAppleMap');
             const googleBtn = document.getElementById('btnGoogleMap');
 
             try {
-                // Dùng chế độ /foot/ (đi bộ/hẻm nhỏ) xuất phát từ STORE_LNG, STORE_LAT cố định
                 let res = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
                 let data = await res.json();
 
@@ -260,6 +283,7 @@
 
                 let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
 
+                statusText.innerText = "✅ Tính phí ship thành công!";
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
                     🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
@@ -267,6 +291,7 @@
                     💰 Phí giao hàng (Ship): <span style="color:#d32f2f;">${shipFeeText}</span>
                 `;
 
+                // Đảm bảo link bản đồ cập nhật tọa độ chính xác
                 appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w`;
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 mapGroup.style.display = 'flex';
@@ -275,6 +300,7 @@
                 let fallbackKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 let shipFeeText = fallbackKm <= 1.0 ? '0đ (Freeship < 1km)' : '10.000đ';
 
+                statusText.innerText = "✅ Đã tính khoảng cách ước tính!";
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
                     📐 Khoảng cách ước tính: ~${fallbackKm.toFixed(1)} km<br>
