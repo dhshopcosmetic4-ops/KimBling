@@ -65,9 +65,6 @@
             outline: none;
             box-sizing: border-box;
         }
-        .input-group input:focus {
-            border-color: #4285F4;
-        }
 
         .btn-manual {
             width: 100%;
@@ -132,16 +129,16 @@
             <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
-        <!-- CÁCH 1: GPS -->
+        <!-- CÁCH 1: LẤY GPS TỰ ĐỘNG -->
         <button type="button" class="btn-gps" onclick="detectGPSAndCalculate()">
             🛰️ Lấy vị trí GPS của bạn (Tự động)
         </button>
 
         <div class="status-box" id="statusText">
-            💡 Bấm nút GPS hoặc nhập địa chỉ để hệ thống tự động đo đường và tính phí ship!
+            💡 Bấm nút GPS hoặc nhập địa chỉ bên dưới để tính phí ship tức thì!
         </div>
 
-        <!-- CÁCH 2: NHẬP TAY -->
+        <!-- CÁCH 2: NHẬP ĐỊA CHỈ BẰNG TAY -->
         <div class="input-group">
             <label>🏠 Nhập địa chỉ nhận hàng:</label>
             <input type="text" id="customerAddress" placeholder="Ví dụ: 628 Hậu Giang, Phường Phú Lâm...">
@@ -151,7 +148,7 @@
             🔍 Tính Phí Ship Ngay
         </button>
 
-        <!-- KẾT QUẢ -->
+        <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
         <!-- NÚT GOOGLE MAPS -->
@@ -161,14 +158,15 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CHUẨN QUÁN KIM BLING
+        // TỌA ĐỘ CHUẨN XÁC CỦA QUÁN KIM BLING
         const STORE_LAT = 10.74955; 
         const STORE_LNG = 106.63099;
+        const STORE_ADDR = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
 
-        // BẢNG GIÁ SHIP
+        // BẢNG GIÁ SHIP CỦA QUÁN
         function calculateShippingFee(distanceKm) {
             if (distanceKm <= 1.0) {
-                return 0; // Dưới 1km (ví dụ 500m) -> Freeship
+                return 0; // Freeship dưới 1km (Ví dụ: 500m)
             } else if (distanceKm <= 2.0) {
                 return 10000;
             } else if (distanceKm <= 3.0) {
@@ -179,7 +177,7 @@
             }
         }
 
-        // 1. LẤY GPS
+        // 1. TRƯỜNG HỢP BẤM GPS TỰ ĐỘNG
         function detectGPSAndCalculate() {
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
@@ -207,11 +205,13 @@
             );
         }
 
-        // 2. NHẬP TAY ĐỊA CHỈ (Tự quy đổi ra tọa độ để đo mét ra tiền ship)
-        async function calculateManualAddress() {
+        // 2. TRƯỜNG HỢP NHẬP ĐỊA CHỈ BẰNG TAY (Dùng Google Maps trực tiếp, không qua trung gian lỗi)
+        function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('statusText');
+            const resultBox = document.getElementById('distanceResultBox');
+            const googleBtn = document.getElementById('btnGoogleMap');
 
             if (!query || query.length < 3) {
                 alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
@@ -219,32 +219,26 @@
                 return;
             }
 
-            statusText.innerText = "⏳ Đang tìm tọa độ địa chỉ qua bản đồ...";
+            statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
 
             let fullAddress = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
                 fullAddress += ", Hồ Chí Minh";
             }
 
-            try {
-                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`);
-                let data = await res.json();
+            // Mở trực tiếp Google Maps chế độ đi bộ
+            googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
+            googleBtn.style.display = 'block';
 
-                if (data && data.length > 0) {
-                    let destLat = parseFloat(data[0].lat);
-                    let destLng = parseFloat(data[0].lon);
-                    statusText.innerText = "✅ Đã tìm thấy địa chỉ!";
-                    calculateOSRMAndShow(destLat, destLng);
-                } else {
-                    // Nếu không tìm thấy tọa độ thô, dùng tọa độ mặc định hoặc báo khách bật GPS
-                    statusText.innerText = "⚠️ Không tra được tọa độ chính xác. Khách vui lòng bật GPS để tính ship chuẩn nhất nhé!";
-                }
-            } catch (e) {
-                alert("Lỗi kết nối tra cứu địa chỉ.");
-            }
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                📌 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling</span><br>
+                📍 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
+                💡 Bấm nút xanh bên dưới để mở Google Maps xem tuyến đường chi tiết!
+            `;
         }
 
-        // 3. TÍNH KHOẢNG CÁCH OSRM (ĐI BỘ QUA HẺM) & HIỂN THỊ TIỀN SHIP
+        // 3. TÍNH KHOẢNG CÁCH OSRM (ĐI BỘ QUA HẺM) KHI DÙNG GPS
         async function calculateOSRMAndShow(lat, lng) {
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
