@@ -1,215 +1,312 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Định vị & Tính phí Ship - Kim Bling Coffee</title>
-<style>
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-body{margin:0;background:#f3f6fa;padding:16px 10px;color:#1e293b}
-.card{max-width:620px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 4px 18px #0000000b}
-h1{font-size:19px;margin:0 0 8px}h2{font-size:15px;margin:0 0 10px}
-.note{font-size:13px;line-height:1.5;color:#475569;background:#f8fafc;padding:10px;border-radius:8px;margin:10px 0}
-.step{border:1px solid #e2e8f0;border-radius:12px;padding:13px;margin-top:12px}
-label{display:block;font-weight:700;font-size:13px;margin:10px 0 5px}
-input{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px;color:#0f172a}
-button{width:100%;border:0;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
-.primary{background:#1976d2;color:white}.green{background:#16803d;color:white}.orange{background:#ea8a0b;color:white}.secondary{background:#e2e8f0;color:#1e293b}
-button:disabled{opacity:.5;cursor:not-allowed}
-.status{font-size:13px;line-height:1.45;padding:10px;border-radius:8px;background:#f8fafc;margin-top:9px;white-space:pre-wrap}
-.results{display:grid;gap:8px;margin-top:8px}
-.result{border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-size:13px;line-height:1.45}
-.result button{margin-top:7px}
-.pill{display:inline-block;border-radius:99px;background:#e0f2fe;color:#075985;padding:4px 8px;font-size:12px;font-weight:700}
-.output{background:#fffbe6;border:1px solid #f5d36b;border-radius:10px;padding:12px;margin-top:12px;line-height:1.65;display:none}
-.map{display:none;margin-top:12px;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden}
-iframe{width:100%;height:300px;border:0;display:block}
-.small{font-size:12px;color:#64748b;line-height:1.5}
-hr{border:0;border-top:1px solid #e2e8f0;margin:12px 0}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Định Vị & Tính Phí Ship - Kim Bling Coffee</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
+        
+        .card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-gps {
+            width: 100%;
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-reset {
+            background: #ff9800;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #475569;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .input-group input:focus {
+            border-color: #2196F3;
+        }
+
+        .btn-manual {
+            width: 100%;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .status-box {
+            font-size: 12px;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border-left: 3px solid #2196F3;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .result-box {
+            display: none;
+            background: #fffbe3;
+            border: 1px solid #ffe58f;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .map-box {
+            display: none;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .map-caption {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+            padding: 6px;
+            background: #f8fafc;
+        }
+    </style>
 </head>
 <body>
-<main class="card">
-<h1>🚚 Định vị & tính phí ship</h1>
-<div class="note"><b>Quy tắc tính phí:</b> trong vòng 1 km đường bộ thực tế: miễn phí. Trên 1 km: 10.000đ phí cơ bản, cộng 5.000đ cho mỗi km vượt quá mốc 1 km (làm tròn phần vượt lên theo km). Chỉ hiện phí khi đã xác nhận cả hai vị trí và dịch vụ tuyến đường trả về tuyến hợp lệ.</div>
 
-<section class="step">
-<h2>1. 📍 Xác nhận vị trí quán Kim Bling</h2>
-<label for="storeAddress">Địa chỉ quán</label>
-<input id="storeAddress" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, TP. Hồ Chí Minh" autocomplete="street-address">
-<button class="primary" id="findStoreBtn" type="button">Tìm địa chỉ quán trên bản đồ</button>
-<div id="storeStatus" class="status">Chưa xác nhận tọa độ quán. Hãy tìm địa chỉ, chọn đúng kết quả và xác nhận ghim vị trí trước khi tính ship.</div>
-<div id="storeResults" class="results"></div>
-<div id="storeChosen" class="status" style="display:none"></div>
-<button class="green" id="confirmStoreBtn" type="button" disabled>Xác nhận đây là đúng vị trí quán</button>
-</section>
+    <div class="card">
+        <div class="title">🚚 Định Vị & Tính Phí Ship Giao Hàng</div>
 
-<section class="step">
-<h2>2. 🏠 Nhập và xác nhận địa chỉ khách</h2>
-<label for="customerAddress">Địa chỉ nhận hàng</label>
-<input id="customerAddress" placeholder="Số nhà, tên đường, phường/xã, TP.HCM" autocomplete="street-address">
-<button class="primary" id="findCustomerBtn" type="button">Tìm địa chỉ khách trên bản đồ</button>
-<div id="customerStatus" class="status">Chưa xác nhận địa chỉ khách. Hãy chọn đúng kết quả bản đồ trước khi tính phí.</div>
-<div id="customerResults" class="results"></div>
-<div id="customerChosen" class="status" style="display:none"></div>
-<button class="green" id="confirmCustomerBtn" type="button" disabled>Xác nhận đúng vị trí khách</button>
-</section>
+        <!-- ĐIỂM XUẤT PHÁT: QUÁN KIM BLING (CỐ ĐỊNH) -->
+        <div class="input-group">
+            <label>📍 Điểm đi (Quán Kim Bling):</label>
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+        </div>
 
-<section class="step">
-<h2>3. 🛵 Tính quãng đường và phí ship</h2>
-<div class="small">Khoảng cách lấy từ tuyến đường bộ do dịch vụ định tuyến trả về, không dùng đường chim bay. Dịch vụ định tuyến công khai bên dưới không cung cấp cam kết chuyên biệt cho xe máy; hãy kiểm tra tuyến trên bản đồ trước khi thu phí.</div>
-<button class="orange" id="calculateBtn" type="button" disabled>Tính quãng đường và phí ship</button>
-<div id="routeStatus" class="status">Cần xác nhận vị trí quán và vị trí khách trước.</div>
-<div id="result" class="output"></div>
-<div id="mapBox" class="map"><iframe id="mapFrame" title="Tuyến đường từ quán đến khách" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
-</section>
+        <!-- NÚT BẬT GPS -->
+        <button type="button" class="btn-gps" id="btnGetLocation" onclick="autoDetectLocationAndCalculate()">
+            🛰️ Bật định vị GPS vị trí của bạn
+        </button>
+        <button type="button" class="btn-reset" id="btnResetLocation" onclick="resetLocationCheck()">
+            🔄 Làm lại / Định vị lại
+        </button>
 
-<div class="note"><b>Lưu ý kỹ thuật:</b> tìm địa chỉ dùng OpenStreetMap Nominatim; quãng đường dùng OSRM public routing server. Các dịch vụ công khai có thể giới hạn truy cập hoặc ngừng hoạt động. Nếu không lấy được tuyến hợp lệ, trang sẽ báo lỗi và không tự tính phí. Vì chưa có API định tuyến xe máy riêng, kết quả cần được đối chiếu với tuyến xe máy thực tế trên Google Maps trước khi áp dụng.</div>
-</main>
-<script>
-const $ = id => document.getElementById(id);
-let storeCandidate = null, customerCandidate = null;
-let storeConfirmed = false, customerConfirmed = false;
+        <div class="status-box" id="gpsStatusText">
+            💡 Bấm bật GPS hoặc tự gõ địa chỉ nhận hàng bên dưới để tính phí ship và xem bản đồ chỉ đường.
+        </div>
 
-function setStatus(id, message){ $(id).textContent = message; }
-function resetRoute(){
-  $('result').style.display='none'; $('mapBox').style.display='none';
-  $('routeStatus').textContent='Vị trí vừa thay đổi. Hãy xác nhận lại cả hai vị trí rồi tính lại.';
-  updateCalculateButton();
-}
-function updateCalculateButton(){
-  $('calculateBtn').disabled = !(storeConfirmed && customerConfirmed && storeCandidate && customerCandidate);
-}
-function invalidateStore(){
-  storeConfirmed=false; storeCandidate=null; $('storeChosen').style.display='none';
-  $('confirmStoreBtn').disabled=true; $('storeResults').innerHTML='';
-  setStatus('storeStatus','Địa chỉ quán đã thay đổi. Cần tìm lại và xác nhận tọa độ quán.');
-  resetRoute();
-}
-function invalidateCustomer(){
-  customerConfirmed=false; customerCandidate=null; $('customerChosen').style.display='none';
-  $('confirmCustomerBtn').disabled=true; $('customerResults').innerHTML='';
-  setStatus('customerStatus','Địa chỉ khách đã thay đổi. Cần tìm lại và xác nhận đúng vị trí khách.');
-  resetRoute();
-}
-$('storeAddress').addEventListener('input', invalidateStore);
-$('customerAddress').addEventListener('input', invalidateCustomer);
+        <!-- ĐIỂM ĐẾN: VỊ TRÍ CỦA BẠN / KHÁCH HÀNG -->
+        <div class="input-group">
+            <label>🏠 Điểm đến (Vị trí của bạn / Khách hàng):</label>
+            <input type="text" id="customerAddress" placeholder="Nhập địa chỉ nhận hàng (Ví dụ: 628/62 Hậu Giang)...">
+        </div>
 
-async function geocode(query){
-  const url='https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=vn&accept-language=vi&q='+encodeURIComponent(query);
-  const response=await fetch(url,{headers:{'Accept':'application/json'}});
-  if(!response.ok) throw new Error('Dịch vụ tìm địa chỉ phản hồi lỗi HTTP '+response.status);
-  const data=await response.json();
-  return Array.isArray(data)?data:[];
-}
-function renderCandidates(items, type){
-  const container=$(type==='store'?'storeResults':'customerResults');
-  container.innerHTML='';
-  if(!items.length){
-    setStatus(type==='store'?'storeStatus':'customerStatus','Không tìm thấy địa chỉ. Hãy nhập đầy đủ số nhà, đường, phường và quận rồi thử lại.');
-    return;
-  }
-  items.forEach((item,index)=>{
-    const div=document.createElement('div'); div.className='result';
-    const title=document.createElement('div'); title.textContent=(index+1)+'. '+item.display_name;
-    const coords=document.createElement('div'); coords.className='small'; coords.textContent='Tọa độ: '+Number(item.lat).toFixed(6)+', '+Number(item.lon).toFixed(6);
-    const button=document.createElement('button'); button.className='secondary'; button.type='button'; button.textContent='Chọn vị trí này';
-    button.addEventListener('click',()=>{
-      const candidate={lat:Number(item.lat),lon:Number(item.lon),label:item.display_name};
-      if(type==='store'){
-        storeCandidate=candidate; storeConfirmed=false; $('confirmStoreBtn').disabled=false;
-        $('storeChosen').style.display='block';
-        $('storeChosen').textContent='Vị trí quán đang chọn:\n'+candidate.label+'\nTọa độ: '+candidate.lat.toFixed(6)+', '+candidate.lon.toFixed(6)+'\nHãy kiểm tra ghim vị trí trên bản đồ rồi bấm xác nhận.';
-        const storeMapLink=document.createElement('a'); storeMapLink.href=`https://www.google.com/maps?q=${candidate.lat},${candidate.lon}`; storeMapLink.target='_blank'; storeMapLink.rel='noopener noreferrer'; storeMapLink.textContent='Mở ghim quán trên Google Maps'; storeMapLink.style.display='inline-block'; storeMapLink.style.marginTop='8px'; $('storeChosen').appendChild(storeMapLink);
-        setStatus('storeStatus','Đã chọn một kết quả nhưng chưa xác nhận. Chưa được tính phí.');
-      }else{
-        customerCandidate=candidate; customerConfirmed=false; $('confirmCustomerBtn').disabled=false;
-        $('customerChosen').style.display='block';
-        $('customerChosen').textContent='Vị trí khách đang chọn:\n'+candidate.label+'\nTọa độ: '+candidate.lat.toFixed(6)+', '+candidate.lon.toFixed(6)+'\nHãy xác nhận đúng địa chỉ khách.';
-        const customerMapLink=document.createElement('a'); customerMapLink.href=`https://www.google.com/maps?q=${candidate.lat},${candidate.lon}`; customerMapLink.target='_blank'; customerMapLink.rel='noopener noreferrer'; customerMapLink.textContent='Mở ghim khách trên Google Maps'; customerMapLink.style.display='inline-block'; customerMapLink.style.marginTop='8px'; $('customerChosen').appendChild(customerMapLink);
-        setStatus('customerStatus','Đã chọn một kết quả nhưng chưa xác nhận. Chưa được tính phí.');
-      }
-      resetRoute();
-    });
-    div.append(title,coords,button); container.appendChild(div);
-  });
-  setStatus(type==='store'?'storeStatus':'customerStatus','Có '+items.length+' kết quả. Chọn đúng địa chỉ trên bản đồ; không chọn nếu số nhà/phường không khớp.');
-}
-$('findStoreBtn').addEventListener('click',async()=>{
-  const q=$('storeAddress').value.trim();
-  if(q.length<5){setStatus('storeStatus','Vui lòng nhập địa chỉ quán cụ thể.');return;}
-  $('findStoreBtn').disabled=true; setStatus('storeStatus','Đang tìm địa chỉ quán...');
-  try{renderCandidates(await geocode(q),'store');}
-  catch(e){setStatus('storeStatus','Không tra cứu được địa chỉ: '+e.message+'. Hãy thử lại sau.');}
-  finally{$('findStoreBtn').disabled=false;}
-});
-$('findCustomerBtn').addEventListener('click',async()=>{
-  const q=$('customerAddress').value.trim();
-  if(q.length<5){setStatus('customerStatus','Vui lòng nhập địa chỉ khách cụ thể.');return;}
-  $('findCustomerBtn').disabled=true; setStatus('customerStatus','Đang tìm địa chỉ khách...');
-  try{renderCandidates(await geocode(q),'customer');}
-  catch(e){setStatus('customerStatus','Không tra cứu được địa chỉ: '+e.message+'. Hãy thử lại sau.');}
-  finally{$('findCustomerBtn').disabled=false;}
-});
-$('confirmStoreBtn').addEventListener('click',()=>{
-  if(!storeCandidate)return;
-  storeConfirmed=true; $('confirmStoreBtn').disabled=true;
-  setStatus('storeStatus','ĐÃ XÁC NHẬN tọa độ quán: '+storeCandidate.lat.toFixed(6)+', '+storeCandidate.lon.toFixed(6));
-  updateCalculateButton(); resetRoute();
-});
-$('confirmCustomerBtn').addEventListener('click',()=>{
-  if(!customerCandidate)return;
-  customerConfirmed=true; $('confirmCustomerBtn').disabled=true;
-  setStatus('customerStatus','ĐÃ XÁC NHẬN vị trí khách: '+customerCandidate.lat.toFixed(6)+', '+customerCandidate.lon.toFixed(6));
-  updateCalculateButton(); resetRoute();
-});
+        <button type="button" class="btn-manual" onclick="calculateDistanceManual()">
+            🔍 Tính phí theo địa chỉ trên
+        </button>
 
-$('calculateBtn').addEventListener('click',async()=>{
-  if(!storeConfirmed||!customerConfirmed||!storeCandidate||!customerCandidate){
-    setStatus('routeStatus','Từ chối tính phí: cần xác nhận đúng vị trí quán và khách.');return;
-  }
-  $('calculateBtn').disabled=true; $('result').style.display='none'; $('mapBox').style.display='none';
-  setStatus('routeStatus','Đang lấy tuyến đường bộ và khoảng cách thực tế...');
-  try{
-    const a=storeCandidate,b=customerCandidate;
-    const url=`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false&alternatives=false&steps=false`;
-    const response=await fetch(url);
-    if(!response.ok) throw new Error('Dịch vụ định tuyến phản hồi HTTP '+response.status);
-    const data=await response.json();
-    if(data.code!=='Ok'||!Array.isArray(data.routes)||!data.routes.length||!Number.isFinite(data.routes[0].distance)||data.routes[0].distance<=0){
-      throw new Error('Không có tuyến đường hợp lệ giữa hai vị trí.');
-    }
-    const distanceKm=data.routes[0].distance/1000;
-    if(!Number.isFinite(distanceKm)||distanceKm<=0) throw new Error('Khoảng cách trả về không hợp lệ.');
-    let fee=0, formula='Miễn phí trong vòng 1 km đường bộ.';
-    if(distanceKm>1){
-      const extraKm=Math.ceil(distanceKm-1-1e-9);
-      fee=10000+Math.max(0,extraKm-1)*5000;
-      formula=`10.000đ phí cơ bản + ${Math.max(0,extraKm-1)} km phụ thu × 5.000đ`;
-    }
-    $('result').innerHTML='';
-    const lines=[
-      ['Điểm đi',a.label],['Điểm đến',b.label],
-      ['Quãng đường đường bộ',distanceKm.toFixed(2)+' km'],
-      ['Phí ship',fee.toLocaleString('vi-VN')+'đ'],
-      ['Cách tính',formula]
-    ];
-    lines.forEach(([label,value])=>{
-      const p=document.createElement('div');
-      const strong=document.createElement('b');strong.textContent=label+': ';
-      p.append(strong,document.createTextNode(value));$('result').appendChild(p);
-    });
-    const warning=document.createElement('p');warning.className='small';
-    warning.textContent='Tuyến được tính bằng OSRM profile driving (đường bộ phổ thông), không phải bộ định tuyến xe máy chuyên dụng. Kiểm tra đường thực tế trước khi chốt đơn.';
-    $('result').appendChild(warning);$('result').style.display='block';
-    $('mapFrame').src=`https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lon}&destination=${b.lat},${b.lon}&travelmode=driving`;
-    $('mapBox').style.display='block';
-    setStatus('routeStatus','Đã lấy được tuyến đường hợp lệ. Hãy đối chiếu tuyến trên bản đồ trước khi thu phí.');
-  }catch(e){
-    $('result').style.display='none';$('mapBox').style.display='none';
-    setStatus('routeStatus','KHÔNG TÍNH PHÍ: '+e.message+'\nHãy kiểm tra kết nối, địa chỉ và thử lại. Không sử dụng khoảng cách đường chim bay thay thế.');
-  }finally{updateCalculateButton();}
-});
-</script>
+        <!-- KẾT QUẢ KHOẢNG CÁCH & PHÍ SHIP -->
+        <div class="result-box" id="distanceResultBox"></div>
+
+        <!-- BẢN ĐỒ HIỂN THỊ CHỈ ĐƯỜNG GIỐNG GOOGLE MAPS -->
+        <div class="map-box" id="mapContainer">
+            <iframe id="googleMapIframe" width="100%" height="240" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+            <div class="map-caption">🗺️ Lộ trình chỉ đường trực tiếp từ Quán đến vị trí của bạn</div>
+        </div>
+    </div>
+
+    <script>
+        // TỌA ĐỘ CỐ ĐỊNH CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A)
+        const STORE_LAT = 10.7485; 
+        const STORE_LNG = 106.6182;
+        const STORE_NAME = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
+
+        // 1. Lấy GPS vị trí khách làm điểm đến
+        function autoDetectLocationAndCalculate() {
+            const statusText = document.getElementById('gpsStatusText');
+            const addressInput = document.getElementById('customerAddress');
+            const btnGet = document.getElementById('btnGetLocation');
+            const btnReset = document.getElementById('btnResetLocation');
+
+            if (!navigator.geolocation) {
+                alert("Trình duyệt không hỗ trợ định vị GPS!");
+                return;
+            }
+
+            btnGet.innerText = "⏳ Đang lấy vị trí của bạn...";
+            statusText.innerText = "⏳ Đang kết nối vệ tinh GPS...";
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    statusText.innerText = "✅ Lấy vị trí thành công!";
+                    btnGet.style.display = 'none';
+                    btnReset.style.display = 'block';
+
+                    try {
+                        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
+                        let data = await res.json();
+                        if (data && data.display_name) {
+                            addressInput.value = data.display_name;
+                        } else {
+                            addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                        }
+                    } catch(e) {
+                        addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    }
+
+                    processDistanceAndMap(userLat, userLng);
+                },
+                (error) => {
+                    alert("Không thể lấy GPS. Vui lòng tự nhập địa chỉ vào ô bên dưới!");
+                    statusText.innerText = "❌ Lỗi GPS. Hãy tự gõ địa chỉ thủ công.";
+                    btnGet.innerText = "🛰️ Bật định vị GPS vị trí của bạn";
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        }
+
+        // 2. Tra cứu thủ công
+        async function calculateDistanceManual() {
+            const addressInput = document.getElementById('customerAddress');
+            const query = addressInput.value.trim();
+            const statusText = document.getElementById('gpsStatusText');
+
+            if (!query || query.length < 4) {
+                alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
+                addressInput.focus();
+                return;
+            }
+
+            statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
+
+            try {
+                let searchQuery = query.toLowerCase().includes("hồ chí minh") || query.toLowerCase().includes("q.") ? query : (query + ", Hồ Chí Minh");
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
+                let data = await res.json();
+
+                if (data && data.length > 0) {
+                    const userLat = parseFloat(data[0].lat);
+                    const userLng = parseFloat(data[0].lon);
+
+                    statusText.innerText = "✅ Đã tìm thấy vị trí!";
+                    processDistanceAndMap(userLat, userLng);
+                } else {
+                    alert("Không tìm thấy địa chỉ này. Vui lòng ghi rõ Số nhà, Đường, Phường/Quận!");
+                    statusText.innerText = "❌ Không tìm thấy địa chỉ.";
+                }
+            } catch(e) {
+                alert("Lỗi kết nối khi tìm kiếm.");
+            }
+        }
+
+        // 3. Tính khoảng cách, phí ship và nhúng bản đồ chuẩn cấu trúc Google Maps
+        function processDistanceAndMap(userLat, userLng) {
+            const distanceBox = document.getElementById('distanceResultBox');
+            const mapContainer = document.getElementById('mapContainer');
+            const iframeMap = document.getElementById('googleMapIframe');
+
+            let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, userLat, userLng);
+            let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
+
+            distanceBox.style.display = 'block';
+            distanceBox.innerHTML = `
+                🛵 Tuyến đường: <span style="color:#1e293b;">Quán Kim Bling ➔ Vị trí của bạn</span><br>
+                📐 Khoảng cách: <span style="color:#d32f2f;">~${distanceKm.toFixed(1)} km</span><br>
+                💰 Phí ship: <span style="color:#d32f2f;">${shipFeeText}</span>
+            `;
+
+            mapContainer.style.display = 'block';
+
+            // Cấu trúc chuẩn nhúng Google Maps: saddr là quán, daddr là vị trí khách, dirflg=w là đi bộ/đường ngắn nhất
+            iframeMap.src = `https://www.google.com/maps?saddr=${encodeURIComponent(STORE_NAME)}&daddr=${userLat},${userLng}&dirflg=w&output=embed`;
+        }
+
+        function resetLocationCheck() {
+            document.getElementById('btnGetLocation').style.display = 'block';
+            document.getElementById('btnGetLocation').innerText = "🛰️ Bật định vị GPS vị trí của bạn";
+            document.getElementById('btnResetLocation').style.display = 'none';
+            document.getElementById('gpsStatusText').innerText = "💡 Đã reset. Bấm bật GPS hoặc nhập địa chỉ mới.";
+            document.getElementById('distanceResultBox').style.display = 'none';
+            document.getElementById('mapContainer').style.display = 'none';
+        }
+
+        function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+            function toRad(x) { return x * Math.PI / 180; }
+            let R = 6371;
+            let dLat = toRad(lat2 - lat1);
+            let dLon = toRad(lon2 - lon1);
+            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+    </script>
 </body>
 </html>
