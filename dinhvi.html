@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Định Vị & Tính Phí Ship - Kim Bling Coffee</title>
+    <title>Tính Phí Ship - Kim Bling Coffee</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
@@ -64,9 +64,6 @@
             font-size: 14px;
             outline: none;
             box-sizing: border-box;
-        }
-        .input-group input:focus {
-            border-color: #2196F3;
         }
 
         .btn-manual {
@@ -133,35 +130,35 @@
     <div class="card">
         <div class="title">🛵 Tính Phí Ship - Kim Bling Coffee</div>
 
-        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING (CHUẨN TỌA ĐỘ) -->
+        <!-- TỌA ĐỘ CỐ ĐỊNH CHUẨN CỦA QUÁN KIM BLING -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling):</label>
-            <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6 (Chuẩn GPS)" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
-        <!-- CÁCH 1: LẤY GPS TỰ ĐỘNG -->
+        <!-- BẬT GPS -->
         <button type="button" class="btn-gps" onclick="detectGPSAndCalculate()">
-            🛰️ Lấy vị trí GPS của bạn (Chuẩn nhất)
+            🛰️ Lấy vị trí GPS của bạn (Tính tự động)
         </button>
 
         <div class="status-box" id="statusText">
-            💡 Bấm nút GPS để hệ thống tính phí ship chính xác xuất phát từ Quán Kim Bling!
+            💡 Bấm nút GPS ở trên HOẶC nhập địa chỉ nhận hàng vào ô bên dưới.
         </div>
 
-        <!-- CÁCH 2: GÕ ĐỊA CHỈ NHẬN HÀNG -->
+        <!-- NHẬP ĐỊA CHỈ HÀNG -->
         <div class="input-group">
-            <label>🏠 Nhập địa chỉ nhận hàng của khách:</label>
-            <input type="text" id="customerAddress" placeholder="Ví dụ: 628/62 Hậu Giang, Quận 6...">
+            <label>🏠 Nhập địa chỉ nhận hàng:</label>
+            <input type="text" id="customerAddress" placeholder="Ví dụ: 628/62 Hậu Giang, Phường Phú Lâm...">
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateManualAddress()">
-            🔍 Tính Phí Ship Ngay
+            🔍 Xác Nhận Địa Chỉ Nhận Hàng
         </button>
 
-        <!-- KẾT QUẢ TÍNH TIỀN SHIP -->
+        <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NÚT MỞ APP BẢN ĐỒ KIỂM TRA -->
+        <!-- NÚT MỞ BẢN ĐỒ DẪN ĐƯỜNG ĐI BỘ -->
         <div class="map-buttons" id="mapButtonsGroup">
             <a id="btnAppleMap" href="#" target="_blank" class="btn-map-app btn-apple">🍏 Xem Apple Maps</a>
             <a id="btnGoogleMap" href="#" target="_blank" class="btn-map-app btn-google">🗺️ Xem Google Maps</a>
@@ -169,11 +166,12 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC 100% CỦA QUÁN KIM BLING
+        // TỌA ĐỘ CHUẨN XÁC QUÁN KIM BLING
         const STORE_LAT = 10.7490699; 
         const STORE_LNG = 106.6310222;
+        const STORE_ADDR = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
 
-        // 1. Lấy GPS khách
+        // 1. Trường hợp BẬT GPS TỰ ĐỘNG
         function detectGPSAndCalculate() {
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
@@ -191,57 +189,54 @@
                     const userLng = position.coords.longitude;
 
                     statusText.innerText = "✅ Định vị GPS thành công!";
-                    addressInput.value = `Tọa độ: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    addressInput.value = `Tọa độ GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
 
                     calculateOSRMAndShow(userLat, userLng);
                 },
                 (error) => {
-                    alert("Không thể lấy GPS. Vui lòng gõ địa chỉ vào ô bên dưới!");
-                    statusText.innerText = "❌ Lỗi GPS. Hãy gõ địa chỉ thủ công.";
+                    alert("Không thể lấy GPS. Vui lòng tự nhập địa chỉ vào ô bên dưới!");
+                    statusText.innerText = "❌ Lỗi GPS. Hãy gõ địa chỉ thủ công vào ô bên dưới.";
                 },
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         }
 
-        // 2. Nhập tay địa chỉ (Dùng hệ thống tra cứu Nominatim kết hợp tọa độ quán chuẩn)
-        async function calculateManualAddress() {
+        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Không gọi API trung gian tránh lỗi mạng)
+        function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('statusText');
+            const resultBox = document.getElementById('distanceResultBox');
+            const mapGroup = document.getElementById('mapButtonsGroup');
+            const appleBtn = document.getElementById('btnAppleMap');
+            const googleBtn = document.getElementById('btnGoogleMap');
 
             if (!query || query.length < 3) {
-                alert("Vui lòng nhập địa chỉ cụ thể!");
+                alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
                 addressInput.focus();
                 return;
             }
 
-            statusText.innerText = "⏳ Đang định vị địa chỉ khách qua bản đồ...";
+            statusText.innerText = "✅ Đã ghi nhận địa chỉ nhận hàng!";
 
-            let searchQuery = query;
+            let fullAddress = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
-                searchQuery += ", Hồ Chí Minh";
+                fullAddress += ", Hồ Chí Minh";
             }
 
-            try {
-                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
-                let data = await res.json();
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = `
+                📌 Địa chỉ giao: <span style="color:#1e293b;">${query}</span><br>
+                💡 Khách bấm nút bên dưới để mở bản đồ (chế độ đi bộ qua hẻm) kiểm tra tuyến đường chính xác nhất!
+            `;
 
-                if (data && data.length > 0) {
-                    let userLat = parseFloat(data[0].lat);
-                    let userLng = parseFloat(data[0].lon);
-
-                    statusText.innerText = "✅ Đã tìm thấy vị trí chính xác!";
-                    calculateOSRMAndShow(userLat, userLng);
-                } else {
-                    alert("Không tìm thấy địa chỉ chính xác. Khách vui lòng bật GPS để tính ship chuẩn nhất nhé!");
-                    statusText.innerText = "❌ Không tìm thấy tọa độ địa chỉ này.";
-                }
-            } catch(e) {
-                alert("Lỗi kết nối tra cứu.");
-            }
+            // Mở ứng dụng bản đồ ở chế độ đi bộ (dirflg=w đối với Apple Maps, travelmode=walking đối với Google Maps)
+            appleBtn.href = `https://maps.apple.com/?saddr=${encodeURIComponent(STORE_ADDR)}&daddr=${encodeURIComponent(fullAddress)}&dirflg=w`;
+            googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(STORE_ADDR)}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
+            mapGroup.style.display = 'flex';
         }
 
-        // 3. Đo quãng đường thực tế từ tọa độ Chuẩn của Quán đến Khách
+        // 3. Tính khoảng cách đi bộ OSRM (chế độ 'foot' đi tắt qua hẻm) khi bật GPS
         async function calculateOSRMAndShow(lat, lng) {
             const resultBox = document.getElementById('distanceResultBox');
             const mapGroup = document.getElementById('mapButtonsGroup');
@@ -249,7 +244,8 @@
             const googleBtn = document.getElementById('btnGoogleMap');
 
             try {
-                let res = await fetch(`https://router.project-osrm.org/route/v1/driving/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
+                // Đổi thành chế độ đi bộ /foot/ để đi qua các hẻm nhỏ
+                let res = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
                 let data = await res.json();
 
                 let distanceKm = 0;
@@ -263,13 +259,14 @@
 
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
-                    🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
-                    📐 Khoảng cách thực tế: <span style="color:#d32f2f;">~${distanceKm.toFixed(2)} km</span><br>
+                    🛵 Lộ trình đi bộ/hẻm: <span style="color:#1e293b;">Quán Kim Bling ➔ Vị trí của bạn</span><br>
+                    📐 Khoảng cách đi bộ hẻm: <span style="color:#d32f2f;">~${distanceKm.toFixed(2)} km</span><br>
                     💰 Phí giao hàng (Ship): <span style="color:#d32f2f;">${shipFeeText}</span>
                 `;
 
-                appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=d`;
-                googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=driving`;
+                // Cài đặt link chỉ đường chế độ đi bộ (dirflg=w & travelmode=walking)
+                appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w`;
+                googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 mapGroup.style.display = 'flex';
 
             } catch(e) {
@@ -281,8 +278,8 @@
                     📐 Khoảng cách ước tính: ~${fallbackKm.toFixed(1)} km<br>
                     💰 Phí ship: ${shipFeeText}
                 `;
-                appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=d`;
-                googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=driving`;
+                appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w`;
+                googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 mapGroup.style.display = 'flex';
             }
         }
