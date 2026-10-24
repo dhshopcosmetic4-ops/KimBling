@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Định Vị & Phí Ship Xe Máy - Kim Bling</title>
+    <title>Định Vị & Tính Phí Ship - Kim Bling Coffee</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
@@ -138,51 +138,52 @@
 <body>
 
     <div class="card">
-        <div class="title">🛵 Định Vị & Tính Phí Ship (Xe Máy)</div>
+        <div class="title">🚚 Định Vị & Tính Phí Ship Giao Hàng</div>
 
-        <!-- BẬT GPS -->
+        <!-- CỐ ĐỊNH NƠI XUẤT PHÁT: QUÁN KIM BLING -->
+        <div class="input-group">
+            <label>📍 Địa chỉ giao đi (Quán Kim Bling):</label>
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+        </div>
+
+        <!-- BÚT BẬT ĐỊNH VỊ GPS -->
         <button type="button" class="btn-gps" id="btnGetLocation" onclick="autoDetectLocationAndCalculate()">
-            🛰️ Bật định vị GPS tự động
+            🛰️ Bật định vị GPS vị trí của bạn
         </button>
         <button type="button" class="btn-reset" id="btnResetLocation" onclick="resetLocationCheck()">
-            🔄 Làm lại / Bật định vị lại
+            🔄 Làm lại / Định vị lại
         </button>
 
         <div class="status-box" id="gpsStatusText">
-            💡 Bạn có thể bấm bật GPS hoặc tự nhập địa chỉ vào ô bên dưới rồi bấm nút màu xanh lá để tính phí ship.
+            💡 Bạn có thể bấm bật GPS hoặc tự gõ địa chỉ nhận hàng bên dưới rồi bấm nút xanh lá để tính phí ship.
         </div>
 
-        <!-- Ô NHẬP ĐỊA CHỈ THANH TOÁN (TỰ ĐỘNG GÁN VÀO ĐÂY) -->
+        <!-- ĐIỂM ĐẾN: NHÀ KHÁCH HÀNG -->
         <div class="input-group">
-            <label>Địa chỉ nhận hàng (Khách hàng):</label>
-            <input type="text" id="customerAddress" placeholder="Nhập địa chỉ nhà của bạn (Ví dụ: 123 Hậu Giang, P.11)...">
+            <label>🏠 Địa chỉ nhận hàng (Giao tới nhà khách):</label>
+            <input type="text" id="customerAddress" placeholder="Nhập địa chỉ nhận hàng (Ví dụ: 628/62 Hậu Giang, P.Phú Lâm)...">
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateDistanceManual()">
-            🔍 Tính phí theo ô địa chỉ trên
+            🔍 Tính phí theo địa chỉ trên
         </button>
 
-        <div class="input-group">
-            <label>Địa chỉ điểm đến (Quán):</label>
-            <input type="text" value="M9 Cư xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #64748b;">
-        </div>
-
-        <!-- KHUNG HIỂN THỊ KẾT QUẢ KHOẢNG CÁCH -->
+        <!-- KẾT QUẢ KHOẢNG CÁCH VÀ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NHÚNG BẢN ĐỒ GOOGLE MAPS XE MÁY -->
+        <!-- NHÚNG BẢN ĐỒ BẮT BUỘC ĐƯỜNG NGẮN NHẤT (ĐI BỘ/HẺM TẮT) -->
         <div class="map-box" id="mapContainer">
-            <iframe id="googleMapIframe" width="100%" height="200" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
-            <div class="map-caption">🛵 Tuyến đường đi được tối ưu hóa dành riêng cho xe mô tô / xe máy</div>
+            <iframe id="googleMapIframe" width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+            <div class="map-caption">🚶 Tuyến đường đi ngắn nhất từ Quán ➔ Khách (Tối ưu ngõ hẻm)</div>
         </div>
     </div>
 
     <script>
-        // Tọa độ quán Kim Bling (M9 Cư Xá Phú Lâm A)
+        // TỌA ĐỘ CỐ ĐỊNH CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A)
         const STORE_LAT = 10.7485; 
         const STORE_LNG = 106.6182;
 
-        // 1. Định vị GPS tự động
+        // 1. Tự động lấy vị trí GPS của khách
         function autoDetectLocationAndCalculate() {
             const statusText = document.getElementById('gpsStatusText');
             const addressInput = document.getElementById('customerAddress');
@@ -195,49 +196,49 @@
             }
 
             btnGet.innerText = "⏳ Đang lấy vị trí...";
-            statusText.innerText = "⏳ Đang xin quyền GPS và định vị vị trí hiện tại...";
+            statusText.innerText = "⏳ Đang xin quyền GPS và lấy vị trí của bạn...";
 
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    statusText.innerText = "✅ Định vị GPS thành công!";
+                    statusText.innerText = "✅ Định vị vị trí nhận hàng thành công!";
                     btnGet.style.display = 'none';
                     btnReset.style.display = 'block';
 
-                    // Chuyển tọa độ sang tên đường thực tế
+                    // Chuyển tọa độ GPS thành tên đường
                     try {
                         let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
                         let data = await res.json();
                         if (data && data.display_name) {
                             addressInput.value = data.display_name;
                         } else {
-                            addressInput.value = `Tọa độ: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
+                            addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
                         }
                     } catch(e) {
-                        addressInput.value = `Tọa độ: ${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
+                        addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
                     }
 
                     processDistanceAndMap(userLat, userLng);
                 },
                 (error) => {
-                    alert("Không thể bật GPS (vui lòng kiểm tra quyền truy cập). Bạn có thể tự gõ địa chỉ vào ô bên dưới rồi bấm nút 'Tính phí theo ô địa chỉ'!");
-                    statusText.innerText = "❌ Không lấy được định vị. Hãy tự gõ địa chỉ thủ công bên dưới.";
-                    btnGet.innerText = "🛰️ Bật định vị GPS tự động";
+                    alert("Không thể bật GPS. Bạn vui lòng tự gõ địa chỉ vào ô bên dưới rồi bấm 'Tính phí theo địa chỉ trên'!");
+                    statusText.innerText = "❌ Không bật được GPS. Vui lòng gõ địa chỉ thủ công bên dưới.";
+                    btnGet.innerText = "🛰️ Bật định vị GPS vị trí của bạn";
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        // 2. Tính khoảng cách thủ công theo nội dung gõ trong ô địa chỉ
+        // 2. Tra cứu khoảng cách thủ công theo địa chỉ khách gõ
         async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('gpsStatusText');
 
             if (!query || query.length < 4) {
-                alert("Vui lòng gõ cụ thể địa chỉ nhận hàng vào ô trước!");
+                alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
                 addressInput.focus();
                 return;
             }
@@ -252,49 +253,51 @@
                     const userLat = parseFloat(data[0].lat);
                     const userLng = parseFloat(data[0].lon);
 
-                    statusText.innerText = "✅ Đã tìm thấy vị trí và tính khoảng cách thành công!";
-                    processDistanceAndMap(userLat, userLng);
+                    statusText.innerText = "✅ Đã tìm thấy vị trí giao hàng!";
+                    processDistanceAndMap(userLat, userLng, query);
                 } else {
-                    alert("Không tìm thấy địa chỉ này trên bản đồ. Vui lòng nhập thêm Tên đường, Phường/Quận cụ thể hơn!");
+                    alert("Không tìm thấy địa chỉ này trên bản đồ. Vui lòng ghi rõ Số nhà, Đường, Phường/Quận!");
                     statusText.innerText = "❌ Không tìm thấy địa chỉ.";
                 }
             } catch(e) {
-                alert("Lỗi kết nối mạng khi tìm kiếm địa chỉ.");
+                alert("Lỗi kết nối khi tìm kiếm địa chỉ.");
             }
         }
 
-        // 3. Hàm tính km, tính phí ship & nhúng Google Maps chế độ Xe máy
-        function processDistanceAndMap(userLat, userLng) {
+        // 3. Hàm tính số km, quy đổi tiền ship & vẽ bản đồ đi bộ ngắn nhất
+        function processDistanceAndMap(userLat, userLng, customAddressText = null) {
             const distanceBox = document.getElementById('distanceResultBox');
             const mapContainer = document.getElementById('mapContainer');
             const iframeMap = document.getElementById('googleMapIframe');
 
-            let distanceKm = calculateDistanceKm(userLat, userLng, STORE_LAT, STORE_LNG);
-            let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship dưới 1km)' : '10.000đ (Phụ thu trên 1km)';
+            let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, userLat, userLng);
+            let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
 
             distanceBox.style.display = 'block';
             distanceBox.innerHTML = `
-                🛵 Phương tiện: <span style="color:#1e293b;">Xe Mô Tô / Xe Máy</span><br>
-                📐 Khoảng cách ước tính: <span style="color:#d32f2f;">${distanceKm.toFixed(1)} km</span><br>
+                🛵 Lộ trình giao: <span style="color:#1e293b;">Từ Quán ➔ Nhà Khách</span><br>
+                📐 Khoảng cách ước tính: <span style="color:#d32f2f;">~${distanceKm.toFixed(1)} km</span><br>
                 💰 Phí ship áp dụng: <span style="color:#d32f2f;">${shipFeeText}</span>
             `;
 
-            // Nhúng Google Maps bắt buộc chỉ đường bằng xe máy (&dirflg=m)
             mapContainer.style.display = 'block';
-            iframeMap.src = `https://www.google.com/maps?saddr=${userLat},${userLng}&daddr=${STORE_LAT},${STORE_LNG}&dirflg=m&output=embed`;
+
+            // saddr: Điểm xuất phát (Quán) | daddr: Điểm tới (Khách) | dirflg=w: Chế độ đi bộ (ngắn nhất)
+            let destParam = customAddressText ? encodeURIComponent(customAddressText) : `${userLat},${userLng}`;
+            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${destParam}&dirflg=w&output=embed`;
         }
 
-        // Reset để làm lại
+        // Reset dữ liệu
         function resetLocationCheck() {
             document.getElementById('btnGetLocation').style.display = 'block';
-            document.getElementById('btnGetLocation').innerText = "🛰️ Bật định vị GPS tự động";
+            document.getElementById('btnGetLocation').innerText = "🛰️ Bật định vị GPS vị trí của bạn";
             document.getElementById('btnResetLocation').style.display = 'none';
-            document.getElementById('gpsStatusText').innerText = "💡 Đã reset. Bạn có thể bật GPS hoặc tự gõ địa chỉ mới.";
+            document.getElementById('gpsStatusText').innerText = "💡 Đã reset. Bấm để bật GPS lại hoặc nhập địa chỉ mới.";
             document.getElementById('distanceResultBox').style.display = 'none';
             document.getElementById('mapContainer').style.display = 'none';
         }
 
-        // Công thức tính khoảng cách Haversine giữa 2 tọa độ (km)
+        // Công thức tính khoảng cách Haversine (km)
         function calculateDistanceKm(lat1, lon1, lat2, lon2) {
             function toRad(x) { return x * Math.PI / 180; }
             let R = 6371;
