@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Định Vị & Tính Phí Ship - Kim Bling Coffee</title>
-    <!-- NHÚNG THƯ VIỆN GOOGLE MAPS PLACES API CHÍNH CHỦ -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=vi"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
@@ -32,7 +30,7 @@
 
         .btn-gps {
             width: 100%;
-            background: #2196F3;
+            background: #000000;
             color: #fff;
             border: none;
             padding: 12px;
@@ -45,20 +43,6 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-        }
-
-        .btn-reset {
-            background: #ff9800;
-            color: #fff;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            display: none;
-            width: 100%;
-            margin-bottom: 8px;
         }
 
         .input-group {
@@ -81,9 +65,6 @@
             outline: none;
             box-sizing: border-box;
         }
-        .input-group input:focus {
-            border-color: #2196F3;
-        }
 
         .status-box {
             font-size: 12px;
@@ -91,7 +72,7 @@
             background: #f8fafc;
             padding: 10px;
             border-radius: 6px;
-            border-left: 3px solid #2196F3;
+            border-left: 3px solid #000000;
             margin-bottom: 10px;
             line-height: 1.4;
         }
@@ -109,176 +90,104 @@
             line-height: 1.5;
         }
 
-        .map-box {
+        .btn-apple-map {
             display: none;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-        }
-        .map-caption {
-            font-size: 11px;
-            color: #64748b;
+            width: 100%;
+            background: #007aff;
+            color: #fff;
             text-align: center;
-            padding: 6px;
-            background: #f8fafc;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="title">🚚 Định Vị & Tính Phí Ship - Kim Bling Coffee</div>
+        <div class="title">🍏 Định Vị & Phí Ship (Apple Maps)</div>
 
-        <!-- ĐIỂM XUẤT PHÁT: QUÁN KIM BLING (CỐ ĐỊNH) -->
+        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling):</label>
-            <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
         <!-- NÚT BẬT GPS -->
-        <button type="button" class="btn-gps" id="btnGetLocation" onclick="autoDetectLocation()">
-            🛰️ Lấy vị trí GPS hiện tại của tôi
-        </button>
-        <button type="button" class="btn-reset" id="btnResetLocation" onclick="resetLocationCheck()">
-            🔄 Chọn lại vị trí khác
+        <button type="button" class="btn-gps" onclick="detectLocationAndCalculate()">
+            🛰️ Lấy vị trí GPS của bạn (Miễn phí 100%)
         </button>
 
-        <div class="status-box" id="gpsStatusText">
-            💡 Gõ địa chỉ nhận hàng bên dưới (sẽ hiện bảng gợi ý chuẩn xác y hệt Google Maps) hoặc bấm nút GPS.
+        <div class="status-box" id="statusText">
+            💡 Bấm nút đen bên trên để hệ thống tự lấy GPS và tính quãng đường thực tế qua hẻm hoàn toàn miễn phí.
         </div>
 
-        <!-- Ô NHẬP ĐỊA CHỈ TÍCH HỢP GỢI Ý GOOGLE -->
+        <!-- ĐỊA CHỈ KHÁCH -->
         <div class="input-group">
-            <label>🏠 Địa chỉ nhận hàng:</label>
-            <input type="text" id="customerAddress" placeholder="Nhập số nhà, tên đường (Ví dụ: 628 Hậu Giang)...">
+            <label>🏠 Vị trí của bạn:</label>
+            <input type="text" id="customerAddress" placeholder="Bấm nút GPS ở trên..." disabled>
         </div>
 
         <!-- KẾT QUẢ KHOẢNG CÁCH & PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- BẢN ĐỒ HIỂN THỊ CHỈ ĐƯỜNG -->
-        <div class="map-box" id="mapContainer">
-            <iframe id="googleMapIframe" width="100%" height="240" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
-            <div class="map-caption">🗺️ Lộ trình đường đi thực tế qua hẻm từ Quán đến bạn</div>
-        </div>
+        <!-- NÚT MỞ TRỰC TIẾP APPLE MAPS CHỈ ĐƯỜNG -->
+        <a id="appleMapBtn" href="#" target="_blank" class="btn-apple-map">
+            🧭 Mở Apple Maps chỉ đường chi tiết
+        </a>
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING
         const STORE_LAT = 10.7490699; 
         const STORE_LNG = 106.6310222;
 
-        let selectedUserLat = null;
-        let selectedUserLng = null;
-        let autocomplete;
-
-        // KÍCH HOẠT GỢI Ý ĐỊA CHỈ GOOGLE PLACES AUTOCOMPLETE
-        window.addEventListener('load', function() {
-            const input = document.getElementById('customerAddress');
-            
-            // Giới hạn gợi ý tập trung trong khu vực TP.HCM để kết quả chuẩn xác nhất
-            const options = {
-                componentRestrictions: { country: "vn" },
-                bounds: new google.maps.LatLngBounds(
-                    new google.maps.LatLng(10.35, 106.35), 
-                    new google.maps.LatLng(11.15, 107.05)  
-                ),
-                strictBounds: false
-            };
-            
-            autocomplete = new google.maps.places.Autocomplete(input, options);
-            
-            // Khi khách bấm chọn một địa điểm trong danh sách gợi ý của Google
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
-                if (place.geometry && place.geometry.location) {
-                    selectedUserLat = place.geometry.location.lat();
-                    selectedUserLng = place.geometry.location.lng();
-                    
-                    document.getElementById('gpsStatusText').innerText = "✅ Đã chọn địa chỉ chuẩn xác từ Google Maps!";
-                    updateMapAndDistance();
-                } else {
-                    alert("Vui lòng chọn địa chỉ từ danh sách gợi ý của Google!");
-                }
-            });
-        });
-
-        // 1. Tự động lấy GPS
-        function autoDetectLocation() {
-            const statusText = document.getElementById('gpsStatusText');
+        function detectLocationAndCalculate() {
+            const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
-            const btnGet = document.getElementById('btnGetLocation');
-            const btnReset = document.getElementById('btnResetLocation');
+            const distanceBox = document.getElementById('distanceResultBox');
+            const appleBtn = document.getElementById('appleMapBtn');
 
             if (!navigator.geolocation) {
-                alert("Trình duyệt không hỗ trợ định vị GPS!");
+                alert("Trình duyệt không hỗ trợ GPS!");
                 return;
             }
 
-            btnGet.innerText = "⏳ Đang lấy vị trí của bạn...";
-            statusText.innerText = "⏳ Đang kết nối vệ tinh GPS...";
+            statusText.innerText = "⏳ Đang kết nối vệ tinh tìm vị trí của bạn...";
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    selectedUserLat = position.coords.latitude;
-                    selectedUserLng = position.coords.longitude;
+                async (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
 
-                    statusText.innerText = "✅ Lấy vị trí GPS thành công!";
-                    btnGet.style.display = 'none';
-                    btnReset.style.display = 'block';
+                    statusText.innerText = "✅ Định vị thành công!";
+                    addressInput.value = `Tọa độ: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
 
-                    // Dùng dịch vụ Geocoder của Google để dịch tọa độ sang tên địa chỉ chi tiết
-                    const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({ location: { lat: selectedUserLat, lng: selectedUserLng } }, (results, status) => {
-                        if (status === "OK" && results[0]) {
-                            addressInput.value = results[0].formatted_address;
-                        } else {
-                            addressInput.value = `${selectedUserLat.toFixed(5)}, ${selectedUserLng.toFixed(5)}`;
-                        }
-                        updateMapAndDistance();
-                    });
+                    // Tính khoảng cách đường đi
+                    let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, userLat, userLng);
+                    let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
+
+                    distanceBox.style.display = 'block';
+                    distanceBox.innerHTML = `
+                        🛵 Tuyến đường: Quán Kim Bling ➔ Vị trí của bạn<br>
+                        📐 Khoảng cách: <span style="color:#d32f2f;">~${distanceKm.toFixed(1)} km</span><br>
+                        💰 Phí ship: <span style="color:#d32f2f;">${shipFeeText}</span>
+                    `;
+
+                    // Tạo link mở app Apple Maps chuẩn định tuyến (Maps Directions)
+                    // Link này hoạt động hoàn hảo trên iPhone/iPad và chuyển đổi linh hoạt trên web
+                    appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${userLat},${userLng}&dirflg=d`;
+                    appleBtn.style.display = 'block';
+
                 },
                 (error) => {
-                    alert("Không thể lấy GPS. Vui lòng gõ địa chỉ vào ô bên dưới!");
-                    statusText.innerText = "❌ Lỗi GPS. Hãy gõ tìm địa chỉ thủ công.";
-                    btnGet.innerText = "🛰️ Lấy vị trí GPS hiện tại của tôi";
+                    alert("Không thể lấy GPS. Vui lòng bật quyền truy cập vị trí trên trình duyệt!");
+                    statusText.innerText = "❌ Lỗi định vị GPS.";
                 },
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
-        }
-
-        // 2. Tính khoảng cách, phí ship và vẽ bản đồ
-        function updateMapAndDistance() {
-            if (!selectedUserLat || !selectedUserLng) return;
-
-            const distanceBox = document.getElementById('distanceResultBox');
-            const mapContainer = document.getElementById('mapContainer');
-            const iframeMap = document.getElementById('googleMapIframe');
-
-            let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, selectedUserLat, selectedUserLng);
-            let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
-
-            distanceBox.style.display = 'block';
-            distanceBox.innerHTML = `
-                🛵 Tuyến đường: <span style="color:#1e293b;">Quán Kim Bling ➔ Vị trí của bạn</span><br>
-                📐 Khoảng cách: <span style="color:#d32f2f;">~${distanceKm.toFixed(1)} km</span><br>
-                💰 Phí ship: <span style="color:#d32f2f;">${shipFeeText}</span>
-            `;
-
-            mapContainer.style.display = 'block';
-            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${selectedUserLat},${selectedUserLng}&dirflg=w&output=embed`;
-        }
-
-        function resetLocationCheck() {
-            selectedUserLat = null;
-            selectedUserLng = null;
-            document.getElementById('btnGetLocation').style.display = 'block';
-            document.getElementById('btnGetLocation').innerText = "🛰️ Lấy vị trí GPS hiện tại của tôi";
-            document.getElementById('btnResetLocation').style.display = 'none';
-            document.getElementById('gpsStatusText').innerText = "💡 Gõ địa chỉ nhận hàng bên dưới hoặc bấm nút GPS.";
-            document.getElementById('distanceResultBox').style.display = 'none';
-            document.getElementById('mapContainer').style.display = 'none';
-            document.getElementById('customerAddress').value = '';
         }
 
         function calculateDistanceKm(lat1, lon1, lat2, lon2) {
