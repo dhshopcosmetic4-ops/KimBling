@@ -131,12 +131,12 @@
 <body>
 
     <div class="card">
-        <div class="title">🛵 Tính Phí Ship & Định Vị - Kim Bling Coffee</div>
+        <div class="title">🛵 Tính Phí Ship - Kim Bling Coffee</div>
 
-        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING -->
+        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING (CHUẨN TỌA ĐỘ) -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling):</label>
-            <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
+            <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6 (Chuẩn GPS)" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
         <!-- CÁCH 1: LẤY GPS TỰ ĐỘNG -->
@@ -145,23 +145,23 @@
         </button>
 
         <div class="status-box" id="statusText">
-            💡 Bấm nút GPS để hệ thống tự động đo đường qua hẻm và tính phí ship ngay lập tức!
+            💡 Bấm nút GPS để hệ thống tính phí ship chính xác xuất phát từ Quán Kim Bling!
         </div>
 
-        <!-- CÁCH 2: GÕ ĐỊA CHỈ HOẶC DÁN LINK MAPS -->
+        <!-- CÁCH 2: GÕ ĐỊA CHỈ NHẬN HÀNG -->
         <div class="input-group">
-            <label>🏠 Nhập địa chỉ nhận hàng:</label>
-            <input type="text" id="customerAddress" placeholder="Ví dụ: 628/62 Hậu Giang, Phường Phú Lâm...">
+            <label>🏠 Nhập địa chỉ nhận hàng của khách:</label>
+            <input type="text" id="customerAddress" placeholder="Ví dụ: 628/62 Hậu Giang, Quận 6...">
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateManualAddress()">
             🔍 Tính Phí Ship Ngay
         </button>
 
-        <!-- KHUNG HIỂN THỊ KẾT QUẢ TÍNH TIỀN SHIP -->
+        <!-- KẾT QUẢ TÍNH TIỀN SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- CÁC NÚT MỞ APP BẢN ĐỒ KIỂM TRA LỘ TRÌNH -->
+        <!-- NÚT MỞ APP BẢN ĐỒ KIỂM TRA -->
         <div class="map-buttons" id="mapButtonsGroup">
             <a id="btnAppleMap" href="#" target="_blank" class="btn-map-app btn-apple">🍏 Xem Apple Maps</a>
             <a id="btnGoogleMap" href="#" target="_blank" class="btn-map-app btn-google">🗺️ Xem Google Maps</a>
@@ -169,11 +169,11 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH QUÁN KIM BLING
+        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC 100% CỦA QUÁN KIM BLING
         const STORE_LAT = 10.7490699; 
         const STORE_LNG = 106.6310222;
 
-        // 1. Trường hợp bấm nút GPS
+        // 1. Lấy GPS khách
         function detectGPSAndCalculate() {
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
@@ -190,8 +190,8 @@
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    statusText.innerText = "✅ Định vị vị trí GPS thành công!";
-                    addressInput.value = `Vị trí GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    statusText.innerText = "✅ Định vị GPS thành công!";
+                    addressInput.value = `Tọa độ: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
 
                     calculateOSRMAndShow(userLat, userLng);
                 },
@@ -203,8 +203,8 @@
             );
         }
 
-        // 2. Trường hợp nhập tay địa chỉ
-        function calculateManualAddress() {
+        // 2. Nhập tay địa chỉ (Dùng hệ thống tra cứu Nominatim kết hợp tọa độ quán chuẩn)
+        async function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('statusText');
@@ -215,18 +215,33 @@
                 return;
             }
 
-            statusText.innerText = "⏳ Đang tính toán quãng đường...";
+            statusText.innerText = "⏳ Đang định vị địa chỉ khách qua bản đồ...";
 
-            let fullAddress = query;
+            let searchQuery = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
-                fullAddress += ", Hồ Chí Minh";
+                searchQuery += ", Hồ Chí Minh";
             }
 
-            // Mở liên kết trực tiếp bằng địa chỉ văn bản
-            showMapLinksByText(fullAddress, query);
+            try {
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
+                let data = await res.json();
+
+                if (data && data.length > 0) {
+                    let userLat = parseFloat(data[0].lat);
+                    let userLng = parseFloat(data[0].lon);
+
+                    statusText.innerText = "✅ Đã tìm thấy vị trí chính xác!";
+                    calculateOSRMAndShow(userLat, userLng);
+                } else {
+                    alert("Không tìm thấy địa chỉ chính xác. Khách vui lòng bật GPS để tính ship chuẩn nhất nhé!");
+                    statusText.innerText = "❌ Không tìm thấy tọa độ địa chỉ này.";
+                }
+            } catch(e) {
+                alert("Lỗi kết nối tra cứu.");
+            }
         }
 
-        // 3. Gọi dịch vụ OSRM miễn phí để đo đúng số mét thực tế qua đường hẻm
+        // 3. Đo quãng đường thực tế từ tọa độ Chuẩn của Quán đến Khách
         async function calculateOSRMAndShow(lat, lng) {
             const resultBox = document.getElementById('distanceResultBox');
             const mapGroup = document.getElementById('mapButtonsGroup');
@@ -234,34 +249,30 @@
             const googleBtn = document.getElementById('btnGoogleMap');
 
             try {
-                // Sử dụng đường bay/đường xe máy OSRM miễn phí
                 let res = await fetch(`https://router.project-osrm.org/route/v1/driving/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
                 let data = await res.json();
 
                 let distanceKm = 0;
                 if (data.code === "Ok" && data.routes && data.routes[0]) {
-                    distanceKm = data.routes[0].distance / 1000; // Đổi mét sang Km
+                    distanceKm = data.routes[0].distance / 1000;
                 } else {
                     distanceKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 }
 
-                // Công thức tính phí ship của Quán Kim Bling
                 let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
 
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
-                    🛵 Lộ trình: Quán Kim Bling ➔ Vị trí của bạn<br>
+                    🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling (M9 Cư Xá Phú Lâm A)</span><br>
                     📐 Khoảng cách thực tế: <span style="color:#d32f2f;">~${distanceKm.toFixed(2)} km</span><br>
                     💰 Phí giao hàng (Ship): <span style="color:#d32f2f;">${shipFeeText}</span>
                 `;
 
-                // Cập nhật đường link cho 2 ứng dụng bản đồ
                 appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=d`;
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=driving`;
                 mapGroup.style.display = 'flex';
 
             } catch(e) {
-                // Nếu nghẽn mạng thì tự động tính công thức dự phòng
                 let fallbackKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 let shipFeeText = fallbackKm <= 1.0 ? '0đ (Freeship < 1km)' : '10.000đ';
 
@@ -276,26 +287,6 @@
             }
         }
 
-        function showMapLinksByText(fullAddress, originalText) {
-            const resultBox = document.getElementById('distanceResultBox');
-            const mapGroup = document.getElementById('mapButtonsGroup');
-            const appleBtn = document.getElementById('btnAppleMap');
-            const googleBtn = document.getElementById('btnGoogleMap');
-
-            const storeAddress = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
-            
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = `
-                📌 Địa chỉ giao: <span style="color:#1e293b;">${originalText}</span><br>
-                💡 Khách có thể bấm mở Apple Maps hoặc Google Maps bên dưới để kiểm tra chính xác lộ trình và khoảng cách nhé!
-            `;
-
-            appleBtn.href = `https://maps.apple.com/?saddr=${encodeURIComponent(storeAddress)}&daddr=${encodeURIComponent(fullAddress)}&dirflg=d`;
-            googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(storeAddress)}&destination=${encodeURIComponent(fullAddress)}&travelmode=driving`;
-            mapGroup.style.display = 'flex';
-        }
-
-        // Công thức tính khoảng cách đường chim bay dự phòng
         function calculateHaversineKm(lat1, lon1, lat2, lon2) {
             function toRad(x) { return x * Math.PI / 180; }
             let R = 6371;
