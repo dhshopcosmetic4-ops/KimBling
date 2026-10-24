@@ -39,7 +39,7 @@
         .box-item.user-opened { 
             background: #fff8e1 !important; 
             color: #d84315 !important; 
-            font-size: 12px !important; 
+            font-size: 11px !important; 
             font-weight: bold !important; 
             cursor: default !important; 
             border: 2px solid #f57c00 !important; 
@@ -49,7 +49,7 @@
             color: #2e7d32 !important; 
             border: 2px solid #2e7d32 !important; 
             animation: shakeWin 0.6s ease-in-out infinite alternate !important; 
-            font-size: 12px !important; 
+            font-size: 11px !important; 
             font-weight: bold !important; 
         }
         
@@ -64,7 +64,7 @@
         }
 
         .box-item span.item-title {
-            font-size: 11px !important;
+            font-size: 10px !important;
             font-weight: bold;
             margin-top: 2px;
         }
@@ -125,12 +125,13 @@
             return arr;
         }
 
+        // TỔNG 9 Ô: 1 Ô MÃ 1K + 3 Ô FREESHIP < 1KM + 5 Ô FAKE DECOY
         function createNewBoard() {
             let board = [
                 { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
-                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
+                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
+                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
+                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
                 { type: 'FAKE', text: 'Mã 30K', icon: '🎟️' },
                 { type: 'FAKE', text: 'Mã 20K', icon: '🎟️' },
                 { type: 'FAKE', text: 'Mã 10K', icon: '🎟️' },
@@ -142,7 +143,7 @@
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v36');
+            const savedState = localStorage.getItem('kimbling_game_state_v39');
             
             if (savedState) {
                 try {
@@ -158,12 +159,13 @@
                 maxTurnsAllowed: 5,
                 gamesPlayed: 0,
                 wonCount1K: 0,
+                wonFreeship: false,
                 isCurrentGameFinished: false,
                 currentBoard: createNewBoard(),
                 selectedBoxIndex: null
             };
 
-            localStorage.setItem('kimbling_game_state_v36', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(newState));
             return newState;
         }
 
@@ -177,6 +179,9 @@
             if (gameState.wonCount1K > 0) {
                 wonDisplay.innerText = `🎉 ĐÃ NHẬN MÃ GIẢM 1K (Tự động trừ khi chốt đơn)`;
                 wonDisplay.style.color = `#2e7d32`;
+            } else if (gameState.wonFreeship) {
+                wonDisplay.innerText = `🛵 ĐÃ NHẬN MÃ FREESHIP DƯỚI 1KM!`;
+                wonDisplay.style.color = `#2e7d32`;
             } else {
                 wonDisplay.innerText = `🎁 Mở hộp quà - Nhận ưu đãi may mắn ngay!`;
                 wonDisplay.style.color = `#e65100`;
@@ -188,11 +193,11 @@
                 boxElements.forEach((box, idx) => {
                     const item = gameState.currentBoard[idx];
                     if (idx === gameState.selectedBoxIndex) {
-                        if (item.type === 'REWARD') {
-                            box.innerHTML = `<span style="font-size:24px;">🎉</span><span class="item-title">${item.text}</span>`;
+                        if (item.type === 'REWARD' || item.type === 'FREESHIP') {
+                            box.innerHTML = `<span style="font-size:22px;">🎉</span><span class="item-title">${item.text}</span>`;
                             box.className = 'box-item user-opened winner-box';
                         } else {
-                            box.innerHTML = `<span style="font-size:24px;">😋</span><span class="item-title">Ngon miệng!</span>`;
+                            box.innerHTML = `<span style="font-size:22px;">😋</span><span class="item-title">Ngon miệng!</span>`;
                             box.className = 'box-item user-opened';
                         }
                     } else {
@@ -226,12 +231,15 @@
             if (item.type === 'REWARD') {
                 gameState.wonCount1K++;
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            } else if (item.type === 'FREESHIP') {
+                gameState.wonFreeship = true;
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             } else {
                 item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
             gameState.currentBoard[index] = item;
-            localStorage.setItem('kimbling_game_state_v36', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -246,20 +254,23 @@
             let htmlMsg = "";
             if (selectedItem.type === 'REWARD') {
                 htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG MÃ GIẢM 1K!</b><br>`;
+            } else if (selectedItem.type === 'FREESHIP') {
+                htmlMsg = `🛵 <b>CHÚC MỪNG BẠN TRÚNG MÃ FREESHIP DƯỚI 1KM!</b><br>`;
             } else {
                 htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Thử vận may ở ô tiếp theo nhé!<br>`;
             }
 
-            // KIỂM TRA SỐ LƯỢT CHƠI ĐỂ HIỆN NÚT CHÍNH XÁC
             if (gameState.gamesPlayed < gameState.maxTurnsAllowed) {
                 choiceRow.style.display = 'flex';
                 btnCloseGame.style.display = 'none';
             } else {
                 choiceRow.style.display = 'none';
-                btnCloseGame.style.display = 'block'; // LUÔN HIỆN NÚT ĐẶT MÓN NGAY KHI HẾT 5 LƯỢT
+                btnCloseGame.style.display = 'block';
 
                 if (gameState.wonCount1K > 0) {
                     htmlMsg += `<br>🎉 <b>MÃ GIẢM 1K ĐÃ ĐƯỢC KÍCH HOẠT!</b><br>Bấm nút bên dưới để áp dụng vào đơn!`;
+                } else if (gameState.wonFreeship) {
+                    htmlMsg += `<br>🛵 <b>MÃ FREESHIP DƯỚI 1KM ĐÃ KÍCH HOẠT!</b><br>Bấm nút bên dưới để chốt đơn ngay!`;
                 } else {
                     htmlMsg += `<br>🛵 Bấm nút bên dưới để hoàn tất đơn hàng nhé!`;
                 }
@@ -276,13 +287,15 @@
             gameState.selectedBoxIndex = null;
             gameState.currentBoard = createNewBoard();
             
-            localStorage.setItem('kimbling_game_state_v36', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
             updateUI();
         }
 
         function finishFiveTurnsAndCheckout() {
             if (gameState.wonCount1K > 0) {
                 dispatchDiscountToMenu('KB1K', 1, 'KB1K_' + Date.now());
+            } else if (gameState.wonFreeship) {
+                dispatchDiscountToMenu('FREESHIP_1KM', 0, 'FREESHIP_' + Date.now());
             }
             closeGame();
         }
@@ -307,15 +320,16 @@
             if (event.data === 'ADD_BONUS_TURNS') {
                 gameState.maxTurnsAllowed += 5; 
                 gameState.wonCount1K = 0;
+                gameState.wonFreeship = false;
                 gameState.isCurrentGameFinished = false;
                 gameState.selectedBoxIndex = null;
                 gameState.currentBoard = createNewBoard();
                 
-                localStorage.setItem('kimbling_game_state_v36', JSON.stringify(gameState));
+                localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
                 updateUI();
             }
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v36');
+                localStorage.removeItem('kimbling_game_state_v39');
                 location.reload();
             }
         });

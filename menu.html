@@ -2575,7 +2575,7 @@ function closeGamePopup() {
 });
 
 
-        // Tự động áp mã giảm giá từ trò chơi và hiển thị minh bạch lên giao diện
+        // Tự động áp mã giảm giá / freeship từ trò chơi và hiển thị minh bạch lên giao diện
 function checkAndApplyDiscountCode() {
     const appliedCode = localStorage.getItem('kimbling_applied_discount_code');
     const appliedValue = localStorage.getItem('kimbling_applied_discount_value');
@@ -2583,20 +2583,25 @@ function checkAndApplyDiscountCode() {
     const noticeBox = document.getElementById('appliedDiscountNotice');
     const codeText = document.getElementById('appliedCodeText');
 
-    if (appliedCode && appliedValue) {
-        // Hiển thị khung minh bạch ra màn hình thanh toán
-        if (noticeBox && codeText) {
-            codeText.innerText = `${appliedCode} (Giảm ngay ${appliedValue}K vào đơn hàng)`;
-            noticeBox.style.display = 'flex';
+    if (appliedCode && noticeBox && codeText) {
+        const valK = parseInt(appliedValue || '0');
+        
+        // Kiểm tra nếu là mã Freeship thì thay dòng chữ theo đúng yêu cầu
+        if (appliedCode.includes('FREESHIP') || valK === 0) {
+            codeText.innerText = `${appliedCode} (Miễn phí giao hàng khoảng cách < 1km)`;
+        } else {
+            codeText.innerText = `${appliedCode} (Giảm ngay ${valK}K vào đơn hàng)`;
         }
 
-        // Tự động gán vào ô nhập mã (nếu có)
+        noticeBox.style.display = 'flex';
+
         const discountInput = document.getElementById('discountCodeInput'); 
         if (discountInput) {
             discountInput.value = appliedCode;
         }
     }
 }
+
 
 // Nút cho phép khách bấm xóa mã nếu muốn
 function removeDiscountCode() {
