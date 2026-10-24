@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Định Vị & Tính Phí Ship - Kim Bling Coffee</title>
-    <!-- Nhúng thư viện Google Maps API (Thay YOUR_GOOGLE_MAPS_API_KEY bằng API key của bạn) -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=vi"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f4f6f9; padding: 20px 12px; display: flex; justify-content: center; }
@@ -157,13 +155,13 @@
         </button>
 
         <div class="status-box" id="gpsStatusText">
-            💡 Gõ địa chỉ hoặc bật GPS để hệ thống Google Maps chính chủ tự động tính phí ship.
+            💡 Gõ tự do số nhà, tên đường hoặc bấm bật GPS để tính phí ship tự động.
         </div>
 
-        <!-- ĐIỂM ĐẾN: TÍCH HỢP GỢI Ý GOOGLE PLACES -->
+        <!-- ĐIỂM ĐẾN: CHO PHÉP NHẬP TỰ DO BẤT KỲ SỐ NHÀ, ĐỊA CHỈ NÀO -->
         <div class="input-group">
-            <label>🏠 Điểm đến (Vị trí của bạn / Khách hàng):</label>
-            <input type="text" id="customerAddress" placeholder="Nhập số nhà, tên đường (Gợi ý chuẩn Google)...">
+            <label>🏠 Địa chỉ nhận hàng của bạn:</label>
+            <input type="text" id="customerAddress" placeholder="Nhập số nhà, tên đường, hẻm (Ví dụ: 628/62 Hậu Giang)...">
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateDistanceManual()">
@@ -181,38 +179,14 @@
     </div>
 
     <script>
+        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING
         const STORE_LAT = 10.7490699; 
         const STORE_LNG = 106.6310222;
 
         let selectedUserLat = null;
         let selectedUserLng = null;
-        let autocomplete;
 
-        // Kích hoạt tính năng Autocomplete chính chủ của Google Maps cho ô nhập địa chỉ
-        window.addEventListener('load', function() {
-            const input = document.getElementById('customerAddress');
-            // Giới hạn gợi ý ưu tiên trong khu vực TP.HCM
-            const options = {
-                componentRestrictions: { country: "vn" },
-                bounds: new google.maps.LatLngBounds(
-                    new google.maps.LatLng(10.35, 106.35), // Tây Nam TP.HCM
-                    new google.maps.LatLng(11.15, 107.05)  // Đông Bắc TP.HCM
-                ),
-                strictBounds: false
-            };
-            
-            autocomplete = new google.maps.places.Autocomplete(input, options);
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
-                if (place.geometry && place.geometry.location) {
-                    selectedUserLat = place.geometry.location.lat();
-                    selectedUserLng = place.geometry.location.lng();
-                    processDistanceAndMap();
-                }
-            });
-        });
-
-        // 1. Lấy GPS vị trí khách làm điểm đến
+        // 1. Tự động lấy GPS vị trí khách
         function autoDetectLocationAndCalculate() {
             const statusText = document.getElementById('gpsStatusText');
             const addressInput = document.getElementById('customerAddress');
@@ -236,16 +210,19 @@
                     btnGet.style.display = 'none';
                     btnReset.style.display = 'block';
 
-                    // Dùng Google Geocoder để dịch tọa độ ra địa chỉ chuẩn của Google
-                    const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({ location: { lat: selectedUserLat, lng: selectedUserLng } }, (results, status) => {
-                        if (status === "OK" && results[0]) {
-                            addressInput.value = results[0].formatted_address;
+                    try {
+                        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedUserLat}&lon=${selectedUserLng}&accept-language=vi`);
+                        let data = await res.json();
+                        if (data && data.display_name) {
+                            addressInput.value = data.display_name;
                         } else {
                             addressInput.value = `${selectedUserLat.toFixed(5)}, ${selectedUserLng.toFixed(5)}`;
                         }
-                        processDistanceAndMap();
-                    });
+                    } catch(e) {
+                        addressInput.value = `${selectedUserLat.toFixed(5)}, ${selectedUserLng.toFixed(5)}`;
+                    }
+
+                    processDistanceAndMap();
                 },
                 (error) => {
                     alert("Không thể lấy GPS. Vui lòng tự nhập địa chỉ vào ô bên dưới!");
@@ -256,40 +233,42 @@
             );
         }
 
-        // 2. Tra cứu thủ công nếu khách gõ xong bấm nút
-        function calculateDistanceManual() {
+        // 2. Tra cứu thủ công khi khách gõ số nhà/tên đường tự do và bấm nút
+        async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('gpsStatusText');
 
-            if (!query || query.length < 4) {
+            if (!query || query.length < 3) {
                 alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
                 addressInput.focus();
                 return;
             }
 
-            if (selectedUserLat && selectedUserLng) {
-                processDistanceAndMap();
-                return;
-            }
+            statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
 
-            // Nếu khách gõ tay mà chưa chọn từ danh sách gợi ý, dùng Geocoder của Google để tìm tọa độ chuẩn
-            statusText.innerText = "⏳ Đang tra cứu địa chỉ trên Google Maps...";
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ address: query + ", Hồ Chí Minh, Việt Nam" }, (results, status) => {
-                if (status === "OK" && results[0]) {
-                    selectedUserLat = results[0].geometry.location.lat();
-                    selectedUserLng = results[0].geometry.location.lng();
-                    statusText.innerText = "✅ Đã tìm thấy vị trí chuẩn!";
+            try {
+                // Tự động thêm ", Hồ Chí Minh" vào sau câu khách gõ để tìm kiếm chính xác trong thành phố
+                let searchQuery = query.toLowerCase().includes("hồ chí minh") || query.toLowerCase().includes("tp.hcm") ? query : (query + ", Hồ Chí Minh");
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
+                let data = await res.json();
+
+                if (data && data.length > 0) {
+                    selectedUserLat = parseFloat(data[0].lat);
+                    selectedUserLng = parseFloat(data[0].lon);
+
+                    statusText.innerText = "✅ Đã tìm thấy vị trí giao hàng!";
                     processDistanceAndMap();
                 } else {
-                    alert("Không tìm thấy địa chỉ này trên Google Maps. Vui lòng chọn gợi ý hiện ra khi gõ!");
+                    alert("Không tìm thấy số nhà/đường này. Vui lòng ghi rõ tên Đường và Phường/Quận!");
                     statusText.innerText = "❌ Không tìm thấy địa chỉ.";
                 }
-            });
+            } catch(e) {
+                alert("Lỗi kết nối khi tìm kiếm địa chỉ.");
+            }
         }
 
-        // 3. Tính khoảng cách, phí ship và nhúng bản đồ chuẩn
+        // 3. Tính khoảng cách, phí ship và nhúng bản đồ
         function processDistanceAndMap() {
             if (!selectedUserLat || !selectedUserLng) return;
 
@@ -308,6 +287,7 @@
             `;
 
             mapContainer.style.display = 'block';
+            // Cố định saddr là tọa độ quán, daddr là tọa độ điểm đến của khách, dirflg=w đi bộ ngắn nhất
             iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${selectedUserLat},${selectedUserLng}&dirflg=w&output=embed`;
         }
 
