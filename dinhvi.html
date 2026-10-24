@@ -140,13 +140,13 @@
     <div class="card">
         <div class="title">🚚 Định Vị & Tính Phí Ship Giao Hàng</div>
 
-        <!-- CỐ ĐỊNH NƠI XUẤT PHÁT: QUÁN KIM BLING -->
+        <!-- CỐ ĐỊNH ĐIỂM XUẤT PHÁT: QUÁN KIM BLING -->
         <div class="input-group">
-            <label>📍 Địa chỉ giao đi (Quán Kim Bling):</label>
+            <label>📍 Địa chỉ giao đi (Quán Kim Bling - Cố định):</label>
             <input type="text" value="M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Q.6, TP.HCM" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
         </div>
 
-        <!-- BÚT BẬT ĐỊNH VỊ GPS -->
+        <!-- NÚT BẬT ĐỊNH VỊ GPS VỊ TRÍ KHÁCH -->
         <button type="button" class="btn-gps" id="btnGetLocation" onclick="autoDetectLocationAndCalculate()">
             🛰️ Bật định vị GPS vị trí của bạn
         </button>
@@ -171,7 +171,7 @@
         <!-- KẾT QUẢ KHOẢNG CÁCH VÀ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NHÚNG BẢN ĐỒ BẮT BUỘC ĐƯỜNG NGẮN NHẤT (ĐI BỘ/HẺM TẮT) -->
+        <!-- BẢN ĐỒ HIỂN THỊ ĐƯỜNG ĐI -->
         <div class="map-box" id="mapContainer">
             <iframe id="googleMapIframe" width="100%" height="220" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
             <div class="map-caption">🚶 Tuyến đường đi ngắn nhất từ Quán ➔ Khách (Tối ưu ngõ hẻm)</div>
@@ -179,11 +179,11 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A)
+        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A)
         const STORE_LAT = 10.7485; 
         const STORE_LNG = 106.6182;
 
-        // 1. Tự động lấy vị trí GPS của khách
+        // 1. Tự động lấy vị trí GPS của khách làm điểm đến
         function autoDetectLocationAndCalculate() {
             const statusText = document.getElementById('gpsStatusText');
             const addressInput = document.getElementById('customerAddress');
@@ -207,7 +207,6 @@
                     btnGet.style.display = 'none';
                     btnReset.style.display = 'block';
 
-                    // Chuyển tọa độ GPS thành tên đường
                     try {
                         let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
                         let data = await res.json();
@@ -231,7 +230,7 @@
             );
         }
 
-        // 2. Tra cứu khoảng cách thủ công theo địa chỉ khách gõ
+        // 2. Tra cứu thủ công theo địa chỉ khách gõ
         async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -264,7 +263,7 @@
             }
         }
 
-        // 3. Hàm tính số km, quy đổi tiền ship & vẽ bản đồ đi bộ ngắn nhất
+        // 3. Tính khoảng cách, quy đổi tiền ship & vẽ bản đồ từ Quán đến Khách (Chế độ đi bộ ngắn nhất)
         function processDistanceAndMap(userLat, userLng, customAddressText = null) {
             const distanceBox = document.getElementById('distanceResultBox');
             const mapContainer = document.getElementById('mapContainer');
@@ -275,14 +274,14 @@
 
             distanceBox.style.display = 'block';
             distanceBox.innerHTML = `
-                🛵 Lộ trình giao: <span style="color:#1e293b;">Từ Quán ➔ Nhà Khách</span><br>
+                🛵 Lộ trình giao: <span style="color:#1e293b;">Từ Quán Kim Bling ➔ Nhà Khách</span><br>
                 📐 Khoảng cách ước tính: <span style="color:#d32f2f;">~${distanceKm.toFixed(1)} km</span><br>
                 💰 Phí ship áp dụng: <span style="color:#d32f2f;">${shipFeeText}</span>
             `;
 
             mapContainer.style.display = 'block';
 
-            // saddr: Điểm xuất phát (Quán) | daddr: Điểm tới (Khách) | dirflg=w: Chế độ đi bộ (ngắn nhất)
+            // saddr: Cố định tọa độ Quán Kim Bling | daddr: Vị trí của Khách | dirflg=w: Đi bộ (ngắn nhất)
             let destParam = customAddressText ? encodeURIComponent(customAddressText) : `${userLat},${userLng}`;
             iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${destParam}&dirflg=w&output=embed`;
         }
