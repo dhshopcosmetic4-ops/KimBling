@@ -62,6 +62,7 @@
         .input-group {
             margin-top: 10px;
             margin-bottom: 10px;
+            position: relative;
         }
         .input-group label {
             font-size: 12px;
@@ -81,6 +82,33 @@
         }
         .input-group input:focus {
             border-color: #2196F3;
+        }
+
+        /* Danh sách gợi ý địa chỉ khi gõ tay */
+        #suggestionsList {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 0 0 8px 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .suggestion-item {
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #334155;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .suggestion-item:hover {
+            background: #f8fafc;
+            color: #2563eb;
         }
 
         .btn-manual {
@@ -161,7 +189,8 @@
         <!-- ĐIỂM ĐẾN: VỊ TRÍ CỦA BẠN / KHÁCH HÀNG -->
         <div class="input-group">
             <label>🏠 Điểm đến (Vị trí của bạn / Khách hàng):</label>
-            <input type="text" id="customerAddress" placeholder="Nhập địa chỉ nhận hàng (Ví dụ: 628/62 Hậu Giang)...">
+            <input type="text" id="customerAddress" placeholder="Nhập số nhà, tên đường (Ví dụ: 628/62 Hậu Giang)..." oninput="searchAddressSuggestions(this.value)">
+            <div id="suggestionsList"></div>
         </div>
 
         <button type="button" class="btn-manual" onclick="calculateDistanceManual()">
@@ -171,7 +200,7 @@
         <!-- KẾT QUẢ KHOẢNG CÁCH & PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- BẢN ĐỒ HIỂN THỊ CHỈ ĐƯỜNG GIỐNG GOOGLE MAPS -->
+        <!-- BẢN ĐỒ HIỂN THỊ CHỈ ĐƯỜNG -->
         <div class="map-box" id="mapContainer">
             <iframe id="googleMapIframe" width="100%" height="240" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
             <div class="map-caption">🗺️ Lộ trình chỉ đường trực tiếp từ Quán đến vị trí của bạn</div>
@@ -179,10 +208,11 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC MỚI CỦA QUÁN KIM BLING
         const STORE_LAT = 10.7490699; 
         const STORE_LNG = 106.6310222;
-        const STORE_NAME = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
+
+        let selectedUserLat = null;
+        let selectedUserLng = null;
 
         // 1. Lấy GPS vị trí khách làm điểm đến
         function autoDetectLocationAndCalculate() {
@@ -201,26 +231,26 @@
 
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
+                    selectedUserLat = position.coords.latitude;
+                    selectedUserLng = position.coords.longitude;
 
                     statusText.innerText = "✅ Lấy vị trí thành công!";
                     btnGet.style.display = 'none';
                     btnReset.style.display = 'block';
 
                     try {
-                        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&accept-language=vi`);
+                        let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedUserLat}&lon=${selectedUserLng}&accept-language=vi`);
                         let data = await res.json();
                         if (data && data.display_name) {
                             addressInput.value = data.display_name;
                         } else {
-                            addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                            addressInput.value = `${selectedUserLat.toFixed(5)}, ${selectedUserLng.toFixed(5)}`;
                         }
                     } catch(e) {
-                        addressInput.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                        addressInput.value = `${selectedUserLat.toFixed(5)}, ${selectedUserLng.toFixed(5)}`;
                     }
 
-                    processDistanceAndMap(userLat, userLng);
+                    processDistanceAndMap();
                 },
                 (error) => {
                     alert("Không thể lấy GPS. Vui lòng tự nhập địa chỉ vào ô bên dưới!");
@@ -231,11 +261,53 @@
             );
         }
 
-        // 2. Tra cứu thủ công
+        // 2. Gợi ý địa chỉ tự động khi khách gõ chữ (giúp chọn đúng địa chỉ, tránh sai lệch)
+        let searchTimeout;
+        async function searchAddressSuggestions(query) {
+            const listDiv = document.getElementById('suggestionsList');
+            if (!query || query.length < 3) {
+                listDiv.style.display = 'none';
+                return;
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    let searchQuery = query + ", Hồ Chí Minh";
+                    let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&accept-language=vi&addressdetails=1`);
+                    let data = await res.json();
+
+                    listDiv.innerHTML = '';
+                    if (data && data.length > 0) {
+                        listDiv.style.display = 'block';
+                        data.forEach(item => {
+                            let div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerText = item.display_name;
+                            div.onclick = () => {
+                                document.getElementById('customerAddress').value = item.display_name;
+                                selectedUserLat = parseFloat(item.lat);
+                                selectedUserLng = parseFloat(item.lon);
+                                listDiv.style.display = 'none';
+                                processDistanceAndMap();
+                            };
+                            listDiv.appendChild(div);
+                        });
+                    } else {
+                        listDiv.style.display = 'none';
+                    }
+                } catch(e) {
+                    listDiv.style.display = 'none';
+                }
+            }, 300);
+        }
+
+        // 3. Tra cứu thủ công nếu khách gõ xong bấm nút
         async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
             const statusText = document.getElementById('gpsStatusText');
+            document.getElementById('suggestionsList').style.display = 'none';
 
             if (!query || query.length < 4) {
                 alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
@@ -243,19 +315,25 @@
                 return;
             }
 
+            // Nếu đã có tọa độ từ gợi ý thì tính luôn
+            if (selectedUserLat && selectedUserLng) {
+                processDistanceAndMap();
+                return;
+            }
+
             statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
 
             try {
-                let searchQuery = query.toLowerCase().includes("hồ chí minh") || query.toLowerCase().includes("q.") ? query : (query + ", Hồ Chí Minh");
+                let searchQuery = query.toLowerCase().includes("hồ chí minh") ? query : (query + ", Hồ Chí Minh");
                 let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
                 let data = await res.json();
 
                 if (data && data.length > 0) {
-                    const userLat = parseFloat(data[0].lat);
-                    const userLng = parseFloat(data[0].lon);
+                    selectedUserLat = parseFloat(data[0].lat);
+                    selectedUserLng = parseFloat(data[0].lon);
 
                     statusText.innerText = "✅ Đã tìm thấy vị trí!";
-                    processDistanceAndMap(userLat, userLng);
+                    processDistanceAndMap();
                 } else {
                     alert("Không tìm thấy địa chỉ này. Vui lòng ghi rõ Số nhà, Đường, Phường/Quận!");
                     statusText.innerText = "❌ Không tìm thấy địa chỉ.";
@@ -265,13 +343,15 @@
             }
         }
 
-        // 3. Tính khoảng cách, phí ship và nhúng bản đồ chuẩn cấu trúc Google Maps
-        function processDistanceAndMap(userLat, userLng) {
+        // 4. Tính khoảng cách, phí ship và nhúng bản đồ chuẩn
+        function processDistanceAndMap() {
+            if (!selectedUserLat || !selectedUserLng) return;
+
             const distanceBox = document.getElementById('distanceResultBox');
             const mapContainer = document.getElementById('mapContainer');
             const iframeMap = document.getElementById('googleMapIframe');
 
-            let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, userLat, userLng);
+            let distanceKm = calculateDistanceKm(STORE_LAT, STORE_LNG, selectedUserLat, selectedUserLng);
             let shipFeeText = distanceKm <= 1.0 ? '0đ (Freeship bán kính < 1km)' : '10.000đ (Phụ thu trên 1km)';
 
             distanceBox.style.display = 'block';
@@ -282,18 +362,19 @@
             `;
 
             mapContainer.style.display = 'block';
-
-            // Dùng tọa độ chuẩn chính xác của quán làm saddr để tuyệt đối không bị lệch quán
-            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${userLat},${userLng}&dirflg=w&output=embed`;
+            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${selectedUserLat},${selectedUserLng}&dirflg=w&output=embed`;
         }
 
         function resetLocationCheck() {
+            selectedUserLat = null;
+            selectedUserLng = null;
             document.getElementById('btnGetLocation').style.display = 'block';
             document.getElementById('btnGetLocation').innerText = "🛰️ Bật định vị GPS vị trí của bạn";
             document.getElementById('btnResetLocation').style.display = 'none';
             document.getElementById('gpsStatusText').innerText = "💡 Đã reset. Bấm bật GPS hoặc nhập địa chỉ mới.";
             document.getElementById('distanceResultBox').style.display = 'none';
             document.getElementById('mapContainer').style.display = 'none';
+            document.getElementById('customerAddress').value = '';
         }
 
         function calculateDistanceKm(lat1, lon1, lat2, lon2) {
