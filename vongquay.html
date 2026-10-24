@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hôm Nay Uống Gì? - Vòng Quay May Mắn</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: transparent; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        
+        .wheel-container {
+            background: #1e1e2f;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .wheel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .wheel-title { font-size: 16px; font-weight: bold; color: #ffd700; }
+        .wheel-close { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; }
+
+        .wheel-subtitle { font-size: 11px; color: #aaa; margin-bottom: 12px; }
+
+        /* MÀN HÌNH CHỌN DANH MỤC */
+        .category-select-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 0;
+        }
+        .cat-option-btn {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            padding-left: 16px;
+            transition: background 0.2s;
+        }
+        .cat-option-btn:hover { background: rgba(33, 150, 243, 0.4); border-color: #2196F3; }
+
+        /* MÀN HÌNH VÒNG QUAY */
+        .wheel-play-screen { display: none; flex-direction: column; align-items: center; }
+        
+        .selected-cat-tag {
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
+            color: #90caf9;
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .wheel-box {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin: 0 auto 12px auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            transition: transform 4s cubic-bezier(0.15, 0.85, 0.12, 1);
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 20px solid #ff1744;
+            z-index: 20;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            border: 3px solid #ffd700;
+        }
+
+        .sector {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        }
+
+        .btn-action-row { display: flex; gap: 8px; width: 100%; }
+        .btn-spin {
+            flex: 2;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+        .btn-back-cat {
+            flex: 1;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .result-popup {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88);
+            border-radius: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 30;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="wheel-container">
+        <div class="wheel-header">
+            <div class="wheel-title">🎰 HÔM NAY UỐNG GÌ?</div>
+            <button class="wheel-close" onclick="closeWheel()">✕</button>
+        </div>
+        
+        <!-- MÀN HÌNH 1: CHỌN DANH MỤC -->
+        <div id="categoryScreen">
+            <div class="wheel-subtitle">Chọn danh mục bạn đang thèm để máy quay chọn giúp nhé!</div>
+            <div class="category-select-screen">
+                <button class="cat-option-btn" onclick="selectCategory('All')">📋 Tất cả các món</button>
+                <button class="cat-option-btn" onclick="selectCategory('MilkTea')">🧋 Trà & Trà Sữa</button>
+                <button class="cat-option-btn" onclick="selectCategory('Coffee')">☕ Cà Phê</button>
+                <button class="cat-option-btn" onclick="selectCategory('Yogurt')">🥛 Sữa Chua</button>
+                <button class="cat-option-btn" onclick="selectCategory('Food')">🍢 Đồ Ăn Vặt</button>
+            </div>
+        </div>
+
+        <!-- MÀN HÌNH 2: VÒNG QUAY -->
+        <div class="wheel-play-screen" id="wheelPlayScreen">
+            <div class="wheel-subtitle" style="margin-bottom: 4px;">Quay để máy chọn giúp bạn món ngon!</div>
+            <div class="selected-cat-tag" id="selectedCatLabel">Danh mục: Tất cả</div>
+
+            <div class="wheel-box">
+                <div class="wheel-pointer"></div>
+                <div class="wheel-center">🎡</div>
+                <div class="wheel" id="wheel"></div>
+            </div>
+
+            <div class="btn-action-row">
+                <button class="btn-back-cat" onclick="goBackToCategories()">◀ Chọn lại</button>
+                <button class="btn-spin" id="btnSpin" onclick="startSpin()">🎡 QUAY NGAY</button>
+            </div>
+        </div>
+
+        <!-- POPUP KẾT QUẢ -->
+        <div class="result-popup" id="resultPopup">
+            <div style="font-size: 13px; color: #aaa; margin-bottom: 6px;">🎉 Máy đã chọn cho bạn:</div>
+            <div id="resultDishName" style="font-size: 18px; font-weight: bold; color: #ffd700; margin-bottom: 16px; text-align: center;">Tên Món</div>
+            <button onclick="selectThisDish()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; margin-bottom: 8px;">🛒 XEM & ĐẶT MÓN NÀY</button>
+            <button onclick="closeResultPopup()" style="background: transparent; border: 1px solid #aaa; color: #aaa; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">Quay lại</button>
+        </div>
+    </div>
+
+    <script>
+        let allMenu = [
+            { id: 1, name: "Trà Tắc Thái", price: 15000, category: "MilkTea" },
+            { id: 2, name: "Trà Sữa Đài Loan", price: 25000, category: "MilkTea" },
+            { id: 3, name: "Matcha Latte", price: 30000, category: "MilkTea" },
+            { id: 4, name: "Cà Phê Sữa Đá", price: 20000, category: "Coffee" },
+            { id: 5, name: "Sữa Chua Phô Mai", price: 25000, category: "Yogurt" },
+            { id: 6, name: "Chân Gà Sốt Thái", price: 40000, category: "Food" }
+        ];
+
+        let activeMenu = [];
+        let currentRotation = 0;
+        let isSpinning = false;
+        let selectedWinningItem = null;
+
+        const colors = ["#e91e63", "#2196F3", "#ff9800", "#4CAF50", "#9c27b0", "#00bcd4", "#ffeb3b", "#3f51b5", "#009688"];
+
+        // Nhận dữ liệu thực tế từ menu.html chính
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'LOAD_WHEEL_MENU' && event.data.menuData) {
+                allMenu = event.data.menuData;
+            }
+        });
+
+        if (window.parent && window.parent !== window) {
+            try { window.parent.postMessage({ type: 'REQUEST_SYNC_MENU' }, '*'); } catch(e) {}
+        }
+
+        try {
+            const cached = localStorage.getItem('kimbling_online_cached_menu');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && parsed.length > 0) allMenu = parsed;
+            }
+        } catch(e) {}
+
+        function selectCategory(catKey) {
+            let catNames = {
+                'All': 'Tất cả các món',
+                'MilkTea': 'Trà & Trà Sữa',
+                'Coffee': 'Cà Phê',
+                'Yogurt': 'Sữa Chua',
+                'Food': 'Đồ Ăn Vặt'
+            };
+
+            if (catKey === 'All') {
+                activeMenu = [...allMenu];
+            } else {
+                activeMenu = allMenu.filter(item => {
+                    const n = (item.name || '').toLowerCase();
+                    const c = (item.category || '');
+                    if (catKey === 'MilkTea') return c === 'MilkTea' || n.includes('tra') || n.includes('matcha');
+                    if (catKey === 'Coffee') return c === 'Coffee' || n.includes('ca phe') || n.includes('cafe') || n.includes('bac siu');
+                    if (catKey === 'Yogurt') return c === 'Yogurt' || n.includes('sua chua');
+                    if (catKey === 'Food') return c === 'Food' || n.includes('chan ga') || n.includes('banh trang') || n.includes('xuc xich') || n.includes('tokbokki');
+                    return true;
+                });
+            }
+
+            if (activeMenu.length === 0) {
+                activeMenu = [...allMenu]; // Nếu danh mục trống thì lấy tất cả để tránh lỗi
+            }
+
+            document.getElementById('selectedCatLabel').innerText = "Danh mục: " + (catNames[catKey] || 'Tất cả');
+            document.getElementById('categoryScreen').style.display = 'none';
+            document.getElementById('wheelPlayScreen').style.display = 'flex';
+            
+            initWheel();
+        }
+
+        function goBackToCategories() {
+            document.getElementById('wheelPlayScreen').style.display = 'none';
+            document.getElementById('categoryScreen').style.display = 'flex';
+        }
+
+        function initWheel() {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+            const total = activeMenu.length;
+            const sliceAngle = 360 / total;
+
+            activeMenu.forEach((item, index) => {
+                const angle = index * sliceAngle;
+                const sector = document.createElement('div');
+                sector.className = 'sector';
+                sector.style.transform = `rotate(${angle}deg) skewY(${90 - sliceAngle}deg)`;
+                sector.style.background = colors[index % colors.length];
+                
+                const textSpan = document.createElement('span');
+                textSpan.innerText = item.name;
+                textSpan.style.transform = `skewY(${-(90 - sliceAngle)}deg) rotate(${sliceAngle / 2}deg)`;
+                textSpan.style.position = 'absolute';
+                textSpan.style.left = '30px';
+                textSpan.style.width = '80px';
+                textSpan.style.overflow = 'hidden';
+                textSpan.style.textOverflow = 'ellipsis';
+                textSpan.style.whiteSpace = 'nowrap';
+                
+                sector.appendChild(textSpan);
+                wheel.appendChild(sector);
+            });
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('btnSpin').disabled = true;
+
+            const total = activeMenu.length;
+            const winningIndex = Math.floor(Math.random() * total);
+            selectedWinningItem = activeMenu[winningIndex];
+
+            const sliceAngle = 360 / total;
+            const extraRounds = 5;
+            const targetAngle = 360 - (winningIndex * sliceAngle + sliceAngle / 2);
+            currentRotation += extraRounds * 360 + (targetAngle - (currentRotation % 360));
+
+            const wheelEl = document.getElementById('wheel');
+            wheelEl.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                document.getElementById('btnSpin').disabled = false;
+                document.getElementById('resultDishName').innerText = selectedWinningItem.name + " (" + (selectedWinningItem.price / 1000) + "k)";
+                document.getElementById('resultPopup').style.display = 'flex';
+            }, 4000);
+        }
+
+        function closeResultPopup() {
+            document.getElementById('resultPopup').style.display = 'none';
+        }
+
+        function selectThisDish() {
+            if (window.parent && selectedWinningItem) {
+                window.parent.postMessage({
+                    type: 'OPEN_DISH_FROM_WHEEL',
+                    dishId: selectedWinningItem.id,
+                    dishName: selectedWinningItem.name
+                }, '*');
+            }
+            closeWheel();
+        }
+
+        function closeWheel() {
+            if (window.parent) {
+                window.parent.postMessage('CLOSE_GAME_POPUP', '*');
+            }
+        }
+    </script>
+</body>
+</html>

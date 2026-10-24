@@ -778,6 +778,14 @@
         </div>
     </div>
 
+    <!-- POPUP VÒNG QUAY CHỌN MÓN -->
+    <div class="banner-popup-overlay" id="wheelPopupModal" style="display: none;">
+        <div class="banner-popup-card" style="background: transparent; box-shadow: none; max-width: 400px; padding: 0;">
+            <iframe src="vongquay.html" id="wheelIframe" style="width: 100%; height: 520px; border: none; border-radius: 20px;"></iframe>
+        </div>
+    </div>
+
+
     <header>
         <button class="admin-trigger-btn" onclick="openAdminModal()">👑 Cài đặt Web</button>
         <h1>Kim Bling Coffee & Tea</h1>
@@ -791,16 +799,21 @@
         🚚 Phí ship: <span>Freeship</span> bán kính 1km (Xa hơn phụ thu 10k)
     </div>
 
-       <!-- HÀNG NÚT CÀI ỨNG DỤNG & MỞ HỘP QUÀ MAY MẮN -->
+           <!-- HÀNG NÚT CÀI ỨNG DỤNG, HỘP QUÀ & VÒNG QUAY CHỌN MÓN -->
     <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 12px 2px 12px;">
         <!-- Nút 1: Cài App Kim Bling -->
         <button onclick="showInstallPrompt()" style="flex: 1; background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
-            📱 Cài App Kim Bling
+            📱 Cài App
         </button>
 
-        <!-- Nút 2: Mở Popup Hộp Quà May Mắn -->
+        <!-- Nút 2: Hộp Quà May Mắn -->
         <button onclick="openLuckyGiftPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #e91e63, #d81b60); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(233, 30, 99, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
-            🎁 Hộp Quà May Mắn
+            🎁 Hộp Quà
+        </button>
+
+        <!-- Nút 3: Vòng Quay Chọn Món (MỚI) -->
+        <button onclick="openWheelPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #2196F3, #0d47a1); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(33, 150, 243, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+            🎡 Hôm Nay Uống Gì?
         </button>
     </div>
 
@@ -2640,6 +2653,39 @@ document.addEventListener('DOMContentLoaded', checkAndApplyDiscountCode);
             }
         }
 
+ // Mở popup Vòng Quay Chọn Món
+function openWheelPopup() {
+    const modal = document.getElementById('wheelPopupModal');
+    const iframe = document.getElementById('wheelIframe');
+    
+    if (modal) modal.style.display = 'flex';
+    
+    if (iframe && iframe.contentWindow && menu.length > 0) {
+        iframe.contentWindow.postMessage({ type: 'LOAD_WHEEL_MENU', menuData: menu }, '*');
+    }
+}
+
+
+        // Đóng popup Vòng Quay
+        function closeWheelPopup() {
+            const modal = document.getElementById('wheelPopupModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Lắng nghe tín hiệu từ Vòng Quay gửi sang
+        window.addEventListener('message', function(event) {
+            if (event.data === 'CLOSE_GAME_POPUP') {
+                closeWheelPopup();
+            }
+            if (event.data && event.data.type === 'OPEN_DISH_FROM_WHEEL') {
+                closeWheelPopup();
+                const dishId = event.data.dishId;
+                const dishName = event.data.dishName;
+                if (typeof openTiktokFromHistory === 'function') {
+                    openTiktokFromHistory(dishId, dishName);
+                }
+            }
+        });
 
     </script>
 
