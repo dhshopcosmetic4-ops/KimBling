@@ -227,14 +227,14 @@
                     btnGet.innerText = "🛰️ Bật định vị GPS vị trí của bạn";
                 },
                 { 
-                    enableHighAccuracy: true, // Bắt buộc dùng GPS phần cứng chính xác cao thay vì trạm phát sóng wifi/cell tower (tránh bị lệch sang khu vực khác như An Lạc)
+                    enableHighAccuracy: true, 
                     timeout: 15000, 
                     maximumAge: 0 
                 }
             );
         }
 
-        // 2. Tra cứu thủ công theo địa chỉ khách gõ (có giới hạn vùng tìm kiếm quanh TP.HCM)
+        // 2. Tra cứu thủ công theo địa chỉ khách gõ
         async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -249,15 +249,10 @@
             statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
 
             try {
-                // Thêm tham số bounded=1 và viewbox quanh khu vực TP.HCM để tránh bị nhảy nhầm sang tỉnh/khu vực khác
-                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ", Hồ Chí Minh")}&limit=1&accept-language=vi`);
+                // Thêm ", Hồ Chí Minh" vào sau câu query để ép kết quả tìm kiếm nằm trong khu vực thành phố
+                let searchQuery = query.toLowerCase().includes("hồ chí minh") || query.toLowerCase().includes("q.") || query.toLowerCase().includes("quận") ? query : (query + ", Hồ Chí Minh");
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=vi`);
                 let data = await res.json();
-
-                if (!data || data.length === 0) {
-                    // Nếu tìm với HCM không ra thì thử tìm rộng hơn
-                    let resFallback = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=vi`);
-                    data = await resFallback.json();
-                }
 
                 if (data && data.length > 0) {
                     const userLat = parseFloat(data[0].lat);
@@ -274,7 +269,7 @@
             }
         }
 
-        // 3. Tính khoảng cách, quy đổi tiền ship & vẽ bản đồ từ Quán đến Khách (Chế độ đi bộ ngắn nhất)
+        // 3. Tính khoảng cách, quy đổi tiền ship & vẽ bản đồ chuẩn xác tuyệt đối bằng TỌA ĐỘ
         function processDistanceAndMap(userLat, userLng, customAddressText = null) {
             const distanceBox = document.getElementById('distanceResultBox');
             const mapContainer = document.getElementById('mapContainer');
@@ -292,9 +287,9 @@
 
             mapContainer.style.display = 'block';
 
-            // saddr: Cố định tọa độ Quán Kim Bling | daddr: Vị trí của Khách | dirflg=w: Đi bộ (ngắn nhất)
-            let destParam = customAddressText ? encodeURIComponent(customAddressText) : `${userLat},${userLng}`;
-            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${destParam}&dirflg=w&output=embed`;
+            // DÙNG TUYỆT ĐỐI CẶP TỌA ĐỘ (STORE_LAT, STORE_LNG) LÀM SADDR ĐỂ KHÔNG BAO GIỜ BỊ LỆCH QUÁN ĐI NƠI KHÁC
+            // daddr: Tọa độ của khách (userLat, userLng) | dirflg=w: Đi bộ (ngắn nhất qua hẻm)
+            iframeMap.src = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${userLat},${userLng}&dirflg=w&output=embed`;
         }
 
         // Reset dữ liệu
