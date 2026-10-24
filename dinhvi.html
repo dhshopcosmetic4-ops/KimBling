@@ -130,7 +130,7 @@
     <div class="card">
         <div class="title">🛵 Tính Phí Ship - Kim Bling Coffee</div>
 
-        <!-- HIỂN THỊ CỐ ĐỊNH ĐỊA CHỈ QUÁN -->
+        <!-- ĐỊA CHỈ QUÁN CỐ ĐỊNH -->
         <div class="input-group">
             <label>📍 Điểm đi (Quán Kim Bling - Cố định):</label>
             <input type="text" value="M9 Cư Xá Phú Lâm A, Q.6" disabled style="background: #f1f5f9; color: #475569; font-weight: bold;">
@@ -158,7 +158,7 @@
         <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NÚT MỞ BẢN ĐỒ CHẾ ĐỘ ĐI BỘ QUA HẺM -->
+        <!-- NÚT MỞ BẢN ĐỒ CHẾ ĐỘ ĐI BỘ / HẺM -->
         <div class="map-buttons" id="mapButtonsGroup">
             <a id="btnAppleMap" href="#" target="_blank" class="btn-map-app btn-apple">🍏 Xem Apple Maps</a>
             <a id="btnGoogleMap" href="#" target="_blank" class="btn-map-app btn-google">🗺️ Xem Google Maps</a>
@@ -167,10 +167,10 @@
 
     <script>
         // ==========================================
-        // CỐ ĐỊNH TUYỆT ĐỐI TỌA ĐỘ CHUẨN CỦA QUÁN KIM BLING
+        // TỌA ĐỘ CHUẨN XÁC 100% CỦA QUÁN KIM BLING
         // ==========================================
-        const STORE_LAT = 10.7490699; 
-        const STORE_LNG = 106.6310222;
+        const STORE_LAT = 10.74955; 
+        const STORE_LNG = 106.63099;
         const STORE_ADDR = "M9 Cư Xá Phú Lâm A, Phường Phú Lâm, Quận 6, Hồ Chí Minh";
 
         // 1. Trường hợp BẬT GPS TỰ ĐỘNG
@@ -203,7 +203,7 @@
             );
         }
 
-        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Xuất phát từ tọa độ cố định của quán)
+        // 2. Trường hợp NHẬP ĐỊA CHỈ BẰNG TAY (Xuất phát từ tọa độ chuẩn của quán)
         function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -233,7 +233,7 @@
                 💡 Bấm nút bản đồ bên dưới để mở chế độ đi bộ/hẻm chính xác nhất!
             `;
 
-            // Khóa chặt điểm đi (saddr) là tọa độ chuẩn của Quán Kim Bling, điểm đến (daddr) là địa chỉ khách nhập
+            // Khóa chặt điểm đi (saddr) là tọa độ chuẩn của Quán Kim Bling, điểm đến (daddr) là địa chỉ khách nhập (chế độ đi bộ w / walking)
             appleBtn.href = `https://maps.apple.com/?saddr=${STORE_LAT},${STORE_LNG}&daddr=${encodeURIComponent(fullAddress)}&dirflg=w`;
             googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
             mapGroup.style.display = 'flex';
@@ -247,7 +247,7 @@
             const googleBtn = document.getElementById('btnGoogleMap');
 
             try {
-                // Dùng chế độ /foot/ (đi bộ/hẻm) xuất phát từ STORE_LNG, STORE_LAT cố định
+                // Dùng chế độ /foot/ (đi bộ/hẻm nhỏ) xuất phát từ STORE_LNG, STORE_LAT cố định
                 let res = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
                 let data = await res.json();
 
