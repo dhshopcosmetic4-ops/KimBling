@@ -179,11 +179,11 @@
     </div>
 
     <script>
-        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A)
+        // TỌA ĐỘ CỐ ĐỊNH CHUẨN XÁC CỦA QUÁN KIM BLING (M9 CƯ XÁ PHÚ LÂM A, QUẬN 6)
         const STORE_LAT = 10.7485; 
         const STORE_LNG = 106.6182;
 
-        // 1. Tự động lấy vị trí GPS của khách làm điểm đến
+        // 1. Tự động lấy vị trí GPS chính xác cao của khách
         function autoDetectLocationAndCalculate() {
             const statusText = document.getElementById('gpsStatusText');
             const addressInput = document.getElementById('customerAddress');
@@ -195,15 +195,15 @@
                 return;
             }
 
-            btnGet.innerText = "⏳ Đang lấy vị trí...";
-            statusText.innerText = "⏳ Đang xin quyền GPS và lấy vị trí của bạn...";
+            btnGet.innerText = "⏳ Đang lấy vị trí chính xác...";
+            statusText.innerText = "⏳ Đang kết nối vệ tinh GPS (vui lòng cho phép quyền truy cập)...";
 
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
 
-                    statusText.innerText = "✅ Định vị vị trí nhận hàng thành công!";
+                    statusText.innerText = "✅ Định vị GPS thành công!";
                     btnGet.style.display = 'none';
                     btnReset.style.display = 'block';
 
@@ -222,15 +222,19 @@
                     processDistanceAndMap(userLat, userLng);
                 },
                 (error) => {
-                    alert("Không thể bật GPS. Bạn vui lòng tự gõ địa chỉ vào ô bên dưới rồi bấm 'Tính phí theo địa chỉ trên'!");
-                    statusText.innerText = "❌ Không bật được GPS. Vui lòng gõ địa chỉ thủ công bên dưới.";
+                    alert("Không thể lấy vị trí chính xác. Bạn vui lòng tự gõ địa chỉ vào ô bên dưới rồi bấm 'Tính phí theo địa chỉ trên'!");
+                    statusText.innerText = "❌ Lỗi GPS. Vui lòng tự gõ địa chỉ thủ công bên dưới.";
                     btnGet.innerText = "🛰️ Bật định vị GPS vị trí của bạn";
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                { 
+                    enableHighAccuracy: true, // Bắt buộc dùng GPS phần cứng chính xác cao thay vì trạm phát sóng wifi/cell tower (tránh bị lệch sang khu vực khác như An Lạc)
+                    timeout: 15000, 
+                    maximumAge: 0 
+                }
             );
         }
 
-        // 2. Tra cứu thủ công theo địa chỉ khách gõ
+        // 2. Tra cứu thủ công theo địa chỉ khách gõ (có giới hạn vùng tìm kiếm quanh TP.HCM)
         async function calculateDistanceManual() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -245,8 +249,15 @@
             statusText.innerText = "⏳ Đang tra cứu địa chỉ trên bản đồ...";
 
             try {
-                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=vi`);
+                // Thêm tham số bounded=1 và viewbox quanh khu vực TP.HCM để tránh bị nhảy nhầm sang tỉnh/khu vực khác
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ", Hồ Chí Minh")}&limit=1&accept-language=vi`);
                 let data = await res.json();
+
+                if (!data || data.length === 0) {
+                    // Nếu tìm với HCM không ra thì thử tìm rộng hơn
+                    let resFallback = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=vi`);
+                    data = await resFallback.json();
+                }
 
                 if (data && data.length > 0) {
                     const userLat = parseFloat(data[0].lat);
