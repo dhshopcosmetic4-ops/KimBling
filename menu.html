@@ -21,6 +21,17 @@
 
 
     <style>
+
+@keyframes smoothShake {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.01) translateY(-2px); }
+}
+.shake-popup {
+    animation: smoothShake 1.2s ease-in-out infinite;
+}
+
+
+
         /* Ép các ô nhập thông tin trong form thanh toán chuẩn 16px để iOS không bị zoom tràn */
         .checkout-card input[type="text"], 
         .checkout-card input[type="number"], 
@@ -2172,7 +2183,7 @@
             document.getElementById('checkoutModal').style.display = 'none';
         }
 
-        function openHistoryModal() {
+                function openHistoryModal() {
             document.body.classList.add('no-scroll');
             const container = document.getElementById('historyListContainer');
             let historyData = [];
@@ -2194,19 +2205,15 @@
                                 let catType = getCategoryType(i.name, i.category);
                                 let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
                                 let imgHtml = i.imageUrl ? `<img src="${i.imageUrl}" alt="${i.name}" onerror="this.parentNode.innerHTML='${fallbackIcon}';">` : fallbackIcon;
-                                
-                                let foundMenuObj = menu.find(m => m.id === i.id || removeDiacritics(m.name) === removeDiacritics(i.name));
-                                let targetId = foundMenuObj ? foundMenuObj.id : (i.id || 0);
-                                let safeDishName = i.name.replace(/'/g, "\\'");
 
                                 return `
-                                    <div class="history-item-detail" onclick="openTiktokFromHistory(${targetId}, '${safeDishName}')" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 0; border-bottom: 1px dashed #eee; cursor: pointer;">
+                                    <div class="history-item-detail" onclick="viewOrderDetailsPopup(${idx})" style="display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 4px 0; border-bottom: 1px dashed #eee; cursor: pointer;">
                                         <div class="history-item-thumb" style="width: 42px; height: 42px; border-radius: 6px; overflow: hidden; background: #f0f4f8; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px;">${imgHtml}</div>
                                         <div style="flex: 1;">
                                             <div style="font-weight: bold; color: #1976D2;">${i.name} (x${i.qty})</div>
                                             <div style="font-size: 11px; color: #666;">${i.options}</div>
                                         </div>
-                                        <div style="font-size: 11px; color: #2196F3; font-weight: bold;">🖼️ Xem hình</div>
+                                        <div style="font-size: 11px; color: #2196F3; font-weight: bold;">📋 Xem lại đơn</div>
                                     </div>
                                 `;
                             }).join('')}
@@ -2217,6 +2224,7 @@
             }
             document.getElementById('historyModal').style.display = 'flex';
         }
+
 
         function closeHistoryModal() {
             document.body.classList.remove('no-scroll');
@@ -2358,7 +2366,7 @@
             }
         }
 
-        async function processOrderSubmit() {
+                                async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -2391,20 +2399,97 @@
             const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
             setTimeout(() => {
-                btnSubmit.style.display = 'none';
-                document.getElementById('estimatedTimeNotice').innerText = `⏱️ Dự kiến sẵn sàng lúc: ${timeString}`;
-                document.getElementById('successNotify').style.display = 'block';
+                let itemsSummaryHTML = cart.map(item => `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
+                        <div>
+                            <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
+                            <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
+                        </div>
+                        <span style="font-weight: bold; color: #d32f2f;">${formatPrice(item.price * item.qty)}</span>
+                    </div>
+                `).join('');
 
+                let shipNoticeText = shipFee === 0 
+                    ? '<span style="color: #2e7d32; font-weight: bold; font-size: 14px;">🎉 FREESHIP (0đ)</span>' 
+                    : `<span style="color: #d32f2f; font-weight: bold; font-size: 15px;">🚚 ${formatPrice(shipFee)}</span>`;
+
+                // Nếu khách chọn chuyển khoản, hiển thị thêm phần QR code ngay trong popup thành công để khách không bị mất mã
+                let transferSectionHTML = '';
                 if (payMethod === 'Chuyển khoản') {
-                    document.getElementById('vietQRImage').src = qrImageUrl;
-                    document.getElementById('btnPayOnlineLink').href = qrImageUrl;
-                    document.getElementById('transferAmountNotice').innerText = `Cần thanh toán: ${Number(total).toLocaleString('vi-VN')}đ`;
-                    document.getElementById('transferBox').style.display = 'block';
-                    document.getElementById('btnZaloOptional').style.display = 'block';
-                } else {
-                    document.getElementById('transferBox').style.display = 'none';
-                    document.getElementById('btnZaloOptional').style.display = 'none';
+                    transferSectionHTML = `
+                        <div style="background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 10px; padding: 12px; margin-top: 10px; text-align: center;">
+                            <div style="font-weight: bold; color: #0288d1; font-size: 13px; margin-bottom: 4px;">💳 MÃ QR THANH TOÁN CHUYỂN KHOẢN</div>
+                            <div style="font-size: 13px; color: #d32f2f; font-weight: bold;">Cần thanh toán: ${Number(total).toLocaleString('vi-VN')}đ</div>
+                            <div style="font-size: 11px; color: #333; margin-top: 2px;">Techcombank: <b>19076231479012</b> - LE MINH DUNG</div>
+                            <div>
+                                <img src="${qrImageUrl}" alt="Mã QR Chuyển Khoản" style="width: 160px; height: 160px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 8px 0;">
+                            </div>
+                            <a href="${qrImageUrl}" target="_blank" style="display: block; background: #2196F3; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; margin-top: 4px;">Mở Link Ảnh QR Gốc</a>
+                        </div>
+                    `;
                 }
+
+                let existingPopup = document.getElementById('orderSuccessModalOverlay');
+                if (existingPopup) existingPopup.remove();
+
+                let modalOverlay = document.createElement('div');
+                modalOverlay.id = 'orderSuccessModalOverlay';
+                modalOverlay.style.cssText = "display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(3px);";
+
+                modalOverlay.innerHTML = `
+                    <div class="shake-popup" style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); position: relative; max-height: 90vh; overflow-y: auto; border: 3px solid #2e7d32;">
+                        
+                        <!-- DẤU X TẮT GÓC TRÊN -->
+                        <button onclick="closeSuccessOrderPopup()" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333;">✕</button>
+
+                        <div style="text-align: center; margin-bottom: 12px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;">
+                                ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!
+                            </div>
+                            <div style="background: #e8f5e9; border: 1px dashed #4caf50; border-radius: 8px; padding: 8px; margin-top: 6px;">
+                                <span style="font-size: 13px; font-weight: bold; color: #2e7d32; display: block;">
+                                    👩‍🍳 QUÁN ĐÃ NHẬN ĐƠN VÀ ĐANG CHUẨN BỊ MÓN!
+                                </span>
+                                <span style="font-size: 12px; font-weight: bold; color: #d32f2f; display: block; margin-top: 2px;">
+                                    ⏱️ Dự kiến sẵn sàng lúc: ${timeString}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- KHUNG TÓM TẮT MÓN VÀ PHÍ SHIP NỔI BẬT -->
+                        <div style="background: #fdfdfd; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 15px; text-align: left;">
+                            <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                                📋 XÁC NHẬN ĐƠN HÀNG ĐÃ GỬI
+                            </div>
+                            
+                            <div style="max-height: 120px; overflow-y: auto; margin-bottom: 8px;">
+                                ${itemsSummaryHTML}
+                            </div>
+
+                            <!-- Phí ship nổi bật -->
+                            <div style="background: #fff3e0; border: 1.5px solid #ff9800; padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 13px; font-weight: bold; color: #e65100;">🛵 PHÍ GIAO HÀNG (SHIP):</span>
+                                ${shipNoticeText}
+                            </div>
+
+                            <!-- Tổng cộng -->
+                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; color: #333; margin-top: 4px; padding-top: 6px; border-top: 1px solid #eee;">
+                                <span>TỔNG THANH TOÁN:</span>
+                                <span style="color: #d32f2f; font-size: 17px;">${formatPrice(total)}</span>
+                            </div>
+
+                            ${transferSectionHTML}
+                        </div>
+
+                        <!-- NÚT ĐÓNG POPUP -->
+                        <button onclick="closeSuccessOrderPopup()" style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.4);">
+                            ĐÓNG & TIẾP TỤC XEM MENU
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modalOverlay);
+
+                closeCheckoutModal();
 
                 localStorage.removeItem('kimbling_applied_discount_code');
                 localStorage.removeItem('kimbling_applied_discount_value');
@@ -2412,18 +2497,19 @@
                 const noticeBox = document.getElementById('appliedDiscountNotice');
                 if (noticeBox) noticeBox.style.display = 'none';
 
-                const iframe = document.getElementById('gameIframe');
-                if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*');
-                }
-
-                alert("🎉 ĐÃ GỬI ĐƠN THÀNH CÔNG!\n\nQuán tặng bạn thêm 5 lượt mở Hộp Quà May Mắn để nhận mã giảm giá cho đơn tiếp theo!");
-                openLuckyGiftPopup();
+                const gameModal = document.getElementById('gamePopupModal');
+                if (gameModal) gameModal.style.display = 'none';
 
                 cart = [];
                 renderCartBar();
             }, 600);
         }
+
+        function closeSuccessOrderPopup() {
+            const modal = document.getElementById('orderSuccessModalOverlay');
+            if (modal) modal.remove();
+        }
+
 
         function openZaloChatManual() {
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
@@ -2755,6 +2841,99 @@
         function closeDinhViPopup() {
             document.getElementById('dinhviPopupModal').style.display = 'none';
         }
+
+                function viewOrderDetailsPopup(index) {
+            let historyData = [];
+            try {
+                historyData = JSON.parse(localStorage.getItem('kimbling_order_history') || '[]');
+            } catch(e) { historyData = []; }
+
+            const order = historyData[index];
+            if (!order) return;
+
+            let itemsHTML = order.items.map(item => `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
+                    <div>
+                        <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
+                        <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
+                    </div>
+                    <span style="font-weight: bold; color: #d32f2f;">${formatPrice(item.price * item.qty)}</span>
+                </div>
+            `).join('');
+
+            // Tính tiền món và tính ngược lại phí ship từ tổng tiền đã lưu trong lịch sử
+            let foodSubtotal = 0;
+            order.items.forEach(i => { foodSubtotal += i.price * i.qty; });
+            
+            // Lấy con số tổng tiền (ví dụ: "45k" -> 45000)
+            let totalNumeric = parseInt(order.totalStr.replace(/[^0-9]/g, '')) * 1000;
+            let shipFee = Math.max(0, totalNumeric - foodSubtotal);
+
+            let shipDisplayHtml = shipFee === 0 
+                ? '<span style="color: #2e7d32; font-weight: bold;">🎉 Freeship (0đ)</span>' 
+                : `<span style="color: #d32f2f; font-weight: bold;">${formatPrice(shipFee)}</span>`;
+
+            let existingPopup = document.getElementById('orderDetailReviewModal');
+            if (existingPopup) existingPopup.remove();
+
+            let modalOverlay = document.createElement('div');
+            modalOverlay.id = 'orderDetailReviewModal';
+            modalOverlay.style.cssText = "display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(3px);";
+
+            modalOverlay.innerHTML = `
+                <div class="shake-popup" style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); position: relative; max-height: 90vh; overflow-y: auto; border: 3px solid #2196F3;">
+                    
+                    <!-- NÚT DẤU X ĐÓNG -->
+                    <button onclick="document.getElementById('orderDetailReviewModal').remove()" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333;">✕</button>
+
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <div style="font-size: 17px; font-weight: bold; color: #1976D2; margin-bottom: 4px;">
+                            📜 CHI TIẾT ĐƠN HÀNG
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
+                            Thời gian đặt: <b>${order.time}</b>
+                        </div>
+                    </div>
+
+                    <!-- KHUNG CHI TIẾT MÓN VÀ GIÁ -->
+                    <div style="background: #fdfdfd; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 15px; text-align: left;">
+                        <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                            📋 Danh sách món đã chọn
+                        </div>
+                        
+                        <div style="max-height: 140px; overflow-y: auto; margin-bottom: 8px;">
+                            ${itemsHTML}
+                        </div>
+
+                        <!-- Tiền món và Phí ship -->
+                        <div style="font-size: 13px; color: #555; border-top: 1px solid #eee; padding-top: 8px; margin-top: 6px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Tiền món:</span>
+                                <span style="font-weight: bold;">${formatPrice(foodSubtotal)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Phí ship:</span>
+                                ${shipDisplayHtml}
+                            </div>
+                        </div>
+
+                        <!-- Tổng cộng -->
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; color: #333; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee;">
+                            <span>TỔNG THANH TOÁN:</span>
+                            <span style="color: #d32f2f; font-size: 17px;">${order.totalStr}</span>
+                        </div>
+                    </div>
+
+                    <!-- NÚT ĐÓNG -->
+                    <button onclick="document.getElementById('orderDetailReviewModal').remove()" style="width: 100%; background: #2196F3; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(33,150,243,0.4);">
+                        ĐÓNG
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+        }
+
+
     </script>
 </body>
 </html>
