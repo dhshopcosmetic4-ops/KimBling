@@ -267,7 +267,7 @@
         const configModalContent = document.getElementById('config-modal-content');
         const toastMsg = document.getElementById('toast-msg');
 
-        // Tải cấu hình tức thì từ localStorage (Stale-While-Revalidate pattern)
+        // Tải cấu hình tức thì từ localStorage
         function loadConfig() {
             try {
                 const saved = localStorage.getItem('vietqr_calc_config');
@@ -388,17 +388,30 @@
             qrLoading.classList.remove('hidden');
             qrImg.classList.add('hidden');
 
+            let qrLoaded = false;
+
             qrImg.onload = function() {
+                qrLoaded = true;
                 qrLoading.classList.add('hidden');
                 qrImg.classList.remove('hidden');
             };
 
             qrImg.onerror = function() {
+                qrLoaded = true;
                 qrLoading.innerHTML = '<span class="text-xs text-red-500 font-medium">Lỗi tải mã QR. Vui lòng thử lại.</span>';
             };
 
             qrImg.src = qrUrl;
             downloadBtn.href = qrUrl;
+
+            // Phòng hờ mạng chậm hoặc API VietQR phản hồi lâu bị kẹt loading (Timeout sau 4 giây)
+            setTimeout(() => {
+                if (!qrLoaded) {
+                    qrLoaded = true;
+                    qrLoading.classList.add('hidden');
+                    qrImg.classList.remove('hidden');
+                }
+            }, 4000);
 
             openModal(qrModal, qrModalContent);
         }
@@ -442,7 +455,6 @@
             openModal(configModal, configModalContent);
         }
 
-        // Khởi chạy ngay lập tức khi trang vừa load
         loadConfig();
 
         document.addEventListener('DOMContentLoaded', () => {
