@@ -158,17 +158,28 @@
         <a id="btnGoogleMap" href="#" target="_blank" class="btn-google-map">
             🗺️ Xem chỉ đường chi tiết trên Google Maps
         </a>
+
+        <!-- BẢNG GIÁ PHÍ SHIP CÔNG KHAI -->
+        <div style="margin-top: 15px; padding: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 12px; color: #334155;">
+            <div style="font-weight: bold; font-size: 13px; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                📋 Bảng Giá Phí Giao Hàng (Ship) Quán Kim Bling:
+            </div>
+            <ul style="margin-left: 18px; line-height: 1.6;">
+                <li>🎉 <b>Bán kính dưới 1km:</b> <span style="color: #28a745; font-weight: bold;">FREESHIP (0đ)</span></li>
+                <li>🛵 <b>Từ 1km - 2km:</b> <span style="color: #d32f2f; font-weight: bold;">10.000đ</span></li>
+                <li>🛵 <b>Từ 2km - 3km:</b> <span style="color: #d32f2f; font-weight: bold;">15.000đ</span></li>
+                <li>🛵 <b>Trên 3km:</b> Cộng thêm <span style="color: #d32f2f; font-weight: bold;">5.000đ / km</span> tiếp theo</li>
+            </ul>
+        </div>
     </div>
 
     <script>
-        // TỌA ĐỘ CHUẨN XÁC CỦA QUÁN KIM BLING
         const STORE_LAT = 10.74955; 
         const STORE_LNG = 106.63099;
 
-        // BẢNG GIÁ SHIP CỦA QUÁN
         function calculateShippingFee(distanceKm) {
             if (distanceKm <= 1.0) {
-                return 0; // Freeship dưới 1km (Ví dụ: 500m)
+                return 0; 
             } else if (distanceKm <= 2.0) {
                 return 10000;
             } else if (distanceKm <= 3.0) {
@@ -179,7 +190,6 @@
             }
         }
 
-        // 1. TRƯỜNG HỢP BẤM GPS TỰ ĐỘNG
         function detectGPSAndCalculate() {
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
@@ -196,7 +206,7 @@
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
                     statusText.innerText = "✅ Định vị GPS thành công!";
-                    addressInput.value = `Tọa độ GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    addressInput.value = `Vị trí GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
                     calculateOSRMAndShow(userLat, userLng);
                 },
                 (error) => {
@@ -207,7 +217,6 @@
             );
         }
 
-        // 2. TRƯỜNG HỢP NHẬP ĐỊA CHỈ BẰNG TAY (Dùng Photon API chống lỗi kết nối trên GitHub)
         async function calculateManualAddress() {
             const addressInput = document.getElementById('customerAddress');
             const query = addressInput.value.trim();
@@ -247,7 +256,6 @@
             }
         }
 
-        // 3. TÍNH KHOẢNG CÁCH OSRM (ĐI BỘ QUA HẺM) & TÍNH PHÍ SHIP
         async function calculateOSRMAndShow(lat, lng) {
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
@@ -284,6 +292,23 @@
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
 
+                // TỰ ĐỘNG GỬI ĐỊA CHỈ KÈM TỌA ĐỘ VỀ CHO MENU.HTML
+                const rawAddr = document.getElementById('customerAddress').value.trim();
+                let finalAddrText = "";
+                if (rawAddr && !rawAddr.startsWith("Vị trí GPS:")) {
+                    finalAddrText = `${rawAddr} (GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                } else {
+                    finalAddrText = `Vị trí GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                }
+
+                const resultData = {
+                    type: 'UPDATE_SHIPPING_FROM_MAP',
+                    address: finalAddrText,
+                    distanceKm: distanceKm,
+                    shippingFee: shipFee
+                };
+                window.parent.postMessage(resultData, '*');
+
             } catch(e) {
                 let fallbackKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 let shipFee = calculateShippingFee(fallbackKm);
@@ -312,20 +337,18 @@
             return R * c;
         }
 
-// Tự động nhận địa chỉ truyền từ menu.html và chạy tính ship ngay lập tức
-window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const passedAddress = urlParams.get('address');
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const passedAddress = urlParams.get('address');
 
-    if (passedAddress) {
-        const addressInput = document.getElementById('customerAddress');
-        if (addressInput) {
-            addressInput.value = decodeURIComponent(passedAddress);
-            calculateManualAddress(); // Tự động đo khoảng cách và tính ship luôn
-        }
-    }
-});
-
+            if (passedAddress) {
+                const addressInput = document.getElementById('customerAddress');
+                if (addressInput) {
+                    addressInput.value = decodeURIComponent(passedAddress);
+                    calculateManualAddress();
+                }
+            }
+        });
     </script>
 </body>
 </html>

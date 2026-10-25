@@ -782,11 +782,12 @@
         <p>📍 <a href="https://maps.google.com/?q=M9+Cư+Xá+Phú+Lâm+A+Phường+Phú+Lâm+Hồ+Chí+Minh" target="_blank" style="color: #fff; text-decoration: underline;">M9 cư xá Phú Lâm A, Phường Phú Lâm, HCM (Bấm xem bản đồ)</a></p>
     </header>
 
-    <div class="store-info-card">
+     <div class="store-info-card">
         ⏰ Trạng thái web: <span id="storeStatusText" style="color: #388E3C;">8:00 - 21:00 (Cả tuần)</span><br>
         ⏱️ Thời gian chuẩn bị: Nước khoảng <span>10 phút</span> | Đồ ăn khoảng <span>15 phút</span><br>
-        🚚 Phí ship: <span>Freeship</span> bán kính 1km (Xa hơn phụ thu 10k)
+        🚚 Phí ship: <a href="javascript:void(0)" onclick="openDinhViPopup()" style="color: #d32f2f; font-weight: bold; text-decoration: underline; cursor: pointer;">Freeship bán kính 1km (Bấm xem bảng giá & tính ship)</a>
     </div>
+
 
     <!-- HÀNG NÚT CÀI ỨNG DỤNG, HỘP QUÀ & VÒNG QUAY CHỌN MÓN -->
     <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 12px 2px 12px;">
@@ -2718,9 +2719,41 @@
                 }
             }
         });
+                        // LẮNG NGHE DỮ LIỆU TỌA ĐỘ VÀ ĐỊA CHỈ TRUYỀN NGƯỢC TỪ POPUP DINHVI.HTML
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'UPDATE_SHIPPING_FROM_MAP') {
+                const addrInput = document.getElementById('customerAddress');
+                if (addrInput) {
+                    addrInput.value = event.data.address;
+                }
+
+                calculatedAutoShippingFee = event.data.shippingFee;
+                let distanceKm = event.data.distanceKm;
+                let distText = distanceKm < 1.0 ? (distanceKm * 1000).toFixed(0) + ' m' : distanceKm.toFixed(2) + ' km';
+
+                document.getElementById('bgDistanceText').innerText = '~' + distText;
+
+                document.getElementById('bgShipFeeText').innerText = calculatedAutoShippingFee === 0 ? "0đ (🎉 Freeship < 1km)" : calculatedAutoShippingFee.toLocaleString('vi-VN') + "đ";
+
+                updateCartDisplay();
+                closeDinhViPopup();
+            }
+        });
 
         // HÀM TRUYỀN CHÍNH XÁC ĐỊA CHỈ SANG POPUP DINHVI.HTML
         function openDinhViPopup() {
+            ...
+        }
+
+        function closeDinhViPopup() {
+            ...
+        }
+    </script>
+</body>
+</html>
+
+
+function openDinhViPopup() {
             const customerAddr = document.getElementById('customerAddress').value.trim();
             const iframe = document.getElementById('dinhviIframe');
             
