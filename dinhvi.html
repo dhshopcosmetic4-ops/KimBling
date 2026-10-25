@@ -190,9 +190,29 @@
             }
         }
 
+        // HÀM KIỂM TRA TỪ KHÓA TẠI QUÁN / KHÔNG SHIP
+        function isAtStoreOrder(text) {
+            const lower = text.toLowerCase();
+            const keywords = [
+                "tự ra lấy", "tu ra lay", 
+                "tự lấy", "tu lay", 
+                "tại quán", "tai quan", 
+                "ngồi uống", "ngoi uong", 
+                "đến quán", "den quan", 
+                "mang qua", "tại chỗ", "tai cho"
+            ];
+            return keywords.some(kw => lower.includes(kw));
+        }
+
         function detectGPSAndCalculate() {
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
+
+            // Nếu khách ghi chữ tại quán/tự lấy trong ô địa chỉ thì chặn luôn không cho lấy GPS tính ship
+            if (isAtStoreOrder(addressInput.value)) {
+                alert("Khách chọn nhận tại quán, không cần tính phí ship ạ!");
+                return;
+            }
 
             if (!navigator.geolocation) {
                 alert("Trình duyệt không hỗ trợ GPS!");
@@ -206,7 +226,12 @@
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
                     statusText.innerText = "✅ Định vị GPS thành công!";
-                    addressInput.value = `Vị trí GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    
+                    let currentVal = addressInput.value.trim();
+                    if (!currentVal || currentVal.startsWith("Vị trí GPS:")) {
+                        addressInput.value = `Vị trí GPS: ${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+                    }
+
                     calculateOSRMAndShow(userLat, userLng);
                 },
                 (error) => {
@@ -225,6 +250,14 @@
             if (!query || query.length < 3) {
                 alert("Vui lòng nhập địa chỉ nhận hàng cụ thể!");
                 addressInput.focus();
+                return;
+            }
+
+            // Kiểm tra nếu khách gõ các từ khóa nhận tại quán
+            if (isAtStoreOrder(query)) {
+                alert("Khách chọn nhận tại quán, không cần tính phí ship ạ!");
+                document.getElementById('distanceResultBox').style.display = 'block';
+                document.getElementById('distanceResultBox').innerHTML = `🏠 Hình thức: <span style="color:#28a745;">Khách nhận tại quán (0đ)</span>`;
                 return;
             }
 
@@ -292,11 +325,18 @@
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
 
-                // TỰ ĐỘNG GỬI ĐỊA CHỈ KÈM TỌA ĐỘ VỀ CHO MENU.HTML
-                const rawAddr = document.getElementById('customerAddress').value.trim();
+                const urlParams = new URLSearchParams(window.location.search);
+                let passedAddr = urlParams.get('address') || '';
+                const currentInputVal = document.getElementById('customerAddress').value.trim();
+                
+                let baseAddr = currentInputVal;
+                if (!baseAddr || baseAddr.startsWith("Vị trí GPS:")) {
+                    baseAddr = passedAddr;
+                }
+
                 let finalAddrText = "";
-                if (rawAddr && !rawAddr.startsWith("Vị trí GPS:")) {
-                    finalAddrText = `${rawAddr} (GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                if (baseAddr && !baseAddr.startsWith("Vị trí GPS:")) {
+                    finalAddrText = `${baseAddr} (GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)})`;
                 } else {
                     finalAddrText = `Vị trí GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                 }
@@ -345,7 +385,9 @@
                 const addressInput = document.getElementById('customerAddress');
                 if (addressInput) {
                     addressInput.value = decodeURIComponent(passedAddress);
-                    calculateManualAddress();
+                    if (!isAtStoreOrder(passedAddress)) {
+                        calculateManualAddress();
+                    }
                 }
             }
         });
