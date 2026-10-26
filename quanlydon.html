@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quản Lý Đơn Hàng — Kim Bling Coffee</title>
+  <style>
+    :root {
+      --primary: #c29b38;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; font-size: 16px; }
+
+    /* Màn hình Đăng Nhập */
+    #loginScreen {
+      max-width: 400px; margin: 60px auto; background: var(--card-bg); padding: 24px; border-radius: 16px; border: 1px solid var(--border); text-align: center;
+    }
+    .input-field {
+      width: 100%; padding: 14px; margin: 12px 0; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: #fff; font-size: 16px; outline: none;
+    }
+    .btn-login {
+      width: 100%; padding: 14px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
+    }
+
+    /* Giao diện chính */
+    #adminHeader {
+      display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .refresh-btn {
+      background: var(--primary); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
+    }
+
+    /* Thẻ Đơn Hàng */
+    .order-card {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .order-header {
+      display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 10px;
+    }
+    .order-id { font-weight: bold; color: var(--primary); }
+    .order-time { font-size: 13px; color: var(--subtext); }
+    .customer-info { margin-bottom: 10px; line-height: 1.4; font-size: 15px; }
+    .customer-info a { color: #38bdf8; text-decoration: none; }
+    .items-box { background: #0f172a; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; white-space: pre-wrap; line-height: 1.5; color: #e2e8f0; }
+    .total-price { text-align: right; font-weight: bold; color: #4ade80; font-size: 18px; margin-bottom: 12px; }
+
+    /* Thanh trạng thái dạng Bấm Nút chọn */
+    .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .status-btn {
+      padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--subtext); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s;
+    }
+    .status-btn.active-1 { background: #eab308; color: #000; border-color: #eab308; } /* Đang chuẩn bị */
+    .status-btn.active-2 { background: #3b82f6; color: #fff; border-color: #3b82f6; } /* Chờ shipper */
+    .status-btn.active-3 { background: #a855f7; color: #fff; border-color: #a855f7; } /* Đang giao */
+    .status-btn.active-4 { background: #22c55e; color: #fff; border-color: #22c55e; } /* Hoàn thành */
+
+    .empty-state { text-align: center; color: var(--subtext); padding: 40px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- MÀN HÌNH ĐĂNG NHẬP -->
+  <div id="loginScreen">
+    <h2 style="color: var(--primary); margin-bottom: 8px;">KIM BLING ADMIN</h2>
+    <p style="font-size: 14px; color: var(--subtext); margin-bottom: 16px;">Đăng nhập để quản lý đơn hàng</p>
+    <input type="password" id="adminPin" class="input-field" placeholder="Nhập PIN Admin..." autofocus>
+    <button class="btn-login" onclick="doLogin()">ĐĂNG NHẬP</button>
+  </div>
+
+  <!-- GIAO DIỆN QUẢN LÝ ĐƠN HÀNG -->
+  <div id="adminApp" style="display: none;">
+    <div id="adminHeader">
+      <div>
+        <h3 style="color: var(--primary);">ĐƠN HÀNG TRONG NGÀY</h3>
+        <span id="orderCount" style="font-size: 13px; color: var(--subtext);">Tự động làm mới mỗi 15s</span>
+      </div>
+      <button class="refresh-btn" onclick="fetchOrders()">🔄 Tải lại</button>
+    </div>
+
+    <div id="ordersContainer">
+      <div class="empty-state">Đang tải dữ liệu đơn hàng...</div>
+    </div>
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script của bạn
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const PIN_KEY = "kimbling_admin_pin";
+
+    // Kiểm tra đăng nhập ghi nhớ sẵn
+    window.onload = function() {
+      const savedPin = localStorage.getItem(PIN_KEY);
+      if (savedPin) {
+        document.getElementById('adminPin').value = savedPin;
+        doLogin();
+      }
+    };
+
+    function doLogin() {
+      const pin = document.getElementById('adminPin').value.trim();
+      if (!pin) { alert("Vui lòng nhập PIN!"); return; }
+
+      // Lưu mật khẩu vào bộ nhớ máy để tự động đăng nhập lần sau
+      localStorage.setItem(PIN_KEY, pin);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display = 'block';
+
+      fetchOrders();
+      // Tự động quét cập nhật đơn mới mỗi 15 giây
+      setInterval(fetchOrders, 15000);
+    }
+
+    // Lấy danh sách toàn bộ đơn trong ngày từ Sheet
+    function fetchOrders() {
+      fetch(`${SCRIPT_URL}?type=checkStatus&phone=ALL`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('ordersContainer');
+          if (!data.success || !data.orders || data.orders.length === 0) {
+            container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
+            return;
+          }
+
+          let html = '';
+          data.orders.forEach(order => {
+            const currentStatus = String(order.status || '1');
+            const cleanPhone = String(order.phone || '').replace(/'/g, '');
+
+            html += `
+              <div class="order-card">
+                <div class="order-header">
+                  <span class="order-id">#${order.orderId || 'Đơn'}</span>
+                  <span class="order-time">${order.time || ''}</span>
+                </div>
+                <div class="customer-info">
+                  <b>Khách hàng:</b> ${order.name || 'Khách lẻ'}<br>
+                  <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a><br>
+                  <b>Địa chỉ:</b> ${order.address || 'Tại quán'}
+                </div>
+                <div class="items-box">${order.items || 'Chi tiết món...'}</div>
+                <div class="total-price">Tổng: ${Number(order.total || 0).toLocaleString('vi-VN')}đ</div>
+                
+                <!-- Thanh chuyển trạng thái trực tiếp -->
+                <div class="status-group">
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '1')">1. Đang làm món</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '4')">4. Hoàn thành</button>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+    }
+
+    // Hàm đổi trạng thái trực tiếp trên Google Sheets
+    function updateStatus(phone, orderId, status) {
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: phone, orderId: orderId, status: status })
+      })
+      .then(res => res.json())
+      .then(res => {
+        // Tải lại giao diện ngay khi bấm đổi
+        fetchOrders();
+      })
+      .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>
