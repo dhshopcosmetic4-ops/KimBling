@@ -822,8 +822,9 @@
         </div>
 
         <div class="btn-history-row">
-            <button class="btn-history-full" onclick="openHistoryModal()">📜 Lịch sử đơn hàng</button>
-            <button class="btn-share-full" onclick="shareStoreWebsite()">📤 Chia sẻ quán</button>
+            <button class="btn-history-full" onclick="openHistoryModal()">📜 Lịch sử</button>
+            <button class="btn-history-full" onclick="checkLatestOrderStatusRealtime()" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f;">🔍 Kiểm tra đơn</button>
+            <button class="btn-share-full" onclick="shareStoreWebsite()">📤 Chia sẻ</button>
         </div>
 
         <div class="category-tabs">
@@ -2344,27 +2345,41 @@
             return msg;
         }
 
-        async function sendTelegramMessage(text, photoUrl = null) {
-            try {
-                if (photoUrl) {
-                    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
-                    await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, photo: photoUrl, caption: text, parse_mode: 'HTML' })
-                    });
-                } else {
-                    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-                    await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text, parse_mode: 'HTML' })
-                    });
-                }
-            } catch (err) {
-                console.error("Lỗi gửi Telegram:", err);
-            }
+        async function sendTelegramMessage(text, phoneNum = '') {
+    try {
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        
+        let payload = {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML'
+        };
+
+        // Gắn thêm các nút bấm tương tác (Inline Keyboard) để chủ quán đổi trạng thái ngay trên Telegram
+        if (phoneNum) {
+            payload.reply_markup = {
+                inline_keyboard: [
+                    [
+                        { text: "🛵 Chờ Shipper (Bước 2)", callback_data: `STATUS_2_${phoneNum}` },
+                        { text: "🚀 Đang Giao (Bước 3)", callback_data: `STATUS_3_${phoneNum}` }
+                    ],
+                    [
+                        { text: "✅ Hoàn Thành Đơn", callback_data: `STATUS_4_${phoneNum}` }
+                    ]
+                ]
+            };
         }
+
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.error("Lỗi gửi Telegram:", err);
+    }
+}
+
 
                                 async function processOrderSubmit() {
             const msg = generateOrderMessage();
@@ -2385,7 +2400,8 @@
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
-            await sendTelegramMessage(msg);
+            await sendTelegramMessage(msg, phone);
+
 
             if (payMethod === 'Chuyển khoản') {
                 await sendTelegramMessage(`💳 <b>THÔNG TIN CHUYỂN KHOẢN</b>:\nLink mã QR: ${qrImageUrl}`);
@@ -2933,6 +2949,84 @@
             document.body.appendChild(modalOverlay);
         }
 
+// Kiểm tra trạng thái đơn mới nhất tự động từ lịch sử thiết bị
+async function checkLatestOrderStatusRealtime() {
+    let historyData = [];
+    try {
+        historyData = JSON.parse(localStorage.getItem('kimbling_order_history') || '[]');
+    } catch(e) { historyData = []; }
+
+    const savedPhone = localStorage.getItem('kimbling_cust_phone');
+
+    if (!savedPhone && historyData.length === 0) {
+        alert("Bạn chưa có đơn hàng nào trên thiết bị này để kiểm tra!");
+        return;
+    }
+
+    let phoneToCheck = savedPhone;
+    if (!phoneToCheck) {
+        alert("Không tìm thấy số điện thoại của bạn.");
+        return;
+    }
+
+    const existingPopup = document.getElementById('statusCheckResultModal');
+    if (existingPopup) existingPopup.remove();
+
+    let modalOverlay = document.createElement('div');
+    modalOverlay.id = 'statusCheckResultModal';
+    modalOverlay.style.cssText = "display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(3px);";
+    modalOverlay.innerHTML = `
+        <div style="background: #ffffff; width: 100%; max-width: 380px; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+            <div style="font-size: 16px; font-weight: bold; color: #1976D2; margin-bottom: 10px;">🔍 Đang kiểm tra trạng thái đơn...</div>
+            <p style="font-size: 13px; color: #666;">Vui lòng đợi trong giây lát.</p>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    try {
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(phoneToCheck)}`);
+        const result = await response.json();
+
+        if (result.success) {
+            let statusCode = String(result.status || '1');
+            let statusText = "1. Đang chuẩn bị món 👩‍🍳";
+            let statusColor = "#d32f2f";
+
+            if (statusCode === '2') {
+                statusText = "2. Chờ shipper 🛵";
+                statusColor = "#ff9800";
+            } else if (statusCode === '3') {
+                statusText = "3. Đang giao hàng 🚀";
+                statusColor = "#2196F3";
+            } else if (statusCode === '4') {
+                statusText = "Đơn hàng đã hoàn thành ✅";
+                statusColor = "#2e7d32";
+            }
+
+            modalOverlay.innerHTML = `
+                <div style="background: #ffffff; width: 100%; max-width: 380px; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+                    <h3 style="font-size: 17px; color: #333; margin-bottom: 8px;">📦 TRẠNG THÁI ĐƠN MỚI NHẤT</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 12px;">SĐT: <b>${phoneToCheck}</b></p>
+                    <div style="background: #f9f9f9; border: 1.5px dashed ${statusColor}; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
+                        <span style="font-size: 16px; font-weight: bold; color: ${statusColor}; display: block;">${statusText}</span>
+                    </div>
+                    <button onclick="document.getElementById('statusCheckResultModal').remove()" style="width: 100%; background: #2196F3; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ĐÓNG</button>
+                </div>
+            `;
+        } else {
+            modalOverlay.innerHTML = `
+                <div style="background: #ffffff; width: 100%; max-width: 380px; border-radius: 16px; padding: 20px; text-align: center;">
+                    <h3 style="font-size: 16px; color: #d32f2f; margin-bottom: 8px;">❌ Chưa ghi nhận đơn</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Hệ thống chưa tìm thấy đơn hàng nào gần đây với số điện thoại này.</p>
+                    <button onclick="document.getElementById('statusCheckResultModal').remove()" style="width: 100%; background: #ccc; color: #333; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ĐÓNG</button>
+                </div>
+            `;
+        }
+    } catch (e) {
+        modalOverlay.remove();
+        alert("Lỗi kết nối máy chủ kiểm tra trạng thái.");
+    }
+}
 
     </script>
 </body>
