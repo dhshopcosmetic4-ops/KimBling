@@ -2400,31 +2400,35 @@
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
-            await sendTelegramMessage(msg, phone);
-
-// Gửi thông tin đơn hàng ngầm về Google Sheets để lưu trữ trạng thái khởi tạo
-try {
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify({
-            type: 'saveOrder',
-            phone: phone,
-            name: document.getElementById('customerName').value.trim(),
-            total: total,
-            items: cart.map(i => `${i.name} (x${i.qty}) - ${i.options}`).join('; '),
-            timestamp: new Date().toLocaleString('vi-VN')
-        })
-    });
-} catch (err) {
-    console.error("Lỗi gửi dữ liệu lưu đơn:", err);
-}
-
+                        await sendTelegramMessage(msg, phone);
 
             if (payMethod === 'Chuyển khoản') {
                 await sendTelegramMessage(`💳 <b>THÔNG TIN CHUYỂN KHOẢN</b>:\nLink mã QR: ${qrImageUrl}`);
             }
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({
+                        type: 'saveOrder',
+                        orderId: 'KB' + Date.now(),
+                        name: name,
+                        phone: phone,
+                        address: orderType === 'Giao hàng' ? addr : 'Tại quán',
+                        orderType: orderType === 'Giao hàng' ? 'delivery' : 'pickup',
+                        customerAddress: addr,
+                        items: cart.map(i => `${i.name} (x${i.qty}) - ${i.options}`).join('; '),
+                        total: total,
+                        payment: payMethod,
+                        note: note,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (err) {
+                console.error("Lỗi lưu đơn xuống Sheet:", err);
+            }
+            // ==========================================
 
             setTimeout(async () => {
                 let alertMsg = `⚠️ <b>CẢNH BÁO ĐƠN MỚI</b>\n🔔 Vui lòng kiểm tra và xác nhận đơn của khách <b>${document.getElementById('customerName').value.trim()}</b> (SĐT: <code>${phone}</code>)!`;
