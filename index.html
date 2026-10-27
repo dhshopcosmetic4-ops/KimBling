@@ -1566,13 +1566,25 @@ async function fetchHistoryFromCloud() {
                     return;
                 }
             }
-            selectedProduct = menu.find(item => item.id === id);
+                        selectedProduct = menu.find(item => item.id === id);
             if (!selectedProduct) return;
             document.getElementById('modalDishName').innerText = selectedProduct.name;
             
             const isFood = getCategoryType(selectedProduct.name) === 'Food';
+
+            // --- KIỂM TRA TỪ KHÓA CẤM UPSIZE ---
+            const nameLower = selectedProduct.name.toLowerCase();
+            const forbiddenKeywords = ["ly 1 lít", "1 lít", "ly khổng lồ", "khổng lồ", "ly nhỏ", "650ml"];
+            const isForbiddenName = forbiddenKeywords.some(keyword => nameLower.includes(keyword));
             
-            document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
+            const cannotUpsize = isFood || isForbiddenName;
+
+            const sizeGroupEl = document.getElementById('sizeGroupContainer');
+            if (sizeGroupEl) {
+                sizeGroupEl.style.display = cannotUpsize ? 'none' : 'block';
+            }
+            // ----------------------------------
+
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị (Bấm tăng giảm x2, x3):' : '🥤 Topping Thức Uống (Bấm tăng giảm x2, x3):';
