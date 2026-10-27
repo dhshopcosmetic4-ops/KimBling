@@ -49,13 +49,47 @@
       color: #e2e8f0; 
       border-left: 4px solid var(--primary);
     }
-    .item-line { margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+    
+    /* Thiết kế dòng món ăn có nút tick checkbox */
+    .item-line { 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px; 
+      border-bottom: 1px solid rgba(255,255,255,0.05); 
+      padding-bottom: 8px; 
+      cursor: pointer;
+    }
     .item-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    
+    .item-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: #22c55e;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .item-line.completed-item {
+      opacity: 0.45;
+      text-decoration: line-through;
+      color: #94a3b8;
+    }
 
     .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
     .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
     .pay-cash { background: #334155; color: #cbd5e1; }
-    .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; }
+    
+    /* Tag chuyển khoản bấm được để xem QR */
+    .pay-transfer { 
+      background: #065f46; 
+      color: #34d399; 
+      border: 1px solid #059669; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+    }
+    .pay-transfer:hover { background: #047857; transform: scale(1.05); }
+
     .total-price { font-weight: bold; color: #4ade80; font-size: 17px; }
 
     .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -68,6 +102,44 @@
     .status-btn.active-4 { background: #22c55e; color: #fff; border-color: #22c55e; } 
 
     .empty-state { text-align: center; color: var(--subtext); padding: 40px 0; }
+
+    /* Hiệu ứng rung lắc nhẹ (buzz) báo có đơn mới */
+    @keyframes orderBuzz {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+      40% { transform: translate(2px, -2px) rotate(0.5deg); }
+      60% { transform: translate(-1px, 1px) rotate(0deg); }
+      80% { transform: translate(1px, -1px) rotate(0deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .order-card.new-buzz {
+      animation: orderBuzz 0.5s ease-in-out infinite;
+      border: 2px solid #eab308 !important;
+      box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+    }
+
+    /* Đổi màu viền khung đơn theo trạng thái */
+    .order-card.status-bg-1 { border-color: #eab308; }
+    .order-card.status-bg-2 { border-color: #3b82f6; }
+    .order-card.status-bg-3 { border-color: #a855f7; }
+    .order-card.status-bg-4 { border-color: #22c55e; opacity: 0.85; }
+
+    /* Nút bản đồ lộ trình cho shipper */
+    .btn-map-route {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #0284c7;
+      color: #fff;
+      text-decoration: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 4px;
+      transition: background 0.2s;
+    }
+    .btn-map-route:hover { background: #0369a1; }
   </style>
 </head>
 <body>
@@ -112,6 +184,10 @@
             const currentStatus = String(order.status || '1');
             const cleanPhone = String(order.phone || '').replace(/'/g, '');
 
+            // Nếu trạng thái là '1' (Đang làm) thì khung sẽ rung lắc và có viền vàng
+            let cardStatusClass = `status-bg-${currentStatus}`;
+            let buzzClass = (currentStatus === '1') ? 'new-buzz' : '';
+
             let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
 
             let rawItems = String(order.items || '');
@@ -120,17 +196,50 @@
               let itemsArray = rawItems.split(';');
               formattedItems = itemsArray
                 .filter(item => item.trim() !== '')
-                .map((item, index) => `<div class="item-line"><b>${index + 1}.</b> ${item.trim()}</div>`)
+                .map((item, index) => {
+                  let cleanItemText = item.trim();
+                  let uniqueItemId = `item_${order.orderId}_${index}`;
+                  return `
+                    <div class="item-line" id="${uniqueItemId}" onclick="toggleItemCheck('${uniqueItemId}')">
+                      <input type="checkbox" class="item-checkbox" onclick="event.stopPropagation(); toggleItemCheck('${uniqueItemId}')">
+                      <span><b>${index + 1}.</b> ${cleanItemText}</span>
+                    </div>
+                  `;
+                })
                 .join('');
             } else {
               formattedItems = `<div class="item-line">☕ Không có thông tin món</div>`;
             }
 
             let paymentText = order.payment || 'Tiền mặt';
-            let paymentClass = paymentText.toLowerCase().includes('chuyển') ? 'pay-transfer' : 'pay-cash';
+            let isTransfer = paymentText.toLowerCase().includes('chuyển');
+            let paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
+
+            let qrTagHtml = '';
+            if (isTransfer) {
+              let totalAmount = Number(order.total || 0);
+              let syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${order.orderId}`;
+              let qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
+              
+              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')" title="Bấm để mở mã QR chuyển khoản">💳 ${paymentText} (🔍 Xem QR)</span>`;
+            } else {
+              qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>`;
+            }
+
+            // Xử lý tạo link bản đồ Google Maps chỉ đường cho shipper
+            let rawAddress = String(order.address || '🏠 Tại quán');
+            let mapButtonHtml = '';
+            if (!rawAddress.includes('Tại quán')) {
+              let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+              let fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
+              let storeCoords = "10.74955,106.63099";
+              let googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
+              
+              mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
+            }
 
             html += `
-              <div class="order-card">
+              <div class="order-card ${cardStatusClass} ${buzzClass}">
                 <div class="order-header">
                   <span class="order-id">#${order.orderId || 'Đơn'}</span>
                   <span class="order-time">${order.time || ''}</span>
@@ -138,13 +247,13 @@
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
                   📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="https://zalo.me/${cleanPhone}" target="_blank" style="color: #60a5fa;">💬 Chat Zalo</a>)<br>
-                  📍 <b>Đ/c:</b> ${order.address || '🏠 Tại quán'}
+                  📍 <b>Đ/c:</b> ${rawAddress} ${mapButtonHtml}
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
                 
                 <div class="order-footer">
-                  <span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>
+                  ${qrTagHtml}
                   <span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>
                 </div>
                 
@@ -162,6 +271,21 @@
         .catch(err => console.error(err));
     }
 
+    // Hàm đánh dấu tick hoàn thành từng món
+    function toggleItemCheck(itemId) {
+      const itemEl = document.getElementById(itemId);
+      if (!itemEl) return;
+      const checkbox = itemEl.querySelector('.item-checkbox');
+      if (!checkbox) return;
+
+      checkbox.checked = !checkbox.checked;
+      if (checkbox.checked) {
+        itemEl.classList.add('completed-item');
+      } else {
+        itemEl.classList.remove('completed-item');
+      }
+    }
+
     function updateStatus(phone, orderId, status) {
       fetch(SCRIPT_URL, {
         method: 'POST',
@@ -173,7 +297,6 @@
       .catch(err => console.error(err));
     }
 
-    // Yêu cầu nhập PIN để xóa đơn cũ
     function requestClearOrders() {
       const pin = prompt("🔐 Nhập mã PIN chủ quán để xóa đơn cũ:");
       if (!pin) return;
