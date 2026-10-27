@@ -2656,6 +2656,43 @@ function clearSearchInput() {
         }
     });
 
+
+    // ==========================================
+    // BỘ TỰ ĐỘNG NHẬN ĐƠN TỪ QUẢN LÝ (CƠ CHẾ HYBRID)
+    // ==========================================
+    let lastProcessedTrigger = 0;
+
+    function checkAndLoadPushedOrder() {
+        try {
+            let triggerStr = localStorage.getItem('kimbling_pushed_trigger');
+            if (triggerStr) {
+                let triggerData = JSON.parse(triggerStr);
+                // Nếu có tín hiệu đẩy đơn mới chưa được nạp
+                if (triggerData && triggerData.time && triggerData.time > lastProcessedTrigger) {
+                    lastProcessedTrigger = triggerData.time;
+                    
+                    let savedCart = localStorage.getItem('kimbling_cart');
+                    if (savedCart) {
+                        cart = JSON.parse(savedCart) || [];
+                        saveCart();
+                        renderCart();
+                        
+                        // Phát âm thanh hoặc báo động
+                        alert(`🔔 CÓ ĐƠN HÀNG MỚI #${triggerData.orderId} VỪA ĐƯỢC ĐẨY VÀO GIỎ HÀNG!`);
+                    }
+                }
+            }
+        } catch(e) { console.log('Err sync:', e); }
+    }
+
+    // 1. Kiểm tra liên tục mỗi 2 giây (Chạy tốt trên mọi điện thoại)
+    setInterval(checkAndLoadPushedOrder, 2000);
+
+    // 2. Kiểm tra ngay khi quay lại tab POS
+    window.addEventListener('focus', checkAndLoadPushedOrder);
+    window.addEventListener('storage', checkAndLoadPushedOrder);
+
+
     </script>
 
 </body>
