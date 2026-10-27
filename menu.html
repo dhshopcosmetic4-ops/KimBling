@@ -856,8 +856,12 @@
         </div>
 
         <div class="btn-history-row">
-            <button class="btn-history-full" onclick="openHistoryModal()">📜 Lịch sử</button>
-            <button class="btn-history-full" onclick="toggleKbOrderPopup(true)" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f;">🔍 Kiểm tra đơn</button>
+            <button class="btn-history-full" onclick="openHistoryModal()">📜 Lịch sử mua</button>
+          
+
+<button class="btn-history-full" onclick="toggleKbOrderPopup(true)" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f; line-height: 1.3; padding: 6px 4px;">🔍 Xem đơn<br> 🔔 Hối giao</button>
+
+
             <button class="btn-share-full" onclick="shareStoreWebsite()">📤 Chia sẻ</button>
         </div>
 
@@ -1843,7 +1847,7 @@
             }
         }
 
-        function openOptionsModal(id) {
+                function openOptionsModal(id) {
             document.body.classList.add('no-scroll');
             selectedProduct = menu.find(m => m.id === id);
             if (!selectedProduct) return;
@@ -1861,11 +1865,26 @@
             modalDescEl.innerText = getItemDescription(selectedProduct.name);
 
             const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
+
+            // --- KIỂM TRA TỪ KHÓA CẤM UPSIZE TRÊN MENU.HTML ---
+            const nameLower = selectedProduct.name.toLowerCase();
+            const forbiddenKeywords = ["ly 1 lít", "1 lít", "ly khổng lồ", "khổng lồ", "ly nhỏ", "650ml"];
+            const isForbiddenName = forbiddenKeywords.some(keyword => nameLower.includes(keyword));
             
-            document.getElementById('sizeGroupContainer').style.display = isFood ? 'none' : 'block';
+            const cannotUpsize = isFood || isForbiddenName;
+
+            const sizeGroupEl = document.getElementById('sizeGroupContainer');
+            if (sizeGroupEl) {
+                sizeGroupEl.style.display = cannotUpsize ? 'none' : 'block';
+            }
+            // --------------------------------------------------
+
             document.getElementById('sugarGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('iceGroupContainer').style.display = isFood ? 'none' : 'block';
             document.getElementById('toppingLabelTitle').innerText = isFood ? '🍟 Phần ăn thêm & Gia vị:' : '🥤 Topping Thức Uống:';
+            
+            // ... các đoạn xử lý topping tiếp theo bên dưới ...
+
 
             currentModalToppings = {};
             let availableList = isFood ? snackToppings : drinkToppings;
