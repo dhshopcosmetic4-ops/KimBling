@@ -22,6 +22,40 @@
 
     <style>
 
+/* --- POPUP CHỨA TRANG KTDON.HTML --- */
+.kb-popup-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: all 0.3s ease; padding: 12px;
+}
+.kb-popup-overlay.active { opacity: 1; visibility: visible; }
+
+.kb-popup-container {
+  background: #0f172a; border: 2px solid #c29b38; width: 100%; max-width: 480px;
+  height: 85vh; border-radius: 16px; display: flex; flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); transform: translateY(20px); transition: transform 0.3s ease;
+  overflow: hidden;
+}
+.kb-popup-overlay.active .kb-popup-container { transform: translateY(0); }
+
+.kb-popup-header {
+  padding: 12px 16px; background: #1e293b; border-bottom: 1px solid #334155;
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+}
+.kb-popup-title { color: #c29b38; font-size: 15px; font-weight: bold; }
+.kb-close-btn {
+  background: #334155; color: #f8fafc; border: none; width: 32px; height: 32px;
+  border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+}
+.kb-close-btn:hover { background: #ef4444; }
+
+.kb-popup-body { flex: 1; width: 100%; overflow: hidden; background: #0f172a; }
+.kb-popup-body iframe { width: 100%; height: 100%; border: none; }
+
+
+
 @keyframes smoothShake {
     0%, 100% { transform: scale(1) translateY(0); }
     50% { transform: scale(1.01) translateY(-2px); }
@@ -823,7 +857,7 @@
 
         <div class="btn-history-row">
             <button class="btn-history-full" onclick="openHistoryModal()">📜 Lịch sử</button>
-            <button class="btn-history-full" onclick="checkLatestOrderStatusRealtime()" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f;">🔍 Kiểm tra đơn</button>
+            <button class="btn-history-full" onclick="toggleKbOrderPopup(true)" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f;">🔍 Kiểm tra đơn</button>
             <button class="btn-share-full" onclick="shareStoreWebsite()">📤 Chia sẻ</button>
         </div>
 
@@ -3102,6 +3136,38 @@ async function checkLatestOrderStatusRealtime() {
     }
 }
 
+
+
+function toggleKbOrderPopup(isOpen) {
+  const popup = document.getElementById('kbOrderPopup');
+  const iframe = document.getElementById('kbIframe');
+  
+  if (isOpen) {
+    // Nếu chưa load trang ktdon.html vào khung thì gán đường dẫn vào
+    if (!iframe.src || iframe.src === window.location.href) {
+      iframe.src = 'ktdon.html';
+    }
+    popup.classList.add('active');
+  } else {
+    popup.classList.remove('active');
+  }
+}
+
     </script>
+
+<!-- === POPUP NHÚNG TRANG KTDON.HTML === -->
+<div id="kbOrderPopup" class="kb-popup-overlay">
+  <div class="kb-popup-container">
+    <div class="kb-popup-header">
+      <span class="kb-popup-title">📦 Tra Cứu Trạng Thái Đơn Hàng</span>
+      <button class="kb-close-btn" onclick="toggleKbOrderPopup(false)">✕</button>
+    </div>
+    <div class="kb-popup-body">
+      <!-- Tải thẳng file ktdon.html vào đây -->
+      <iframe id="kbIframe" src=""></iframe>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
