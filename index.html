@@ -2640,18 +2640,21 @@ function clearSearchInput() {
     input.focus();
 }
 
-    try {
-        const posChannel = new BroadcastChannel('kimbling_pos_sync_channel');
-        posChannel.onmessage = function (event) {
-            if (event.data && event.data.type === 'PUSH_CART') {
-                // Nạp trực tiếp giỏ hàng được đẩy từ qldon vào giỏ hiện tại của POS
-                cart = event.data.cart || [];
-                saveCart();
-                renderCart();
-                alert(`🔔 Có đơn hàng mới #${event.data.orderId} vừa được đẩy từ Quản Lý Đơn Hàng vào giỏ hàng thu ngân!`);
-            }
-        };
-    } catch (e) { console.log('BroadcastChannel error:', e); }
+        // Tự động nhận đơn khi bên Quản Lý Đơn Hàng (qldon) đẩy sang
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'kimbling_pushed_trigger') {
+            try {
+                let savedCart = localStorage.getItem('kimbling_cart');
+                if (savedCart) {
+                    cart = JSON.parse(savedCart) || [];
+                    saveCart();
+                    renderCart();
+                    let triggerData = JSON.parse(event.newValue);
+                    alert(`🔔 Có đơn hàng mới #${triggerData.orderId} vừa được đẩy từ Quản Lý Đơn Hàng vào giỏ hàng thu ngân!`);
+                }
+            } catch(e) { console.log(e); }
+        }
+    });
 
     </script>
 

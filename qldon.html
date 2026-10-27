@@ -242,7 +242,6 @@
     }
 
     function pushOrderToPOS(orderId, orderObj) {
-      // 1. Yêu cầu nhập mã PIN chủ quán
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
       if (!pin) return;
 
@@ -252,17 +251,13 @@
         return;
       }
 
-      // 2. Chuyển đổi danh sách món sang định dạng giỏ hàng (cart)
       let rawItemsStr = String(orderObj.items || '').trim();
       let parsedCartItems = [];
       let lines = rawItemsStr.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
       
       lines.forEach((line, idx) => {
         let priceMatch = line.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
-        let priceVal = 0;
-        if (priceMatch) {
-          priceVal = parseInt(priceMatch[0].replace(/[^\d]/g, '')) || 0;
-        }
+        let priceVal = priceMatch ? parseInt(priceMatch[0].replace(/[^\d]/g, '')) || 0 : 0;
         let cleanName = priceVal ? line.replace(priceMatch[0], '').replace(/\|\s*$/, '').trim() : line;
         
         parsedCartItems.push({
@@ -288,24 +283,20 @@
         });
       }
 
-      // 3. Đẩy vào giỏ hàng của POS (kimbling_cart)
+      // Lưu vào localStorage kèm trigger để tab POS nhận diện tự động cập nhật ngay lập tức
       localStorage.setItem('kimbling_cart', JSON.stringify(parsedCartItems));
+      localStorage.setItem('kimbling_pushed_trigger', JSON.stringify({ orderId: orderId, time: Date.now() }));
 
-      // 4. Đánh dấu đơn này đã đẩy qua POS
       localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-      // 5. Tự động chuyển trạng thái đơn hàng trên Google Sheets sang 4 (Hoàn thành)
       const cleanPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: cleanPhone, orderId: orderId, status: '4' })
-      })
-      .then(res => res.json())
-      .catch(err => console.error("Cập nhật trạng thái tự động lỗi:", err));
+      }).catch(err => console.error(err));
 
-      alert(`🚀 Đẩy đơn #${orderId} sang POS thành công!\n- Đơn hàng đã được nạp sẵn vào giỏ hàng bên màn hình thu ngân (index).\n- Trạng thái đơn đã chuyển sang 'Hoàn thành'.`);
-      
+      alert(`🚀 Đẩy đơn #${orderId} sang POS thành công!\n- Đơn đã nạp vào giỏ hàng POS.\n- Trạng thái đã chuyển sang 'Hoàn thành'.`);
       fetchOrders();
     }
 
