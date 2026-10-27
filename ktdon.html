@@ -303,7 +303,7 @@
         qrButtonHtml = `<a href="${qrUrl}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold; margin-left: 6px;">[🔍 Xem QR CK]</a>`;
       }
 
-      // Chỉ hiển thị nút hối giao nếu trạng thái CHƯA HOÀN THÀNH (status khác '4')
+      // Chỉ hiển thị nút hối giao khi trạng thái CHƯA HOÀN THÀNH (khác '4')
       let hurryBtnHtml = '';
       if (status !== '4') {
         let isHurried = localStorage.getItem(`hurried_${order.orderId}`) === 'true';
@@ -315,7 +315,7 @@
           `;
         } else {
           hurryBtnHtml = `
-            <button class="btn-hurry" id="btnHurry_${order.orderId}" onclick="sendHurryOrder('${order.orderId}', '${order.name || 'Khách'}', '${order.phone || ''}', '${order.address || ''}')">
+            <button class="btn-hurry" id="btnHurry_${order.orderId}" onclick="sendHurryOrder('${order.orderId}', '${order.name || 'Khách'}', '${order.phone || ''}', '${order.address || ''}', '${order.items || ''}', ${order.total || 0})">
               ⚡ Hối giao đơn này ngay!
             </button>
           `;
@@ -362,7 +362,7 @@
       `;
     }
 
-    function sendHurryOrder(orderId, name, phone, address) {
+    function sendHurryOrder(orderId, name, phone, address, items, total) {
       if (!confirm("Bạn có chắc chắn muốn gửi yêu cầu hối giao đơn hàng này không?")) return;
 
       localStorage.setItem(`hurried_${orderId}`, 'true');
@@ -379,12 +379,21 @@
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ type: 'hurryOrder', orderId: orderId, name: name, phone: phone, address: address })
+        body: JSON.stringify({ 
+          type: 'saveOrder', 
+          orderId: orderId, 
+          customerName: name + " [⚡ HỐI GIAO]", 
+          customerPhone: phone, 
+          customerAddress: address,
+          itemsSummary: items,
+          totalAmount: total,
+          note: "Khách bấm hối giao đơn hàng này!"
+        })
       })
       .then(res => res.json())
       .then(res => {
-        if (!res.success) {
-          console.error("Lỗi gửi yêu cầu hối giao về máy chủ");
+        if (!res.success && !res.ok) {
+          console.error("Lỗi gửi hối giao");
         }
       })
       .catch(err => {
