@@ -26,14 +26,26 @@
     .clear-btn { background: #ef4444; color: #fff; }
 
     .order-card {
-      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); position: relative;
     }
     .order-header {
-      display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 10px; align-items: center;
     }
     .order-id { font-weight: bold; color: var(--primary); font-size: 16px; }
     .order-time { font-size: 13px; color: var(--subtext); }
     
+    .btn-delete-single {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid #ef4444;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-delete-single:hover { background: #ef4444; color: #fff; }
+
     .customer-info { margin-bottom: 8px; line-height: 1.6; font-size: 14px; }
     .customer-info a { color: #38bdf8; text-decoration: none; font-weight: bold; }
     
@@ -50,7 +62,6 @@
       border-left: 4px solid var(--primary);
     }
     
-    /* Thiết kế dòng món ăn có nút tick checkbox */
     .item-line { 
       display: flex;
       align-items: center;
@@ -76,11 +87,50 @@
       color: #94a3b8;
     }
 
+    /* Khung gán Shipper & Bật GPS */
+    .shipper-assign-box {
+      background: #0f172a;
+      border: 1px dashed #38bdf8;
+      padding: 8px;
+      border-radius: 8px;
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .shipper-select {
+      width: 100%;
+      padding: 6px;
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .btn-gps-on {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 6px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+    .btn-gps-on.active {
+      background: #22c55e;
+    }
+
     .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
     .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
     .pay-cash { background: #334155; color: #cbd5e1; }
     
-    /* Tag chuyển khoản bấm được để xem QR */
     .pay-transfer { 
       background: #065f46; 
       color: #34d399; 
@@ -103,7 +153,6 @@
 
     .empty-state { text-align: center; color: var(--subtext); padding: 40px 0; }
 
-    /* Hiệu ứng rung lắc nhẹ (buzz) báo có đơn mới */
     @keyframes orderBuzz {
       0% { transform: translate(0, 0) rotate(0deg); }
       20% { transform: translate(-2px, 2px) rotate(-0.5deg); }
@@ -118,13 +167,11 @@
       box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
     }
 
-    /* Đổi màu viền khung đơn theo trạng thái */
     .order-card.status-bg-1 { border-color: #eab308; }
     .order-card.status-bg-2 { border-color: #3b82f6; }
     .order-card.status-bg-3 { border-color: #a855f7; }
     .order-card.status-bg-4 { border-color: #22c55e; opacity: 0.85; }
 
-    /* Nút bản đồ lộ trình cho shipper */
     .btn-map-route {
       display: inline-flex;
       align-items: center;
@@ -163,6 +210,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    let activeGpsIntervals = {};
 
     window.onload = function() {
       fetchOrders();
@@ -184,7 +232,6 @@
             const currentStatus = String(order.status || '1');
             const cleanPhone = String(order.phone || '').replace(/'/g, '');
 
-            // Nếu trạng thái là '1' (Đang làm) thì khung sẽ rung lắc và có viền vàng
             let cardStatusClass = `status-bg-${currentStatus}`;
             let buzzClass = (currentStatus === '1') ? 'new-buzz' : '';
 
@@ -200,9 +247,9 @@
                   let cleanItemText = item.trim();
                   let uniqueItemId = `item_${order.orderId}_${index}`;
                   return `
-                    <div class="item-line" id="${uniqueItemId}" onclick="toggleItemCheck('${uniqueItemId}')">
-                      <input type="checkbox" class="item-checkbox" onclick="event.stopPropagation(); toggleItemCheck('${uniqueItemId}')">
-                      <span><b>${index + 1}.</b> ${cleanItemText}</span>
+                    <div class="item-line" id="${uniqueItemId}">
+                      <input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')">
+                      <span onclick="document.getElementById('chk_${uniqueItemId}').click()"><b>${index + 1}.</b> ${cleanItemText}</span>
                     </div>
                   `;
                 })
@@ -226,9 +273,10 @@
               qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>`;
             }
 
-            // Xử lý tạo link bản đồ Google Maps chỉ đường cho shipper
             let rawAddress = String(order.address || '🏠 Tại quán');
             let mapButtonHtml = '';
+            let shipperBoxHtml = '';
+
             if (!rawAddress.includes('Tại quán')) {
               let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
               let fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
@@ -236,13 +284,32 @@
               let googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
               
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
+
+              // Khung chọn Shipper & Phát GPS cho các đơn giao tận nơi
+              let isGpsActive = !!activeGpsIntervals[order.orderId];
+              shipperBoxHtml = `
+                <div class="shipper-assign-box">
+                  <span style="font-weight:bold; color:#38bdf8;">🛵 Phân công Shipper:</span>
+                  <select class="shipper-select" id="sel_shipper_${order.orderId}" onchange="assignShipper('${order.orderId}', '${cleanPhone}')">
+                    <option value="">-- Chọn Shipper nhận đơn --</option>
+                    <option value="Chú Dũng|0862695269" ${order.shipper === 'Chú Dũng' ? 'selected' : ''}>Chú Dũng (086.269.5269)</option>
+                    <option value="A. Phát|0768024894" ${order.shipper === 'A. Phát' ? 'selected' : ''}>A. Phát (076.802.4894)</option>
+                  </select>
+                  <button class="btn-gps-on ${isGpsActive ? 'active' : ''}" id="btn_gps_${order.orderId}" onclick="toggleShipperGPS('${order.orderId}')">
+                    ${isGpsActive ? '🛰️ Đang phát GPS trực tiếp...' : '🛰️ Bật GPS chia sẻ vị trí thực tế'}
+                  </button>
+                </div>
+              `;
             }
 
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
                 <div class="order-header">
-                  <span class="order-id">#${order.orderId || 'Đơn'}</span>
-                  <span class="order-time">${order.time || ''}</span>
+                  <div>
+                    <span class="order-id">#${order.orderId || 'Đơn'}</span>
+                    <span class="order-time" style="margin-left: 6px;">${order.time || ''}</span>
+                  </div>
+                  <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${order.orderId}')">🗑️ Xóa đơn</button>
                 </div>
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
@@ -251,6 +318,7 @@
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
+                ${shipperBoxHtml}
                 
                 <div class="order-footer">
                   ${qrTagHtml}
@@ -271,19 +339,74 @@
         .catch(err => console.error(err));
     }
 
-    // Hàm đánh dấu tick hoàn thành từng món
     function toggleItemCheck(itemId) {
       const itemEl = document.getElementById(itemId);
       if (!itemEl) return;
       const checkbox = itemEl.querySelector('.item-checkbox');
       if (!checkbox) return;
 
-      checkbox.checked = !checkbox.checked;
       if (checkbox.checked) {
         itemEl.classList.add('completed-item');
       } else {
         itemEl.classList.remove('completed-item');
       }
+    }
+
+    function assignShipper(orderId, phone) {
+      const selectEl = document.getElementById(`sel_shipper_${orderId}`);
+      if (!selectEl || !selectEl.value) return;
+      const parts = selectEl.value.split('|');
+      const name = parts[0];
+      const shPhone = parts[1];
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ type: 'updateShipperLocation', orderId: orderId, shipperName: name, shipperPhone: shPhone })
+      }).then(res => res.json()).catch(err => console.error(err));
+    }
+
+    function toggleShipperGPS(orderId) {
+      const btn = document.getElementById(`btn_gps_${orderId}`);
+      
+      if (activeGpsIntervals[orderId]) {
+        clearInterval(activeGpsIntervals[orderId]);
+        delete activeGpsIntervals[orderId];
+        if (btn) {
+          btn.classList.remove('active');
+          btn.innerHTML = "🛰️ Bật GPS chia sẻ vị trí thực tế";
+        }
+        alert("Đã tắt chia sẻ GPS cho đơn này.");
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        alert("Trình duyệt không hỗ trợ định vị GPS!");
+        return;
+      }
+
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = "🛰️ Đang phát GPS trực tiếp...";
+      }
+      alert("Đã bật GPS! Tọa độ của shipper sẽ tự động đồng bộ mỗi 10 giây.");
+
+      let intervalId = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(position => {
+          let lat = position.coords.latitude;
+          let lng = position.coords.longitude;
+
+          fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ type: 'updateShipperLocation', orderId: orderId, lat: lat, lng: lng })
+          }).catch(err => console.error(err));
+        }, err => {
+          console.error("Lỗi lấy vị trí GPS:", err);
+        }, { enableHighAccuracy: true });
+      }, 10000);
+
+      activeGpsIntervals[orderId] = intervalId;
     }
 
     function updateStatus(phone, orderId, status) {
@@ -297,8 +420,27 @@
       .catch(err => console.error(err));
     }
 
+    function requestDeleteSingleOrder(orderId) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
+      if (!pin) return;
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ type: 'deleteSingleOrder', orderId: orderId, pin: pin })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message);
+        if (res.success) {
+          fetchOrders();
+        }
+      })
+      .catch(err => alert("Lỗi kết nối máy chủ!"));
+    }
+
     function requestClearOrders() {
-      const pin = prompt("🔐 Nhập mã PIN chủ quán để xóa đơn cũ:");
+      const pin = prompt("🔐 Nhập mã PIN chủ quán để dọn dẹp các đơn cũ:");
       if (!pin) return;
 
       fetch(SCRIPT_URL, {
