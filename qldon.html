@@ -39,6 +39,26 @@
     }
     .btn-delete-single:hover { background: #ef4444; color: #fff; }
 
+    .btn-push-pos {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-push-pos:hover { background: linear-gradient(135deg, #2563eb, #1e40af); transform: scale(1.02); }
+    .btn-push-pos.pushed {
+      background: #10b981 !important;
+      cursor: default;
+    }
+
     .customer-info { margin-bottom: 8px; line-height: 1.6; font-size: 14px; }
     .customer-info a { color: #38bdf8; text-decoration: none; font-weight: bold; }
     
@@ -173,8 +193,14 @@
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
 
-            // Dùng chuẩn https://zalo.me/036... để iPhone mở thẳng vào khung chat chính xác
             let zaloDeepLink = `https://zalo.me/${cleanPhone}`;
+
+            // Kiểm tra trạng thái đã đẩy đơn hay chưa
+            let pushedPosKey = `kimbling_pushed_pos_${order.orderId}`;
+            let isPushed = localStorage.getItem(pushedPosKey) === 'true';
+            let pushBtnText = isPushed ? '✅ Đã đẩy đơn' : '🚀 Đẩy qua POS';
+            let pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
+            let pushDisabled = isPushed ? 'disabled' : '';
 
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
@@ -183,7 +209,10 @@
                     <span class="order-id">#${order.orderId || 'Đơn'}</span>
                     <span class="order-time" style="margin-left: 6px;">${order.time || ''}</span>
                   </div>
-                  <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${order.orderId}')">🗑️ Xóa đơn</button>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <button class="${pushBtnClass}" ${pushDisabled} onclick="pushOrderToPOS('${order.orderId}', ${JSON.stringify(order).replace(/"/g, '&quot;')})">${pushBtnText}</button>
+                    <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${order.orderId}')">🗑️ Xóa đơn</button>
+                  </div>
                 </div>
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
@@ -210,6 +239,74 @@
           container.innerHTML = html;
         })
         .catch(err => console.error(err));
+    }
+
+    function pushOrderToPOS(orderId, orderObj) {
+      // 1. Yêu cầu nhập mã PIN chủ quán
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
+      if (!pin) return;
+
+      let savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin) {
+        alert("❌ Mã PIN chủ quán không chính xác!");
+        return;
+      }
+
+      // 2. Chuyển đổi danh sách món sang định dạng giỏ hàng (cart)
+      let rawItemsStr = String(orderObj.items || '').trim();
+      let parsedCartItems = [];
+      let lines = rawItemsStr.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      
+      lines.forEach((line, idx) => {
+        let priceMatch = line.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
+        let priceVal = 0;
+        if (priceMatch) {
+          priceVal = parseInt(priceMatch[0].replace(/[^\d]/g, '')) || 0;
+        }
+        let cleanName = priceVal ? line.replace(priceMatch[0], '').replace(/\|\s*$/, '').trim() : line;
+        
+        parsedCartItems.push({
+          cartId: Date.now() + idx + Math.random(),
+          id: 9999 + idx,
+          name: cleanName || 'Món đơn hàng',
+          basePrice: priceVal,
+          optionsText: `Đơn từ QLĐN #${orderId}`,
+          quantity: 1,
+          rawToppings: []
+        });
+      });
+
+      if (parsedCartItems.length === 0) {
+        parsedCartItems.push({
+          cartId: Date.now(),
+          id: 9999,
+          name: 'Đơn hàng tổng hợp #' + orderId,
+          basePrice: Number(orderObj.total || 0),
+          optionsText: `Khách: ${orderObj.name || 'Lẻ'} - ĐT: ${orderObj.phone || ''}`,
+          quantity: 1,
+          rawToppings: []
+        });
+      }
+
+      // 3. Đẩy vào giỏ hàng của POS (kimbling_cart)
+      localStorage.setItem('kimbling_cart', JSON.stringify(parsedCartItems));
+
+      // 4. Đánh dấu đơn này đã đẩy qua POS
+      localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+
+      // 5. Tự động chuyển trạng thái đơn hàng trên Google Sheets sang 4 (Hoàn thành)
+      const cleanPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: cleanPhone, orderId: orderId, status: '4' })
+      })
+      .then(res => res.json())
+      .catch(err => console.error("Cập nhật trạng thái tự động lỗi:", err));
+
+      alert(`🚀 Đẩy đơn #${orderId} sang POS thành công!\n- Đơn hàng đã được nạp sẵn vào giỏ hàng bên màn hình thu ngân (index).\n- Trạng thái đơn đã chuyển sang 'Hoàn thành'.`);
+      
+      fetchOrders();
     }
 
     function parseAdminItemsToList(rawItemsStr) {
