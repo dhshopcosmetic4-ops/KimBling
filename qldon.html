@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quản Lý Đơn Hàng — Kim Bling</title>
+  <style>
+    :root {
+      --primary: #c29b38;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; font-size: 15px; }
+
+    #adminHeader {
+      display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .header-btns { display: flex; gap: 8px; }
+    .action-btn {
+      background: var(--primary); color: #000; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;
+    }
+    .clear-btn { background: #ef4444; color: #fff; }
+
+    .order-card {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .order-header {
+      display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 10px;
+    }
+    .order-id { font-weight: bold; color: var(--primary); font-size: 16px; }
+    .order-time { font-size: 13px; color: var(--subtext); }
+    
+    .customer-info { margin-bottom: 8px; line-height: 1.6; font-size: 14px; }
+    .customer-info a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+    
+    .note-box { background: #451a03; color: #fdba74; padding: 8px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 8px; border: 1px dashed #c2410c; }
+    
+    .items-box { 
+      background: #0f172a; 
+      padding: 10px 12px; 
+      border-radius: 8px; 
+      margin: 8px 0; 
+      font-size: 14px; 
+      line-height: 1.6; 
+      color: #e2e8f0; 
+      border-left: 4px solid var(--primary);
+    }
+    .item-line { margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+    .item-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
+    .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+    .pay-cash { background: #334155; color: #cbd5e1; }
+    .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; }
+    .total-price { font-weight: bold; color: #4ade80; font-size: 17px; }
+
+    .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .status-btn {
+      padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--subtext); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center;
+    }
+    .status-btn.active-1 { background: #eab308; color: #000; border-color: #eab308; } 
+    .status-btn.active-2 { background: #3b82f6; color: #fff; border-color: #3b82f6; } 
+    .status-btn.active-3 { background: #a855f7; color: #fff; border-color: #a855f7; } 
+    .status-btn.active-4 { background: #22c55e; color: #fff; border-color: #22c55e; } 
+
+    .empty-state { text-align: center; color: var(--subtext); padding: 40px 0; }
+  </style>
+</head>
+<body>
+
+  <div id="adminApp">
+    <div id="adminHeader">
+      <div>
+        <h3 style="color: var(--primary);">QUẢN LÝ ĐƠN HÀNG</h3>
+        <span id="orderCount" style="font-size: 13px; color: var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
+      </div>
+      <div class="header-btns">
+        <button class="action-btn clear-btn" onclick="requestClearOrders()">🗑️ Dọn dẹp</button>
+        <button class="action-btn" onclick="fetchOrders()">🔄 Tải lại</button>
+      </div>
+    </div>
+
+    <div id="ordersContainer">
+      <div class="empty-state">Đang tải dữ liệu đơn hàng...</div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+    window.onload = function() {
+      fetchOrders();
+      setInterval(fetchOrders, 15000); 
+    };
+
+    function fetchOrders() {
+      fetch(`${SCRIPT_URL}?type=checkStatus&phone=ALL`)
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('ordersContainer');
+          if (!data.success || !data.orders || data.orders.length === 0) {
+            container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
+            return;
+          }
+
+          let html = '';
+          data.orders.forEach(order => {
+            const currentStatus = String(order.status || '1');
+            const cleanPhone = String(order.phone || '').replace(/'/g, '');
+
+            let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
+
+            let rawItems = String(order.items || '');
+            let formattedItems = '';
+            if (rawItems) {
+              let itemsArray = rawItems.split(';');
+              formattedItems = itemsArray
+                .filter(item => item.trim() !== '')
+                .map((item, index) => `<div class="item-line"><b>${index + 1}.</b> ${item.trim()}</div>`)
+                .join('');
+            } else {
+              formattedItems = `<div class="item-line">☕ Không có thông tin món</div>`;
+            }
+
+            let paymentText = order.payment || 'Tiền mặt';
+            let paymentClass = paymentText.toLowerCase().includes('chuyển') ? 'pay-transfer' : 'pay-cash';
+
+            html += `
+              <div class="order-card">
+                <div class="order-header">
+                  <span class="order-id">#${order.orderId || 'Đơn'}</span>
+                  <span class="order-time">${order.time || ''}</span>
+                </div>
+                <div class="customer-info">
+                  👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
+                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="https://zalo.me/${cleanPhone}" target="_blank" style="color: #60a5fa;">💬 Chat Zalo</a>)<br>
+                  📍 <b>Đ/c:</b> ${order.address || '🏠 Tại quán'}
+                </div>
+                ${noteHtml}
+                <div class="items-box">${formattedItems}</div>
+                
+                <div class="order-footer">
+                  <span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>
+                  <span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>
+                </div>
+                
+                <div class="status-group">
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '1')">1. Đang làm</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '4')">4. Hoàn thành</button>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        })
+        .catch(err => console.error(err));
+    }
+
+    function updateStatus(phone, orderId, status) {
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: phone, orderId: orderId, status: status })
+      })
+      .then(res => res.json())
+      .then(res => { fetchOrders(); })
+      .catch(err => console.error(err));
+    }
+
+    // Yêu cầu nhập PIN để xóa đơn cũ
+    function requestClearOrders() {
+      const pin = prompt("🔐 Nhập mã PIN chủ quán để xóa đơn cũ:");
+      if (!pin) return;
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ type: 'clearOrders', pin: pin })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message);
+        if (res.success) {
+          fetchOrders();
+        }
+      })
+      .catch(err => alert("Lỗi kết nối!"));
+    }
+  </script>
+</body>
+</html>
