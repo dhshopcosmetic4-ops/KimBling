@@ -173,8 +173,9 @@
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
 
-            // Sử dụng deep link zalo:// để mở thẳng trực tiếp vào App Zalo
-            let zaloDeepLink = `zalo://chat?phone=${cleanPhone}`;
+            // Chuẩn hóa số điện thoại cho iPhone để mở thẳng vào khung chat Zalo
+            let formattedZaloPhone = cleanPhone.startsWith('0') ? '84' + cleanPhone.substring(1) : cleanPhone;
+            let zaloDeepLink = `https://zalo.me/${formattedZaloPhone}`;
 
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
@@ -187,7 +188,7 @@
                 </div>
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
-                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="${zaloDeepLink}" style="color: #60a5fa;">💬 Mở app Zalo</a>)<br>
+                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="${zaloDeepLink}" target="_blank" style="color: #60a5fa;">💬 Mở app Zalo</a>)<br>
                   📍 <b>Đ/c:</b> ${rawAddress} ${mapButtonHtml}
                 </div>
                 ${noteHtml}
@@ -262,7 +263,7 @@
       }
     }
 
-    // Tối ưu phản hồi siêu tốc (Optimistic UI) khi đổi trạng thái
+    // Phản hồi siêu tốc (Optimistic UI) khi đổi trạng thái
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
       if (card) {
