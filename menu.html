@@ -2381,23 +2381,7 @@
 }
 
 
-                                async function saveOrderToGoogleSheets(orderPayload) {
-            // text/plain avoids a CORS preflight for the Apps Script web app.
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(orderPayload),
-                redirect: 'follow'
-            });
-            if (!response.ok) throw new Error('Máy chủ Google Sheets phản hồi HTTP ' + response.status);
-            const result = await response.json();
-            if (!result || result.ok !== true) {
-                throw new Error((result && (result.error || result.message)) || 'Google Sheets chưa xác nhận đã lưu đơn.');
-            }
-            return result;
-        }
-
-        async function processOrderSubmit() {
+                                async function processOrderSubmit() {
             const msg = generateOrderMessage();
             if (!msg) return;
 
@@ -2409,58 +2393,12 @@
             btnSubmit.disabled = true;
             btnSubmit.classList.remove('pulse-attention');
 
-            const name = document.getElementById('customerName').value.trim();
-            const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            const address = document.getElementById('customerAddress').value.trim();
-            const note = document.getElementById('customerNote').value.trim();
             let foodTotal = calculateFoodSubtotal();
             let shipFee = getShippingFee();
-            const discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
-            const discountAmount = discountValK * 1000;
-            let total = Math.max(0, foodTotal + shipFee - discountAmount);
-            const orderId = 'KB' + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
-            const itemsSummary = cart.map(item => {
-                const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()})` : '';
-                return `${item.name}${options} x${item.qty} = ${Number(item.price * item.qty).toLocaleString('vi-VN')}đ`;
-            }).join(' | ');
-            const sheetPayload = {
-                type: 'saveOrder',
-                orderId: orderId,
-                timestamp: new Date().toISOString(),
-                name: name,
-                customerName: name,
-                phone: phone,
-                customerPhone: phone,
-                orderType: orderType,
-                customerAddress: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
-                address: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
-                items: itemsSummary,
-                itemsSummary: itemsSummary,
-                total: total,
-                totalAmount: total,
-                payment: payMethod,
-                paymentMethod: payMethod,
-                payMethod: payMethod,
-                note: note + (discountAmount > 0 ? ` | Giảm giá: ${discountAmount.toLocaleString('vi-VN')}đ` : '') +
-                    ` | Tiền món: ${foodTotal.toLocaleString('vi-VN')}đ | Phí ship: ${shipFee.toLocaleString('vi-VN')}đ`,
-                discountAmount: discountAmount,
-                foodTotal: foodTotal,
-                shippingFee: shipFee
-            };
+            let total = foodTotal + shipFee;
 
             let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
             let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-
-            try {
-                await saveOrderToGoogleSheets(sheetPayload);
-            } catch (syncError) {
-                console.error('Không lưu được đơn lên Google Sheets:', syncError);
-                alert('Chưa đồng bộ được đơn hàng lên Google Sheets nên hệ thống chưa xác nhận đặt đơn. Vui lòng kiểm tra kết nối và thử lại. Chi tiết: ' + syncError.message);
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = 'ĐẶT HÀNG NGAY';
-                btnSubmit.classList.add('pulse-attention');
-                return;
-            }
 
             await sendTelegramMessage(msg, phone);
 
