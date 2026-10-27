@@ -1696,26 +1696,28 @@ async function fetchHistoryFromCloud() {
             renderCart();
         }
 
-                        function saveCart() { 
+                                function saveCart() { 
             localStorage.setItem('kimbling_cart', JSON.stringify(cart));
             syncActiveCartToGoogleSheets();
         }
 
         function syncActiveCartToGoogleSheets() {
             if (!GOOGLE_SCRIPT_URL) return;
+            let currentTotal = cart.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0);
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                 body: JSON.stringify({ 
                     type: 'updateActiveCart', 
-                    account: currentAccount || 'POS', 
+                    account: currentAccount || 'NV3',
                     cart: cart,
-                    total: cart.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0),
+                    total: currentTotal,
                     updatedAt: new Date().toISOString()
                 })
             }).catch(err => { console.log("Sync cart error:", err); });
         }
+
 
 
 
