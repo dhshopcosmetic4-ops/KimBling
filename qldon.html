@@ -5,335 +5,299 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản Lý Đơn Hàng — Kim Bling</title>
   <style>
-    :root {
-      --primary: #c29b38;
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --subtext: #94a3b8;
-      --border: #334155;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 12px; font-size: 15px; }
-
-    #adminHeader {
-      display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
-    }
-    .header-btns { display: flex; gap: 8px; }
-    .action-btn {
-      background: var(--primary); color: #000; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;
-    }
-    .clear-btn { background: #ef4444; color: #fff; }
-
-    .order-card {
-      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); position: relative;
-    }
-    .order-header {
-      display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px; margin-bottom: 10px; align-items: center;
-    }
-    .order-id { font-weight: bold; color: var(--primary); font-size: 16px; }
-    .order-time { font-size: 13px; color: var(--subtext); }
-    
-    .btn-delete-single {
-      background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
-    }
-    .btn-delete-single:hover { background: #ef4444; color: #fff; }
-
-    .btn-push-pos {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: #fff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s;
-    }
-    .btn-push-pos:hover { background: linear-gradient(135deg, #2563eb, #1e40af); transform: scale(1.02); }
-    .btn-push-pos.pushed {
-      background: #10b981 !important;
-      cursor: default;
-    }
-
-    .customer-info { margin-bottom: 8px; line-height: 1.6; font-size: 14px; }
-    .customer-info a { color: #38bdf8; text-decoration: none; font-weight: bold; }
-    
-    .note-box { background: #451a03; color: #fdba74; padding: 8px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 8px; border: 1px dashed #c2410c; }
-    
-    .items-box { 
-      background: #0f172a; padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 14px; line-height: 1.6; color: #e2e8f0; border-left: 4px solid var(--primary);
-    }
-    
-    .item-line { 
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; cursor: pointer;
-    }
-    .item-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    
-    .item-checkbox { width: 18px; height: 18px; accent-color: #22c55e; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
-    .item-line.completed-item { opacity: 0.45; text-decoration: line-through; color: #94a3b8; }
-
-    .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
-    .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-    .pay-cash { background: #334155; color: #cbd5e1; }
-    .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; cursor: pointer; transition: all 0.2s; }
-    .pay-transfer:hover { background: #047857; transform: scale(1.05); }
-
-    .total-price { font-weight: bold; color: #4ade80; font-size: 17px; }
-
-    .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .status-btn {
-      padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--subtext); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-    }
-    .status-btn.active-1 { background: #eab308; color: #000; border-color: #eab308; } 
-    .status-btn.active-2 { background: #3b82f6; color: #fff; border-color: #3b82f6; } 
-    .status-btn.active-3 { background: #a855f7; color: #fff; border-color: #a855f7; } 
-    .status-btn.active-4 { background: #22c55e; color: #fff; border-color: #22c55e; } 
-
-    .empty-state { text-align: center; color: var(--subtext); padding: 40px 0; }
-
-    @keyframes orderBuzz {
-      0% { transform: translate(0, 0) rotate(0deg); }
-      20% { transform: translate(-2px, 2px) rotate(-0.5deg); }
-      40% { transform: translate(2px, -2px) rotate(0.5deg); }
-      60% { transform: translate(-1px, 1px) rotate(0deg); }
-      80% { transform: translate(1px, -1px) rotate(0deg); }
-      100% { transform: translate(0, 0) rotate(0deg); }
-    }
-    .order-card.new-buzz {
-      animation: orderBuzz 0.5s ease-in-out infinite;
-      border: 2px solid #eab308 !important;
-      box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
-    }
-
-    .order-card.status-bg-1 { border-color: #eab308; }
-    .order-card.status-bg-2 { border-color: #3b82f6; }
-    .order-card.status-bg-3 { border-color: #a855f7; }
-    .order-card.status-bg-4 { border-color: #22c55e; opacity: 0.85; }
-
-    .btn-map-route {
-      display: inline-flex; align-items: center; gap: 4px; background: #0284c7; color: #fff; text-decoration: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 4px; transition: background 0.2s;
-    }
-    .btn-map-route:hover { background: #0369a1; }
+    :root { --primary:#c29b38; --bg:#0f172a; --card-bg:#1e293b; --text:#f8fafc; --subtext:#94a3b8; --border:#334155; }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    body { background-color:var(--bg); color:var(--text); padding:12px; font-size:15px; }
+    #adminHeader { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--border); }
+    .header-btns { display:flex; gap:8px; }
+    .action-btn { background:var(--primary); color:#000; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:13px; }
+    .clear-btn { background:#ef4444; color:#fff; }
+    .order-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 4px 6px -1px rgba(0,0,0,.3); position:relative; }
+    .order-header { display:flex; justify-content:space-between; border-bottom:1px dashed var(--border); padding-bottom:8px; margin-bottom:10px; align-items:center; gap:8px; }
+    .order-id { font-weight:bold; color:var(--primary); font-size:16px; }
+    .order-time { font-size:13px; color:var(--subtext); }
+    .btn-delete-single { background:rgba(239,68,68,.15); color:#f87171; border:1px solid #ef4444; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer; }
+    .btn-delete-single:hover { background:#ef4444; color:#fff; }
+    .btn-push-pos { background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all .2s; }
+    .btn-push-pos:hover { background:linear-gradient(135deg,#2563eb,#1e40af); transform:scale(1.02); }
+    .btn-push-pos.pushed { background:#10b981!important; cursor:default; }
+    .btn-push-pos:disabled { opacity:.75; cursor:wait; }
+    .customer-info { margin-bottom:8px; line-height:1.6; font-size:14px; overflow-wrap:anywhere; }
+    .customer-info a { color:#38bdf8; text-decoration:none; font-weight:bold; }
+    .note-box { background:#451a03; color:#fdba74; padding:8px 10px; border-radius:6px; font-size:13px; margin-bottom:8px; border:1px dashed #c2410c; }
+    .items-box { background:#0f172a; padding:10px 12px; border-radius:8px; margin:8px 0; font-size:14px; line-height:1.6; color:#e2e8f0; border-left:4px solid var(--primary); }
+    .item-line { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; border-bottom:1px dashed rgba(255,255,255,.1); padding-bottom:8px; cursor:pointer; }
+    .item-line:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+    .item-checkbox { width:18px; height:18px; accent-color:#22c55e; cursor:pointer; flex-shrink:0; margin-top:2px; }
+    .item-line.completed-item { opacity:.45; text-decoration:line-through; color:#94a3b8; }
+    .order-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 12px; font-size:14px; }
+    .payment-tag { padding:5px 10px; border-radius:6px; font-size:13px; font-weight:bold; }
+    .pay-cash { background:#334155; color:#cbd5e1; }
+    .pay-transfer { background:#065f46; color:#34d399; border:1px solid #059669; cursor:pointer; transition:all .2s; }
+    .pay-transfer:hover { background:#047857; transform:scale(1.05); }
+    .total-price { font-weight:bold; color:#4ade80; font-size:17px; white-space:nowrap; }
+    .status-group { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+    .status-btn { padding:10px 4px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:var(--subtext); font-size:13px; font-weight:bold; cursor:pointer; text-align:center; transition:background .15s,color .15s,border-color .15s; }
+    .status-btn.active-1 { background:#eab308; color:#000; border-color:#eab308; }
+    .status-btn.active-2 { background:#3b82f6; color:#fff; border-color:#3b82f6; }
+    .status-btn.active-3 { background:#a855f7; color:#fff; border-color:#a855f7; }
+    .status-btn.active-4 { background:#22c55e; color:#fff; border-color:#22c55e; }
+    .empty-state { text-align:center; color:var(--subtext); padding:40px 0; }
+    @keyframes orderBuzz { 0%{transform:translate(0,0) rotate(0)} 20%{transform:translate(-2px,2px) rotate(-.5deg)} 40%{transform:translate(2px,-2px) rotate(.5deg)} 60%{transform:translate(-1px,1px) rotate(0)} 80%{transform:translate(1px,-1px) rotate(0)} 100%{transform:translate(0,0) rotate(0)} }
+    .order-card.new-buzz { animation:orderBuzz .5s ease-in-out infinite; border:2px solid #eab308!important; box-shadow:0 0 15px rgba(234,179,8,.4); }
+    .order-card.status-bg-1 { border-color:#eab308; } .order-card.status-bg-2 { border-color:#3b82f6; } .order-card.status-bg-3 { border-color:#a855f7; } .order-card.status-bg-4 { border-color:#22c55e; opacity:.85; }
+    .btn-map-route { display:inline-flex; align-items:center; gap:4px; background:#0284c7; color:#fff!important; text-decoration:none; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold; margin-top:4px; transition:background .2s; }
+    .btn-map-route:hover { background:#0369a1; }
+    @media(max-width:420px) { .order-header { align-items:flex-start; } .header-btns { gap:5px; } .action-btn { padding:7px 8px; font-size:12px; } .btn-push-pos { padding:6px 8px; } }
   </style>
 </head>
 <body>
-
   <div id="adminApp">
     <div id="adminHeader">
       <div>
-        <h3 style="color: var(--primary);">QUẢN LÝ ĐƠN HÀNG</h3>
-        <span id="orderCount" style="font-size: 13px; color: var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
+        <h3 style="color:var(--primary);">QUẢN LÝ ĐƠN HÀNG</h3>
+        <span id="orderCount" style="font-size:13px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
       <div class="header-btns">
         <button class="action-btn clear-btn" onclick="requestClearOrders()">🗑️ Dọn dẹp</button>
         <button class="action-btn" onclick="fetchOrders()">🔄 Tải lại</button>
       </div>
     </div>
-
-    <div id="ordersContainer">
-      <div class="empty-state">Đang tải dữ liệu đơn hàng...</div>
-    </div>
+    <div id="ordersContainer"><div class="empty-state">Đang tải dữ liệu đơn hàng...</div></div>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    let isFetchingOrders = false;
 
     window.onload = function() {
       fetchOrders();
-      setInterval(fetchOrders, 15000); 
+      setInterval(fetchOrders, 15000);
     };
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
     function fetchOrders() {
-      fetch(`${SCRIPT_URL}?type=checkStatus&phone=ALL`)
+      if (isFetchingOrders) return;
+      isFetchingOrders = true;
+      fetch(`${SCRIPT_URL}?type=checkStatus&phone=ALL`, {cache:'no-store'})
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('ordersContainer');
-          if (!data.success || !data.orders || data.orders.length === 0) {
+          if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
+            document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
             return;
           }
-
           let html = '';
           data.orders.forEach(order => {
+            const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
             const cleanPhone = String(order.phone || '').replace(/'/g, '').trim();
-
-            let cardStatusClass = `status-bg-${currentStatus}`;
-            let buzzClass = (currentStatus === '1') ? 'new-buzz' : '';
-            let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
-
-            let formattedItems = parseAdminItemsToList(order.items);
-
-            let paymentText = order.payment || 'Tiền mặt';
-            let isTransfer = paymentText.toLowerCase().includes('chuyển');
-            let paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
-
+            const cardStatusClass = `status-bg-${currentStatus}`;
+            const buzzClass = currentStatus === '1' ? 'new-buzz' : '';
+            const noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${escapeHtml(order.note)}</div>` : '';
+            const formattedItems = parseAdminItemsToList(order.items);
+            const paymentText = String(order.payment || 'Tiền mặt');
+            const isTransfer = paymentText.toLowerCase().includes('chuyển');
+            const paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
             let qrTagHtml = '';
             if (isTransfer) {
-              let totalAmount = Number(order.total || 0);
-              let syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${order.orderId}`;
-              let qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
-              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')" title="Bấm để mở mã QR chuyển khoản">💳 ${paymentText} (🔍 Xem QR)</span>`;
+              const totalAmount = Number(order.total || 0);
+              const syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${orderId}`;
+              const qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
+              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')" title="Bấm để mở mã QR chuyển khoản">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
             } else {
-              qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>`;
+              qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${escapeHtml(paymentText)}</span>`;
             }
-
-            let rawAddress = String(order.address || '🏠 Tại quán');
+            const rawAddress = String(order.address || '🏠 Tại quán');
             let mapButtonHtml = '';
             if (!rawAddress.includes('Tại quán')) {
-              let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
-              let fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
-              let storeCoords = "10.74955,106.63099";
-              let googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
-              mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
+              const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+              const fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
+              const storeCoords = '10.74955,106.63099';
+              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
+              mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" rel="noopener" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
-
-            let zaloDeepLink = `https://zalo.me/${cleanPhone}`;
-
-            // Kiểm tra trạng thái đã đẩy đơn hay chưa
-            let pushedPosKey = `kimbling_pushed_pos_${order.orderId}`;
-            let isPushed = localStorage.getItem(pushedPosKey) === 'true';
-            let pushBtnText = isPushed ? '✅ Đã đẩy đơn' : '🚀 Đẩy qua POS';
-            let pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
-            let pushDisabled = isPushed ? 'disabled' : '';
-
+            const zaloDeepLink = `https://zalo.me/${encodeURIComponent(cleanPhone)}`;
+            const isPushed = localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true';
+            const pushBtnText = isPushed ? '✅ Đã đẩy đơn' : '🚀 Đẩy qua POS';
+            const pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
+            const pushDisabled = isPushed ? 'disabled' : '';
+            const orderJson = escapeHtml(JSON.stringify(order));
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
                 <div class="order-header">
-                  <div>
-                    <span class="order-id">#${order.orderId || 'Đơn'}</span>
-                    <span class="order-time" style="margin-left: 6px;">${order.time || ''}</span>
-                  </div>
-                  <div style="display: flex; gap: 6px; align-items: center;">
-                    <button class="${pushBtnClass}" ${pushDisabled} onclick="pushOrderToPOS('${order.orderId}', ${JSON.stringify(order).replace(/"/g, '&quot;')})">${pushBtnText}</button>
-                    <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${order.orderId}')">🗑️ Xóa đơn</button>
+                  <div><span class="order-id">#${escapeHtml(orderId || 'Đơn')}</span><span class="order-time" style="margin-left:6px;">${escapeHtml(order.time || '')}</span></div>
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                    <button class="${pushBtnClass}" ${pushDisabled} data-order="${orderJson}" onclick="pushOrderButton(this)">${pushBtnText}</button>
+                    <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${escapeHtml(orderId)}')">🗑️ Xóa đơn</button>
                   </div>
                 </div>
                 <div class="customer-info">
-                  👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
-                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="${zaloDeepLink}" target="_blank" style="color: #60a5fa;">💬 Mở app Zalo</a>)<br>
-                  📍 <b>Đ/c:</b> ${rawAddress} ${mapButtonHtml}
+                  👤 <b>Khách:</b> ${escapeHtml(order.name || 'Khách lẻ')}<br>
+                  📞 <b>SĐT:</b> <a href="tel:${escapeHtml(cleanPhone)}">${escapeHtml(cleanPhone)}</a> (<a href="${zaloDeepLink}" target="_blank" rel="noopener" style="color:#60a5fa;">💬 Mở app Zalo</a>)<br>
+                  📍 <b>Đ/c:</b> ${escapeHtml(rawAddress)} ${mapButtonHtml}
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
-                
-                <div class="order-footer">
-                  ${qrTagHtml}
-                  <span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>
-                </div>
-                
+                <div class="order-footer">${qrTagHtml}<span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span></div>
                 <div class="status-group">
-                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '1')">1. Đang làm</button>
-                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '2')">2. Chờ Shipper</button>
-                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '3')">3. Đang giao</button>
-                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '4')">4. Hoàn thành</button>
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '4')">4. Hoàn thành</button>
                 </div>
-              </div>
-            `;
+              </div>`;
           });
           container.innerHTML = html;
+          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error('Lỗi tải đơn hàng:', err))
+        .finally(() => { isFetchingOrders = false; });
     }
 
-    function pushOrderToPOS(orderId, orderObj) {
-      const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
-      if (!pin) return;
+    function pushOrderButton(button) {
+      let orderObj;
+      try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); }
+      catch (e) { alert('Không đọc được dữ liệu đơn hàng. Vui lòng tải lại trang.'); return; }
+      pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
+    }
 
-      let savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
-      if (pin !== savedAdminPin) {
-        alert("❌ Mã PIN chủ quán không chính xác!");
-        return;
+    function parseOrderItemsForPOS(orderObj, orderId) {
+      const rawItems = orderObj.items;
+      if (Array.isArray(rawItems)) {
+        return rawItems.map((item, idx) => ({
+          cartId: Date.now() + idx,
+          id: item.id || 9999 + idx,
+          name: String(item.name || item.title || 'Món đơn hàng'),
+          basePrice: Number(item.basePrice ?? item.price ?? 0) || 0,
+          optionsText: String(item.optionsText || item.options || `Đơn online #${orderId}`),
+          quantity: Math.max(1, Number(item.quantity || item.qty || 1) || 1),
+          rawToppings: Array.isArray(item.rawToppings) ? item.rawToppings : []
+        }));
       }
-
-      let rawItemsStr = String(orderObj.items || '').trim();
-      let parsedCartItems = [];
-      let lines = rawItemsStr.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
-      
+      const rawItemsStr = String(rawItems || '').trim();
+      const lines = rawItemsStr.split(/[\r\n]+/).map(line => line.trim()).filter(Boolean);
+      const parsed = [];
       lines.forEach((line, idx) => {
-        let priceMatch = line.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
-        let priceVal = priceMatch ? parseInt(priceMatch[0].replace(/[^\d]/g, '')) || 0 : 0;
-        let cleanName = priceVal ? line.replace(priceMatch[0], '').replace(/\|\s*$/, '').trim() : line;
-        
-        parsedCartItems.push({
-          cartId: Date.now() + idx + Math.random(),
+        const priceMatch = line.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*đ/i);
+        const priceVal = priceMatch ? (parseInt(priceMatch[0].replace(/[^\d]/g, ''), 10) || 0) : 0;
+        let cleanName = priceMatch ? line.replace(priceMatch[0], '').replace(/\|\s*$/, '').trim() : line;
+        cleanName = cleanName.replace(/^\|\s*/, '').trim();
+        const qtyMatch = cleanName.match(/(?:x|×)\s*(\d+)\s*$/i);
+        const quantity = qtyMatch ? Math.max(1, parseInt(qtyMatch[1], 10) || 1) : 1;
+        if (qtyMatch) cleanName = cleanName.replace(qtyMatch[0], '').trim();
+        parsed.push({
+          cartId: Date.now() + idx,
           id: 9999 + idx,
           name: cleanName || 'Món đơn hàng',
           basePrice: priceVal,
-          optionsText: `Đơn từ QLĐN #${orderId}`,
-          quantity: 1,
+          optionsText: `Đơn online #${orderId}`,
+          quantity,
           rawToppings: []
         });
       });
+      if (!parsed.length) parsed.push({
+        cartId: Date.now(), id: 9999, name: `Đơn hàng tổng hợp #${orderId}`,
+        basePrice: Number(orderObj.total || 0),
+        optionsText: `Khách: ${orderObj.name || 'Lẻ'} - ĐT: ${orderObj.phone || ''}`,
+        quantity: 1, rawToppings: []
+      });
+      return parsed;
+    }
 
-      if (parsedCartItems.length === 0) {
-        parsedCartItems.push({
-          cartId: Date.now(),
-          id: 9999,
-          name: 'Đơn hàng tổng hợp #' + orderId,
-          basePrice: Number(orderObj.total || 0),
-          optionsText: `Khách: ${orderObj.name || 'Lẻ'} - ĐT: ${orderObj.phone || ''}`,
-          quantity: 1,
-          rawToppings: []
-        });
+    async function waitForSalesOrder(orderId, attempts = 15, delayMs = 1000) {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const response = await fetch(`${SCRIPT_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
+          const data = await response.json();
+          if (data && data.success && data.saved) return true;
+        } catch (err) {
+          console.warn('Đang chờ xác nhận Sales:', err);
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
+      return false;
+    }
 
-      // Lưu vào localStorage kèm trigger để tab POS nhận diện tự động cập nhật ngay lập tức
-      localStorage.setItem('kimbling_cart', JSON.stringify(parsedCartItems));
-      localStorage.setItem('kimbling_pushed_trigger', JSON.stringify({ orderId: orderId, time: Date.now() }));
+    async function pushOrderToPOS(orderId, orderObj, button) {
+      if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
+      if (localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true') {
+        alert(`Đơn #${orderId} đã được đánh dấu đẩy trước đó.`);
+        return;
+      }
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
+      if (!pin) return;
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin) { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+      const originalText = button ? button.textContent : '';
+      if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
+      try {
+        const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
+        const payload = {
+          type: 'pushOnlineOrder',
+          action: 'pushOnlineOrder',
+          sourceOrderId: String(orderId),
+          orderId: String(orderId),
+          total: Number(orderObj.total || 0),
+          items: parsedCartItems,
+          name: String(orderObj.name || 'Khách lẻ'),
+          phone: String(orderObj.phone || '').replace(/'/g, '').trim(),
+          address: String(orderObj.address || ''),
+          payment: String(orderObj.payment || 'Tiền mặt'),
+          note: String(orderObj.note || '')
+        };
 
-      const cleanPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: cleanPhone, orderId: orderId, status: '4' })
-      }).catch(err => console.error(err));
+        // POST no-cors không đọc được phản hồi; vì vậy phải kiểm tra lại Sales qua GET trước khi báo thành công.
+        await fetch(SCRIPT_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
 
-      alert(`🚀 Đẩy đơn #${orderId} sang POS thành công!\n- Đơn đã nạp vào giỏ hàng POS.\n- Trạng thái đã chuyển sang 'Hoàn thành'.`);
-      fetchOrders();
+        const saved = await waitForSalesOrder(String(orderId), 18, 1000);
+        if (!saved) {
+          throw new Error('Chưa xác nhận được hóa đơn trong Sales sau 18 lần kiểm tra. Đơn có thể chưa được lưu; hãy kiểm tra Sales trước khi thử lại.');
+        }
+
+        // Chỉ nạp giỏ và đánh dấu đã đẩy sau khi Sales xác nhận có hóa đơn.
+        localStorage.setItem('kimbling_cart', JSON.stringify(parsedCartItems));
+        localStorage.setItem('kimbling_pushed_trigger', JSON.stringify({orderId: String(orderId), time: Date.now()}));
+        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+        alert(`✅ Đã xác nhận lưu hóa đơn online #${orderId} vào Sales.\n- POS sẽ nhận giỏ hàng nếu đang mở cùng nguồn trang.\n- Trạng thái đơn được Apps Script V47 cập nhật thành Hoàn thành.`);
+        fetchOrders();
+      } catch (err) {
+        console.error('Lỗi đẩy đơn sang POS/Sales:', err);
+        alert(`⚠️ Chưa xác nhận lưu hóa đơn #${orderId}.\n${err.message || 'Lỗi kết nối máy chủ.'}\n\nKhông đánh dấu đơn là đã đẩy. Vui lòng kiểm tra sheet Sales và triển khai đúng Ma.gs V47 trước khi thử lại.`);
+      } finally {
+        if (button && !button.classList.contains('pushed')) {
+          button.disabled = false;
+          button.textContent = originalText || '🚀 Đẩy qua POS';
+        }
+      }
     }
 
     function parseAdminItemsToList(rawItemsStr) {
       let rawItems = String(rawItemsStr || '').trim();
       if (!rawItems) return '<div class="item-line">☕ Không có thông tin món</div>';
-
       rawItems = rawItems.replace(/[\r\n]+/g, ' ');
-      let regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
-      let matches = [];
-      let match;
-      while ((match = regex.exec(rawItems)) !== null) {
-        matches.push(match[1].trim());
-      }
-
-      if (matches.length === 0) {
-        matches = rawItems.split(';').map(i => i.trim()).filter(i => i !== '');
-      }
-      if (matches.length === 0) return `<div class="item-line">${rawItems}</div>`;
-
+      const regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
+      let matches = [], match;
+      while ((match = regex.exec(rawItems)) !== null) matches.push(match[1].trim());
+      if (matches.length === 0) matches = rawItems.split(';').map(i => i.trim()).filter(Boolean);
+      if (matches.length === 0) return `<div class="item-line">${escapeHtml(rawItems)}</div>`;
       return matches.map((item, idx) => {
-        let cleanText = item.replace(/^\|\s*/, '').trim();
-        let priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
-        let priceStr = priceMatch ? priceMatch[0] : '';
+        const cleanText = item.replace(/^\|\s*/, '').trim();
+        const priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
+        const priceStr = priceMatch ? priceMatch[0] : '';
         let dishName = priceStr ? cleanText.replace(priceStr, '').replace(/\|\s*$/, '').trim() : cleanText;
         dishName = dishName.replace(/=\s*$/, '').trim();
-        let uniqueItemId = `admin_item_${idx}_${Math.random().toString(36).substring(2, 7)}`;
-
-        return `
-          <div class="item-line" id="${uniqueItemId}">
-            <input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')">
-            <span onclick="document.getElementById('chk_${uniqueItemId}').click()" style="flex: 1; cursor: pointer;">
-              <b style="color: var(--primary);">${idx + 1}.</b> <span>${dishName}</span>
-            </span>
-            ${priceStr ? `<span style="font-weight: bold; color: #4ade80; flex-shrink: 0; margin-left: 6px;">${priceStr}</span>` : ''}
-          </div>
-        `;
+        const uniqueItemId = `admin_item_${idx}_${Math.random().toString(36).substring(2, 7)}`;
+        return `<div class="item-line" id="${uniqueItemId}"><input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')"><span onclick="document.getElementById('chk_${uniqueItemId}').click()" style="flex:1;cursor:pointer;"><b style="color:var(--primary);">${idx + 1}.</b> <span>${escapeHtml(dishName)}</span></span>${priceStr ? `<span style="font-weight:bold;color:#4ade80;flex-shrink:0;margin-left:6px;">${escapeHtml(priceStr)}</span>` : ''}</div>`;
       }).join('');
     }
 
@@ -341,66 +305,35 @@
       const itemEl = document.getElementById(itemId);
       if (!itemEl) return;
       const checkbox = itemEl.querySelector('.item-checkbox');
-      if (!checkbox) return;
-
-      if (checkbox.checked) {
-        itemEl.classList.add('completed-item');
-      } else {
-        itemEl.classList.remove('completed-item');
-      }
+      if (checkbox) itemEl.classList.toggle('completed-item', checkbox.checked);
     }
 
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
       if (card) {
-        card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`);
-        const buttons = card.querySelectorAll('.status-btn');
-        buttons.forEach((btn, idx) => {
-          btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`;
-        });
+        card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`).replace('new-buzz', '').trim();
+        card.querySelectorAll('.status-btn').forEach((btn, idx) => { btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`; });
       }
-
       fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: phone, orderId: orderId, status: status })
-      })
-      .then(res => res.json())
-      .catch(err => console.error(err));
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
+      }).catch(err => console.error('Lỗi cập nhật trạng thái:', err));
     }
 
     function requestDeleteSingleOrder(orderId) {
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
       if (!pin) return;
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ type: 'deleteSingleOrder', orderId: orderId, pin: pin })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        if (res.success) { fetchOrders(); }
-      })
-      .catch(err => alert("Lỗi kết nối máy chủ!"));
+      fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
+        .then(res => res.json()).then(res => { alert(res.message || (res.success ? 'Đã xóa đơn.' : 'Không thể xóa đơn.')); if (res.success) fetchOrders(); })
+        .catch(err => { console.error(err); alert('Lỗi kết nối máy chủ!'); });
     }
 
     function requestClearOrders() {
-      const pin = prompt("🔐 Nhập mã PIN chủ quán để dọn dẹp các đơn cũ:");
+      const pin = prompt('🔐 Nhập mã PIN chủ quán để dọn dẹp các đơn cũ:');
       if (!pin) return;
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ type: 'clearOrders', pin: pin })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        if (res.success) { fetchOrders(); }
-      })
-      .catch(err => alert("Lỗi kết nối!"));
+      fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'clearOrders',pin:pin})})
+        .then(res => res.json()).then(res => { alert(res.message || (res.success ? 'Đã dọn dẹp.' : 'Không thể dọn dẹp.')); if (res.success) fetchOrders(); })
+        .catch(err => { console.error(err); alert('Lỗi kết nối!'); });
     }
   </script>
 </body>
