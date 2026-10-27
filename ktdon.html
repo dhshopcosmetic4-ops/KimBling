@@ -1,133 +1,384 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kim Bling Coffee & Tea - Tra Cứu Đơn Hàng</title>
-    <link rel="icon" type="image/jpeg" href="logo.jpg">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #f4f6f9; color: #333; padding-bottom: 50px; }
-        header { background: #2196F3; color: white; padding: 16px 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        header h1 { font-size: 18px; margin-bottom: 4px; }
-        header p { font-size: 12px; opacity: 0.95; }
-        
-        .container { padding: 16px; max-width: 500px; margin: 0 auto; }
-        
-        .search-card { background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 16px; }
-        .search-card label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px; color: #444; }
-        .search-card input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; margin-bottom: 10px; }
-        .search-card input:focus { border-color: #2196F3; box-shadow: 0 0 5px rgba(33,150,243,0.3); }
-        
-        .btn-search { width: 100%; background: #2196F3; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(33,150,243,0.3); }
-        .btn-search:active { transform: scale(0.98); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tra Cứu Đơn Hàng — Kim Bling Coffee & Tea</title>
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <style>
+    :root {
+      --primary: #c29b38;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; font-size: 15px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
-        .back-menu { display: block; text-align: center; margin-top: 15px; color: #1976D2; text-decoration: none; font-size: 13px; font-weight: bold; }
+    .container { width: 100%; max-width: 480px; }
 
-        .result-container { margin-top: 15px; }
-        .order-item-card { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 4px solid #2196F3; }
-        .order-time { font-size: 12px; color: #666; margin-bottom: 4px; }
-        .order-details { font-size: 13px; color: #333; margin-bottom: 8px; line-height: 1.4; }
-        .order-total { font-weight: bold; color: #d32f2f; font-size: 14px; margin-bottom: 8px; }
-        
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        .status-1 { background: #ffebee; color: #c62828; } /* Đang chuẩn bị */
-        .status-2 { background: #fff3e0; color: #e65100; } /* Chờ shipper */
-        .status-3 { background: #e3f2fd; color: #1565c0; } /* Đang giao */
-        .status-4 { background: #e8f5e9; color: #2e7d32; } /* Hoàn thành */
+    .brand-header { text-align: center; margin-bottom: 20px; }
+    .brand-header h2 { color: var(--primary); font-size: 22px; margin-bottom: 4px; }
+    .brand-header p { color: var(--subtext); font-size: 13px; }
 
-        .loading, .error-msg, .info-msg { text-align: center; color: #666; font-size: 14px; padding: 20px; }
-    </style>
+    .search-box {
+      background: var(--card-bg); border: 1px solid var(--border); padding: 14px; border-radius: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .search-group { display: flex; gap: 8px; }
+    .search-input {
+      flex: 1; background: #0f172a; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; font-size: 16px; outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .search-btn {
+      background: var(--primary); color: #000; border: none; padding: 0 16px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 15px;
+    }
+
+    /* Khung hiển thị ảnh động minh họa từng bước */
+    .step-animation-banner {
+      background: #0f172a;
+      border: 1.5px solid var(--primary);
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: center;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .step-banner-img {
+      width: 65px;
+      height: 65px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #1e293b;
+      border: 1px solid rgba(194, 155, 56, 0.5);
+      flex-shrink: 0;
+    }
+    .step-banner-text {
+      text-align: left;
+      flex: 1;
+    }
+    .step-banner-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 2px;
+    }
+    .step-banner-desc {
+      font-size: 12px;
+      color: var(--subtext);
+      line-height: 1.4;
+    }
+
+    /* 4 Bước trạng thái sáng đèn */
+    .steps-container {
+      display: flex; justify-content: space-between; position: relative; margin: 18px 0 20px 0; padding: 0 10px;
+    }
+    .steps-container::before {
+      content: ''; position: absolute; top: 16px; left: 30px; right: 30px; height: 3px; background: var(--border); z-index: 1;
+    }
+    .step-item {
+      position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; width: 25%;
+    }
+    .step-circle {
+      width: 34px; height: 34px; border-radius: 50%; background: #0f172a; border: 2px solid var(--border); color: var(--subtext);
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin-bottom: 6px; transition: all 0.3s;
+    }
+    .step-label { font-size: 11px; color: var(--subtext); font-weight: 500; transition: color 0.3s; }
+
+    /* Trạng thái sáng đèn cho các bước */
+    .step-item.active .step-circle { background: var(--primary); border-color: var(--primary); color: #000; box-shadow: 0 0 12px rgba(194, 155, 56, 0.6); }
+    .step-item.active .step-label { color: var(--primary); font-weight: bold; }
+    
+    .step-item.completed .step-circle { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .step-item.completed .step-label { color: #22c55e; }
+
+    /* Thẻ đơn hàng chính (Mới nhất) */
+    .main-order-card {
+      background: var(--card-bg); border: 2px solid var(--primary); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 16px -4px rgba(0,0,0,0.4);
+    }
+    .card-title-badge {
+      display: inline-block; background: rgba(194, 155, 56, 0.15); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-bottom: 8px;
+    }
+    .order-info-line { margin-bottom: 8px; font-size: 14px; line-height: 1.5; color: #cbd5e1; }
+    .order-info-line b { color: #fff; }
+    
+    .items-box {
+      background: #0f172a; padding: 10px 12px; border-radius: 8px; margin: 10px 0; font-size: 14px; line-height: 1.5; border-left: 4px solid var(--primary);
+    }
+    .note-box {
+      background: #451a03; color: #fdba74; padding: 8px 10px; border-radius: 6px; font-size: 13px; margin-top: 8px; border: 1px dashed #c2410c;
+    }
+
+    .order-footer-total {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 15px;
+    }
+    .total-price { font-weight: bold; color: #4ade80; font-size: 18px; }
+
+    /* Danh sách đơn rút gọn (Các đơn cũ) */
+    .section-title { font-size: 14px; color: var(--subtext); margin: 20px 0 10px 4px; font-weight: bold; }
+    .compact-order-card {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: border-color 0.2s;
+    }
+    .compact-order-card:hover { border-color: var(--primary); }
+    .compact-left { display: flex; flex-direction: column; gap: 3px; }
+    .compact-id { font-weight: bold; color: var(--primary); font-size: 14px; }
+    .compact-time { font-size: 11px; color: var(--subtext); }
+    .compact-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .compact-status { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: bold; }
+    
+    .status-badge-1 { background: #eab308; color: #000; }
+    .status-badge-2 { background: #3b82f6; color: #fff; }
+    .status-badge-3 { background: #a855f7; color: #fff; }
+    .status-badge-4 { background: #22c55e; color: #fff; }
+
+    .empty-state { text-align: center; color: var(--subtext); padding: 30px 0; font-size: 14px; }
+    .payment-tag { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    .pay-cash { background: #334155; color: #cbd5e1; }
+    .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; }
+    .back-menu { display: block; text-align: center; margin-top: 15px; color: var(--primary); text-decoration: none; font-size: 13px; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>Kim Bling Coffee & Tea</h1>
-        <p>📦 Hệ Thống Tra Cứu Trạng Thái Đơn Hàng</p>
-    </header>
-
-    <div class="container">
-        <div class="search-card">
-            <label for="phoneInput">Nhập số điện thoại đặt hàng của bạn:</label>
-            <input type="tel" id="phoneInput" placeholder="Ví dụ: 0938573973" maxlength="11">
-            <button class="btn-search" onclick="checkOrderStatus()">🔍 TRA CỨU NGAY</button>
-        </div>
-
-        <a href="menu.html" class="back-menu">⬅ Quay lại trang đặt món (Menu)</a>
-
-        <div class="result-container" id="resultContainer">
-            <!-- Kết quả tra cứu sẽ hiển thị ở đây -->
-        </div>
+  <div class="container">
+    <div class="brand-header">
+      <h2>KIM BLING COFFEE & TEA</h2>
+      <p>Tra cứu trạng thái đơn hàng trực tuyến</p>
     </div>
 
-    <script>
-        // URL Google Apps Script Web App của bạn
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    <div class="search-box">
+      <div class="search-group">
+        <input type="tel" id="phoneInput" class="search-input" placeholder="Nhập số điện thoại của bạn..." maxlength="11">
+        <button class="search-btn" onclick="searchOrders(true)">🔍 Tra cứu</button>
+      </div>
+    </div>
 
-        // Tự động điền số điện thoại nếu khách đã từng đặt hàng lưu trên máy
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedPhone = localStorage.getItem('kimbling_cust_phone');
-            if (savedPhone) {
-                document.getElementById('phoneInput').value = savedPhone;
-                // Có thể tự động tra cứu luôn nếu muốn:
-                // checkOrderStatus();
-            }
+    <a href="menu.html" class="back-menu">⬅ Quay lại trang đặt món (Menu)</a>
+
+    <div id="resultArea" style="margin-top: 15px;">
+      <div class="empty-state">Vui lòng nhập số điện thoại để xem trạng thái đơn hàng.</div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    
+    // Đã cấu hình đủ 4 link ảnh GIF động cho từng bước tiến trình đơn hàng
+    const STEP_GIFS = {
+      '1': {
+        url: "https://lh3.googleusercontent.com/d/1N3HNNIPELUOAQmhucwxOI75pfwtiHS6T",
+        title: "1. Đang pha chế món...",
+        desc: "Quán đang chuẩn bị nguyên liệu và tất bật pha chế món ngon cho bạn."
+      },
+      '2': {
+        url: "https://lh3.googleusercontent.com/d/14OcOnHXz1_uD7qEKNG4HXy_naHqvGNeU",
+        title: "2. Chờ Shipper nhận đơn...",
+        desc: "Món đã pha chế xong, đóng gói cẩn thận và đang chờ Shipper nhận đơn."
+      },
+      '3': {
+        url: "https://lh3.googleusercontent.com/d/1ScoS7mnqt_KQro51XKir-0cgx8bhATMp",
+        title: "3. Shipper đang giao hàng...",
+        desc: "Shipper đang di chuyển siêu tốc đến địa chỉ của bạn. Chuẩn bị nhận hàng nhé!"
+      },
+      '4': {
+        url: "https://lh3.googleusercontent.com/d/1LwGm-J9tVRkURPYYB0H9ZGbQuFT_z5Ow",
+        title: "4. Giao hàng thành công!",
+        desc: "Đơn hàng đã được giao hoàn tất. Cảm ơn bạn đã ủng hộ Kim Bling Coffee & Tea! ❤️"
+      }
+    };
+
+    let autoRefreshTimer = null;
+    let currentSearchedPhone = "";
+
+    window.onload = function() {
+      const savedPhone = localStorage.getItem('kb_customer_phone');
+      if (savedPhone) {
+        document.getElementById('phoneInput').value = savedPhone;
+        searchOrders(false);
+      }
+    };
+
+    function searchOrders(isManual = true) {
+      const phoneInput = document.getElementById('phoneInput');
+      const phone = phoneInput.value.trim();
+
+      if (!phone || phone.length < 9) {
+        if (isManual) alert("Vui lòng nhập số điện thoại hợp lệ!");
+        return;
+      }
+
+      currentSearchedPhone = phone;
+      localStorage.setItem('kb_customer_phone', phone);
+
+      const resultArea = document.getElementById('resultArea');
+      resultArea.innerHTML = '<div class="empty-state">Đang tìm kiếm đơn hàng...</div>';
+
+      fetch(`${SCRIPT_URL}?type=checkStatus&phone=${phone}`)
+        .then(res => res.json())
+        .then(data => {
+          renderOrders(data);
+          
+          if (!autoRefreshTimer) {
+            autoRefreshTimer = setInterval(() => {
+              silentRefresh();
+            }, 10000);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          resultArea.innerHTML = '<div class="empty-state" style="color: #ef4444;">Lỗi kết nối đến máy chủ. Vui lòng thử lại!</div>';
         });
+    }
 
-        async function checkOrderStatus() {
-            const phone = document.getElementById('phoneInput').value.trim();
-            const container = document.getElementById('resultContainer');
+    function silentRefresh() {
+      if (!currentSearchedPhone) return;
+      fetch(`${SCRIPT_URL}?type=checkStatus&phone=${currentSearchedPhone}`)
+        .then(res => res.json())
+        .then(data => {
+          renderOrders(data);
+        })
+        .catch(err => console.error(err));
+    }
 
-            if (!phone || phone.length < 9) {
-                alert("Vui lòng nhập số điện thoại hợp lệ để tra cứu!");
-                return;
-            }
+    function renderOrders(data) {
+      const resultArea = document.getElementById('resultArea');
+      
+      if (!data.success || !data.orders || data.orders.length === 0) {
+        resultArea.innerHTML = '<div class="empty-state">Không tìm thấy đơn hàng nào cho số điện thoại này.</div>';
+        return;
+      }
 
-            container.innerHTML = `<div class="loading">⏳ Đang tìm kiếm đơn hàng...</div>`;
+      let orders = data.orders;
+      let latestOrder = orders[orders.length - 1]; 
+      let olderOrders = orders.slice(0, orders.length - 1).reverse(); 
 
-            try {
-                // Gọi tới endpoint checkStatus trong file Code.gs của bạn
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(phone)}`);
-                const data = await response.json();
+      let html = '';
 
-                if (data.success && data.orders && data.orders.length > 0) {
-                    container.innerHTML = `<h3 style="font-size:14px; margin-bottom:10px; color:#555;">Kết quả tìm thấy cho SĐT: <b>${phone}</b></h3>`;
-                    
-                    data.orders.forEach(order => {
-                        let statusCode = String(order.status || '1').trim();
-                        let statusText = "1. Đang chuẩn bị món 👩‍🍳";
-                        let statusClass = "status-1";
+      let currentStatus = String(latestOrder.status || '1');
+      html += renderMainOrderCard(latestOrder, currentStatus);
 
-                        if (statusCode === '2') {
-                            statusText = "2. Chờ shipper giao 🛵";
-                            statusClass = "status-2";
-                        } else if (statusCode === '3') {
-                            statusText = "3. Đang giao hàng 🚀";
-                            statusClass = "status-3";
-                        } else if (statusCode === '4') {
-                            statusText = "Đã hoàn thành ✅";
-                            statusClass = "status-4";
-                        }
+      if (olderOrders.length > 0) {
+        html += `<div class="section-title">📦 Lịch sử đơn hàng trước đó (${olderOrders.length})</div>`;
+        olderOrders.forEach(oldOrder => {
+          html += renderCompactOrderCard(oldOrder);
+        });
+      }
 
-                        container.innerHTML += `
-                            <div class="order-item-card">
-                                <div class="order-time">🕒 Thời gian: ${order.time}</div>
-                                <div class="order-details"><b>Món:</b> ${order.items}</div>
-                                <div class="order-total">💰 Tổng tiền: ${order.total}</div>
-                                <div>
-                                    <span class="status-badge ${statusClass}">${statusText}</span>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    container.innerHTML = `<div class="error-msg">❌ Không tìm thấy đơn hàng nào với số điện thoại này.</div>`;
-                }
-            } catch (err) {
-                console.error("Lỗi tra cứu:", err);
-                container.innerHTML = `<div class="error-msg">⚠️ Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.</div>`;
-            }
-        }
-    </script>
+      resultArea.innerHTML = html;
+    }
+
+    function renderMainOrderCard(order, status) {
+      let s1 = (status === '1') ? 'active' : (status > '1' ? 'completed' : '');
+      let s2 = (status === '2') ? 'active' : (status > '2' ? 'completed' : '');
+      let s3 = (status === '3') ? 'active' : (status > '3' ? 'completed' : '');
+      let s4 = (status === '4') ? 'completed active' : '';
+
+      // Thông tin ảnh GIF minh họa tương ứng với bước hiện tại
+      let currentGifInfo = STEP_GIFS[status] || STEP_GIFS['1'];
+
+      let rawItems = String(order.items || '');
+      let formattedItems = '';
+      if (rawItems) {
+        formattedItems = rawItems.split(';')
+          .filter(item => item.trim() !== '')
+          .map((item, idx) => `<div><b>${idx + 1}.</b> ${item.trim()}</div>`)
+          .join('');
+      } else {
+        formattedItems = '<div>Không có thông tin món</div>';
+      }
+
+      let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
+      let paymentText = order.payment || 'Tiền mặt';
+      let isTransfer = paymentText.toLowerCase().includes('chuyển');
+      let paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
+
+      let qrButtonHtml = '';
+      if (isTransfer) {
+        let totalAmount = Number(order.total || 0);
+        let syntax = order.phone ? `THANHTOAN_${String(order.phone).replace(/'/g, '')}` : `THANHTOAN_${order.orderId}`;
+        let qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
+        qrButtonHtml = `<a href="${qrUrl}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold; margin-left: 6px;">[🔍 Xem QR CK]</a>`;
+      }
+
+      return `
+        <div class="main-order-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="card-title-badge">⭐ ĐƠN HÀNG MỚI NHẤT</span>
+            <span style="font-size: 13px; color: var(--subtext);">${order.time || ''}</span>
+          </div>
+
+          <div class="order-info-line" style="margin-top: 8px;">
+            🆔 Mã đơn: <b>#${order.orderId || ''}</b><br>
+            📍 Giao đến: <b>${order.address || 'Tại quán'}</b>
+          </div>
+
+          <!-- Khung ảnh GIF động thay đổi linh hoạt theo từng bước -->
+          <div class="step-animation-banner">
+            <img src="${currentGifInfo.url}" alt="Trạng thái" class="step-banner-img">
+            <div class="step-banner-text">
+              <div class="step-banner-title">${currentGifInfo.title}</div>
+              <div class="step-banner-desc">${currentGifInfo.desc}</div>
+            </div>
+          </div>
+
+          <!-- 4 Bước Sáng Đèn (Nút tròn truyền thống) -->
+          <div class="steps-container">
+            <div class="step-item ${s1}">
+              <div class="step-circle">1</div>
+              <div class="step-label">Đang làm</div>
+            </div>
+            <div class="step-item ${s2}">
+              <div class="step-circle">2</div>
+              <div class="step-label">Chờ Shipper</div>
+            </div>
+            <div class="step-item ${s3}">
+              <div class="step-circle">3</div>
+              <div class="step-label">Đang giao</div>
+            </div>
+            <div class="step-item ${s4}">
+              <div class="step-circle">4</div>
+              <div class="step-label">Hoàn thành</div>
+            </div>
+          </div>
+
+          <div class="items-box">${formattedItems}</div>
+          ${noteHtml}
+
+          <div class="order-footer-total">
+            <span class="payment-tag ${paymentClass}">💳 ${paymentText} ${qrButtonHtml}</span>
+            <span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCompactOrderCard(order) {
+      let status = String(order.status || '1');
+      let statusNames = { '1': 'Đang làm', '2': 'Chờ Shipper', '3': 'Đang giao', '4': 'Hoàn thành' };
+      
+      let rawItems = String(order.items || '');
+      let firstItemName = "Đơn nước";
+      if (rawItems) {
+        let firstPart = rawItems.split(';')[0];
+        firstItemName = firstPart.replace(/^\d+\s*x\s*/i, '').trim(); 
+      }
+
+      return `
+        <div class="compact-order-card">
+          <div class="compact-left">
+            <span class="compact-id">#${order.orderId || ''} - <span style="color:#fff; font-weight:normal;">${firstItemName}</span></span>
+            <span class="compact-time">📅 ${order.time || ''} | Tổng: <b>${Number(order.total || 0).toLocaleString('vi-VN')}đ</b></span>
+          </div>
+          <div class="compact-right">
+            <span class="compact-status status-badge-${status}">${statusNames[status] || 'Đang xử lý'}</span>
+          </div>
+        </div>
+      `;
+    }
+  </script>
 </body>
 </html>
