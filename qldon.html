@@ -173,9 +173,8 @@
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
 
-            // Chuẩn hóa số điện thoại cho iPhone để mở thẳng vào khung chat Zalo
-            let formattedZaloPhone = cleanPhone.startsWith('0') ? '84' + cleanPhone.substring(1) : cleanPhone;
-            let zaloDeepLink = `https://zalo.me/${formattedZaloPhone}`;
+            // Dùng chuẩn https://zalo.me/036... để iPhone mở thẳng vào khung chat chính xác
+            let zaloDeepLink = `https://zalo.me/${cleanPhone}`;
 
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
@@ -263,7 +262,6 @@
       }
     }
 
-    // Phản hồi siêu tốc (Optimistic UI) khi đổi trạng thái
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
       if (card) {
