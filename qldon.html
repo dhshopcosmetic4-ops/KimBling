@@ -64,10 +64,11 @@
     
     .item-line { 
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      justify-content: space-between;
       gap: 8px;
       margin-bottom: 8px; 
-      border-bottom: 1px solid rgba(255,255,255,0.05); 
+      border-bottom: 1px dashed rgba(255,255,255,0.1); 
       padding-bottom: 8px; 
       cursor: pointer;
     }
@@ -79,6 +80,7 @@
       accent-color: #22c55e;
       cursor: pointer;
       flex-shrink: 0;
+      margin-top: 2px;
     }
 
     .item-line.completed-item {
@@ -237,26 +239,8 @@
 
             let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
 
-            let rawItems = String(order.items || '');
-            let formattedItems = '';
-            if (rawItems) {
-              let itemsArray = rawItems.split(';');
-              formattedItems = itemsArray
-                .filter(item => item.trim() !== '')
-                .map((item, index) => {
-                  let cleanItemText = item.trim();
-                  let uniqueItemId = `item_${order.orderId}_${index}`;
-                  return `
-                    <div class="item-line" id="${uniqueItemId}">
-                      <input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')">
-                      <span onclick="document.getElementById('chk_${uniqueItemId}').click()"><b>${index + 1}.</b> ${cleanItemText}</span>
-                    </div>
-                  `;
-                })
-                .join('');
-            } else {
-              formattedItems = `<div class="item-line">☕ Không có thông tin món</div>`;
-            }
+            // Hàm bóc tách sản phẩm chuẩn xác (giống ktdon.html)
+            let formattedItems = parseAdminItemsToList(order.items);
 
             let paymentText = order.payment || 'Tiền mặt';
             let isTransfer = paymentText.toLowerCase().includes('chuyển');
@@ -285,7 +269,6 @@
               
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
 
-              // Khung chọn Shipper & Phát GPS cho các đơn giao tận nơi
               let isGpsActive = !!activeGpsIntervals[order.orderId];
               shipperBoxHtml = `
                 <div class="shipper-assign-box">
@@ -337,6 +320,46 @@
           container.innerHTML = html;
         })
         .catch(err => console.error(err));
+    }
+
+    // Thuật toán chuẩn hóa và bóc tách từng sản phẩm đi kèm checkbox tích chọn cho quản lý
+    function parseAdminItemsToList(rawItemsStr) {
+      let rawItems = String(rawItemsStr || '').trim();
+      if (!rawItems) return '<div class="item-line">☕ Không có thông tin món</div>';
+
+      rawItems = rawItems.replace(/[\r\n]+/g, ' ');
+
+      let regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
+      let matches = [];
+      let match;
+      while ((match = regex.exec(rawItems)) !== null) {
+        matches.push(match[1].trim());
+      }
+
+      if (matches.length === 0) {
+        matches = rawItems.split(';').map(i => i.trim()).filter(i => i !== '');
+      }
+      if (matches.length === 0) return `<div class="item-line">${rawItems}</div>`;
+
+      return matches.map((item, idx) => {
+        let cleanText = item.replace(/^\|\s*/, '').trim();
+        let priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
+        let priceStr = priceMatch ? priceMatch[0] : '';
+        let dishName = priceStr ? cleanText.replace(priceStr, '').replace(/\|\s*$/, '').trim() : cleanText;
+        
+        dishName = dishName.replace(/=\s*$/, '').trim();
+        let uniqueItemId = `admin_item_${idx}_${Math.random().toString(36).substring(2, 7)}`;
+
+        return `
+          <div class="item-line" id="${uniqueItemId}">
+            <input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')">
+            <span onclick="document.getElementById('chk_${uniqueItemId}').click()" style="flex: 1; cursor: pointer;">
+              <b style="color: var(--primary);">${idx + 1}.</b> <span>${dishName}</span>
+            </span>
+            ${priceStr ? `<span style="font-weight: bold; color: #4ade80; flex-shrink: 0; margin-left: 6px;">${priceStr}</span>` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function toggleItemCheck(itemId) {
