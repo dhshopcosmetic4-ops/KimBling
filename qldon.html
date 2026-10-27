@@ -89,46 +89,6 @@
       color: #94a3b8;
     }
 
-    /* Khung gán Shipper & Bật GPS */
-    .shipper-assign-box {
-      background: #0f172a;
-      border: 1px dashed #38bdf8;
-      padding: 8px;
-      border-radius: 8px;
-      margin: 8px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 13px;
-    }
-    .shipper-select {
-      width: 100%;
-      padding: 6px;
-      background: #1e293b;
-      color: #fff;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    .btn-gps-on {
-      background: #0284c7;
-      color: white;
-      border: none;
-      padding: 6px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      transition: background 0.2s;
-    }
-    .btn-gps-on.active {
-      background: #22c55e;
-    }
-
     .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
     .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
     .pay-cash { background: #334155; color: #cbd5e1; }
@@ -212,7 +172,6 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
-    let activeGpsIntervals = {};
 
     window.onload = function() {
       fetchOrders();
@@ -239,7 +198,7 @@
 
             let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
 
-            // Hàm bóc tách sản phẩm chuẩn xác (giống ktdon.html)
+            // Bóc tách sản phẩm sạch sẽ
             let formattedItems = parseAdminItemsToList(order.items);
 
             let paymentText = order.payment || 'Tiền mặt';
@@ -259,7 +218,6 @@
 
             let rawAddress = String(order.address || '🏠 Tại quán');
             let mapButtonHtml = '';
-            let shipperBoxHtml = '';
 
             if (!rawAddress.includes('Tại quán')) {
               let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
@@ -268,21 +226,6 @@
               let googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
               
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
-
-              let isGpsActive = !!activeGpsIntervals[order.orderId];
-              shipperBoxHtml = `
-                <div class="shipper-assign-box">
-                  <span style="font-weight:bold; color:#38bdf8;">🛵 Phân công Shipper:</span>
-                  <select class="shipper-select" id="sel_shipper_${order.orderId}" onchange="assignShipper('${order.orderId}', '${cleanPhone}')">
-                    <option value="">-- Chọn Shipper nhận đơn --</option>
-                    <option value="Chú Dũng|0862695269" ${order.shipper === 'Chú Dũng' ? 'selected' : ''}>Chú Dũng (086.269.5269)</option>
-                    <option value="A. Phát|0768024894" ${order.shipper === 'A. Phát' ? 'selected' : ''}>A. Phát (076.802.4894)</option>
-                  </select>
-                  <button class="btn-gps-on ${isGpsActive ? 'active' : ''}" id="btn_gps_${order.orderId}" onclick="toggleShipperGPS('${order.orderId}')">
-                    ${isGpsActive ? '🛰️ Đang phát GPS trực tiếp...' : '🛰️ Bật GPS chia sẻ vị trí thực tế'}
-                  </button>
-                </div>
-              `;
             }
 
             html += `
@@ -301,7 +244,6 @@
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
-                ${shipperBoxHtml}
                 
                 <div class="order-footer">
                   ${qrTagHtml}
@@ -322,7 +264,6 @@
         .catch(err => console.error(err));
     }
 
-    // Thuật toán chuẩn hóa và bóc tách từng sản phẩm đi kèm checkbox tích chọn cho quản lý
     function parseAdminItemsToList(rawItemsStr) {
       let rawItems = String(rawItemsStr || '').trim();
       if (!rawItems) return '<div class="item-line">☕ Không có thông tin món</div>';
@@ -373,63 +314,6 @@
       } else {
         itemEl.classList.remove('completed-item');
       }
-    }
-
-    function assignShipper(orderId, phone) {
-      const selectEl = document.getElementById(`sel_shipper_${orderId}`);
-      if (!selectEl || !selectEl.value) return;
-      const parts = selectEl.value.split('|');
-      const name = parts[0];
-      const shPhone = parts[1];
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ type: 'updateShipperLocation', orderId: orderId, shipperName: name, shipperPhone: shPhone })
-      }).then(res => res.json()).catch(err => console.error(err));
-    }
-
-    function toggleShipperGPS(orderId) {
-      const btn = document.getElementById(`btn_gps_${orderId}`);
-      
-      if (activeGpsIntervals[orderId]) {
-        clearInterval(activeGpsIntervals[orderId]);
-        delete activeGpsIntervals[orderId];
-        if (btn) {
-          btn.classList.remove('active');
-          btn.innerHTML = "🛰️ Bật GPS chia sẻ vị trí thực tế";
-        }
-        alert("Đã tắt chia sẻ GPS cho đơn này.");
-        return;
-      }
-
-      if (!navigator.geolocation) {
-        alert("Trình duyệt không hỗ trợ định vị GPS!");
-        return;
-      }
-
-      if (btn) {
-        btn.classList.add('active');
-        btn.innerHTML = "🛰️ Đang phát GPS trực tiếp...";
-      }
-      alert("Đã bật GPS! Tọa độ của shipper sẽ tự động đồng bộ mỗi 10 giây.");
-
-      let intervalId = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(position => {
-          let lat = position.coords.latitude;
-          let lng = position.coords.longitude;
-
-          fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ type: 'updateShipperLocation', orderId: orderId, lat: lat, lng: lng })
-          }).catch(err => console.error(err));
-        }, err => {
-          console.error("Lỗi lấy vị trí GPS:", err);
-        }, { enableHighAccuracy: true });
-      }, 10000);
-
-      activeGpsIntervals[orderId] = intervalId;
     }
 
     function updateStatus(phone, orderId, status) {
