@@ -16,6 +16,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kim Bling Coffee & Tea - V37 (Danh mục Topping)</title>
     <style>
+
+/* Ép tất cả các ô nhập liệu đạt font-size 16px chuẩn iOS để chống zoom vỡ giao diện */
+input[type="text"], 
+input[type="number"], 
+input[type="tel"],
+input[type="password"],
+input[type="search"],
+select,
+textarea {
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+}
+
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f9; overflow: hidden; }
         
@@ -166,9 +180,11 @@
             </div>
         </div>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món thông minh (Không dấu, viết tắt: vd 'ts', 'cf')..." oninput="renderMenu()">
-        </div>
+       <div class="search-box" style="position: relative;">
+    <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm món thông minh (Không dấu, viết tắt: vd 'ts', 'cf')..." oninput="handleSearchInput()" style="padding-right: 35px;">
+    <button type="button" id="searchClearBtn" onclick="clearSearchInput()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ccc; border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 13px; font-weight: bold; cursor: pointer; color: #333; align-items: center; justify-content: center;">✕</button>
+</div>
+
         <div class="category-tabs" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(82px, 1fr)); gap: 6px; margin-bottom: 15px;">
             <button class="cat-btn active" onclick="filterCategory('All', this)" style="background: #2196F3; color: white; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">📋 Tất cả</button>
             <button class="cat-btn" onclick="filterCategory('Favorite', this)" style="background: #e0e0e0; color: #333; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center;">⭐ Yêu thích</button>
@@ -231,12 +247,11 @@
                 </div>
             </div>
 
-            <div class="option-group" id="sugarGroupContainer">
+                        <div class="option-group" id="sugarGroupContainer">
                 <label>Lượng Đường:</label>
                 <div class="option-list" style="max-height: none;">
-                    <label><input type="radio" name="sugarOption" value="100% đường" checked> 100% đường</label>
-                    <label><input type="radio" name="sugarOption" value="70% đường"> 70% đường</label>
-                    <label><input type="radio" name="sugarOption" value="50% đường"> 50% đường</label>
+                    <label><input type="radio" name="sugarOption" value="Đường bình thường" checked> Đường bình thường</label>
+                    <label><input type="radio" name="sugarOption" value="Ít đường"> Ít đường</label>
                     <label><input type="radio" name="sugarOption" value="Không đường"> Không đường</label>
                 </div>
             </div>
@@ -244,11 +259,12 @@
             <div class="option-group" id="iceGroupContainer">
                 <label>Lượng Đá:</label>
                 <div class="option-list" style="max-height: none;">
-                    <label><input type="radio" name="iceOption" value="100% đá" checked> 100% đá</label>
+                    <label><input type="radio" name="iceOption" value="Đá bình thường" checked> Đá bình thường</label>
                     <label><input type="radio" name="iceOption" value="Ít đá"> Ít đá</label>
                     <label><input type="radio" name="iceOption" value="Không đá"> Không đá</label>
                 </div>
             </div>
+
 
             <div class="option-group">
                 <label id="toppingLabelTitle">Topping thêm (Bấm tăng giảm số lượng x2, x3...):</label>
@@ -2592,6 +2608,27 @@ fetchStaffFromCloud();
         function closeGuestPreviewModal() {
             document.getElementById('guestPreviewModal').style.display = 'none';
         }
+
+function handleSearchInput() {
+    const input = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('searchClearBtn');
+    if (input.value.trim().length > 0) {
+        clearBtn.style.display = 'flex';
+    } else {
+        clearBtn.style.display = 'none';
+    }
+    renderMenu();
+}
+
+function clearSearchInput() {
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    document.getElementById('searchClearBtn').style.display = 'none';
+    renderMenu();
+    input.focus();
+}
+
+
     </script>
 
 </body>
