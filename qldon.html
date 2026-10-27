@@ -35,14 +35,7 @@
     .order-time { font-size: 13px; color: var(--subtext); }
     
     .btn-delete-single {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid #ef4444;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: bold;
-      cursor: pointer;
+      background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
     }
     .btn-delete-single:hover { background: #ef4444; color: #fff; }
 
@@ -52,54 +45,21 @@
     .note-box { background: #451a03; color: #fdba74; padding: 8px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 8px; border: 1px dashed #c2410c; }
     
     .items-box { 
-      background: #0f172a; 
-      padding: 10px 12px; 
-      border-radius: 8px; 
-      margin: 8px 0; 
-      font-size: 14px; 
-      line-height: 1.6; 
-      color: #e2e8f0; 
-      border-left: 4px solid var(--primary);
+      background: #0f172a; padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 14px; line-height: 1.6; color: #e2e8f0; border-left: 4px solid var(--primary);
     }
     
     .item-line { 
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px; 
-      border-bottom: 1px dashed rgba(255,255,255,0.1); 
-      padding-bottom: 8px; 
-      cursor: pointer;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; cursor: pointer;
     }
     .item-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
     
-    .item-checkbox {
-      width: 18px;
-      height: 18px;
-      accent-color: #22c55e;
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .item-line.completed-item {
-      opacity: 0.45;
-      text-decoration: line-through;
-      color: #94a3b8;
-    }
+    .item-checkbox { width: 18px; height: 18px; accent-color: #22c55e; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+    .item-line.completed-item { opacity: 0.45; text-decoration: line-through; color: #94a3b8; }
 
     .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 12px 0; font-size: 14px; }
     .payment-tag { padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
     .pay-cash { background: #334155; color: #cbd5e1; }
-    
-    .pay-transfer { 
-      background: #065f46; 
-      color: #34d399; 
-      border: 1px solid #059669; 
-      cursor: pointer; 
-      transition: all 0.2s; 
-    }
+    .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; cursor: pointer; transition: all 0.2s; }
     .pay-transfer:hover { background: #047857; transform: scale(1.05); }
 
     .total-price { font-weight: bold; color: #4ade80; font-size: 17px; }
@@ -107,6 +67,7 @@
     .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .status-btn {
       padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: var(--subtext); font-size: 13px; font-weight: bold; cursor: pointer; text-align: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
     .status-btn.active-1 { background: #eab308; color: #000; border-color: #eab308; } 
     .status-btn.active-2 { background: #3b82f6; color: #fff; border-color: #3b82f6; } 
@@ -135,18 +96,7 @@
     .order-card.status-bg-4 { border-color: #22c55e; opacity: 0.85; }
 
     .btn-map-route {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #0284c7;
-      color: #fff;
-      text-decoration: none;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 4px;
-      transition: background 0.2s;
+      display: inline-flex; align-items: center; gap: 4px; background: #0284c7; color: #fff; text-decoration: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 4px; transition: background 0.2s;
     }
     .btn-map-route:hover { background: #0369a1; }
   </style>
@@ -191,14 +141,12 @@
           let html = '';
           data.orders.forEach(order => {
             const currentStatus = String(order.status || '1');
-            const cleanPhone = String(order.phone || '').replace(/'/g, '');
+            const cleanPhone = String(order.phone || '').replace(/'/g, '').trim();
 
             let cardStatusClass = `status-bg-${currentStatus}`;
             let buzzClass = (currentStatus === '1') ? 'new-buzz' : '';
-
             let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
 
-            // Bóc tách sản phẩm sạch sẽ
             let formattedItems = parseAdminItemsToList(order.items);
 
             let paymentText = order.payment || 'Tiền mặt';
@@ -210,7 +158,6 @@
               let totalAmount = Number(order.total || 0);
               let syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${order.orderId}`;
               let qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
-              
               qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')" title="Bấm để mở mã QR chuyển khoản">💳 ${paymentText} (🔍 Xem QR)</span>`;
             } else {
               qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${paymentText}</span>`;
@@ -218,15 +165,16 @@
 
             let rawAddress = String(order.address || '🏠 Tại quán');
             let mapButtonHtml = '';
-
             if (!rawAddress.includes('Tại quán')) {
               let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
               let fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
               let storeCoords = "10.74955,106.63099";
               let googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
-              
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
+
+            // Sử dụng deep link zalo:// để mở thẳng trực tiếp vào App Zalo
+            let zaloDeepLink = `zalo://chat?phone=${cleanPhone}`;
 
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
@@ -239,7 +187,7 @@
                 </div>
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${order.name || 'Khách lẻ'}<br>
-                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="https://zalo.me/${cleanPhone}" target="_blank" style="color: #60a5fa;">💬 Chat Zalo</a>)<br>
+                  📞 <b>SĐT:</b> <a href="tel:${cleanPhone}">${cleanPhone}</a> (<a href="${zaloDeepLink}" style="color: #60a5fa;">💬 Mở app Zalo</a>)<br>
                   📍 <b>Đ/c:</b> ${rawAddress} ${mapButtonHtml}
                 </div>
                 ${noteHtml}
@@ -251,10 +199,10 @@
                 </div>
                 
                 <div class="status-group">
-                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '1')">1. Đang làm</button>
-                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '2')">2. Chờ Shipper</button>
-                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '3')">3. Đang giao</button>
-                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus('${cleanPhone}', '${order.orderId}', '4')">4. Hoàn thành</button>
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '1')">1. Đang làm</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus(this, '${cleanPhone}', '${order.orderId}', '4')">4. Hoàn thành</button>
                 </div>
               </div>
             `;
@@ -269,7 +217,6 @@
       if (!rawItems) return '<div class="item-line">☕ Không có thông tin món</div>';
 
       rawItems = rawItems.replace(/[\r\n]+/g, ' ');
-
       let regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
       let matches = [];
       let match;
@@ -287,7 +234,6 @@
         let priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
         let priceStr = priceMatch ? priceMatch[0] : '';
         let dishName = priceStr ? cleanText.replace(priceStr, '').replace(/\|\s*$/, '').trim() : cleanText;
-        
         dishName = dishName.replace(/=\s*$/, '').trim();
         let uniqueItemId = `admin_item_${idx}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -316,14 +262,23 @@
       }
     }
 
-    function updateStatus(phone, orderId, status) {
+    // Tối ưu phản hồi siêu tốc (Optimistic UI) khi đổi trạng thái
+    function updateStatus(btnElement, phone, orderId, status) {
+      const card = btnElement.closest('.order-card');
+      if (card) {
+        card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`);
+        const buttons = card.querySelectorAll('.status-btn');
+        buttons.forEach((btn, idx) => {
+          btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`;
+        });
+      }
+
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: phone, orderId: orderId, status: status })
       })
       .then(res => res.json())
-      .then(res => { fetchOrders(); })
       .catch(err => console.error(err));
     }
 
@@ -339,9 +294,7 @@
       .then(res => res.json())
       .then(res => {
         alert(res.message);
-        if (res.success) {
-          fetchOrders();
-        }
+        if (res.success) { fetchOrders(); }
       })
       .catch(err => alert("Lỗi kết nối máy chủ!"));
     }
@@ -358,9 +311,7 @@
       .then(res => res.json())
       .then(res => {
         alert(res.message);
-        if (res.success) {
-          fetchOrders();
-        }
+        if (res.success) { fetchOrders(); }
       })
       .catch(err => alert("Lỗi kết nối!"));
     }
