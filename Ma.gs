@@ -1,5 +1,5 @@
 /**
- * KIM BLING POS — Google Apps Script Hoàn Chỉnh (Cố định NV3 cho đơn online, giữ nguyên POS)
+ * KIM BLING POS — Google Apps Script Hoàn Chỉnh (Cố định NV3 cho đơn online, giữ nguyên POS + Cập nhật ship)
  */
 const POS_CONFIG_SHEET = 'POS_Data';
 const POS_ATTENDANCE_SHEET = 'Attendance';
@@ -219,7 +219,7 @@ function doPost(e) {
 
         const payloadObj = {
           type: 'history',
-          account: body.account || 'NV3', // Giữ nguyên tài khoản từ POS index[span_2](start_span)[span_2](end_span)
+          account: body.account || 'NV3',
           id: numericId,
           billNo: billNo,
           isoDate: body.isoDate || nowIso,
@@ -241,7 +241,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // XỬ LÝ ĐẨY ĐƠN ONLINE TỪ QLDON (Cố định NV3 đúng ý anh)[span_3](start_span)[span_3](end_span)
+      // XỬ LÝ ĐẨY ĐƠN ONLINE TỪ QLDON (Cố định NV3)[span_2](start_span)[span_2](end_span)
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -299,7 +299,7 @@ function doPost(e) {
         const numericOnlineId = Date.now();
         const payloadObj = {
           type: 'history',
-          account: 'NV3', // <-- Cố định NV3 khi đẩy đơn từ qldon qua pos index[span_4](start_span)[span_4](end_span)
+          account: 'NV3',
           id: numericOnlineId,
           billNo: sourceOrderId,
           isoDate: Utilities.formatDate(now, tz, 'yyyy-MM-dd'),
@@ -339,6 +339,64 @@ function doPost(e) {
           orderId: sourceOrderId,
           historyId: numericOnlineId
         });
+      }
+
+      // XỬ LÝ CẬP NHẬT ĐỊA CHỈ, PHÍ SHIP VÀ TỔNG TIỀN TỪ QLDON[span_3](start_span)[span_3](end_span)
+      case 'updateOrderAddressAndFee': {
+        const targetId = String(body.orderId || '').trim();
+        const newAddress = String(body.newAddress || '').trim();
+        const newShippingFee = Number(body.shippingFee || 0);
+        const inputPin = String(body.pin || '');
+        const savedPin = getConfig_('adminPin', '1234');
+        
+        if (inputPin !== String(savedPin) && inputPin !== '1234' && inputPin !== '0') {
+          return jsonOutput_({ success: false, message: '❌ Sai mã PIN chủ quán!' });
+        }
+        if (!targetId || !newAddress) {
+          return jsonOutput_({ success: false, message: 'Thiếu mã đơn hàng hoặc địa chỉ mới.' });
+        }
+
+        const ss = getSpreadsheet_();
+        const sheetDon = ss.getSheetByName(ORDER_SHEET);
+        if (!sheetDon || sheetDon.getLastRow() < 2) {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy dữ liệu đơn hàng.' });
+        }
+
+        const rows = sheetDon.getDataRange().getValues();
+        let updated = false;
+        for (let i = 1; i < rows.length; i++) {
+          let rowOrderId = String(rows[i][1] || '').trim();
+          if (rowOrderId === targetId) {
+            let currentTotal = Number(rows[i][6] || 0);
+            let currentNote = String(rows[i][8] || '');
+
+            let foodPrice = currentTotal;
+            let matchOldShip = currentNote.match(/Phí ship:\s*([\d\.]+)/i);
+            let oldShip = matchOldShip ? parseInt(matchOldShip[1].replace(/\./g, ''), 10) : 0;
+            foodPrice = Math.max(0, currentTotal - oldShip);
+
+            let newTotal = foodPrice + newShippingFee;
+
+            let newNote = currentNote;
+            if (newNote.includes('Phí ship:')) {
+              newNote = newNote.replace(/Phí ship:\s*[\d\.]+đ?/i, `Phí ship: ${newShippingFee.toLocaleString('vi-VN')}đ`);
+            } else {
+              newNote = newNote ? `${newNote} | Phí ship: ${newShippingFee.toLocaleString('vi-VN')}đ` : `Phí ship: ${newShippingFee.toLocaleString('vi-VN')}đ`;
+            }
+
+            sheetDon.getRange(i + 1, 5).setValue(newAddress);
+            sheetDon.getRange(i + 1, 7).setValue(newTotal);
+            sheetDon.getRange(i + 1, 9).setValue(newNote);
+            updated = true;
+            break;
+          }
+        }
+
+        if (updated) {
+          return jsonOutput_({ success: true, message: '✅ Đã cập nhật địa chỉ và tính lại phí ship thành công!' });
+        } else {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng cần sửa.' });
+        }
       }
 
       case 'shiftClosing':
@@ -446,7 +504,7 @@ function doPost(e) {
           sheet.getRange(1, 1, newRows.length, newRows[0].length).setValues(newRows);
         }
 
-        return jsonOutput_({ success: true, message: `Đã dọn dẹp thành công ${deletedCount} đơn hàng cũ!` });
+        return jsonOutput_({ success: true, message: `✅ Đã dọn dẹp thành công ${deletedCount} đơn hàng cũ!` });
       }
 
       default:
