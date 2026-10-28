@@ -52,6 +52,7 @@
     .order-card.status-bg-1 { border-color:#eab308; } .order-card.status-bg-2 { border-color:#3b82f6; } .order-card.status-bg-3 { border-color:#a855f7; } .order-card.status-bg-4 { border-color:#22c55e; opacity:.85; }
     .btn-map-route { display:inline-flex; align-items:center; gap:4px; background:#0284c7; color:#fff!important; text-decoration:none; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold; margin-top:4px; transition:background .2s; }
     .btn-map-route:hover { background:#0369a1; }
+    .btn-edit-addr { background:#0284c7; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:11px; cursor:pointer; margin-left:6px; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -130,6 +131,11 @@
             const pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
             const pushDisabled = isPushed ? 'disabled' : '';
             const orderJson = escapeHtml(JSON.stringify(order));
+            
+            const displayAddress = escapeHtml(rawAddress);
+            const pureAddressForEdit = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+            const addressEditBtn = `<button class="btn-edit-addr" onclick="requestUpdateAddress('${escapeHtml(orderId)}', '${escapeHtml(pureAddressForEdit)}')">✏️ Sửa Đ/c</button>`;
+
             html += `
               <div class="order-card ${cardStatusClass} ${buzzClass}">
                 <div class="order-header">
@@ -142,7 +148,7 @@
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${escapeHtml(order.name || 'Khách lẻ')}<br>
                   📞 <b>SĐT:</b> <a href="tel:${escapeHtml(cleanPhone)}">${escapeHtml(cleanPhone)}</a> (<a href="${zaloDeepLink}" target="_blank" rel="noopener" style="color:#60a5fa;">💬 Mở app Zalo</a>)<br>
-                  📍 <b>Đ/c:</b> ${escapeHtml(rawAddress)} ${mapButtonHtml}
+                  📍 <b>Đ/c:</b> <span id="addr_text_${escapeHtml(orderId)}">${displayAddress}</span> ${addressEditBtn} ${mapButtonHtml}
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
@@ -160,6 +166,44 @@
         })
         .catch(err => console.error('Lỗi tải đơn hàng:', err))
         .finally(() => { isFetchingOrders = false; });
+    }
+
+    function requestUpdateAddress(orderId, oldAddress) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ cho đơn [#${orderId}]:`);
+      if (!pin) return;
+
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
+        alert('❌ Mã PIN chủ quán không chính xác!');
+        return;
+      }
+
+      const newAddrInput = prompt("Nhập địa chỉ giao hàng mới cho khách:", oldAddress);
+      if (!newAddrInput || newAddrInput.trim() === '') return;
+
+      const formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'updateOrderAddress',
+          orderId: orderId,
+          newAddress: formattedNewAddress,
+          pin: pin
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message || (res.success ? 'Đã cập nhật địa chỉ thành công.' : 'Không thể cập nhật.'));
+        if (res.success) {
+          fetchOrders(); // Tải lại danh sách đơn để cập nhật bản đồ và địa chỉ mới nhất
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('⚠️ Lỗi kết nối máy chủ!');
+      });
     }
 
     function pushOrderButton(button) {
@@ -249,142 +293,4 @@
           id: idx + 1,
           name: dishName,
           basePrice: itemPrice,
-          optionsText: finalOptionsText,
-          quantity: qty,
-          rawToppings: toppingsArr
-        });
-      });
-
-      return parsedItems.length ? parsedItems : [{
-        cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`,
-        basePrice: Number(orderObj.total || 56000),
-        optionsText: "Size: Bình thường",
-        quantity: 1, rawToppings: []
-      }];
-    }
-
-    function parseAdminItemsToList(rawItemsStr) {
-      const itemsArr = parseOrderItemsForPOS({ items: rawItemsStr }, 'preview');
-      if (!itemsArr || itemsArr.length === 0) return '<div class="pos-item-row">☕ Không có thông tin món</div>';
-
-      return itemsArr.map((item, idx) => {
-        const uniqueId = `item_row_${idx}_${Math.random().toString(36).substring(2, 6)}`;
-        const formattedPrice = Number(item.basePrice || 0).toLocaleString('vi-VN') + 'đ';
-
-        return `
-          <div class="pos-item-row" id="${uniqueId}" onclick="toggleItemRow('${uniqueId}')">
-            <div class="pos-item-header">
-              <span><b>${escapeHtml(item.name)}</b> <span style="font-size:13px;color:#38bdf8;">(x${item.quantity})</span></span>
-              <span class="pos-item-price">${escapeHtml(formattedPrice)}</span>
-            </div>
-            <div class="pos-item-options">- ${escapeHtml(item.optionsText)}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleItemRow(rowId) {
-      const rowEl = document.getElementById(rowId);
-      if (rowEl) rowEl.classList.toggle('completed-item');
-    }
-
-    async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
-      for (let i = 0; i < attempts; i++) {
-        try {
-          const response = await fetch(`${SCRIPT_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
-          const data = await response.json();
-          if (data && data.success && data.saved) return true;
-        } catch (err) {
-          console.warn('Đang chờ xác nhận Sales:', err);
-        }
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
-      return false;
-    }
-
-    async function pushOrderToPOS(orderId, orderObj, button) {
-      if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
-      if (localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true') {
-        alert(`Đơn #${orderId} đã được đánh dấu đẩy trước đó.`);
-        return;
-      }
-      const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
-      if (!pin) return;
-      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
-      if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
-
-      const originalText = button ? button.textContent : '';
-      if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
-      try {
-        const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
-        const payload = {
-          type: 'pushOnlineOrder',
-          action: 'pushOnlineOrder',
-          sourceOrderId: String(orderId),
-          orderId: String(orderId),
-          total: Number(orderObj.total || 0),
-          items: parsedCartItems,
-          name: String(orderObj.name || 'Khách lẻ'),
-          phone: String(orderObj.phone || '').replace(/'/g, '').trim(),
-          address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'),
-          note: String(orderObj.note || '')
-        };
-
-        await fetch(SCRIPT_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-
-        const saved = await waitForSalesOrder(String(orderId), 18, 1000);
-        if (!saved) {
-          throw new Error('Chưa xác nhận được hóa đơn trong Sales sau 18 lần kiểm tra.');
-        }
-
-        localStorage.setItem('kimbling_cart', JSON.stringify(parsedCartItems));
-        localStorage.setItem('kimbling_pushed_trigger', JSON.stringify({orderId: String(orderId), time: Date.now()}));
-        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-        alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`);
-        fetchOrders();
-      } catch (err) {
-        console.error('Lỗi đẩy đơn sang POS/Sales:', err);
-        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối máy chủ.'}`);
-      } finally {
-        if (button && !button.classList.contains('pushed')) {
-          button.disabled = false;
-          button.textContent = originalText || '🚀 Đẩy qua POS';
-        }
-      }
-    }
-
-    function updateStatus(btnElement, phone, orderId, status) {
-      const card = btnElement.closest('.order-card');
-      if (card) {
-        card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`).replace('new-buzz', '').trim();
-        card.querySelectorAll('.status-btn').forEach((btn, idx) => { btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`; });
-      }
-      fetch(SCRIPT_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
-      }).catch(err => console.error('Lỗi cập nhật trạng thái:', err));
-    }
-
-    function requestDeleteSingleOrder(orderId) {
-      const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
-      if (!pin) return;
-      fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
-        .then(res => res.json()).then(res => { alert(res.message || (res.success ? 'Đã xóa đơn.' : 'Không thể xóa đơn.')); if (res.success) fetchOrders(); })
-        .catch(err => { console.error(err); alert('Lỗi kết nối máy chủ!'); });
-    }
-
-    function requestClearOrders() {
-      const pin = prompt('🔐 Nhập mã PIN chủ quán để dọn dẹp các đơn cũ:');
-      if (!pin) return;
-      fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'clearOrders',pin:pin})})
-        .then(res => res.json()).then(res => { alert(res.message || (res.success ? 'Đã dọn dẹp.' : 'Không thể dọn dẹp.')); if (res.success) fetchOrders(); })
-        .catch(err => { console.error(err); alert('Lỗi kết nối!'); });
-    }
-  </script>
-</body>
-</html>
+          optionsText: finalOptionsText
