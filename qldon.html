@@ -25,11 +25,15 @@
     .customer-info { margin-bottom:8px; line-height:1.6; font-size:14px; overflow-wrap:anywhere; }
     .customer-info a { color:#38bdf8; text-decoration:none; font-weight:bold; }
     .note-box { background:#451a03; color:#fdba74; padding:8px 10px; border-radius:6px; font-size:13px; margin-bottom:8px; border:1px dashed #c2410c; }
-    .items-box { background:#0f172a; padding:10px 12px; border-radius:8px; margin:8px 0; font-size:14px; line-height:1.6; color:#e2e8f0; border-left:4px solid var(--primary); }
-    .item-line { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; border-bottom:1px dashed rgba(255,255,255,.1); padding-bottom:8px; cursor:pointer; }
-    .item-line:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
-    .item-checkbox { width:18px; height:18px; accent-color:#22c55e; cursor:pointer; flex-shrink:0; margin-top:2px; }
-    .item-line.completed-item { opacity:.45; text-decoration:line-through; color:#94a3b8; }
+    
+    .items-box { background:#0f172a; padding:10px 12px; border-radius:8px; margin:8px 0; font-size:14px; border-left:4px solid var(--primary); }
+    .pos-item-row { margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.1); padding-bottom:8px; cursor:pointer; }
+    .pos-item-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+    .pos-item-header { display:flex; justify-content:space-between; align-items:center; font-weight:bold; font-size:15px; color:#f8fafc; }
+    .pos-item-price { color:#facc15; font-size:15px; font-weight:bold; }
+    .pos-item-options { font-size:13px; color:#94a3b8; margin-top:2px; line-height:1.4; padding-left:4px; }
+    .pos-item-row.completed-item { opacity:.45; text-decoration:line-through; }
+
     .order-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 12px; font-size:14px; }
     .payment-tag { padding:5px 10px; border-radius:6px; font-size:13px; font-weight:bold; }
     .pay-cash { background:#334155; color:#cbd5e1; }
@@ -48,7 +52,6 @@
     .order-card.status-bg-1 { border-color:#eab308; } .order-card.status-bg-2 { border-color:#3b82f6; } .order-card.status-bg-3 { border-color:#a855f7; } .order-card.status-bg-4 { border-color:#22c55e; opacity:.85; }
     .btn-map-route { display:inline-flex; align-items:center; gap:4px; background:#0284c7; color:#fff!important; text-decoration:none; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold; margin-top:4px; transition:background .2s; }
     .btn-map-route:hover { background:#0369a1; }
-    @media(max-width:420px) { .order-header { align-items:flex-start; } .header-btns { gap:5px; } .action-btn { padding:7px 8px; font-size:12px; } .btn-push-pos { padding:6px 8px; } }
   </style>
 </head>
 <body>
@@ -166,95 +169,123 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
-    // Hàm bóc tách chuẩn xác từng món y hệt như POS trực tiếp
     function parseOrderItemsForPOS(orderObj, orderId) {
       const rawItems = orderObj.items;
       if (Array.isArray(rawItems) && rawItems.length > 0) {
         return rawItems.map((item, idx) => ({
-          cartId: item.cartId || (Date.now() + idx),
-          id: item.id || (9999 + idx),
-          name: String(item.name || item.title || 'Món nước').trim(),
-          basePrice: Number(item.basePrice ?? item.price ?? 25000) || 25000,
-          optionsText: String(item.optionsText || item.options || 'Size: Bình thường | Đường bình thường, Đá bình thường'),
-          quantity: Math.max(1, Number(item.quantity || item.qty || 1) || 1),
+          cartId: Number(item.cartId || (Date.now() + idx)),
+          id: Number(item.id || (idx + 1)),
+          name: String(item.name || item.title || 'Món nước').replace(/\([^)]*\)/g, '').trim(),
+          basePrice: Number(item.basePrice ?? item.price ?? (String(item.name || '').toLowerCase().includes('bạc hà') ? 30000 : 26000)),
+          optionsText: String(item.optionsText || item.options || 'Size: Bình thường'),
+          quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
           rawToppings: Array.isArray(item.rawToppings) ? item.rawToppings : []
         }));
       }
 
       const rawItemsStr = String(rawItems || '').trim();
-      if (!rawItemsStr) return [{
-        cartId: Date.now(), id: 9999, name: `Đơn hàng #${orderId}`,
-        basePrice: Number(orderObj.total || 0), optionsText: `Đơn online #${orderId}`, quantity: 1, rawToppings: []
-      }];
+      if (!rawItemsStr) {
+        return [{
+          cartId: Date.now(),
+          id: 1,
+          name: `Đơn hàng #${orderId}`,
+          basePrice: Number(orderObj.total || 56000),
+          optionsText: "Size: Bình thường",
+          quantity: 1,
+          rawToppings: []
+        }];
+      }
 
-      const segments = rawItemsStr.split(/[\r\n]+|\|/).map(s => s.trim()).filter(Boolean);
+      const itemBlocks = rawItemsStr.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
       let parsedItems = [];
-      let currentItem = null;
 
-      segments.forEach((seg, idx) => {
-        const isLikelyDish = seg.includes('Matcha') || seg.includes('Trà') || seg.includes('Coffee') || seg.includes('Sữa') || seg.includes('đ') || seg.includes('k') || seg.match(/x\d+/i);
-        
-        if (isLikelyDish && (!currentItem || currentItem.name)) {
-          if (currentItem && currentItem.name) {
-            parsedItems.push(currentItem);
-          }
-          let itemPrice = 25000;
-          const priceM = seg.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
-          if (priceM) {
-            itemPrice = parseInt(priceM[1].replace(/[^\d]/g, ''), 10);
-            if (priceM[0].toLowerCase().includes('k') && itemPrice < 1000) itemPrice *= 1000;
-          } else if (seg.toLowerCase().includes('bạc hà')) {
-            itemPrice = 30000;
-          } else if (seg.toLowerCase().includes('latte')) {
-            itemPrice = 26000;
-          }
+      itemBlocks.forEach((block, idx) => {
+        let itemPrice = 26000;
+        if (block.toLowerCase().includes('bạc hà')) itemPrice = 30000;
 
-          let cleanName = seg.replace(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/gi, '').replace(/=\s*$/, '').trim();
-          let optTxt = "Size: Bình thường | Đường bình thường, Đá bình thường";
-          let pMatch = cleanName.match(/\(([^)]+)\)/);
-          if (pMatch) {
-            optTxt = pMatch[1].trim();
-            cleanName = cleanName.replace(pMatch[0], '').trim();
-          }
-
-          let qty = 1;
-          let qtyM = cleanName.match(/(?:x|×)\s*(\d+)\s*$/i);
-          if (qtyM) {
-            qty = parseInt(qtyM[1], 10) || 1;
-            cleanName = cleanName.replace(qtyM[0], '').trim();
-          }
-
-          cleanName = cleanName.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
-
-          currentItem = {
-            cartId: Date.now() + parsedItems.length,
-            id: 9999 + parsedItems.length,
-            name: cleanName || 'Món nước',
-            basePrice: itemPrice,
-            quantity: qty,
-            optionsText: optTxt,
-            rawToppings: []
-          };
-        } else {
-          if (currentItem) {
-            currentItem.optionsText += ' | ' + seg.replace(/^[-–—|]\s*/, '').trim();
+        const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+        if (priceMatch) {
+          let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
+          if (pVal > 0) {
+            if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+            itemPrice = pVal;
           }
         }
+
+        let cleanBlock = block;
+        if (priceMatch) {
+          cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
+        }
+
+        let optionContent = "";
+        const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
+        if (parenMatch) {
+          optionContent = parenMatch[1].trim();
+          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+        }
+
+        let qty = 1;
+        const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
+        if (qtyMatch) {
+          qty = parseInt(qtyMatch[1], 10) || 1;
+          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+        }
+
+        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
+        if (!dishName) dishName = 'Món nước';
+
+        let finalOptionsText = optionContent ? `Size: ${optionContent}` : "Size: Bình thường";
+
+        let toppingsArr = [];
+        if (optionContent.includes('+')) {
+          const parts = optionContent.split('+');
+          if (parts[1]) {
+            toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean);
+          }
+        }
+
+        parsedItems.push({
+          cartId: Date.now() + idx + Math.random(),
+          id: idx + 1,
+          name: dishName,
+          basePrice: itemPrice,
+          optionsText: finalOptionsText,
+          quantity: qty,
+          rawToppings: toppingsArr
+        });
       });
 
-      if (currentItem && currentItem.name) {
-        parsedItems.push(currentItem);
-      }
+      return parsedItems.length ? parsedItems : [{
+        cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`,
+        basePrice: Number(orderObj.total || 56000),
+        optionsText: "Size: Bình thường",
+        quantity: 1, rawToppings: []
+      }];
+    }
 
-      if (!parsedItems.length) {
-        parsedItems.push({
-          cartId: Date.now(), id: 9999, name: `Đơn hàng #${orderId}`,
-          basePrice: Number(orderObj.total || 0),
-          optionsText: `Đơn online #${orderId}`,
-          quantity: 1, rawToppings: []
-        });
-      }
-      return parsedItems;
+    function parseAdminItemsToList(rawItemsStr) {
+      const itemsArr = parseOrderItemsForPOS({ items: rawItemsStr }, 'preview');
+      if (!itemsArr || itemsArr.length === 0) return '<div class="pos-item-row">☕ Không có thông tin món</div>';
+
+      return itemsArr.map((item, idx) => {
+        const uniqueId = `item_row_${idx}_${Math.random().toString(36).substring(2, 6)}`;
+        const formattedPrice = Number(item.basePrice || 0).toLocaleString('vi-VN') + 'đ';
+
+        return `
+          <div class="pos-item-row" id="${uniqueId}" onclick="toggleItemRow('${uniqueId}')">
+            <div class="pos-item-header">
+              <span><b>${escapeHtml(item.name)}</b> <span style="font-size:13px;color:#38bdf8;">(x${item.quantity})</span></span>
+              <span class="pos-item-price">${escapeHtml(formattedPrice)}</span>
+            </div>
+            <div class="pos-item-options">- ${escapeHtml(item.optionsText)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleItemRow(rowId) {
+      const rowEl = document.getElementById(rowId);
+      if (rowEl) rowEl.classList.toggle('completed-item');
     }
 
     async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
@@ -325,33 +356,6 @@
           button.textContent = originalText || '🚀 Đẩy qua POS';
         }
       }
-    }
-
-    function parseAdminItemsToList(rawItemsStr) {
-      let rawItems = String(rawItemsStr || '').trim();
-      if (!rawItems) return '<div class="item-line">☕ Không có thông tin món</div>';
-      rawItems = rawItems.replace(/[\r\n]+/g, ' ');
-      const regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
-      let matches = [], match;
-      while ((match = regex.exec(rawItems)) !== null) matches.push(match[1].trim());
-      if (matches.length === 0) matches = rawItems.split(';').map(i => i.trim()).filter(Boolean);
-      if (matches.length === 0) return `<div class="item-line">${escapeHtml(rawItems)}</div>`;
-      return matches.map((item, idx) => {
-        const cleanText = item.replace(/^\|\s*/, '').trim();
-        const priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
-        const priceStr = priceMatch ? priceMatch[0] : '';
-        let dishName = priceStr ? cleanText.replace(priceStr, '').replace(/\|\s*$/, '').trim() : cleanText;
-        dishName = dishName.replace(/=\s*$/, '').trim();
-        const uniqueItemId = `admin_item_${idx}_${Math.random().toString(36).substring(2, 7)}`;
-        return `<div class="item-line" id="${uniqueItemId}"><input type="checkbox" class="item-checkbox" id="chk_${uniqueItemId}" onchange="toggleItemCheck('${uniqueItemId}')"><span onclick="document.getElementById('chk_${uniqueItemId}').click()" style="flex:1;cursor:pointer;"><b style="color:var(--primary);">${idx + 1}.</b> <span>${escapeHtml(dishName)}</span></span>${priceStr ? `<span style="font-weight:bold;color:#4ade80;flex-shrink:0;margin-left:6px;">${escapeHtml(priceStr)}</span>` : ''}</div>`;
-      }).join('');
-    }
-
-    function toggleItemCheck(itemId) {
-      const itemEl = document.getElementById(itemId);
-      if (!itemEl) return;
-      const checkbox = itemEl.querySelector('.item-checkbox');
-      if (checkbox) itemEl.classList.toggle('completed-item', checkbox.checked);
     }
 
     function updateStatus(btnElement, phone, orderId, status) {
