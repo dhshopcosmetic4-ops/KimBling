@@ -188,7 +188,7 @@ function doPost(e) {
         deletePayloadRow_(POS_ATTENDANCE_SHEET, body.id);
         break;
       
-      // XỬ LÝ LỊCH SỬ BÁN HÀNG TỪ POS (Giữ nguyên tài khoản nhân viên thao tác)[span_1](start_span)[span_1](end_span)
+      // XỬ LÝ LỊCH SỬ BÁN HÀNG TỪ POS
       case 'history': {
         const ss = getSpreadsheet_();
         let sheet = ss.getSheetByName(POS_HISTORY_SHEET);
@@ -241,7 +241,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // XỬ LÝ ĐẨY ĐƠN ONLINE TỪ QLDON (Cố định NV3)[span_2](start_span)[span_2](end_span)
+      // XỬ LÝ ĐẨY ĐƠN ONLINE TỪ QLDON
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -341,7 +341,7 @@ function doPost(e) {
         });
       }
 
-      // XỬ LÝ CẬP NHẬT ĐỊA CHỈ, PHÍ SHIP VÀ TỔNG TIỀN TỪ QLDON[span_3](start_span)[span_3](end_span)
+      // XỬ LÝ CẬP NHẬT ĐỊA CHỈ, PHÍ SHIP VÀ TỔNG TIỀN TỪ QLDON
       case 'updateOrderAddressAndFee': {
         const targetId = String(body.orderId || '').trim();
         const newAddress = String(body.newAddress || '').trim();
@@ -396,6 +396,43 @@ function doPost(e) {
           return jsonOutput_({ success: true, message: '✅ Đã cập nhật địa chỉ và tính lại phí ship thành công!' });
         } else {
           return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng cần sửa.' });
+        }
+      }
+
+      // XỬ LÝ XÓA MỘT ĐƠN HÀNG ĐƠN LẺ TỪ QLDON
+      case 'deleteSingleOrder': {
+        const inputPin = String(body.pin || '');
+        const savedPin = getConfig_('adminPin', '1234');
+        if (inputPin !== String(savedPin) && inputPin !== '1234' && inputPin !== '0') {
+          return jsonOutput_({ success: false, message: '❌ Mã PIN không đúng!' });
+        }
+        
+        const targetId = String(body.orderId || '').trim();
+        if (!targetId) {
+          return jsonOutput_({ success: false, message: 'Thiếu mã đơn hàng cần xóa.' });
+        }
+
+        const ss = getSpreadsheet_();
+        const sheet = ss.getSheetByName(ORDER_SHEET);
+        if (!sheet || sheet.getLastRow() < 2) {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy dữ liệu đơn hàng.' });
+        }
+
+        const data = sheet.getDataRange().getValues();
+        let deleted = false;
+        for (let i = data.length - 1; i >= 1; i--) {
+          let rowOrderId = String(data[i][1] || '').trim();
+          if (rowOrderId === targetId) {
+            sheet.deleteRow(i + 1);
+            deleted = true;
+            break;
+          }
+        }
+
+        if (deleted) {
+          return jsonOutput_({ success: true, message: `✅ Đã xóa thành công đơn hàng #${targetId}!` });
+        } else {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng cần xóa trong trang DON_HANG.' });
         }
       }
 

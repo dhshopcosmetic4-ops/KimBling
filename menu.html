@@ -2408,20 +2408,17 @@
             parse_mode: 'HTML'
         };
 
-        // Gắn thêm các nút bấm tương tác (Inline Keyboard) để chủ quán đổi trạng thái ngay trên Telegram
-        if (phoneNum) {
-            payload.reply_markup = {
-                inline_keyboard: [
-                    [
-                        { text: "🛵 Chờ Shipper (Bước 2)", callback_data: `STATUS_2_${phoneNum}` },
-                        { text: "🚀 Đang Giao (Bước 3)", callback_data: `STATUS_3_${phoneNum}` }
-                    ],
-                    [
-                        { text: "✅ Hoàn Thành Đơn", callback_data: `STATUS_4_${phoneNum}` }
-                    ]
+        // Thay vì hiển thị các nút đổi trạng thái 1, 2, 3, 4, ta đổi thành 1 nút mở trang qldon.html
+        payload.reply_markup = {
+            inline_keyboard: [
+                [
+                    { 
+                        text: "🛠️ Mở Trang Quản Lý Đơn (QLDON)", 
+                        url: "https://dhshopcosmetic4-ops.github.io/KimBling/qldon.html" 
+                    }
                 ]
-            };
-        }
+            ]
+        };
 
         await fetch(url, {
             method: 'POST',
