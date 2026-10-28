@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản Lý Đơn Hàng — Kim Bling</title>
   
-  <!-- Cấu hình PWA để iOS Safari nhận diện Web App chuẩn -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="QLĐ Kim Bling">
@@ -65,6 +64,11 @@
   </style>
 </head>
 <body>
+  <!-- Thẻ âm thanh ẩn giúp lừa iOS giữ cho trang hoạt động ngầm -->
+  <audio id="silentBackgroundAudio" loop preload="auto">
+    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
+  </audio>
+
   <div id="adminApp">
     <div id="adminHeader">
       <div>
@@ -72,7 +76,7 @@
         <span id="orderCount" style="font-size:13px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
       <div class="header-btns">
-        <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Chuông Lặp Lại</button>
+        <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Chế Độ Nền</button>
         <button class="action-btn clear-btn" onclick="requestClearOrders()">🗑️ Dọn dẹp</button>
         <button class="action-btn" onclick="fetchOrders()">🔄 Tải lại</button>
       </div>
@@ -89,7 +93,7 @@
     let audioContext = null;
     let knownOrderIds = new Set();
     let isFirstLoad = true;
-    let continuousAlarmTimer = null; // Biến quản lý vòng lặp còi báo
+    let continuousAlarmTimer = null;
 
     function enableAudioAndNotification() {
       if (!audioContext) {
@@ -99,11 +103,18 @@
         audioContext.resume();
       }
 
+      // Kích hoạt luồng nhạc nền ẩn để chống bị iOS đóng băng
+      const silentAudio = document.getElementById('silentBackgroundAudio');
+      if (silentAudio) {
+        silentAudio.volume = 0.01;
+        silentAudio.play().catch(e => console.log("Silent audio blocked"));
+      }
+
       if ("Notification" in window) {
         Notification.requestPermission().then(permission => {
           const btn = document.getElementById('btnEnableSound');
           if (permission === 'granted') {
-            btn.innerHTML = '✅ Đã Bật Chuông Lặp';
+            btn.innerHTML = '✅ Đã Bật Nền & Chuông';
             btn.classList.add('active');
             playChimeSound();
           } else {
@@ -112,11 +123,10 @@
         });
       } else {
         playChimeSound();
-        document.getElementById('btnEnableSound').innerHTML = '🔊 Đã Bật Âm Thanh';
+        document.getElementById('btnEnableSound').innerHTML = '🔊 Đã Bật Nền';
       }
     }
 
-    // Phát chuông báo "Ting Tong"
     function playChimeSound() {
       try {
         if (!audioContext) {
@@ -158,16 +168,14 @@
       }
     }
 
-    // Bắt đầu còi hú lặp lại liên tục cho đến khi có đơn mới được xử lý
     function startContinuousAlarm() {
-      if (continuousAlarmTimer) return; // Đang kêu thì không tạo thêm vòng lặp nữa
-      playChimeSound(); // Kêu ngay tiếng đầu tiên
+      if (continuousAlarmTimer) return;
+      playChimeSound();
       continuousAlarmTimer = setInterval(() => {
         playChimeSound();
-      }, 3000); // Lặp lại chuông và rung mỗi 3 giây
+      }, 3000);
     }
 
-    // Dừng còi hú khi không còn đơn nào ở trạng thái chờ (status = 1)
     function stopContinuousAlarm() {
       if (continuousAlarmTimer) {
         clearInterval(continuousAlarmTimer);
@@ -185,6 +193,11 @@
         }
         if (audioContext.state === 'suspended') {
           audioContext.resume();
+        }
+        const silentAudio = document.getElementById('silentBackgroundAudio');
+        if (silentAudio && silentAudio.paused) {
+          silentAudio.volume = 0.01;
+          silentAudio.play().catch(e => {});
         }
       }, { once: true });
     };
@@ -222,11 +235,11 @@
           if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
             document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
-            stopContinuousAlarm(); // Hết đơn thì tắt còi
+            stopContinuousAlarm();
             return;
           }
 
-          let hasStatus1Order = false; // Kiểm tra xem còn đơn nào ở trạng thái 'Đang làm' (1) không
+          let hasStatus1Order = false;
 
           data.orders.forEach(order => {
             const orderId = String(order.orderId || '');
@@ -238,7 +251,6 @@
 
             if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
               if (!isFirstLoad) {
-                // Đẩy thông báo banner iOS
                 if ("Notification" in window && Notification.permission === "granted") {
                   new Notification(`🚨 ĐƠN MỚI #${orderId} - Kim Bling`, {
                     body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${Number(order.total || 0).toLocaleString('vi-VN')}đ`,
@@ -252,7 +264,6 @@
             knownOrderIds.add(orderId);
           });
 
-          // Nếu còn đơn ở trạng thái 1 mà chưa xử lý -> Kích hoạt còi hú liên tục
           if (hasStatus1Order && !isFirstLoad) {
             startContinuousAlarm();
           } else {
@@ -569,14 +580,12 @@
         card.querySelectorAll('.status-btn').forEach((btn, idx) => { btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`; });
       }
 
-      // Ngay khi chủ quán đổi trạng thái, lập tức ngắt còi báo
       stopContinuousAlarm();
 
       fetch(SCRIPT_URL, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
       }).then(() => {
-        // Quét lại dữ liệu sau khi cập nhật để đồng bộ trạng thái toàn cục
         setTimeout(fetchOrders, 500);
       }).catch(err => console.error(err));
     }
