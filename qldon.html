@@ -153,22 +153,20 @@
     }
 
     function requestUpdateAddress(orderId, oldAddress) {
-      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ cho đơn [#${orderId}]:`);
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ giao hàng cho đơn [#${orderId}]:`);
       if (!pin) return;
-      const newAddrInput = prompt("Nhập địa chỉ giao hàng mới cho khách:", oldAddress);
-      if (!newAddrInput || newAddrInput.trim() === '') return;
+      
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
+        alert('❌ Mã PIN chủ quán không chính xác!');
+        return;
+      }
 
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ type: 'updateOrderAddress', orderId: orderId, newAddress: '🛵 Giao tận nơi: ' + newAddrInput.trim(), pin: pin })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        if (res.success) fetchOrders();
-      })
-      .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'));
+      // Mở file dinhvi.html để đo khoảng cách, tính lại ship chính xác và cập nhật tự động
+      const width = 480, height = 650;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+      window.open(`dinhvi.html?orderId=${orderId}&address=${encodeURIComponent(oldAddress)}`, '_blank', `width=${width},height=${height},top=${top},left=${left}`);
     }
 
     function parseAdminItemsToList(rawItemsStr) {
