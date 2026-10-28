@@ -72,6 +72,8 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const STORE_LAT = 10.74955; 
+    const STORE_LNG = 106.63099;
     let isFetchingOrders = false;
 
     window.onload = function() {
@@ -81,6 +83,25 @@
 
     function escapeHtml(value) {
       return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function calculateShippingFee(distanceKm) {
+      if (distanceKm <= 1.0) return 0;
+      else if (distanceKm <= 2.0) return 10000;
+      else if (distanceKm <= 3.0) return 15000;
+      else {
+        let extraKm = Math.ceil(distanceKm - 3.0);
+        return 15000 + (extraKm * 5000);
+      }
+    }
+
+    function calculateHaversineKm(lat1, lon1, lat2, lon2) {
+      function toRad(x) { return x * Math.PI / 180; }
+      let R = 6371;
+      let dLat = toRad(lat2 - lat1);
+      let dLon = toRad(lon2 - lon1);
+      let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
     function fetchOrders() {
@@ -112,7 +133,7 @@
               const totalAmount = Number(order.total || 0);
               const syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${orderId}`;
               const qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
-              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')" title="Bấm để mở mã QR chuyển khoản">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
+              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
             } else {
               qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${escapeHtml(paymentText)}</span>`;
             }
@@ -121,8 +142,7 @@
             if (!rawAddress.includes('Tại quán')) {
               const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
               const fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
-              const storeCoords = '10.74955,106.63099';
-              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${storeCoords}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
+              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" rel="noopener" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
             }
             const zaloDeepLink = `https://zalo.me/${encodeURIComponent(cleanPhone)}`;
@@ -145,7 +165,7 @@
                 <div class="customer-info">
                   👤 <b>Khách:</b> ${escapeHtml(order.name || 'Khách lẻ')}<br>
                   📞 <b>SĐT:</b> <a href="tel:${escapeHtml(cleanPhone)}">${escapeHtml(cleanPhone)}</a> (<a href="${zaloDeepLink}" target="_blank" rel="noopener" style="color:#60a5fa;">💬 Mở app Zalo</a>)<br>
-                  📍 <b>Đ/c:</b> <span id="addr_text_${escapeHtml(orderId)}">${escapeHtml(rawAddress)}</span> <button class="btn-edit-addr" onclick="requestUpdateAddress('${escapeHtml(orderId)}', '${escapeHtml(pureAddressForEdit)}')">✏️ Sửa Đ/c</button> ${mapButtonHtml}
+                  📍 <b>Đ/c:</b> <span id="addr_text_${escapeHtml(orderId)}">${escapeHtml(rawAddress)}</span> <button class="btn-edit-addr" onclick="requestUpdateAddressAndCalculateFee('${escapeHtml(orderId)}', '${escapeHtml(pureAddressForEdit)}')">✏️ Sửa Đ/c</button> ${mapButtonHtml}
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
@@ -161,22 +181,72 @@
           container.innerHTML = html;
           document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
         })
-        .catch(err => console.error('Lỗi tải đơn hàng:', err))
+        .catch(err => console.error(err))
         .finally(() => { isFetchingOrders = false; });
     }
 
-    function requestUpdateAddress(orderId, oldAddress) {
-      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ cho đơn [#${orderId}]:`);
+    // TÍNH TOÁN SHIP TRỰC TIẾP VÀ CẬP NHẬT GOOGLE SHEETS
+    async function requestUpdateAddressAndCalculateFee(orderId, oldAddress) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ giao hàng cho đơn [#${orderId}]:`);
       if (!pin) return;
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
         alert('❌ Mã PIN chủ quán không chính xác!');
         return;
       }
-      const width = 480, height = 650;
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
-      window.open(`dinhvi.html?orderId=${orderId}&address=${encodeURIComponent(oldAddress)}`, '_blank', `width=${width},height=${height},top=${top},left=${left}`);
+
+      const newAddrInput = prompt("Nhập địa chỉ giao hàng mới cho khách:", oldAddress);
+      if (!newAddrInput || newAddrInput.trim() === '') return;
+
+      let fullAddress = newAddrInput.trim();
+      if (!fullAddress.toLowerCase().includes("hồ chí minh") && !fullAddress.toLowerCase().includes("tp.hcm")) {
+        fullAddress += ", Hồ Chí Minh";
+      }
+
+      alert("⏳ Hệ thống đang quét tọa độ và tính lại phí ship tự động...");
+
+      let distanceKm = 0;
+      try {
+        let res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullAddress)}&limit=1`);
+        let data = await res.json();
+        if (data && data.features && data.features.length > 0) {
+          let coords = data.features[0].geometry.coordinates;
+          let destLng = coords[0], destLat = coords[1];
+
+          let osrmRes = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${destLng},${destLat}?overview=false`);
+          let osrmData = await osrmRes.json();
+          if (osrmData.code === "Ok" && osrmData.routes && osrmData.routes[0]) {
+            distanceKm = osrmData.routes[0].distance / 1000;
+          } else {
+            distanceKm = calculateHaversineKm(STORE_LAT, STORE_LNG, destLat, destLng);
+          }
+        } else {
+          distanceKm = 1.0;
+        }
+      } catch (e) {
+        distanceKm = 1.0;
+      }
+
+      let newShippingFee = calculateShippingFee(distanceKm);
+      let formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'updateOrderAddressAndFee',
+          orderId: orderId,
+          newAddress: formattedNewAddress,
+          shippingFee: newShippingFee,
+          pin: pin
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message || 'Đã cập nhật thành công.');
+        if (res.success) fetchOrders();
+      })
+      .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'));
     }
 
     function parseOrderItemsForPOS(orderObj, orderId) {
@@ -213,9 +283,7 @@
         }
 
         let cleanBlock = block;
-        if (priceMatch) {
-          cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
-        }
+        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
 
         let optionContent = "";
         const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
@@ -238,7 +306,7 @@
         let toppingsArr = [];
         if (optionContent.includes('+')) {
           const parts = optionContent.split('+');
-          if (parts[1]) { toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean); }
+          if (parts[1]) toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean);
         }
 
         parsedItems.push({
@@ -335,15 +403,12 @@
         });
 
         const saved = await waitForSalesOrder(String(orderId), 18, 1000);
-        if (!saved) {
-          throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
-        }
+        if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
         alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`);
         fetchOrders();
       } catch (err) {
-        console.error(err);
         alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối máy chủ.'}`);
       } finally {
         if (button && !button.classList.contains('pushed')) {
