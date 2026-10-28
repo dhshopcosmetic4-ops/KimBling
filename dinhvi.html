@@ -106,6 +106,23 @@
             line-height: 1.6;
         }
 
+        /* Khung hiển thị bản đồ nhỏ trực tiếp */
+        .map-container {
+            display: none;
+            width: 100%;
+            height: 220px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
         .btn-google-map {
             display: none;
             width: 100%;
@@ -117,7 +134,7 @@
             border-radius: 8px;
             font-weight: bold;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 6px;
         }
     </style>
 </head>
@@ -154,9 +171,14 @@
         <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- NÚT GOOGLE MAPS -->
+        <!-- KHUNG BẢN ĐỒ NHỎ HIỂN THỊ TRỰC TIẾP (CHẾ ĐỘ ĐI BỘ) -->
+        <div class="map-container" id="mapPreviewContainer">
+            <iframe id="mapIframe" src="" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+
+        <!-- NÚT MỞ GOOGLE MAPS LỚN -->
         <a id="btnGoogleMap" href="#" target="_blank" class="btn-google-map">
-            🗺️ Xem chỉ đường chi tiết trên Google Maps
+            🗺️ Mở chỉ đường chi tiết trên Google Maps (App)
         </a>
 
         <!-- BẢNG GIÁ PHÍ SHIP CÔNG KHAI -->
@@ -190,7 +212,6 @@
             }
         }
 
-        // HÀM KIỂM TRA TỪ KHÓA TẠI QUÁN / KHÔNG SHIP
         function isAtStoreOrder(text) {
             const lower = text.toLowerCase();
             const keywords = [
@@ -208,7 +229,6 @@
             const statusText = document.getElementById('statusText');
             const addressInput = document.getElementById('customerAddress');
 
-            // Nếu khách ghi chữ tại quán/tự lấy trong ô địa chỉ thì chặn luôn không cho lấy GPS tính ship
             if (isAtStoreOrder(addressInput.value)) {
                 alert("Khách chọn nhận tại quán, không cần tính phí ship ạ!");
                 return;
@@ -253,7 +273,6 @@
                 return;
             }
 
-            // Kiểm tra nếu khách gõ các từ khóa nhận tại quán
             if (isAtStoreOrder(query)) {
                 alert("Khách chọn nhận tại quán, không cần tính phí ship ạ!");
                 document.getElementById('distanceResultBox').style.display = 'block';
@@ -265,7 +284,7 @@
 
             let fullAddress = query;
             if (!query.toLowerCase().includes("hồ chí minh") && !query.toLowerCase().includes("tp.hcm")) {
-                fullAddress += ", Hồ Chí Minh";
+                fullAddress += ", Hồ chí Minh";
             }
 
             try {
@@ -293,6 +312,8 @@
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
             const googleBtn = document.getElementById('btnGoogleMap');
+            const mapContainer = document.getElementById('mapPreviewContainer');
+            const mapIframe = document.getElementById('mapIframe');
 
             try {
                 let res = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
@@ -318,10 +339,16 @@
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = `
                     🛵 Xuất phát từ: <span style="color:#1e293b;">Quán Kim Bling</span><br>
-                    📐 Khoảng cách qua hẻm: <span style="color:#d32f2f;">~${distanceText}</span><br>
+                    📐 Khoảng cách đường đi: <span style="color:#d32f2f;">~${distanceText}</span><br>
                     💰 Phí giao hàng (Ship): <span style="color:#d32f2f; font-size:15px;">${shipFeeText}</span>
                 `;
 
+                // Cập nhật khung bản đồ nhỏ nhúng trực tiếp (Đã ép chế độ đi bộ: mode=walking)
+                const embedMapUrl = `https://maps.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w&output=embed`;
+                mapIframe.src = embedMapUrl;
+                mapContainer.style.display = 'block';
+
+                // Nút mở Google Maps lớn (Ép chế độ đi bộ: travelmode=walking)
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
 
@@ -360,6 +387,11 @@
                     📐 Khoảng cách ước tính: ~${fallbackKm.toFixed(1)} km<br>
                     💰 Phí ship: ${shipFeeText}
                 `;
+
+                const embedMapUrl = `https://maps.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w&output=embed`;
+                mapIframe.src = embedMapUrl;
+                mapContainer.style.display = 'block';
+
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
             }
@@ -381,7 +413,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const passedAddress = urlParams.get('address');
 
-            if (passedAddress) {
+            if, (passedAddress) {
                 const addressInput = document.getElementById('customerAddress');
                 if (addressInput) {
                     addressInput.value = decodeURIComponent(passedAddress);
