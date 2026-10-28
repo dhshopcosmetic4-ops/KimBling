@@ -4,21 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản Lý Đơn Hàng — Kim Bling</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="QLĐ Kim Bling">
-  <link rel="apple-touch-icon" href="logo.jpg">
-  
   <style>
     :root { --primary:#c29b38; --bg:#0f172a; --card-bg:#1e293b; --text:#f8fafc; --subtext:#94a3b8; --border:#334155; }
     * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
     body { background-color:var(--bg); color:var(--text); padding:12px; font-size:15px; }
-    #adminHeader { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:8px; }
-    .header-btns { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    #adminHeader { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--border); }
+    .header-btns { display:flex; gap:8px; }
     .action-btn { background:var(--primary); color:#000; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:13px; }
-    .sound-btn { background:#059669; color:#fff; display:inline-flex; align-items:center; gap:4px; }
-    .sound-btn.active { background:#10b981; }
     .clear-btn { background:#ef4444; color:#fff; }
     .order-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 4px 6px -1px rgba(0,0,0,.3); position:relative; }
     .order-header { display:flex; justify-content:space-between; border-bottom:1px dashed var(--border); padding-bottom:8px; margin-bottom:10px; align-items:center; gap:8px; }
@@ -64,11 +56,6 @@
   </style>
 </head>
 <body>
-  <!-- Thẻ âm thanh ẩn giúp lừa iOS giữ cho trang hoạt động ngầm -->
-  <audio id="silentBackgroundAudio" loop preload="auto">
-    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
-  </audio>
-
   <div id="adminApp">
     <div id="adminHeader">
       <div>
@@ -76,7 +63,6 @@
         <span id="orderCount" style="font-size:13px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
       <div class="header-btns">
-        <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Chế Độ Nền</button>
         <button class="action-btn clear-btn" onclick="requestClearOrders()">🗑️ Dọn dẹp</button>
         <button class="action-btn" onclick="fetchOrders()">🔄 Tải lại</button>
       </div>
@@ -90,116 +76,9 @@
     const STORE_LNG = 106.63099;
     let isFetchingOrders = false;
 
-    let audioContext = null;
-    let knownOrderIds = new Set();
-    let isFirstLoad = true;
-    let continuousAlarmTimer = null;
-
-    function enableAudioAndNotification() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-
-      // Kích hoạt luồng nhạc nền ẩn để chống bị iOS đóng băng
-      const silentAudio = document.getElementById('silentBackgroundAudio');
-      if (silentAudio) {
-        silentAudio.volume = 0.01;
-        silentAudio.play().catch(e => console.log("Silent audio blocked"));
-      }
-
-      if ("Notification" in window) {
-        Notification.requestPermission().then(permission => {
-          const btn = document.getElementById('btnEnableSound');
-          if (permission === 'granted') {
-            btn.innerHTML = '✅ Đã Bật Nền & Chuông';
-            btn.classList.add('active');
-            playChimeSound();
-          } else {
-            alert("Vui lòng cấp quyền Notification trong Cài đặt iPhone.");
-          }
-        });
-      } else {
-        playChimeSound();
-        document.getElementById('btnEnableSound').innerHTML = '🔊 Đã Bật Nền';
-      }
-    }
-
-    function playChimeSound() {
-      try {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-
-        const now = audioContext.currentTime;
-        
-        const osc1 = audioContext.createOscillator();
-        const gain1 = audioContext.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(880, now);
-        gain1.gain.setValueAtTime(0.5, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-        osc1.connect(gain1);
-        gain1.connect(audioContext.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.5);
-
-        const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1174.66, now + 0.2);
-        gain2.gain.setValueAtTime(0.6, now + 0.2);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
-        osc2.start(now + 0.2);
-        osc2.stop(now + 0.8);
-
-        if ("vibrate" in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 400]);
-        }
-      } catch (e) {
-        console.log("Lỗi âm thanh:", e);
-      }
-    }
-
-    function startContinuousAlarm() {
-      if (continuousAlarmTimer) return;
-      playChimeSound();
-      continuousAlarmTimer = setInterval(() => {
-        playChimeSound();
-      }, 3000);
-    }
-
-    function stopContinuousAlarm() {
-      if (continuousAlarmTimer) {
-        clearInterval(continuousAlarmTimer);
-        continuousAlarmTimer = null;
-      }
-    }
-
     window.onload = function() {
       fetchOrders();
-      setInterval(fetchOrders, 12000);
-
-      document.body.addEventListener('click', function unlockAudio() {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-        const silentAudio = document.getElementById('silentBackgroundAudio');
-        if (silentAudio && silentAudio.paused) {
-          silentAudio.volume = 0.01;
-          silentAudio.play().catch(e => {});
-        }
-      }, { once: true });
+      setInterval(fetchOrders, 15000);
     };
 
     function escapeHtml(value) {
@@ -235,43 +114,8 @@
           if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
             document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
-            stopContinuousAlarm();
             return;
           }
-
-          let hasStatus1Order = false;
-
-          data.orders.forEach(order => {
-            const orderId = String(order.orderId || '');
-            const currentStatus = String(order.status || '1');
-
-            if (currentStatus === '1') {
-              hasStatus1Order = true;
-            }
-
-            if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
-              if (!isFirstLoad) {
-                if ("Notification" in window && Notification.permission === "granted") {
-                  new Notification(`🚨 ĐƠN MỚI #${orderId} - Kim Bling`, {
-                    body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${Number(order.total || 0).toLocaleString('vi-VN')}đ`,
-                    icon: 'logo.jpg',
-                    tag: orderId,
-                    renotify: true
-                  });
-                }
-              }
-            }
-            knownOrderIds.add(orderId);
-          });
-
-          if (hasStatus1Order && !isFirstLoad) {
-            startContinuousAlarm();
-          } else {
-            stopContinuousAlarm();
-          }
-
-          isFirstLoad = false;
-
           let html = '';
           data.orders.forEach(order => {
             const orderId = String(order.orderId || '');
@@ -341,6 +185,7 @@
         .finally(() => { isFetchingOrders = false; });
     }
 
+    // TÍNH TOÁN SHIP TRỰC TIẾP VÀ CẬP NHẬT GOOGLE SHEETS
     async function requestUpdateAddressAndCalculateFee(orderId, oldAddress) {
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ giao hàng cho đơn [#${orderId}]:`);
       if (!pin) return;
@@ -579,14 +424,9 @@
         card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`).replace('new-buzz', '').trim();
         card.querySelectorAll('.status-btn').forEach((btn, idx) => { btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`; });
       }
-
-      stopContinuousAlarm();
-
       fetch(SCRIPT_URL, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
-      }).then(() => {
-        setTimeout(fetchOrders, 500);
       }).catch(err => console.error(err));
     }
 
@@ -594,26 +434,14 @@
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
       if (!pin) return;
       fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
-        .then(res => res.json()).then(res => { 
-          alert(res.message); 
-          if (res.success) {
-            stopContinuousAlarm();
-            fetchOrders();
-          } 
-        });
+        .then(res => res.json()).then(res => { alert(res.message); if (res.success) fetchOrders(); });
     }
 
     function requestClearOrders() {
       const pin = prompt('🔐 Nhập mã PIN chủ quán để dọn dẹp các đơn cũ:');
       if (!pin) return;
       fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'clearOrders',pin:pin})})
-        .then(res => res.json()).then(res => { 
-          alert(res.message); 
-          if (res.success) {
-            stopContinuousAlarm();
-            fetchOrders();
-          } 
-        });
+        .then(res => res.json()).then(res => { alert(res.message); if (res.success) fetchOrders(); });
     }
   </script>
 </body>
