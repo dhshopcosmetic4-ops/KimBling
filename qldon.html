@@ -88,7 +88,7 @@
     const STORE_LAT = 10.74955; 
     const STORE_LNG = 106.63099;
     let isFetchingOrders = false;
-    let lastRenderedDataSignature = ""; // Biến lưu chữ ký dữ liệu để so sánh đơn cũ/mới chống load lại thừa thãi
+    let lastRenderedDataSignature = ""; 
 
     let audioContext = null;
     let knownOrderIds = new Set();
@@ -239,7 +239,6 @@
             return;
           }
 
-          // Tạo chuỗi chữ ký gồm ID và trạng thái của các đơn để so sánh
           const currentDataSignature = data.orders.map(o => `${o.orderId}_${o.status}`).join('|');
 
           let hasStatus1Order = false;
@@ -275,7 +274,7 @@
 
           isFirstLoad = false;
 
-          // ⭐ CƠ CHẾ CHỐNG LOAD LẠI THỪA THÃI: Nếu danh sách đơn y hệt như cũ thì bỏ qua không vẽ lại giao diện
+          // Chống load lại giao diện khi danh sách đơn không đổi
           if (currentDataSignature === lastRenderedDataSignature) {
             return;
           }
@@ -399,6 +398,7 @@
       let newShippingFee = calculateShippingFee(distanceKm);
       let formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
 
+      isFetchingOrders = true;
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -414,11 +414,12 @@
       .then(res => {
         alert(res.message || 'Đã cập nhật thành công.');
         if (res.success) {
-          lastRenderedDataSignature = ""; // Ép làm mới sau khi sửa thành công
+          lastRenderedDataSignature = ""; 
           fetchOrders();
         }
       })
-      .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'));
+      .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'))
+      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
     }
 
     function parseOrderItemsForPOS(orderObj, orderId) {
@@ -552,6 +553,8 @@
 
       const originalText = button ? button.textContent : '';
       if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
+      
+      isFetchingOrders = true; // Khóa quét ngầm
       try {
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
         const payload = {
@@ -579,7 +582,7 @@
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
         alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`);
-        lastRenderedDataSignature = ""; // Ép cập nhật lại khi đồng bộ POS thành công
+        lastRenderedDataSignature = ""; 
         fetchOrders();
       } catch (err) {
         alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối máy chủ.'}`);
@@ -588,6 +591,7 @@
           button.disabled = false;
           button.textContent = originalText || '🚀 Đẩy qua POS';
         }
+        setTimeout(() => { isFetchingOrders = false; }, 3000);
       }
     }
 
@@ -599,27 +603,39 @@
       }
 
       stopContinuousAlarm();
+      isFetchingOrders = true; // Khóa quét ngầm chống nhảy lùi
 
       fetch(SCRIPT_URL, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
-      }).then(() => {
-        lastRenderedDataSignature = ""; // Ép cập nhật lại giao diện khi đổi trạng thái đơn
-        setTimeout(fetchOrders, 300);
-      }).catch(err => console.error(err));
+      })
+      .then(() => {
+        lastRenderedDataSignature = ""; 
+      })
+      .catch(err => console.error(err))
+      .finally(() => {
+        setTimeout(() => { isFetchingOrders = false; }, 3000);
+      });
     }
 
     function requestDeleteSingleOrder(orderId) {
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
       if (!pin) return;
+
+      isFetchingOrders = true; // Khóa quét ngầm
       fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
-        .then(res => res.json()).then(res => { 
+        .then(res => res.json())
+        .then(res => { 
           alert(res.message); 
           if (res.success) {
             stopContinuousAlarm();
-            lastRenderedDataSignature = ""; // Ép làm mới khi xóa đơn
+            lastRenderedDataSignature = ""; 
             fetchOrders();
           } 
+        })
+        .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'))
+        .finally(() => {
+          setTimeout(() => { isFetchingOrders = false; }, 3000);
         });
     }
   </script>
