@@ -484,6 +484,9 @@ textarea {
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px;">Link Hình Ảnh (URL trực tiếp, vd từ Imgur):</label>
             <input type="text" id="newDishImageUrl" placeholder="https://i.imgur.com/... (để trống nếu không có ảnh)">
 
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-top: 8px; margin-bottom: 4px;">Link Video TikTok (Tùy chọn):</label>
+            <input type="text" id="newDishVideoUrl" placeholder="https://www.tiktok.com/@.../video/..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; margin-bottom: 10px;">
+
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeAddDishModal()">Hủy</button>
                 <button style="background: #4CAF50; color: white;" onclick="saveNewDishWithPin()">Lưu lại</button>
@@ -501,6 +504,10 @@ textarea {
             <input type="number" id="editDishPriceInput">
             <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 4px; margin-top: 6px;">Link Hình Ảnh (URL):</label>
             <input type="text" id="editDishImageUrlInput">
+
+<label style="font-size: 14px; font-weight: bold; display: block; margin-top: 8px; margin-bottom: 4px;">Link Video TikTok (Tùy chọn):</label>
+<input type="text" id="editDishVideoUrlInput" placeholder="https://www.tiktok.com/@.../video/..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; margin-bottom: 10px;">
+
             <div class="modal-actions">
                 <button style="background: #ccc;" onclick="closeEditDishModal()">Hủy</button>
                 <button style="background: #4CAF50; color: white;" onclick="saveEditedDish()">Cập nhật</button>
@@ -2391,13 +2398,24 @@ async function fetchHistoryFromCloud() {
             const cat = document.getElementById('newDishCategory').value;
             if (!name || isNaN(price)) { alert("Vui lòng nhập tên và giá hợp lệ!"); return; }
             
-            const imageUrl = document.getElementById('newDishImageUrl').value.trim();
-            menu.push({ id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, name, price, category: cat, imageUrl: imageUrl });
-            localStorage.setItem('kimbling_menu', JSON.stringify(menu));
-            renderMenu();
-            closeAddDishModal();
-            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
-            alert("Đã thêm món mới và đồng bộ lên Google Sheets thành công!");
+                    const imageUrl = document.getElementById('newDishImageUrl').value.trim();
+    const videoUrl = document.getElementById('newDishVideoUrl').value.trim();
+
+    menu.push({ 
+        id: menu.length > 0 ? Math.max(...menu.map(i => i.id)) + 1 : 1, 
+        name, 
+        price, 
+        category: cat, 
+        imageUrl: imageUrl, 
+        videoUrl: videoUrl 
+    });
+
+    localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+    renderMenu();
+    closeAddDishModal();
+    syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
+    alert("Đã thêm món mới và đồng bộ lên Google Sheets thành công!");
+
         }
 
         // Hàm chuyển đổi trạng thái Hết hàng / Còn hàng của món (Chỉ Chủ Quán)
@@ -2427,7 +2445,12 @@ async function fetchHistoryFromCloud() {
             document.getElementById('editDishNameInput').value = item.name;
             document.getElementById('editDishPriceInput').value = item.price;
             document.getElementById('editDishImageUrlInput').value = item.imageUrl || '';
-            document.getElementById('editDishModal').style.display = 'flex';
+            
+
+document.getElementById('editDishVideoUrlInput').value = item.videoUrl || '';
+
+
+document.getElementById('editDishModal').style.display = 'flex';
         }
         function closeEditDishModal() { document.getElementById('editDishModal').style.display = 'none'; }
         
@@ -2437,9 +2460,16 @@ async function fetchHistoryFromCloud() {
             const name = document.getElementById('editDishNameInput').value.trim();
             const price = parseInt(document.getElementById('editDishPriceInput').value);
             const imageUrl = document.getElementById('editDishImageUrlInput').value.trim();
-            const item = menu.find(i => i.id === id);
-            if (item) {
-                item.name = name; item.price = price; item.imageUrl = imageUrl;
+
+const videoUrl = document.getElementById('editDishVideoUrlInput').value.trim();
+
+                const item = menu.find(i => i.id === id);
+    if (item) {
+        item.name = name; 
+        item.price = price;
+        item.imageUrl = imageUrl;
+        item.videoUrl = videoUrl; // <-- THÊM DÒNG NÀY VÀO ĐÂY
+
                 localStorage.setItem('kimbling_menu', JSON.stringify(menu));
                 renderMenu();
                 syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });

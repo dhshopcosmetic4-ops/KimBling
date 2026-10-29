@@ -1762,19 +1762,58 @@
             }
         }
 
+                let isShowingVideoState = {}; // Lưu trạng thái đang xem video hay xem ảnh của từng món
+
         function renderTiktokCard() {
             const item = filteredMenu[currentTiktokIndex];
             if (!item) return;
 
             const catType = getCategoryType(item.name, item.category);
             let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
-
             const box = document.getElementById('tiktokImgBox');
-            if (item.imageUrl) {
-                box.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'tiktok-fallback-icon\'>${fallbackIcon}</div>';">`;
-            } else {
-                box.innerHTML = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
+
+            // --- KIỂM TRA VÀ XỬ LÝ LINK TIKTOK ---
+            let tiktokEmbedUrl = '';
+            if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
+                const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
+                if (videoIdMatch && videoIdMatch[1]) {
+                    tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
+                }
             }
+
+            // Mặc định nếu có video thì ưu tiên hiện video, nếu không thì hiện ảnh
+            if (isShowingVideoState[item.id] === undefined) {
+                isShowingVideoState[item.id] = tiktokEmbedUrl ? true : false;
+            }
+            let showVideo = isShowingVideoState[item.id] && tiktokEmbedUrl;
+
+            // --- TẠO NÚT CHUYỂN ĐỔI QUA LẠI GIỮA VIDEO VÀ ẢNH TĨNH ---
+            let toggleBtnHtml = '';
+            if (tiktokEmbedUrl && item.imageUrl) {
+                let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video TikTok';
+                toggleBtnHtml = `
+                    <button onclick="toggleMediaView(${item.id})" style="position: absolute; bottom: 120px; right: 16px; z-index: 99; background: rgba(0, 0, 0, 0.75); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                        ${btnText}
+                    </button>
+                `;
+            }
+
+            // --- HIỂN THỊ NỘI DUNG TƯƠNG TỨNG (VIDEO HOẶC ẢNH) ---
+            let mediaContent = '';
+            if (showVideo) {
+                mediaContent = `
+                    <iframe src="${tiktokEmbedUrl}" 
+                        style="width: 100%; height: 100%; border: none; object-fit: cover;" 
+                        allow="autoplay; encrypted-media" 
+                        allowfullscreen>
+                    </iframe>`;
+            } else if (item.imageUrl) {
+                mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
+            } else {
+                mediaContent = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
+            }
+
+            box.innerHTML = mediaContent + toggleBtnHtml;
 
             if (isHotFoodItem(item.name)) {
                 box.classList.add('hot-food');     
@@ -1782,15 +1821,9 @@
                 box.classList.remove('hot-food');  
             }
 
+            // --- GIỮ NGUYÊN THÔNG TIN TÊN, GIÁ, MÔ TẢ ---
             document.getElementById('tiktokTitle').innerText = item.name;
             document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
-
-            let heartBtn = document.getElementById('btnTiktokHeart');
-            if (heartBtn) heartBtn.classList.remove('liked');
-            document.getElementById('heartCount').innerText = Math.floor(Math.random() * 150) + 95;
-            
-            let listComments = getCommentsListForItem(item.name, item.category);
-            document.getElementById('commentCountDisplay').innerText = listComments.length + Math.floor(Math.random() * 10);
 
             let descEl = document.getElementById('tiktokDesc');
             if (!descEl) {
@@ -1801,6 +1834,16 @@
                 titleEl.parentNode.insertBefore(descEl, titleEl.nextSibling);
             }
             descEl.innerText = getItemDescription(item.name);
+        }
+
+        // --- HÀM XỬ LÝ KHI BẤM NÚT CHUYỂN ĐỔI ---
+        function toggleMediaView(itemId) {
+            if (isShowingVideoState[itemId] !== undefined) {
+                isShowingVideoState[itemId] = !isShowingVideoState[itemId];
+            } else {
+                isShowingVideoState[itemId] = false;
+            }
+            renderTiktokCard();
         }
 
         function openCommentsSheet() {
