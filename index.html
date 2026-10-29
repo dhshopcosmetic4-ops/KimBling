@@ -49,6 +49,35 @@ textarea {
 
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
         .menu-item { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+
+        /* CSS cho món tạm hết hàng */
+        .menu-item.sold-out {
+            opacity: 0.55;
+            background: #f1f1f1 !important;
+            border-color: #ccc !important;
+            cursor: not-allowed !important;
+        }
+        .menu-item.sold-out h4 {
+            color: #888;
+            text-decoration: line-through;
+        }
+        .sold-out-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 2;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+
         .menu-item:hover { background: #e3f2fd; border-color: #2196F3; }
         .menu-item.favorite { border: 2px solid #ff9800; background: #fff8e1; }
         .menu-item h4 { font-size: 15px; margin-bottom: 6px; color: #333; font-weight: bold; }
@@ -1470,15 +1499,23 @@ async function fetchHistoryFromCloud() {
                 return;
             }
 
-            filteredMenu.forEach(item => {
+                        filteredMenu.forEach(item => {
                 const isFav = favorites.includes(item.id);
                 const starIcon = isFav ? '⭐' : '☆';
-                const favClass = isFav ? 'menu-item favorite' : 'menu-item';
+                const isSoldOut = item.isSoldOut === true; // Kiểm tra trạng thái hết hàng
+                
+                let favClass = isFav ? 'menu-item favorite' : 'menu-item';
+                if (isSoldOut) favClass += ' sold-out';
+                
+                const soldOutBadgeHtml = isSoldOut ? '<div class="sold-out-badge">HẾT HÀNG</div>' : '';
 
                 let adminActionBtns = '';
                 if (currentAccount === 'CQ' && !isCustomerViewMode) {
+                    const soldOutBtnText = isSoldOut ? '🟢 Còn' : '🔴 Hết';
+                    const soldOutBtnTitle = isSoldOut ? 'Bật lại món này' : 'Đánh dấu tạm hết';
                     adminActionBtns = `
                         <div class="menu-item-btns">
+                            <button class="btn-dish-action" onclick="event.stopPropagation(); toggleItemSoldOut(${item.id})" title="${soldOutBtnTitle}">${soldOutBtnText}</button>
                             <button class="btn-dish-action" onclick="event.stopPropagation(); openEditDishModal(${item.id})" title="Sửa">✏️</button>
                             <button class="btn-dish-action btn-del-dish" onclick="event.stopPropagation(); deleteDish(${item.id})" title="Xóa">×</button>
                         </div>
@@ -1490,8 +1527,9 @@ async function fetchHistoryFromCloud() {
                     imgTag = `<div style="width: 100%; height: 90px; background: #eee; border-radius: 6px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;"><img src="${item.imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>`;
                 }
                 menuGrid.innerHTML += `
-                    <div class="${favClass}" onclick="openOptionsModal(${item.id})">
+                    <div class="${favClass}" onclick="${isSoldOut ? 'alert(\'Món này hiện đang tạm hết!\');' : `openOptionsModal(${item.id})`}">
                         <button class="btn-fav" onclick="toggleFavorite(${item.id}, event)" title="Đánh dấu yêu thích">${starIcon}</button>
+                        ${soldOutBadgeHtml}
                         ${adminActionBtns}
                         ${imgTag}
                         <h4 style="${imgTag ? 'font-size: 13px;' : 'margin-top: 14px;'}">${item.name}</h4>
@@ -2361,6 +2399,25 @@ async function fetchHistoryFromCloud() {
             syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings });
             alert("Đã thêm món mới và đồng bộ lên Google Sheets thành công!");
         }
+
+        // Hàm chuyển đổi trạng thái Hết hàng / Còn hàng của món (Chỉ Chủ Quán)
+        function toggleItemSoldOut(id) {
+            const item = menu.find(i => i.id === id);
+            if (!item) return;
+            
+            item.isSoldOut = !item.isSoldOut;
+            
+            localStorage.setItem('kimbling_menu', JSON.stringify(menu));
+            renderMenu();
+            
+            syncToGoogleSheets('menu', { menu, drinkToppings, snackToppings, favorites: favorites });
+            
+            alert(item.isSoldOut 
+                ? `🔴 Đã đánh dấu món "${item.name}" là TẠM HẾT!` 
+                : `🟢 Đã mở lại bán món "${item.name}"!`
+            );
+        }
+
 
         function openEditDishModal(id) {
             if (!verifyAdminPin()) return;
