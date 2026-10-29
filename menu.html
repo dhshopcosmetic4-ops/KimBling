@@ -1854,19 +1854,21 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media ---
+    // --- Nạp nội dung Media (Ép buộc muted=1 để tự động chạy ngay không cần bấm) ---
     let mediaContent = '';
     if (showVideo) {
+        let autoPlayMutedUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
+
         mediaContent = `
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                <!-- Lớp Iframe video TikTok -->
-                <iframe id="tiktokVideoIframe" src="${tiktokEmbedUrl}" 
+                <!-- Lớp Iframe video TikTok (Chạy tự động tắt tiếng trước) -->
+                <iframe id="tiktokVideoIframe" src="${autoPlayMutedUrl}" 
                     style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
                     allow="autoplay; encrypted-media; fullscreen" 
                     allowfullscreen>
                 </iframe>
 
-                <!-- LỚP PHỦ TÀNG HÌNH (70% MÀN HÌNH): Giúp vuốt lên/xuống chuyển món mượt mà -->
+                <!-- LỚP PHỦ TÀNG HÌNH (70% MÀN HÌNH TỪ TRÊN XUỐNG): Giúp vuốt chuyển món mượt mà -->
                 <div id="swipeOverlayZone" style="position: absolute; top: 0; left: 0; width: 100%; height: 70%; z-index: 10; background: transparent;"></div>
 
                 <!-- BẢNG HƯỚNG DẪN CHE ĐÚNG NÚT PLAY Ở GIỮA (top: 50%) -->
@@ -1886,13 +1888,23 @@ function renderTiktokCard() {
 
     box.innerHTML = mediaContent;
 
-    // --- TỰ ĐỘNG ẨN BẢNG HƯỚNG DẪN SAU 5 GIÂY ---
-if (showVideo) {
-    setTimeout(() => {
-        dismissVideoNotice();
-    }, 5000); // 5000 mili-giây = 5 giây
+    // --- TỰ ĐỘNG MỞ ÂM THANH SAU 2.5 GIÂY VÀ TỰ ĐỘNG ẨN BẢNG HƯỚNG DẪN SAU 5 GIÂY ---
+    if (showVideo) {
+        // Tự động bật tiếng sau 2.5 giây
+        setTimeout(() => {
+            const iframe = document.getElementById('tiktokVideoIframe');
+            if (iframe && iframe.src) {
+                if (iframe.src.includes('muted=1')) {
+                    iframe.src = iframe.src.replace('muted=1', 'muted=0');
+                }
+            }
+        }, 2500);
 
-        // Khi khách bấm vào vùng video hoặc vuốt qua món khác, bảng hướng dẫn cũng ẩn đi luôn cho tiện
+        // Tự động ẩn bảng hướng dẫn sau 5 giây
+        setTimeout(() => {
+            dismissVideoNotice();
+        }, 5000);
+
         const videoIframe = document.getElementById('tiktokVideoIframe');
         if (videoIframe) {
             videoIframe.onclick = function() {
@@ -1922,16 +1934,17 @@ if (showVideo) {
     descEl.innerText = getItemDescription(item.name);
 }
 
-// Hàm ẩn bảng hướng dẫn
+// Hàm ẩn bảng hướng dẫn mờ dần
 function dismissVideoNotice() {
     const notice = document.getElementById('videoPlayNotice');
     if (notice) {
         notice.style.opacity = '0';
         setTimeout(() => {
             notice.style.display = 'none';
-        }, 500); // Hiệu ứng mờ dần trong 0.5s cho mượt
+        }, 500);
     }
 }
+
 
 
 
