@@ -1762,7 +1762,7 @@
             }
         }
 
-                                    let isShowingVideoState = {}; // Lưu trạng thái đang xem video hay xem ảnh của từng món
+                        let isShowingVideoState = {}; // Lưu trạng thái đang xem video hay xem ảnh của từng món
 
         function renderTiktokCard() {
             const item = filteredMenu[currentTiktokIndex];
@@ -1772,15 +1772,15 @@
             let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
             const box = document.getElementById('tiktokImgBox');
 
-            // --- XÓA NỘI DUNG CŨ ĐỂ DỪNG VIDEO NGAY LẬP TỨC ---
+            // --- 1. XÓA SẠCH NỘI DUNG CŨ ĐỂ DỪNG VIDEO NGAY LẬP TỨC ---
             box.innerHTML = '';
 
-            // --- KIỂM TRA LINK TIKTOK ---
+            // --- 2. KIỂM TRA LINK TIKTOK ---
             let tiktokEmbedUrl = '';
             if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
                 const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
                 if (videoIdMatch && videoIdMatch[1]) {
-                    tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1&muted=0`;
+                    tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
                 }
             }
 
@@ -1790,7 +1790,14 @@
             }
             let showVideo = isShowingVideoState[item.id] && tiktokEmbedUrl;
 
-            // --- NÚT BẤM CHUYỂN ĐỔI GỌN GÀNG (KHÔNG DÙNG ẢNH THUMBNAIL) ---
+            // --- 3. ẨN / HIỆN CỤM NƯỚC TƯƠNG TÁC (TIM, BÌNH LUẬN) DỰA VÀO CHẾ ĐỘ XEM ---
+            const sideActionsEl = document.querySelector('.tiktok-side-actions');
+            if (sideActionsEl) {
+                // Nếu đang xem video thật thì ẨN, xem ảnh tĩnh thì HIỆN
+                sideActionsEl.style.display = showVideo ? 'none' : 'flex';
+            }
+
+            // --- 4. NÚT CHUYỂN ĐỔI CHẾ ĐỘ Ở GÓC TRÊN ---
             let toggleButtonHtml = '';
             if (tiktokEmbedUrl && item.imageUrl) {
                 let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video';
@@ -1801,7 +1808,7 @@
                 `;
             }
 
-            // --- HIỂN THỊ NỘI DUNG TRÀN MÀN HÌNH CHUẨN TIKTOK ---
+            // --- 5. HIỂN THỊ NỘI DUNG (VIDEO HOẶC ẢNH TĨNH TRÀN MÀN HÌNH) ---
             let mediaContent = '';
             if (showVideo) {
                 mediaContent = `
@@ -1824,7 +1831,7 @@
                 box.classList.remove('hot-food');  
             }
 
-            // --- ĐỒNG BỘ TÊN, GIÁ, MÔ TẢ ---
+            // --- 6. ĐỒNG BỘ THÔNG TIN TÊN, GIÁ, MÔ TẢ ---
             document.getElementById('tiktokTitle').innerText = item.name;
             document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
 
@@ -1839,24 +1846,15 @@
             descEl.innerText = getItemDescription(item.name);
         }
 
-        // --- HÀM XỬ LÝ KHI BẤM NÚT CHUYỂN ĐỔI ---
-        function toggleMediaView(itemId) {
-            if (isShowingVideoState[itemId] !== undefined) {
-                isShowingVideoState[itemId] = !isShowingVideoState[itemId];
-            } else {
-                isShowingVideoState[itemId] = false;
-            }
-            renderTiktokCard();
-        }
-
-        // --- ĐẢM BẢO KHI ĐÓNG MODAL THÌ DỪNG HOÀN TOÀN VIDEO ---
+        // --- ĐẢM BẢO KHI ĐÓNG MODAL THÌ HIỆN LẠI THANH TƯƠNG TÁC CHO CÁC LẦN SAU ---
         function closeTiktokModal() {
             document.body.classList.remove('no-scroll');
             const box = document.getElementById('tiktokImgBox');
             if (box) box.innerHTML = '';
+            const sideActionsEl = document.querySelector('.tiktok-side-actions');
+            if (sideActionsEl) sideActionsEl.style.display = 'flex';
             document.getElementById('tiktokModal').style.display = 'none';
         }
-
 
 
         function openCommentsSheet() {
