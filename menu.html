@@ -1762,7 +1762,7 @@
             }
         }
 
-                let isShowingVideoState = {}; // Lưu trạng thái đang xem video hay xem ảnh của từng món
+                                    let isShowingVideoState = {}; // Lưu trạng thái đang xem video hay xem ảnh của từng món
 
         function renderTiktokCard() {
             const item = filteredMenu[currentTiktokIndex];
@@ -1772,48 +1772,51 @@
             let fallbackIcon = catType === 'Food' ? '🍢' : (catType === 'Coffee' ? '☕' : '🧋');
             const box = document.getElementById('tiktokImgBox');
 
-            // --- KIỂM TRA VÀ XỬ LÝ LINK TIKTOK ---
+            // --- XÓA NỘI DUNG CŨ ĐỂ DỪNG VIDEO NGAY LẬP TỨC ---
+            box.innerHTML = '';
+
+            // --- KIỂM TRA LINK TIKTOK ---
             let tiktokEmbedUrl = '';
             if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
                 const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
                 if (videoIdMatch && videoIdMatch[1]) {
-                    tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
+                    tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1&muted=0`;
                 }
             }
 
-            // Mặc định nếu có video thì ưu tiên hiện video, nếu không thì hiện ảnh
+            // Mặc định ưu tiên hiện video nếu có link
             if (isShowingVideoState[item.id] === undefined) {
                 isShowingVideoState[item.id] = tiktokEmbedUrl ? true : false;
             }
             let showVideo = isShowingVideoState[item.id] && tiktokEmbedUrl;
 
-            // --- TẠO NÚT CHUYỂN ĐỔI QUA LẠI GIỮA VIDEO VÀ ẢNH TĨNH ---
-            let toggleBtnHtml = '';
+            // --- NÚT BẤM CHUYỂN ĐỔI GỌN GÀNG (KHÔNG DÙNG ẢNH THUMBNAIL) ---
+            let toggleButtonHtml = '';
             if (tiktokEmbedUrl && item.imageUrl) {
-                let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video TikTok';
-                toggleBtnHtml = `
-                    <button onclick="toggleMediaView(${item.id})" style="position: absolute; bottom: 120px; right: 16px; z-index: 99; background: rgba(0, 0, 0, 0.75); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-                        ${btnText}
-                    </button>
+                let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video';
+                toggleButtonHtml = `
+                    <div onclick="toggleMediaView(${item.id})" style="position: absolute; top: 75px; right: 16px; z-index: 99999; background: rgba(0, 0, 0, 0.75); border: 1.5px solid rgba(255,255,255,0.8); border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.6); backdrop-filter: blur(4px); pointer-events: auto;">
+                        <span style="font-size: 13px; color: #ffd700; font-weight: bold; white-space: nowrap;">${btnText}</span>
+                    </div>
                 `;
             }
 
-            // --- HIỂN THỊ NỘI DUNG TƯƠNG TỨNG (VIDEO HOẶC ẢNH) ---
+            // --- HIỂN THỊ NỘI DUNG TRÀN MÀN HÌNH CHUẨN TIKTOK ---
             let mediaContent = '';
             if (showVideo) {
                 mediaContent = `
                     <iframe src="${tiktokEmbedUrl}" 
-                        style="width: 100%; height: 100%; border: none; object-fit: cover;" 
-                        allow="autoplay; encrypted-media" 
+                        style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
+                        allow="autoplay; encrypted-media; fullscreen" 
                         allowfullscreen>
                     </iframe>`;
             } else if (item.imageUrl) {
-                mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
+                mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
             } else {
                 mediaContent = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
             }
 
-            box.innerHTML = mediaContent + toggleBtnHtml;
+            box.innerHTML = mediaContent + toggleButtonHtml;
 
             if (isHotFoodItem(item.name)) {
                 box.classList.add('hot-food');     
@@ -1821,7 +1824,7 @@
                 box.classList.remove('hot-food');  
             }
 
-            // --- GIỮ NGUYÊN THÔNG TIN TÊN, GIÁ, MÔ TẢ ---
+            // --- ĐỒNG BỘ TÊN, GIÁ, MÔ TẢ ---
             document.getElementById('tiktokTitle').innerText = item.name;
             document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
 
@@ -1845,6 +1848,16 @@
             }
             renderTiktokCard();
         }
+
+        // --- ĐẢM BẢO KHI ĐÓNG MODAL THÌ DỪNG HOÀN TOÀN VIDEO ---
+        function closeTiktokModal() {
+            document.body.classList.remove('no-scroll');
+            const box = document.getElementById('tiktokImgBox');
+            if (box) box.innerHTML = '';
+            document.getElementById('tiktokModal').style.display = 'none';
+        }
+
+
 
         function openCommentsSheet() {
             const item = filteredMenu[currentTiktokIndex];
