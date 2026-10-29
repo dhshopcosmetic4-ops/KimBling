@@ -25,6 +25,79 @@
 
     <style>
 
+/* POPUP VIDEO CHUYÊN CHO SAFARI IOS */
+.video-popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    backdrop-filter: blur(5px);
+}
+.video-popup-card {
+    position: relative;
+    background: #000;
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,215,0,0.4);
+}
+.video-popup-close-top {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.8);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.video-popup-iframe-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.video-popup-footer {
+    padding: 12px 16px;
+    background: #111;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.btn-close-video-bottom {
+    width: 100%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+
 /* Ẩn hoàn toàn hiệu ứng bọt/khói khi ở chế độ xem video */
 .video-mode-active .tiktok-img-box::before,
 .video-mode-active .tiktok-img-box::after {
@@ -857,6 +930,25 @@
     </style>
 </head>
 <body>
+
+<!-- POPUP VIDEO NỔI CHO SAFARI IPHONE -->
+<div class="video-popup-overlay" id="videoPopupModal">
+    <div class="video-popup-card">
+        <!-- NÚT ✕ PHÍA TRÊN -->
+        <button class="video-popup-close-top" onclick="closeVideoPopup()">✕</button>
+        
+        <div class="video-popup-iframe-container" id="videoPopupIframeBox">
+            <!-- Iframe video sẽ được nạp động tại đây -->
+        </div>
+
+        <div class="video-popup-footer">
+            <button class="btn-tiktok-add pulse-attention" style="width: 100%;" onclick="confirmAddFromTiktok()">🛒 ĐẶT MÓN NÀY NGAY</button>
+            <!-- NÚT ĐÓNG PHÍA DƯỚI -->
+            <button class="btn-close-video-bottom" onclick="closeVideoPopup()">✕ Đóng Video</button>
+        </div>
+    </div>
+</div>
+
 
     <!-- POPUP BANNER LẦN ĐẦU VÀO WEB -->
     <div class="banner-popup-overlay" id="bannerPopupModal">
@@ -1791,7 +1883,8 @@
             }
         }
 
-            let isShowingVideoState = {};
+    let isShowingVideoState = {};
+
 
 function renderTiktokCard() {
     const item = filteredMenu[currentTiktokIndex];
@@ -1804,89 +1897,46 @@ function renderTiktokCard() {
 
     box.innerHTML = '';
 
-    // Kiểm tra link video TikTok
+    // Lấy link video TikTok
     let tiktokEmbedUrl = '';
     if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
         const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
         if (videoIdMatch && videoIdMatch[1]) {
-            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
+            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&muted=0&loop=1`;
         }
     }
 
-    if (isShowingVideoState[item.id] === undefined) {
-        // Mặc định ban đầu vào món sẽ phát video trước (true nếu có link video)
-        isShowingVideoState[item.id] = tiktokEmbedUrl ? true : false;
-    }
-    let showVideo = isShowingVideoState[item.id] && tiktokEmbedUrl;
-
-    // --- Bật/tắt chế độ xem video để ẩn hiệu ứng khói/bọt ---
-    if (showVideo) {
-        card.classList.add('video-mode-active');
-        box.classList.remove('hot-food');
+    // Hiệu ứng ứng với đồ ăn hot
+    if (isHotFoodItem(item.name)) {
+        box.classList.add('hot-food');
     } else {
-        card.classList.remove('video-mode-active');
-        if (isHotFoodItem(item.name)) {
-            box.classList.add('hot-food');
-        } else {
-            box.classList.remove('hot-food');
-        }
+        box.classList.remove('hot-food');
     }
 
-    // Ẩn cụm tim/bình luận ảo nếu đang xem video thật
-    const sideActionsEl = document.querySelector('.tiktok-side-actions');
-    if (sideActionsEl) {
-        sideActionsEl.style.display = showVideo ? 'none' : 'flex';
-    }
-
-    // --- Nút chuyển đổi qua lại giữa Ảnh Tĩnh và Video ở góc trên ---
+    // Nút Xem Video ở góc trên khi xem trên TikTok Card
     let oldToggleBtn = document.getElementById('tiktokToggleMediaBtn');
     if (oldToggleBtn) oldToggleBtn.remove();
 
-    if (item.imageUrl && tiktokEmbedUrl) {
-        let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video';
+    if (tiktokEmbedUrl) {
         let toggleBtn = document.createElement('div');
         toggleBtn.id = 'tiktokToggleMediaBtn';
         toggleBtn.className = 'tiktok-toggle-btn';
         toggleBtn.onclick = function(e) {
             e.stopPropagation();
-            toggleMediaView(item.id);
+            openVideoPopup(tiktokEmbedUrl);
         };
-        toggleBtn.innerHTML = `<span style="font-size: 12px; color: #ffd700; font-weight: bold; white-space: nowrap;">${btnText}</span>`;
+        toggleBtn.innerHTML = `<span style="font-size: 12px; color: #ffd700; font-weight: bold; white-space: nowrap;">🎬 Bấm Xem Video </span>`;
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media ---
-    let mediaContent = '';
-    if (showVideo) {
-        // Mặc định lúc đầu vào chạy muted=1 để trình duyệt cho phép autoplay, kèm nút Play to ở giữa
-        let autoPlayMutedUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
-
-        mediaContent = `
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                <!-- Lớp Iframe video TikTok -->
-                <iframe id="tiktokVideoIframe" src="${autoPlayMutedUrl}" 
-                    style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
-                    allow="autoplay; encrypted-media; fullscreen" 
-                    allowfullscreen>
-                </iframe>
-
-                <!-- LỚP PHỦ TÀNG HÌNH (Giúp vẫn vuốt lên/xuống đổi món mượt mà) -->
-                <div id="swipeOverlayZone" style="position: absolute; top: 0; left: 0; width: 100%; height: 70%; z-index: 10; background: transparent;" onclick="unmuteAndHidePlayButton()"></div>
-
-                <!-- NÚT PLAY TO RÕ Ở GIỮA MÀN HÌNH -->
-                <div id="bigPlayCenterBtn" onclick="unmuteAndHidePlayButton()" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.75); color: #ffd700; padding: 16px 26px; border-radius: 35px; border: 2px solid #ffd700; text-align: center; z-index: 50; backdrop-filter: blur(6px); box-shadow: 0 8px 25px rgba(0,0,0,0.8); cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 15px;">
-                    <span style="font-size: 22px;">▶️</span> BẤM ĐỂ PHÁT & BẬT TIẾNG
-                </div>
-            </div>`;
-    } else if (item.imageUrl) {
-        mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
-    } else {
-        mediaContent = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
-    }
+    // Luôn hiển thị Ảnh Tĩnh sắc nét trên card chính để lướt mượt 100%
+    let mediaContent = item.imageUrl 
+        ? `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`
+        : `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
 
     box.innerHTML = mediaContent;
 
-    // --- Cập nhật Tên món, Giá và Mô tả vào Footer ---
+    // Cập nhật thông tin
     document.getElementById('tiktokTitle').innerText = item.name;
     document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
 
@@ -1901,26 +1951,56 @@ function renderTiktokCard() {
     descEl.innerText = getItemDescription(item.name);
 }
 
-// Hàm khi khách bấm vào nút Play giữa màn hình: Bật tiếng và ẩn nút đi
-
-function unmuteAndHidePlayButton() {
-    const iframe = document.getElementById('tiktokVideoIframe'); // Đã sửa đúng ID
-    if (iframe && iframe.src) {
-        if (iframe.src.includes('muted=1')) {
-            iframe.src = iframe.src.replace('muted=1', 'muted=0');
-        }
+// HÀM MỞ POPUP VIDEO (Safari iPhone kích hoạt có tiếng 100%)
+function openVideoPopup(url) {
+    const box = document.getElementById('videoPopupIframeBox');
+    if (box) {
+        box.innerHTML = `
+            <iframe src="${url}" 
+                style="width: 100%; height: 100%; border: none; object-fit: cover;" 
+                allow="autoplay; encrypted-media; fullscreen" 
+                allowfullscreen>
+            </iframe>`;
     }
+    document.getElementById('videoPopupModal').style.display = 'flex';
+}
 
-    const bigBtn = document.getElementById('bigPlayCenterBtn');
-    if (bigBtn) {
-        bigBtn.style.opacity = '0';
-        setTimeout(() => {
-            bigBtn.style.display = 'none';
-        }, 300);
-    }
+// HÀM ĐÓNG POPUP VIDEO
+function closeVideoPopup() {
+    const box = document.getElementById('videoPopupIframeBox');
+    if (box) box.innerHTML = ''; // Xóa iframe để tắt tiếng ngay lập tức khi đóng
+    document.getElementById('videoPopupModal').style.display = 'none';
 }
 
 
+
+        function openCommentsSheet() {
+            const item = filteredMenu[currentTiktokIndex];
+            if (!item) return;
+
+            const commentsList = getCommentsListForItem(item.name, item.category);
+            const container = document.getElementById('commentsListContent');
+            
+            document.getElementById('commentsHeaderTitle').innerText = `Bình luận (${commentsList.length})`;
+
+            container.innerHTML = commentsList.map(c => `
+                <div class="comment-item">
+                    <div class="comment-avatar">${c.avatar}</div>
+                    <div class="comment-body">
+                        <div class="comment-author">${c.user}</div>
+                        <div class="comment-content">${c.text}</div>
+                        ${c.reply ? `
+                            <div class="comment-reply">
+                                <div class="comment-reply-author">${c.reply.split(':')[0]}:</div>
+                                <div style="color:#333;">${c.reply.split(':').slice(1).join(':')}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('commentsSheetOverlay').style.display = 'flex';
+        }
 
         function closeCommentsSheet(event) {
             if (event.target.id === 'commentsSheetOverlay') {
@@ -1937,21 +2017,20 @@ function unmuteAndHidePlayButton() {
             document.getElementById('tiktokModal').style.display = 'none';
         }
 
-        function navigateTiktok(direction) {
-            closeCommentsSheetDirect();
-            currentTiktokIndex += direction;
-            if (currentTiktokIndex < 0) currentTiktokIndex = filteredMenu.length - 1;
-            if (currentTiktokIndex >= filteredMenu.length) currentTiktokIndex = 0;
-            renderTiktokCard();
-        }
-
         function confirmAddFromTiktok() {
-            const item = filteredMenu[currentTiktokIndex];
-            closeTiktokModal();
-            if (item) {
-                openOptionsModal(item.id);
-            }
-        }
+    const item = filteredMenu[currentTiktokIndex];
+    
+    // Đóng popup video lại ngay lập tức (và xóa iframe để tắt tiếng)
+    closeVideoPopup();
+    
+    // Đồng thời đóng luôn cả modal TikTok chính nếu đang mở
+    closeTiktokModal();
+
+    if (item) {
+        openOptionsModal(item.id);
+    }
+}
+
 
         let touchStartY = 0;
         let touchEndY = 0;
