@@ -1854,20 +1854,23 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media (Dùng pointer-events: none để vuốt chuyển món mượt mà) ---
+    // --- Nạp nội dung Media (Xử lý lớp nhận vuốt chuyển món và bảng hướng dẫn) ---
     let mediaContent = '';
     if (showVideo) {
         mediaContent = `
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                <!-- Lớp iframe video cho phép bấm vào các nút điều khiển của TikTok -->
+                <!-- Lớp Iframe video TikTok -->
                 <iframe id="tiktokVideoIframe" src="${tiktokEmbedUrl}" 
                     style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
                     allow="autoplay; encrypted-media; fullscreen" 
                     allowfullscreen>
                 </iframe>
 
-                <!-- GHI CHÚ HƯỚNG DẪN GIỮA MÀN HÌNH (Che nút Play) -->
-                <div id="videoPlayNotice" onclick="dismissVideoNotice()" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 14px 18px; border-radius: 16px; border: 1.5px solid rgba(255, 215, 0, 0.9); text-align: center; z-index: 50; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,0.7); width: 85%; max-width: 290px; cursor: pointer;">
+                <!-- LỚP PHỦ TÀNG HÌNH (70% MÀN HÌNH TỪ TRÊN XUỐNG): Giúp vuốt lên/xuống chuyển món mượt mà -->
+                <div id="swipeOverlayZone" style="position: absolute; top: 0; left: 0; width: 100%; height: 70%; z-index: 10; background: transparent;"></div>
+
+                <!-- BẢNG HƯỚNG DẪN CHE ĐÚNG NÚT PLAY Ở GIỮA (top: 50%) -->
+                <div id="videoPlayNotice" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); color: #fff; padding: 14px 18px; border-radius: 16px; border: 1.5px solid rgba(255, 215, 0, 0.9); text-align: center; z-index: 50; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,0.8); width: 85%; max-width: 290px; pointer-events: none;">
                     <div style="font-size: 26px; margin-bottom: 2px;">▶️</div>
                     <div style="font-size: 12px; font-weight: bold; color: #ffd700; line-height: 1.4; margin-bottom: 6px;">
                         Vui lòng bấm nút Play dưới góc màn hình và nút âm thanh dưới góc trái màn hình để xem video
@@ -1882,6 +1885,23 @@ function renderTiktokCard() {
     }
 
     box.innerHTML = mediaContent;
+
+    // Lắng nghe bấm vào góc dưới (khi khách bấm nút Play/Âm thanh của TikTok) để tự động ẩn bảng hướng dẫn đi
+    if (showVideo) {
+        const videoIframe = document.getElementById('tiktokVideoIframe');
+        if (videoIframe) {
+            videoIframe.onclick = function() {
+                dismissVideoNotice();
+            };
+        }
+        // Khi khách vuốt sang món khác hoặc bấm vùng màn hình, cũng ẩn bảng đi
+        const swipeZone = document.getElementById('swipeOverlayZone');
+        if (swipeZone) {
+            swipeZone.onclick = function() {
+                dismissVideoNotice();
+            };
+        }
+    }
 
     // --- Cập nhật Tên món, Giá và Mô tả vào Footer ---
     document.getElementById('tiktokTitle').innerText = item.name;
@@ -1898,15 +1918,13 @@ function renderTiktokCard() {
     descEl.innerText = getItemDescription(item.name);
 }
 
-// Hàm bấm vào bảng hướng dẫn để ẩn nó đi và xem video
+// Hàm ẩn bảng hướng dẫn
 function dismissVideoNotice() {
     const notice = document.getElementById('videoPlayNotice');
     if (notice) {
         notice.style.display = 'none';
     }
 }
-
-
 
 
 
