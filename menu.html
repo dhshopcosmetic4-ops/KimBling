@@ -25,31 +25,33 @@
 
     <style>
 
-/* 1. Ẩn hoàn toàn hiệu ứng bọt/khói khi ở chế độ xem video */
+/* Ẩn hoàn toàn hiệu ứng bọt/khói khi ở chế độ xem video */
 .video-mode-active .tiktok-img-box::before,
 .video-mode-active .tiktok-img-box::after {
     display: none !important;
 }
 
-/* 2. Đảm bảo khung thông tin món (tên, giá, nút đặt hàng) luôn hiện lên trên cùng */
-
+/* Ẩn phần nền tối của footer khi xem video */
 .tiktok-footer {
     position: absolute !important;
     bottom: 45px !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 20 !important;
-    background: transparent !important; /* Đổi thành transparent để ẩn hoàn toàn phần nền tối */
-    backdrop-filter: none !important; /* Bỏ hiệu ứng làm mờ nền nếu không cần */
+    background: transparent !important; 
+    backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-top: none !important; /* Xóa luôn đường viền trên nếu muốn gọn */
+    border-top: none !important;
     padding: 12px 16px 10px 16px !important;
     color: #fff !important;
     pointer-events: none !important;
 }
 
+.tiktok-footer * {
+    pointer-events: auto !important;
+}
 
-/* 3. Vị trí nút chuyển đổi Ảnh / Video ở góc trên bên trái (cạnh nút X) */
+/* Nút chuyển đổi Ảnh / Video ở góc trên */
 .tiktok-toggle-btn {
     position: absolute !important;
     top: 36px !important;
@@ -62,9 +64,6 @@
     backdrop-filter: blur(4px) !important;
     cursor: pointer !important;
 }
-
-
-
 
         /* CSS cho món tạm hết hàng trên menu khách */
         .menu-item.sold-out {
@@ -1805,7 +1804,7 @@ function renderTiktokCard() {
 
     box.innerHTML = '';
 
-    // Kiểm tra xem món có link TikTok hay không
+    // Kiểm tra link video TikTok
     let tiktokEmbedUrl = '';
     if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
         const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
@@ -1814,16 +1813,15 @@ function renderTiktokCard() {
         }
     }
 
-    // Mặc định nếu không có video thì hiển thị ảnh tĩnh, nếu có video thì ưu tiên hoặc theo trạng thái người dùng bấm
     if (isShowingVideoState[item.id] === undefined) {
         isShowingVideoState[item.id] = tiktokEmbedUrl ? true : false;
     }
     let showVideo = isShowingVideoState[item.id] && tiktokEmbedUrl;
 
-    // --- XỬ LÝ ẨN/HIỆN HIỆU ỨNG VÀ GIAO DIỆN THEO CHẾ ĐỘ ---
+    // --- Bật/tắt chế độ xem video để ẩn hiệu ứng khói/bọt ---
     if (showVideo) {
         card.classList.add('video-mode-active');
-        box.classList.remove('hot-food'); // Tắt hoàn toàn hiệu ứng khói/bọt khi xem video
+        box.classList.remove('hot-food');
     } else {
         card.classList.remove('video-mode-active');
         if (isHotFoodItem(item.name)) {
@@ -1833,13 +1831,13 @@ function renderTiktokCard() {
         }
     }
 
-    // Ẩn cụm tim/bình luận ảo nếu xem video thật để tránh che nội dung video
+    // Ẩn cụm tim/bình luận ảo nếu đang xem video thật
     const sideActionsEl = document.querySelector('.tiktok-side-actions');
     if (sideActionsEl) {
         sideActionsEl.style.display = showVideo ? 'none' : 'flex';
     }
 
-    // --- NÚT CHUYỂN ĐỔI CHẾ ĐỘ XEM (ẢNH TĨNH / VIDEO) Ở GÓC TRÊN ---
+    // --- Tạo nút chuyển đổi qua lại giữa Ảnh Tĩnh và Video ở góc trên ---
     let oldToggleBtn = document.getElementById('tiktokToggleMediaBtn');
     if (oldToggleBtn) oldToggleBtn.remove();
 
@@ -1856,15 +1854,20 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // Nạp nội dung Video hoặc Ảnh vào khung
+    // --- Nạp nội dung Media (Video tự động phát có âm thanh hoặc Ảnh tĩnh) ---
     let mediaContent = '';
     if (showVideo) {
+        // Khởi tạo với muted=1 để trình duyệt cho phép tự động phát, sau đó tự bật tiếng
+        let autoPlayUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
+        
         mediaContent = `
-            <iframe src="${tiktokEmbedUrl}" 
-                style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
-                allow="autoplay; encrypted-media; fullscreen" 
-                allowfullscreen>
-            </iframe>`;
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                <iframe id="tiktokVideoIframe" src="${autoPlayUrl}" 
+                    style="width: 100%; height: 100%; border: none; object-fit: cover;" 
+                    allow="autoplay; encrypted-media; fullscreen" 
+                    allowfullscreen>
+                </iframe>
+            </div>`;
     } else if (item.imageUrl) {
         mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
     } else {
@@ -1873,7 +1876,17 @@ function renderTiktokCard() {
 
     box.innerHTML = mediaContent;
 
-    // Cập nhật thông tin Tên món, Giá và Mô tả vào Footer
+    // Tự động chuyển sang có âm thanh sau 0.3 giây khi video đã bắt đầu chạy
+    if (showVideo) {
+        setTimeout(() => {
+            const iframe = document.getElementById('tiktokVideoIframe');
+            if (iframe && iframe.src.includes('muted=1')) {
+                iframe.src = iframe.src.replace('muted=1', 'muted=0');
+            }
+        }, 300);
+    }
+
+    // --- Đảm bảo hiển thị đầy đủ tên món, giá và mô tả vào footer ---
     document.getElementById('tiktokTitle').innerText = item.name;
     document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
 
@@ -1887,6 +1900,7 @@ function renderTiktokCard() {
     }
     descEl.innerText = getItemDescription(item.name);
 }
+
 
 
         function openCommentsSheet() {
