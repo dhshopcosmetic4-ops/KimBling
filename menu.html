@@ -1810,7 +1810,7 @@ function renderTiktokCard() {
     if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
         const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
         if (videoIdMatch && videoIdMatch[1]) {
-            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1&controls=1`;
+            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
         }
     }
 
@@ -1855,92 +1855,68 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media ---
+    // --- Nạp nội dung Media (Ép buộc muted=1 để tự động chạy ngay không cần bấm) ---
     let mediaContent = '';
     if (showVideo) {
-        // Chỉ tạo tham số URL một lần, không sửa src để bật tiếng.
-        let autoPlayUrl = tiktokEmbedUrl + '&autoplay=1&loop=1';
+        let autoPlayMutedUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
 
         mediaContent = `
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;">
-                <iframe
-                    id="tiktokVideoIframe"
-                    src="${autoPlayUrl}"
-                    style="width:100%;height:100%;border:none;object-fit:cover;pointer-events:auto;"
-                    allow="autoplay; encrypted-media; fullscreen"
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                <!-- Lớp Iframe video TikTok (Chạy tự động tắt tiếng trước) -->
+                <iframe id="tiktokVideoIframe" src="${autoPlayMutedUrl}" 
+                    style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
+                    allow="autoplay; encrypted-media; fullscreen" 
                     allowfullscreen>
                 </iframe>
 
-                <!-- Giữ lớp vuốt cũ để không ảnh hưởng giao diện -->
-                <div id="swipeOverlayZone"
-                    style="position:absolute;top:0;left:0;width:100%;height:70%;z-index:10;background:transparent;pointer-events:none;">
-                </div>
+                <!-- LỚP PHỦ TÀNG HÌNH (70% MÀN HÌNH TỪ TRÊN XUỐNG): Giúp vuốt chuyển món mượt mà -->
+                <div id="swipeOverlayZone" style="position: absolute; top: 0; left: 0; width: 100%; height: 70%; z-index: 10; background: transparent;"></div>
 
-                <!-- Bảng hướng dẫn giữ nguyên -->
-                <div id="videoPlayNotice"
-                    style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);color:#fff;padding:14px 18px;border-radius:16px;border:1.5px solid rgba(255,215,0,0.9);text-align:center;z-index:5;backdrop-filter:blur(6px);box-shadow:0 6px 20px rgba(0,0,0,0.8);width:85%;max-width:290px;pointer-events:none;transition:opacity 0.5s ease;">
-                    <div style="font-size:26px;margin-bottom:2px;">▶️</div>
-                    <div style="font-size:12px;font-weight:bold;color:#ffd700;line-height:1.4;margin-bottom:6px;">
-                        Video đang tải. Nếu chưa có tiếng, hãy bật âm thanh trong trình phát TikTok.
+                <!-- BẢNG HƯỚNG DẪN CHE ĐÚNG NÚT PLAY Ở GIỮA (top: 50%) -->
+                <div id="videoPlayNotice" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); color: #fff; padding: 14px 18px; border-radius: 16px; border: 1.5px solid rgba(255, 215, 0, 0.9); text-align: center; z-index: 50; backdrop-filter: blur(6px); box-shadow: 0 6px 20px rgba(0,0,0,0.8); width: 85%; max-width: 290px; pointer-events: none; transition: opacity 0.5s ease;">
+                    <div style="font-size: 26px; margin-bottom: 2px;">▶️</div>
+                    <div style="font-size: 12px; font-weight: bold; color: #ffd700; line-height: 1.4; margin-bottom: 6px;">
+                        Vui lòng bấm nút Play dưới góc màn hình và nút âm thanh dưới góc trái màn hình để xem video
                     </div>
-                    <div style="font-size:16px;animation:bounceDown 1s infinite alternate;">👇</div>
+                    <div style="font-size: 16px; animation: bounceDown 1s infinite alternate;">👇</div>
                 </div>
             </div>`;
     } else if (item.imageUrl) {
-        mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
+        mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
     } else {
         mediaContent = `<div class="tiktok-fallback-icon">${fallbackIcon}</div>`;
     }
 
     box.innerHTML = mediaContent;
 
-    // --- CHỈ SỬA PHẦN TỰ PHÁT VÀ TỰ BẬT ÂM THANH ---
+    // --- TỰ ĐỘNG MỞ ÂM THANH SAU 2.5 GIÂY VÀ TỰ ĐỘNG ẨN BẢNG HƯỚNG DẪN SAU 5 GIÂY ---
     if (showVideo) {
-        const iframe = document.getElementById('tiktokVideoIframe');
-
-        // Dọn listener và bộ hẹn giờ từ video trước.
-        if (window.__tiktokAutoPlayHandler) {
-            window.removeEventListener('message', window.__tiktokAutoPlayHandler);
-            window.__tiktokAutoPlayHandler = null;
-        }
-
-        clearTimeout(window.__tiktokAutoPlayTimer);
-        clearTimeout(window.__tiktokNoticeTimer);
-
-        if (iframe) {
-            const sendTikTokCommand = function(type) {
-                if (!iframe.contentWindow) return;
-
-                iframe.contentWindow.postMessage({
-                    type: type,
-                    'x-tiktok-player': true
-                }, 'https://www.tiktok.com');
-            };
-
-            // Chờ TikTok Player sẵn sàng rồi yêu cầu phát và bật tiếng.
-            window.__tiktokAutoPlayHandler = function(event) {
-                if (event.origin !== 'https://www.tiktok.com') return;
-                if (event.source !== iframe.contentWindow) return;
-
-                const data = event.data;
-                if (!data || data['x-tiktok-player'] !== true) return;
-
-                if (data.type === 'onPlayerReady') {
-                    sendTikTokCommand('play');
-
-                    clearTimeout(window.__tiktokAutoPlayTimer);
-                    window.__tiktokAutoPlayTimer = setTimeout(function() {
-                        sendTikTokCommand('unMute');
-                    }, 1000);
+        // Tự động bật tiếng sau 2.5 giây
+        setTimeout(() => {
+            const iframe = document.getElementById('tiktokVideoIframe');
+            if (iframe && iframe.src) {
+                if (iframe.src.includes('muted=1')) {
+                    iframe.src = iframe.src.replace('muted=1', 'muted=0');
                 }
-            };
+            }
+        }, 2500);
 
-            window.addEventListener('message', window.__tiktokAutoPlayHandler);
+        // Tự động ẩn bảng hướng dẫn sau 5 giây
+        setTimeout(() => {
+            dismissVideoNotice();
+        }, 5000);
 
-            // Ẩn bảng hướng dẫn sau 5 giây như chức năng cũ.
-            window.__tiktokNoticeTimer = setTimeout(function() {
+        const videoIframe = document.getElementById('tiktokVideoIframe');
+        if (videoIframe) {
+            videoIframe.onclick = function() {
                 dismissVideoNotice();
-            }, 5000);
+            };
+        }
+        const swipeZone = document.getElementById('swipeOverlayZone');
+        if (swipeZone) {
+            swipeZone.onclick = function() {
+                dismissVideoNotice();
+            };
         }
     }
 
@@ -1959,7 +1935,7 @@ function renderTiktokCard() {
     descEl.innerText = getItemDescription(item.name);
 }
 
-// Hàm ẩn bảng hướng dẫn giữ nguyên
+// Hàm ẩn bảng hướng dẫn mờ dần
 function dismissVideoNotice() {
     const notice = document.getElementById('videoPlayNotice');
     if (notice) {
@@ -1969,6 +1945,7 @@ function dismissVideoNotice() {
         }, 500);
     }
 }
+
 
 
 
