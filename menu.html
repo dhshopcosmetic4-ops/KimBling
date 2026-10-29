@@ -1809,7 +1809,7 @@ function renderTiktokCard() {
     if (item.videoUrl && item.videoUrl.includes('tiktok.com')) {
         const videoIdMatch = item.videoUrl.match(/video\/(\d+)/);
         if (videoIdMatch && videoIdMatch[1]) {
-            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&loop=1`;
+            tiktokEmbedUrl = `https://www.tiktok.com/player/v1/${videoIdMatch[1]}?autoplay=1&muted=1&loop=1`;
         }
     }
 
@@ -1854,19 +1854,19 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media (Video tự động phát có âm thanh hoặc Ảnh tĩnh) ---
+    // --- Nạp nội dung Media kèm lớp tương tác thông minh ---
     let mediaContent = '';
     if (showVideo) {
-        // Khởi tạo với muted=1 để trình duyệt cho phép tự động phát, sau đó tự bật tiếng
-        let autoPlayUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
-        
         mediaContent = `
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                <iframe id="tiktokVideoIframe" src="${autoPlayUrl}" 
-                    style="width: 100%; height: 100%; border: none; object-fit: cover;" 
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                <!-- Lớp iframe chạy video -->
+                <iframe id="tiktokVideoIframe" src="${tiktokEmbedUrl}" 
+                    style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
                     allow="autoplay; encrypted-media; fullscreen" 
                     allowfullscreen>
                 </iframe>
+                <!-- Lớp phủ tàng hình giúp vừa bấm được vào video, vừa vuốt chuyển món được -->
+                <div id="videoTouchOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 75%; z-index: 5; background: transparent;"></div>
             </div>`;
     } else if (item.imageUrl) {
         mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
@@ -1876,14 +1876,28 @@ function renderTiktokCard() {
 
     box.innerHTML = mediaContent;
 
-    // Tự động chuyển sang có âm thanh sau 0.3 giây khi video đã bắt đầu chạy
+    // Tự động bật tiếng sau 0.3s khi video load để có âm thanh ngay
     if (showVideo) {
         setTimeout(() => {
             const iframe = document.getElementById('tiktokVideoIframe');
-            if (iframe && iframe.src.includes('muted=1')) {
+            if (iframe && iframe.src && iframe.src.includes('muted=1')) {
                 iframe.src = iframe.src.replace('muted=1', 'muted=0');
             }
         }, 300);
+
+        // Xử lý chạm vào màn hình video để kích hoạt play nếu bị trình duyệt giữ lại
+        const overlay = document.getElementById('videoTouchOverlay');
+        if (overlay) {
+            overlay.onclick = function() {
+                const iframe = document.getElementById('tiktokVideoIframe');
+                if (iframe) {
+                    // Reload nhẹ source với âm thanh bật sẵn nếu khách bấm vào màn hình
+                    if (iframe.src.includes('muted=1')) {
+                        iframe.src = iframe.src.replace('muted=1', 'muted=0');
+                    }
+                }
+            };
+        }
     }
 
     // --- Đảm bảo hiển thị đầy đủ tên món, giá và mô tả vào footer ---
@@ -1900,6 +1914,7 @@ function renderTiktokCard() {
     }
     descEl.innerText = getItemDescription(item.name);
 }
+
 
 
 
