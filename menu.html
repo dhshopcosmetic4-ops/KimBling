@@ -1837,7 +1837,7 @@ function renderTiktokCard() {
         sideActionsEl.style.display = showVideo ? 'none' : 'flex';
     }
 
-    // --- Tạo nút chuyển đổi qua lại giữa Ảnh Tĩnh và Video ở góc trên ---
+    // --- Nút chuyển đổi qua lại giữa Ảnh Tĩnh và Video ở góc trên ---
     let oldToggleBtn = document.getElementById('tiktokToggleMediaBtn');
     if (oldToggleBtn) oldToggleBtn.remove();
 
@@ -1854,22 +1854,24 @@ function renderTiktokCard() {
         card.appendChild(toggleBtn);
     }
 
-    // --- Nạp nội dung Media (Ép buộc tắt tiếng lúc đầu để chắc chắn tự play, sau đó bật âm thanh) ---
+    // --- Nạp nội dung Media kèm Ghi chú Hướng dẫn ---
     let mediaContent = '';
     if (showVideo) {
-        // Bắt buộc thêm muted=1 để vượt qua hàng rào chặn autoplay của trình duyệt di động
-        let autoPlayUrl = tiktokEmbedUrl.includes('?') ? tiktokEmbedUrl + '&autoplay=1&muted=1&loop=1' : tiktokEmbedUrl + '?autoplay=1&muted=1&loop=1';
-        
         mediaContent = `
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                <!-- Lớp iframe chạy video -->
-                <iframe id="tiktokVideoIframe" src="${autoPlayUrl}" 
+                <iframe id="tiktokVideoIframe" src="${tiktokEmbedUrl}" 
                     style="width: 100%; height: 100%; border: none; object-fit: cover; pointer-events: auto;" 
                     allow="autoplay; encrypted-media; fullscreen" 
                     allowfullscreen>
                 </iframe>
-                <!-- Lớp phủ tàng hình giúp vừa bấm được vào video, vừa vuốt chuyển món được -->
-                <div id="videoTouchOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 75%; z-index: 5; background: transparent;"></div>
+
+                <!-- GHI CHÚ HƯỚNG DẪN GIỮA MÀN HÌNH -->
+                <div id="videoPlayNotice" style="position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.75); color: #fff; padding: 12px 18px; border-radius: 16px; border: 1.5px solid rgba(255, 215, 0, 0.8); text-align: center; z-index: 10; backdrop-filter: blur(4px); pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 80%; max-width: 260px;">
+                    <div style="font-size: 28px; margin-bottom: 2px;">▶️</div>
+                    <div style="font-size: 13px; font-weight: bold; color: #ffd700; margin-bottom: 4px;">Vui lòng bấm nút Play</div>
+                    <div style="font-size: 11px; opacity: 0.9; color: #fff;">để xem video có âm thanh</div>
+                    <div style="font-size: 18px; margin-top: 4px; animation: bounceDown 1s infinite alternate;">👇</div>
+                </div>
             </div>`;
     } else if (item.imageUrl) {
         mediaContent = `<img src="${item.imageUrl}" alt="${item.name}" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'tiktok-fallback-icon\\'>${fallbackIcon}</div>';">`;
@@ -1879,29 +1881,30 @@ function renderTiktokCard() {
 
     box.innerHTML = mediaContent;
 
-    // Tự động kích hoạt bật tiếng (unmute) sau 0.4 giây khi video đã bắt đầu chạy tự động
+    // --- Tự động bật âm thanh ngay khi khách bấm vào màn hình/nút Play ---
     if (showVideo) {
-        setTimeout(() => {
+        const hideNoticeAndUnmute = function() {
+            const notice = document.getElementById('videoPlayNotice');
+            if (notice) notice.style.display = 'none';
+
+            // Tự động thêm lệnh bật tiếng vào iframe
             const iframe = document.getElementById('tiktokVideoIframe');
             if (iframe && iframe.src) {
-                // Thay thế muted=1 thành muted=0 để bật tiếng ngay lập tức
-                iframe.src = iframe.src.replace('muted=1', 'muted=0');
-            }
-        }, 400);
-
-        // Hỗ trợ thêm sự kiện chạm vào màn hình để bật tiếng phòng trường hợp trình duyệt chặn
-        const overlay = document.getElementById('videoTouchOverlay');
-        if (overlay) {
-            overlay.onclick = function() {
-                const iframe = document.getElementById('tiktokVideoIframe');
-                if (iframe && iframe.src.includes('muted=1')) {
-                    iframe.src = iframe.src.replace('muted=1', 'muted=0');
+                if (!iframe.src.includes('muted=0')) {
+                    iframe.src = iframe.src.includes('muted=1') 
+                        ? iframe.src.replace('muted=1', 'muted=0') 
+                        : iframe.src + '&muted=0';
                 }
-            };
-        }
+            }
+        };
+
+        // Khi khách chạm vào vùng video (bao gồm cả lúc bấm nút Play của TikTok), bảng hướng dẫn biến mất và tiếng được bật lên
+        box.onclick = function() {
+            hideNoticeAndUnmute();
+        };
     }
 
-    // --- Đảm bảo hiển thị đầy đủ tên món, giá và mô tả vào footer ---
+    // --- Cập nhật Tên món, Giá và Mô tả vào Footer ---
     document.getElementById('tiktokTitle').innerText = item.name;
     document.getElementById('tiktokPrice').innerText = formatPrice(item.price);
 
