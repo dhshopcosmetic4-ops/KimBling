@@ -61,19 +61,19 @@
     pointer-events: auto !important;
 }
 
-/* Nút chuyển đổi Ảnh / Video ở góc trên */
 .tiktok-toggle-btn {
-    position: absolute !important;
-    top: 36px !important;
-    left: 65px !important;
-    z-index: 9999 !important;
     background: rgba(0, 0, 0, 0.65) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     padding: 6px 12px !important;
     border-radius: 14px !important;
     backdrop-filter: blur(4px) !important;
     cursor: pointer !important;
+    display: inline-block !important;
 }
+
+
+
+
 
         /* CSS cho món tạm hết hàng trên menu khách */
         .menu-item.sold-out {
@@ -398,7 +398,7 @@
         
               .tiktok-header { 
             position: absolute !important; 
-            top: 100px !important; /* Đẩy hẳn xuống dưới để hiển thị rõ nút X và hướng dẫn */
+            top: 120px !important; /* Hạ thấp vừa vặn xuống bên dưới thanh công cụ Chrome */
             left: 14px !important; 
             right: 14px !important; 
             display: flex !important; 
@@ -1806,7 +1806,7 @@
     let isShowingVideoState = {};
 
 
-// HÀM RENDER GIAO DIỆN TIKTOK CARD (ẢNH TĨNH LÀM CHỦ ĐẠO & NGÓN TAY RUNG NANG HÀNG NÚT ĐẶT MÓN)
+// HÀM RENDER GIAO DIỆN TIKTOK CARD HOÀN CHỈNH
 function renderTiktokCard() {
     const item = filteredMenu[currentTiktokIndex];
     if (!item) return;
@@ -1851,21 +1851,22 @@ function renderTiktokCard() {
         sideActionsEl.style.display = showVideo ? 'none' : 'flex';
     }
 
-    // Nút chuyển đổi qua lại giữa Ảnh Tĩnh và Video ở góc trên
-    let oldToggleBtn = document.getElementById('tiktokToggleMediaBtn');
-    if (oldToggleBtn) oldToggleBtn.remove();
-
+    // Xây dựng phần Header: Đưa nút Xem Video lên nằm ngay dưới dòng chữ hướng dẫn ở góc trên bên phải
+    let toggleBtnHtml = '';
     if (item.imageUrl && tiktokEmbedUrl) {
         let btnText = showVideo ? '🖼️ Xem Ảnh Tĩnh' : '🎬 Xem Video';
-        let toggleBtn = document.createElement('div');
-        toggleBtn.id = 'tiktokToggleMediaBtn';
-        toggleBtn.className = 'tiktok-toggle-btn';
-        toggleBtn.onclick = function(e) {
-            e.stopPropagation();
-            toggleMediaView(item.id);
-        };
-        toggleBtn.innerHTML = `<span style="font-size: 12px; color: #ffd700; font-weight: bold; white-space: nowrap;">${btnText}</span>`;
-        card.appendChild(toggleBtn);
+        toggleBtnHtml = `<div id="tiktokToggleMediaBtn" class="tiktok-toggle-btn" onclick="event.stopPropagation(); toggleMediaView('${item.id}');"><span style="font-size: 11px; color: #ffd700; font-weight: bold; white-space: nowrap;">${btnText}</span></div>`;
+    }
+
+    const headerEl = card.querySelector('.tiktok-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <button class="tiktok-close" onclick="closeTiktokModal()">✕</button>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                <div class="tiktok-hint">👆 Vuốt lên/xuống xem món</div>
+                ${toggleBtnHtml}
+            </div>
+        `;
     }
 
     // Nạp nội dung Media
@@ -1970,6 +1971,7 @@ function renderTiktokCard() {
         }
     }
 }
+
 
 
 
