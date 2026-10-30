@@ -3,31 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gia Sư Toán Lớp 6 - Bạn Đồng Hành Của Con</title>
+    <title>Gia Sư Toán Lớp 6 - v1.0</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
-        h2 { color: #2c3e50; text-align: center; margin-bottom: 5px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 2px; }
+        p.version { text-align: center; color: #e67e22; font-size: 0.85em; font-weight: bold; margin-top: 0; margin-bottom: 5px; }
         p.subtitle { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 0.95em; }
         .chat-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        
         .api-box { background: #fff8e1; border: 1px dashed #f39c12; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
         .api-box input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
-        
+        .api-btn-group { display: flex; gap: 8px; margin-top: 8px; }
         textarea { width: 100%; height: 90px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; resize: vertical; outline: none; margin-top: 10px; }
         textarea:focus { border-color: #3498db; }
         .file-upload { margin: 10px 0; font-size: 14px; color: #555; }
-        
         .action-container { display: flex; gap: 10px; margin-top: 10px; }
-        
         #micBtn { flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; user-select: none; }
         #micBtn.recording { background: #c0392b; animation: pulse 1.5s infinite; }
-        
         #sendBtn { flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         #sendBtn:hover { background: #27ae60; }
-
         #result { margin-top: 20px; white-space: pre-wrap; background: #eef9f1; padding: 18px; border-radius: 8px; border-left: 5px solid #2ecc71; line-height: 1.6; font-size: 15px; color: #2c3e50; }
-        
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
             70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
@@ -38,14 +33,17 @@
 <body>
 
     <h2>📐 Gia Sư Toán Lớp 6</h2>
+    <p class="version">Phiên bản: v1.0 (Gemini 3.8 Flash)</p>
     <p class="subtitle">Chụp ảnh đề bài hoặc giữ nút micro để nói chuyện với Thầy/Cô nhé!</p>
 
     <div class="chat-box">
+        <!-- Ô cài đặt API Key kèm nút Lưu và Xóa -->
         <div class="api-box">
             <label for="apiKeyInput">🔑 <b>Google Gemini API Key của bạn:</b></label>
-            <div style="display: flex; gap: 8px; margin-top: 5px;">
-                <input type="password" id="apiKeyInput" placeholder="Dán API Key vào đây..." style="margin-top: 0; flex: 1;">
-                <button onclick="saveApiKey()" style="padding: 0 15px; background: #f39c12; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Lưu lại</button>
+            <input type="password" id="apiKeyInput" placeholder="Dán API Key vào đây...">
+            <div class="api-btn-group">
+                <button onclick="saveApiKey()" style="flex: 1; padding: 8px; background: #f39c12; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Lưu lại Key</button>
+                <button onclick="clearApiKey()" style="flex: 1; padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Xóa nhanh Key</button>
             </div>
         </div>
 
@@ -79,7 +77,14 @@
                 return;
             }
             localStorage.setItem("gemini_math_apikey", key);
-            alert("Đã lưu API Key thành công! Bây giờ con có thể hỏi bài thoải mái.");
+            alert("Đã lưu API Key thành công!");
+        };
+
+        // Tính năng xóa nhanh API Key khỏi bộ nhớ
+        window.clearApiKey = function() {
+            localStorage.removeItem("gemini_math_apikey");
+            document.getElementById("apiKeyInput").value = "";
+            alert("Đã xóa API Key khỏi thiết bị!");
         };
 
         const systemInstruction = `
@@ -147,16 +152,6 @@
                 userInput.value = transcript;
             };
 
-            recognition.onerror = () => {
-                micBtn.innerText = "🎙️ Giữ để nói";
-                micBtn.classList.remove("recording");
-            };
-
-            recognition.onend = () => {
-                micBtn.innerText = "🎙️ Giữ để nói";
-                micBtn.classList.remove("recording");
-            };
-
             micBtn.addEventListener("mousedown", () => {
                 micBtn.innerText = "🔴 Đang nghe con nói...";
                 micBtn.classList.add("recording");
@@ -178,10 +173,6 @@
                 e.preventDefault();
                 try { recognition.stop(); } catch(e) {}
             });
-
-        } else {
-            micBtn.innerText = "❌ Trình duyệt không hỗ trợ Mic";
-            micBtn.disabled = true;
         }
 
         window.askGiaSu = async function() {
@@ -191,7 +182,7 @@
             const resultDiv = document.getElementById("result");
             
             if (!currentKey) {
-                alert("Vui lòng nhập và bấm 'Lưu lại' API Key trước nhé!");
+                alert("Vui lòng nhập và bấm 'Lưu lại Key' trước nhé!");
                 return;
             }
 
@@ -204,9 +195,8 @@
 
             try {
                 const genAI = new GoogleGenerativeAI(currentKey);
-                // ĐÃ ĐỔI TÊN MODEL SANG GEMINI-2.5-FLASH
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-2.5-flash",
+                    model: "gemini-3.8-flash",
                     systemInstruction: systemInstruction 
                 });
                 
