@@ -23,10 +23,12 @@
     #qrcode { display: flex; justify-content: center; background: #fff; padding: 15px; border-radius: 12px; margin-top: 15px; min-height: 200px; align-items: center; }
     .note { font-size: 12px; color: #ffd60a; text-align: center; margin-top: 8px; }
 
-    /* MODAL QUẢN LÝ ĐỔI QUÀ & XEM LỊCH SỬ */
+    /* MODAL QUẢN LÝ ĐỔI QUÀ & TÌM KIẾM */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 999; padding: 12px; }
     .modal-card { background: #2c2c2e; width: 100%; max-width: 450px; border-radius: 16px; padding: 18px; max-height: 90vh; display: flex; flex-direction: column; border: 1px solid #3a3a3c; }
-    .filter-bar { display: flex; gap: 6px; margin: 10px 0; }
+    
+    .search-customer-box { margin: 10px 0; }
+    .filter-bar { display: flex; gap: 6px; margin: 8px 0; }
     .filter-btn { flex: 1; padding: 8px; background: #3a3a3c; border: none; color: #aaa; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
     .filter-btn.active { background: #0a84ff; color: #fff; }
     
@@ -64,7 +66,7 @@
       <button class="num-btn" style="background:#ff9f0a;" onclick="backspaceNum()">⌫</button>
     </div>
 
-    <label>SỐ LƯỢNG LY MUA:</label>
+    <label>SỐ LƯỢNG MÓN MUA (Tính cả đồ ăn & thức uống):</label>
     <input type="number" id="ly" value="2" min="1" style="font-size:22px; font-weight:bold; color:#0a84ff;">
 
     <button class="btn-create" onclick="generateQR()">TẠO MÃ QR</button>
@@ -74,11 +76,16 @@
     <div id="qrcode"></div>
   </div>
 
-  <!-- MODAL XEM DANH SÁCH & DUYỆT ĐỔI QUÀ -->
+  <!-- MODAL XEM DANH SÁCH, TÌM KIẾM & DUYỆT ĐỔI QUÀ -->
   <div class="modal-overlay" id="leaderboardModal">
     <div class="modal-card">
       <h3 style="margin:0; color:#ff9f0a; text-align:center;">📊 QUẢN LÝ TÍCH ĐIỂM KHÁCH HÀNG</h3>
       
+      <!-- Ô tìm kiếm SĐT nhanh -->
+      <div class="search-customer-box">
+        <input type="tel" id="searchCustomerInput" placeholder="🔍 Tìm nhanh theo số điện thoại..." oninput="renderLeaderboard()" style="font-size: 14px; padding: 10px;">
+      </div>
+
       <!-- Bộ lọc -->
       <div class="filter-bar">
         <button class="filter-btn active" id="btn-filter-all" onclick="setFilter('all')">Tất Cả Khách</button>
@@ -93,7 +100,7 @@
     </div>
   </div>
 
-  <!-- MODAL XEM LỊCH SỬ CHI TIẾT CỦA 1 SĐT -->
+  <!-- MODAL XEM LỊCH SỬ CHI TIẾT & SỬA ĐIỂM CỦA 1 SĐT -->
   <div class="modal-overlay" id="historyModal" style="z-index: 1000;">
     <div class="modal-card">
       <h3 style="margin:0; color:#0a84ff; text-align:center;" id="history-title">📜 LỊCH SỬ TÍCH ĐIỂM</h3>
@@ -129,7 +136,7 @@
       const ly = document.getElementById('ly').value.trim();
       const noteEl = document.getElementById('note-text');
 
-      if (!ly) return alert("Vui lòng nhập số ly!");
+      if (!ly) return alert("Vui lòng nhập số lượng món!");
 
       const txid = "TX" + Date.now();
       const currentHost = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
@@ -137,9 +144,9 @@
 
       if (sdt) {
         targetUrl += `&sdt=${encodeURIComponent(sdt)}`;
-        noteEl.innerText = `Mã QR đã gán SĐT: ${sdt} (${ly} ly)`;
+        noteEl.innerText = `Mã QR đã gán SĐT: ${sdt} (${ly} món)`;
       } else {
-        noteEl.innerText = `Chưa nhập SĐT: Khách tự nhập SĐT trên máy để nhận ${ly} ly.`;
+        noteEl.innerText = `Chưa nhập SĐT: Khách tự nhập SĐT trên máy để nhận ${ly} món tích điểm.`;
       }
 
       const qrBox = document.getElementById('qrcode');
@@ -147,7 +154,6 @@
       new QRCode(qrBox, { text: targetUrl, width: 200, height: 200 });
     }
 
-    // MỞ BẢNG QUẢN LÝ
     function openLeaderboard() {
       document.getElementById('leaderboardModal').style.display = 'flex';
       fetchLeaderboardData();
@@ -185,14 +191,19 @@
 
     function renderLeaderboard() {
       const listEl = document.getElementById('leaderboard-list');
+      const searchKw = document.getElementById('searchCustomerInput').value.trim();
       let displayData = rawLeaderboardData;
 
+      if (searchKw) {
+        displayData = displayData.filter(item => item.sdt.includes(searchKw));
+      }
+
       if (currentFilter === 'reward') {
-        displayData = rawLeaderboardData.filter(item => item.rewards > 0);
+        displayData = displayData.filter(item => item.rewards > 0);
       }
 
       if (displayData.length === 0) {
-        listEl.innerHTML = "<p style='text-align:center; color:#8e8e93; margin-top:20px;'>Không tìm thấy dữ liệu phù hợp.</p>";
+        listEl.innerHTML = "<p style='text-align:center; color:#8e8e93; margin-top:20px;'>Không tìm thấy khách hàng phù hợp.</p>";
         return;
       }
 
@@ -206,7 +217,7 @@
             <div>
               <div style="font-size:15px; font-weight:bold;">📱 ${item.sdt}</div>
               <div style="font-size:12px; color:#aaa; margin-top:2px;">Tổng tích lũy: <b style="color:#0a84ff;">${item.total} điểm</b></div>
-              ${hasReward ? `<div style="font-size:12px; color:#30d158; font-weight:bold; margin-top:2px;">🎁 Có ${item.rewards} phần quà!</div>` : `<div style="font-size:11px; color:#8e8e93; margin-top:2px;">Còn ${item.next} ly nữa nhận quà</div>`}
+              ${hasReward ? `<div style="font-size:12px; color:#30d158; font-weight:bold; margin-top:2px;">🎁 Có ${item.rewards} phần quà!</div>` : `<div style="font-size:11px; color:#8e8e93; margin-top:2px;">Còn ${item.next} món nữa nhận quà</div>`}
             </div>
             <div style="display:flex; align-items:center;">
               <button class="btn-history-sm" onclick="viewCustomerHistory('${item.sdt}', ${item.total})">📜 Nhật ký</button>
@@ -218,7 +229,6 @@
       listEl.innerHTML = html;
     }
 
-    // CHỦ QUÁN DUYỆT ĐỔI QUÀ TRỰC TIẾP
     function adminRedeem(sdt) {
       if (!confirm(`Xác nhận trừ 10 điểm để đổi quà tại quầy cho SĐT ${sdt}?`)) return;
 
@@ -235,7 +245,6 @@
         .catch(() => alert("Lỗi kết nối!"));
     }
 
-    // XEM LỊCH SỬ MUA VÀ TÍCH ĐIỂM CỦA 1 SĐT
     function viewCustomerHistory(sdt, totalPoints) {
       selectedCustomerSDT = sdt;
       document.getElementById('historyModal').style.display = 'flex';
@@ -253,7 +262,7 @@
             data.history.reverse().forEach(h => {
               let isPlus = h.ly > 0;
               let color = isPlus ? '#30d158' : '#ff453a';
-              let text = isPlus ? `+${h.ly} ly (Tích điểm)` : `${h.ly} ly (Đổi quà)`;
+              let text = isPlus ? `+${h.ly} món (Tích điểm)` : `${h.ly} món (Đổi quà)`;
               
               html += `
                 <div class="history-item">
@@ -273,7 +282,6 @@
       document.getElementById('historyModal').style.display = 'none';
     }
 
-    // CHỈNH SỬA / RESET ĐIỂM THỦ CÔNG CỦA KHÁCH
     function manualAdjustPoints() {
       let adjust = prompt(`Nhập số điểm cần cộng hoặc trừ cho SĐT ${selectedCustomerSDT}\n(Ví dụ: Nhập 5 để cộng 5 điểm, nhập -10 để trừ 10 điểm):`);
       if (!adjust || isNaN(adjust) || parseInt(adjust) === 0) return;
