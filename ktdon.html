@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tra Cứu Đơn Hàng — Kim Bling Coffee & Tea</title>
+  <title>Tra Cứu Đơn Hàng & Điểm Tích Lũy — Kim Bling Coffee & Tea</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg">
   <style>
     :root {
@@ -34,6 +34,19 @@
     .search-btn {
       background: var(--primary); color: #000; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
     }
+
+    /* CARD HIỂN THỊ ĐIỂM TÍCH LŨY CỦA KHÁCH */
+    .loyalty-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 2px solid #34c759;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(52, 199, 89, 0.2);
+    }
+    .loyalty-title { font-size: 13px; font-weight: bold; color: #34c759; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .loyalty-stats { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
+    .loyalty-badge { background: #34c759; color: #000; font-weight: bold; padding: 4px 10px; border-radius: 8px; font-size: 15px; }
 
     /* Khung hiển thị ảnh động minh họa từng bước */
     .step-animation-banner {
@@ -110,8 +123,6 @@
       transition: opacity 0.2s, background 0.2s;
     }
     .btn-hurry:active { opacity: 0.8; }
-    
-    /* Trạng thái khi đã hối giao */
     .btn-hurry.hurried {
       background: #334155;
       color: #94a3b8;
@@ -147,18 +158,33 @@
   <div class="container">
     <div class="brand-header">
       <h2>KIM BLING COFFEE & TEA</h2>
-      <p>Tra cứu trạng thái đơn hàng trực tuyến</p>
+      <p>Tra cứu đơn hàng & điểm tích lũy thành viên</p>
     </div>
 
     <div class="search-box">
       <div class="search-group">
-        <input type="tel" id="phoneInput" class="search-input" placeholder="Nhập số điện thoại..." maxlength="11">
-        <button class="search-btn" onclick="searchOrders(true)">🔍 Tra cứu</button>
+        <input type="tel" id="phoneInput" class="search-input" placeholder="Nhập số điện thoại của bạn..." maxlength="11">
+        <button class="search-btn" onclick="searchAll(true)">🔍 Tra cứu</button>
       </div>
     </div>
 
+    <!-- KHU VỰC HIỂN THỊ KẾT QUẢ (ĐƠN HÀNG + ĐIỂM) -->
     <div id="resultArea">
-      <div class="empty-state">Vui lòng nhập số điện thoại để xem trạng thái đơn hàng.</div>
+      <div class="empty-state">Vui lòng nhập số điện thoại để tra cứu thông tin.</div>
+    </div>
+  </div>
+
+  <!-- MODAL XEM LỊCH SỬ TÍCH ĐIỂM CỦA KHÁCH -->
+  <div id="customerHistoryModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 15px;">
+    <div style="background: #1e293b; border: 1px solid #334155; width: 100%; max-width: 420px; border-radius: 14px; padding: 16px; max-height: 85vh; display: flex; flex-direction: column;">
+      <h3 style="margin: 0 0 4px 0; color: #34c759; font-size: 16px; text-align: center;">📜 Lịch Sử Tích Điểm & Đổi Quà</h3>
+      <div style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 12px;" id="modalPhoneSubtitle"></div>
+
+      <div id="customerHistoryList" style="flex: 1; overflow-y: auto; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 13px;">
+        Đang tải lịch sử...
+      </div>
+
+      <button onclick="closeCustomerHistory()" style="width: 100%; margin-top: 12px; background: #ef4444; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ĐÓNG</button>
     </div>
   </div>
 
@@ -179,11 +205,11 @@
       const savedPhone = localStorage.getItem('kb_customer_phone');
       if (savedPhone) {
         document.getElementById('phoneInput').value = savedPhone;
-        searchOrders(false);
+        searchAll(false);
       }
     };
 
-    function searchOrders(isManual = true) {
+    function searchAll(isManual = true) {
       const phoneInput = document.getElementById('phoneInput');
       const phone = phoneInput.value.trim();
 
@@ -196,43 +222,82 @@
       localStorage.setItem('kb_customer_phone', phone);
 
       const resultArea = document.getElementById('resultArea');
-      resultArea.innerHTML = '<div class="empty-state">Đang tìm kiếm đơn hàng...</div>';
+      resultArea.innerHTML = '<div class="empty-state">Đang tra cứu dữ liệu đơn hàng và điểm tích lũy...</div>';
 
-      fetch(`${SCRIPT_URL}?type=checkStatus&phone=${phone}`)
-        .then(res => res.json())
-        .then(data => {
-          renderOrders(data);
-          if (!autoRefreshTimer) {
-            autoRefreshTimer = setInterval(() => { silentRefresh(); }, 10000);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          resultArea.innerHTML = '<div class="empty-state" style="color: #ef4444;">Lỗi kết nối đến máy chủ. Vui lòng thử lại!</div>';
-        });
+      Promise.all([
+        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${phone}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' }))
+      ])
+      .then(([orderData, pointData]) => {
+        renderCombinedResult(orderData, pointData, phone);
+        if (!autoRefreshTimer) {
+          autoRefreshTimer = setInterval(() => { silentRefresh(); }, 15000);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        resultArea.innerHTML = '<div class="empty-state" style="color: #ef4444;">Lỗi kết nối đến máy chủ. Vui lòng thử lại!</div>';
+      });
     }
 
     function silentRefresh() {
       if (!currentSearchedPhone) return;
-      fetch(`${SCRIPT_URL}?type=checkStatus&phone=${currentSearchedPhone}`)
-        .then(res => res.json())
-        .then(data => { renderOrders(data); })
-        .catch(err => console.error(err));
+      Promise.all([
+        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${currentSearchedPhone}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' }))
+      ])
+      .then(([orderData, pointData]) => {
+        renderCombinedResult(orderData, pointData, currentSearchedPhone);
+      });
     }
 
-    function renderOrders(data) {
+    function renderCombinedResult(orderData, pointData, phone) {
       const resultArea = document.getElementById('resultArea');
-      
-      if (!data.success || !data.orders || data.orders.length === 0) {
-        resultArea.innerHTML = '<div class="empty-state">Không tìm thấy đơn hàng nào cho số điện thoại này.</div>';
+      let html = '';
+
+      let totalPoints = 0;
+      let rewards = 0;
+      let nextLy = 10;
+      if (pointData && pointData.status === 'success') {
+        totalPoints = pointData.totalPoints || 0;
+        rewards = pointData.rewards || 0;
+        nextLy = pointData.nextReward || 10;
+      }
+
+      html += `
+        <div class="loyalty-card">
+          <div class="loyalty-title">
+            <span>⭐ THẺ THÀNH VIÊN TÍCH ĐIỂM</span>
+            <span style="font-size:11px; color:var(--subtext);">SĐT: ${phone}</span>
+          </div>
+          <div class="loyalty-stats">
+            <div>
+              <div style="font-size: 12px; color: var(--subtext);">Tổng điểm tích lũy:</div>
+              <div style="font-size: 18px; font-weight: bold; color: #fff;">${totalPoints} Điểm</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 12px; color: var(--subtext);">Quà đổi miễn phí:</div>
+              <span class="loyalty-badge">🎁 ${rewards} Phần</span>
+            </div>
+          </div>
+          ${rewards > 0 ? `<div style="font-size: 12px; color: #34c759; margin-top: 8px; text-align: center; font-weight: bold;">🎉 Bạn đang có ${rewards} ly nước miễn phí! Hãy đưa màn hình cho quán để đổi nhé.</div>` : `<div style="font-size: 11px; color: var(--subtext); margin-top: 8px; text-align: center;">💡 Còn mua thêm <b>${nextLy} ly</b> nữa là bạn sẽ nhận được phần quà đổi miễn phí!</div>`}
+          
+          <button onclick="openCustomerPointHistory('${phone}')" style="width: 100%; margin-top: 10px; background: rgba(52, 199, 89, 0.15); border: 1px solid #34c759; color: #34c759; padding: 6px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">
+            📜 Xem lịch sử tích điểm & đổi quà chi tiết
+          </button>
+        </div>
+      `;
+
+      if (!orderData.success || !orderData.orders || orderData.orders.length === 0) {
+        html += '<div class="empty-state">Không tìm thấy đơn hàng nào trong ngày cho số điện thoại này.</div>';
+        resultArea.innerHTML = html;
         return;
       }
 
-      let orders = data.orders;
+      let orders = orderData.orders;
       let latestOrder = orders[orders.length - 1]; 
       let olderOrders = orders.slice(0, orders.length - 1).reverse(); 
 
-      let html = '';
       let currentStatus = String(latestOrder.status || '1');
       html += renderMainOrderCard(latestOrder, currentStatus);
 
@@ -303,22 +368,22 @@
         qrButtonHtml = `<a href="${qrUrl}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold; margin-left: 6px;">[🔍 Xem QR CK]</a>`;
       }
 
-      // Chỉ hiển thị nút hối giao khi trạng thái CHƯA HOÀN THÀNH (khác '4')
+      let rawAddress = String(order.address || 'Tại quán');
+      let addressDisplayHtml = '';
+      if (rawAddress.includes('Khách đến quán lấy') || rawAddress.includes('Tại quán') || rawAddress.trim() === '') {
+        addressDisplayHtml = `🏪 <b>Hình thức:</b> Khách đến quán lấy`;
+      } else {
+        let cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+        addressDisplayHtml = `🛵 <b>Giao tận nơi:</b> ${cleanDestAddress}`;
+      }
+
       let hurryBtnHtml = '';
       if (status !== '4') {
         let isHurried = localStorage.getItem(`hurried_${order.orderId}`) === 'true';
         if (isHurried) {
-          hurryBtnHtml = `
-            <button class="btn-hurry hurried" disabled>
-              ✅ Đã gửi hối giao cho quán
-            </button>
-          `;
+          hurryBtnHtml = `<button class="btn-hurry hurried" disabled>✅ Đã gửi hối giao cho quán</button>`;
         } else {
-          hurryBtnHtml = `
-            <button class="btn-hurry" id="btnHurry_${order.orderId}" onclick="sendHurryOrder('${order.orderId}', '${order.name || 'Khách'}', '${order.phone || ''}', '${order.address || ''}', '${order.items || ''}', ${order.total || 0})">
-              ⚡ Hối giao đơn này ngay!
-            </button>
-          `;
+          hurryBtnHtml = `<button class="btn-hurry" id="btnHurry_${order.orderId}" onclick="sendHurryOrder('${order.orderId}', '${order.name || 'Khách'}', '${order.phone || ''}', '${order.address || ''}', '${order.items || ''}', ${order.total || 0})">⚡ Hối giao đơn này ngay!</button>`;
         }
       }
 
@@ -331,7 +396,7 @@
 
           <div class="order-info-line" style="margin-top: 6px;">
             🆔 Mã đơn: <b>#${order.orderId || ''}</b><br>
-            📍 Giao đến: <b>${order.address || 'Tại quán'}</b>
+            📍 ${addressDisplayHtml}
           </div>
 
           <div class="step-animation-banner">
@@ -366,7 +431,6 @@
       if (!confirm("Bạn có chắc chắn muốn gửi yêu cầu hối giao đơn hàng này không?")) return;
 
       localStorage.setItem(`hurried_${orderId}`, 'true');
-      
       let btn = document.getElementById(`btnHurry_${orderId}`);
       if (btn) {
         btn.className = "btn-hurry hurried";
@@ -389,16 +453,7 @@
           totalAmount: total,
           note: "Khách bấm hối giao đơn hàng này!"
         })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (!res.success && !res.ok) {
-          console.error("Lỗi gửi hối giao");
-        }
-      })
-      .catch(err => {
-        console.error("Lỗi kết nối:", err);
-      });
+      }).catch(err => console.error("Lỗi kết nối:", err));
     }
 
     function renderCompactOrderCard(order) {
@@ -425,6 +480,44 @@
           </div>
         </div>
       `;
+    }
+
+    // Xử lý mở modal xem lịch sử tích điểm của khách
+    function openCustomerPointHistory(phone) {
+      document.getElementById('customerHistoryModal').style.display = 'flex';
+      document.getElementById('modalPhoneSubtitle').innerText = `Số điện thoại: ${phone}`;
+      const listEl = document.getElementById('customerHistoryList');
+      listEl.innerHTML = "Đang tải dữ liệu...";
+
+      fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.history && data.history.length > 0) {
+            let html = '';
+            data.history.reverse().forEach(h => {
+              let isPlus = h.ly > 0;
+              let color = isPlus ? '#34c759' : '#ef4444';
+              let text = isPlus ? `+${h.ly} ly (Tích điểm)` : `${h.ly} ly (Đổi quà)`;
+              
+              html += `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <span style="color: #94a3b8; font-size: 12px;">🕒 ${h.time}</span>
+                  <b style="color: ${color};">${text}</b>
+                </div>
+              `;
+            });
+            listEl.innerHTML = html;
+          } else {
+            listEl.innerHTML = "<p style='text-align: center; color: #94a3b8; padding: 20px 0;'>Chưa có lịch sử giao dịch tích điểm nào.</p>";
+          }
+        })
+        .catch(() => {
+          listEl.innerHTML = "<p style='text-align: center; color: #ef4444;'>Không thể kết nối máy chủ để tải lịch sử!</p>";
+        });
+    }
+
+    function closeCustomerHistory() {
+      document.getElementById('customerHistoryModal').style.display = 'none';
     }
   </script>
 </body>

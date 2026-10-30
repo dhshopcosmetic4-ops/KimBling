@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Mã Tích Điểm & Quản Lý - Kim Bling</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+    body { background: #1c1c1e; color: #fff; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 420px; background: #2c2c2e; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+    h2 { text-align: center; margin-top: 0; color: #0a84ff; font-size: 20px; }
+    label { font-size: 13px; color: #8e8e93; display: block; margin-top: 10px; }
+    input { width: 100%; padding: 12px; font-size: 18px; border-radius: 10px; border: 1px solid #3a3a3c; background: #1c1c1e; color: #fff; text-align: center; margin-top: 4px; outline: none; }
+    
+    /* Bàn phím số */
+    .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .num-btn { background: #3a3a3c; border: none; color: #fff; font-size: 20px; font-weight: bold; padding: 12px; border-radius: 10px; cursor: pointer; }
+    .num-btn:active { background: #48484a; }
+    
+    .btn-create { width: 100%; padding: 14px; background: #30d158; color: #fff; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; }
+    .btn-manage { width: 100%; padding: 12px; background: #ff9f0a; color: #fff; font-size: 15px; font-weight: bold; border: none; border-radius: 10px; margin-top: 10px; cursor: pointer; }
+    #qrcode { display: flex; justify-content: center; background: #fff; padding: 15px; border-radius: 12px; margin-top: 15px; min-height: 200px; align-items: center; }
+    .note { font-size: 12px; color: #ffd60a; text-align: center; margin-top: 8px; }
+
+    /* MODAL QUẢN LÝ ĐỔI QUÀ & XEM LỊCH SỬ */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 999; padding: 12px; }
+    .modal-card { background: #2c2c2e; width: 100%; max-width: 450px; border-radius: 16px; padding: 18px; max-height: 90vh; display: flex; flex-direction: column; border: 1px solid #3a3a3c; }
+    .filter-bar { display: flex; gap: 6px; margin: 10px 0; }
+    .filter-btn { flex: 1; padding: 8px; background: #3a3a3c; border: none; color: #aaa; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .filter-btn.active { background: #0a84ff; color: #fff; }
+    
+    .list-box { flex: 1; overflow-y: auto; margin-top: 8px; }
+    .customer-row { background: #1c1c1e; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #0a84ff; }
+    .customer-row.has-reward { border-left-color: #30d158; background: #1a2e1d; }
+    
+    .btn-action-sm { background: #ff9f0a; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-left: 4px; }
+    .btn-history-sm { background: #0a84ff; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    
+    .history-item { background: #1c1c1e; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #3a3a3c; }
+    .close-modal { background: #ff453a; color: #fff; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; margin-top: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>TẠO MÃ TÍCH ĐIỂM</h2>
+
+    <label>SỐ ĐIỆN THOẠI KHÁCH (Bỏ trống nếu để khách tự nhập):</label>
+    <input type="tel" id="sdt" placeholder="Chưa nhập SĐT" readonly>
+
+    <div class="numpad">
+      <button class="num-btn" onclick="pressNum('1')">1</button>
+      <button class="num-btn" onclick="pressNum('2')">2</button>
+      <button class="num-btn" onclick="pressNum('3')">3</button>
+      <button class="num-btn" onclick="pressNum('4')">4</button>
+      <button class="num-btn" onclick="pressNum('5')">5</button>
+      <button class="num-btn" onclick="pressNum('6')">6</button>
+      <button class="num-btn" onclick="pressNum('7')">7</button>
+      <button class="num-btn" onclick="pressNum('8')">8</button>
+      <button class="num-btn" onclick="pressNum('9')">9</button>
+      <button class="num-btn" style="background:#ff453a;" onclick="clearNum()">Xóa</button>
+      <button class="num-btn" onclick="pressNum('0')">0</button>
+      <button class="num-btn" style="background:#ff9f0a;" onclick="backspaceNum()">⌫</button>
+    </div>
+
+    <label>SỐ LƯỢNG LY MUA:</label>
+    <input type="number" id="ly" value="2" min="1" style="font-size:22px; font-weight:bold; color:#0a84ff;">
+
+    <button class="btn-create" onclick="generateQR()">TẠO MÃ QR</button>
+    <button class="btn-manage" onclick="openLeaderboard()">🎁 Quản Lý Điểm & Đổi Quà Khách</button>
+
+    <div id="note-text" class="note"></div>
+    <div id="qrcode"></div>
+  </div>
+
+  <!-- MODAL XEM DANH SÁCH & DUYỆT ĐỔI QUÀ -->
+  <div class="modal-overlay" id="leaderboardModal">
+    <div class="modal-card">
+      <h3 style="margin:0; color:#ff9f0a; text-align:center;">📊 QUẢN LÝ TÍCH ĐIỂM KHÁCH HÀNG</h3>
+      
+      <!-- Bộ lọc -->
+      <div class="filter-bar">
+        <button class="filter-btn active" id="btn-filter-all" onclick="setFilter('all')">Tất Cả Khách</button>
+        <button class="filter-btn" id="btn-filter-reward" onclick="setFilter('reward')">🎁 Đủ Đổi Quà (≥10đ)</button>
+      </div>
+
+      <div class="list-box" id="leaderboard-list">
+        Đang tải dữ liệu từ Google Sheets...
+      </div>
+
+      <button class="close-modal" onclick="closeLeaderboard()">ĐÓNG</button>
+    </div>
+  </div>
+
+  <!-- MODAL XEM LỊCH SỬ CHI TIẾT CỦA 1 SĐT -->
+  <div class="modal-overlay" id="historyModal" style="z-index: 1000;">
+    <div class="modal-card">
+      <h3 style="margin:0; color:#0a84ff; text-align:center;" id="history-title">📜 LỊCH SỬ TÍCH ĐIỂM</h3>
+      <div style="font-size:12px; text-align:center; color:#8e8e93; margin-bottom:10px;" id="history-subtitle"></div>
+
+      <div class="list-box" id="history-list">
+        Đang tải lịch sử...
+      </div>
+
+      <div style="display:flex; gap:6px; margin-top:10px;">
+        <button style="flex:1; padding:10px; background:#ff9f0a; border:none; color:#fff; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="manualAdjustPoints()">✏️ Chỉnh Sửa Điểm</button>
+        <button style="flex:1; padding:10px; background:#ff453a; border:none; color:#fff; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="closeHistory()">ĐÓNG</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+    let rawLeaderboardData = [];
+    let currentFilter = 'all';
+    let selectedCustomerSDT = "";
+
+    function pressNum(num) { document.getElementById('sdt').value += num; }
+    function clearNum() { document.getElementById('sdt').value = ''; }
+    function backspaceNum() {
+      let v = document.getElementById('sdt').value;
+      document.getElementById('sdt').value = v.substring(0, v.length - 1);
+    }
+
+    function generateQR() {
+      const sdt = document.getElementById('sdt').value.trim();
+      const ly = document.getElementById('ly').value.trim();
+      const noteEl = document.getElementById('note-text');
+
+      if (!ly) return alert("Vui lòng nhập số ly!");
+
+      const txid = "TX" + Date.now();
+      const currentHost = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+      let targetUrl = `${currentHost}/tichdiem.html?txid=${txid}&ly=${ly}`;
+
+      if (sdt) {
+        targetUrl += `&sdt=${encodeURIComponent(sdt)}`;
+        noteEl.innerText = `Mã QR đã gán SĐT: ${sdt} (${ly} ly)`;
+      } else {
+        noteEl.innerText = `Chưa nhập SĐT: Khách tự nhập SĐT trên máy để nhận ${ly} ly.`;
+      }
+
+      const qrBox = document.getElementById('qrcode');
+      qrBox.innerHTML = "";
+      new QRCode(qrBox, { text: targetUrl, width: 200, height: 200 });
+    }
+
+    // MỞ BẢNG QUẢN LÝ
+    function openLeaderboard() {
+      document.getElementById('leaderboardModal').style.display = 'flex';
+      fetchLeaderboardData();
+    }
+
+    function closeLeaderboard() {
+      document.getElementById('leaderboardModal').style.display = 'none';
+    }
+
+    function setFilter(type) {
+      currentFilter = type;
+      document.getElementById('btn-filter-all').className = `filter-btn ${type === 'all' ? 'active' : ''}`;
+      document.getElementById('btn-filter-reward').className = `filter-btn ${type === 'reward' ? 'active' : ''}`;
+      renderLeaderboard();
+    }
+
+    function fetchLeaderboardData() {
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = "Đang tải dữ liệu...";
+
+      fetch(`${SCRIPT_URL}?action=get_leaderboard`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            rawLeaderboardData = data.leaderboard || [];
+            renderLeaderboard();
+          } else {
+            listEl.innerHTML = "<p style='text-align:center; color:#ff453a;'>Lỗi tải dữ liệu!</p>";
+          }
+        })
+        .catch(() => {
+          listEl.innerHTML = "<p style='text-align:center; color:#ff453a;'>Lỗi kết nối máy chủ!</p>";
+        });
+    }
+
+    function renderLeaderboard() {
+      const listEl = document.getElementById('leaderboard-list');
+      let displayData = rawLeaderboardData;
+
+      if (currentFilter === 'reward') {
+        displayData = rawLeaderboardData.filter(item => item.rewards > 0);
+      }
+
+      if (displayData.length === 0) {
+        listEl.innerHTML = "<p style='text-align:center; color:#8e8e93; margin-top:20px;'>Không tìm thấy dữ liệu phù hợp.</p>";
+        return;
+      }
+
+      let html = '';
+      displayData.forEach(item => {
+        let hasReward = item.rewards > 0;
+        let rowClass = hasReward ? 'customer-row has-reward' : 'customer-row';
+
+        html += `
+          <div class="${rowClass}">
+            <div>
+              <div style="font-size:15px; font-weight:bold;">📱 ${item.sdt}</div>
+              <div style="font-size:12px; color:#aaa; margin-top:2px;">Tổng tích lũy: <b style="color:#0a84ff;">${item.total} điểm</b></div>
+              ${hasReward ? `<div style="font-size:12px; color:#30d158; font-weight:bold; margin-top:2px;">🎁 Có ${item.rewards} phần quà!</div>` : `<div style="font-size:11px; color:#8e8e93; margin-top:2px;">Còn ${item.next} ly nữa nhận quà</div>`}
+            </div>
+            <div style="display:flex; align-items:center;">
+              <button class="btn-history-sm" onclick="viewCustomerHistory('${item.sdt}', ${item.total})">📜 Nhật ký</button>
+              ${hasReward ? `<button class="btn-action-sm" onclick="adminRedeem('${item.sdt}')">Duyệt Đổi</button>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      listEl.innerHTML = html;
+    }
+
+    // CHỦ QUÁN DUYỆT ĐỔI QUÀ TRỰC TIẾP
+    function adminRedeem(sdt) {
+      if (!confirm(`Xác nhận trừ 10 điểm để đổi quà tại quầy cho SĐT ${sdt}?`)) return;
+
+      fetch(`${SCRIPT_URL}?action=redeem&sdt=${encodeURIComponent(sdt)}&item=${encodeURIComponent('Quà trực tiếp tại quầy')}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert(`🎉 Đã trừ 10 điểm thành công cho SĐT ${sdt}!`);
+            fetchLeaderboardData();
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(() => alert("Lỗi kết nối!"));
+    }
+
+    // XEM LỊCH SỬ MUA VÀ TÍCH ĐIỂM CỦA 1 SĐT
+    function viewCustomerHistory(sdt, totalPoints) {
+      selectedCustomerSDT = sdt;
+      document.getElementById('historyModal').style.display = 'flex';
+      document.getElementById('history-title').innerText = `📱 ${sdt}`;
+      document.getElementById('history-subtitle').innerText = `Tổng điểm hiện tại: ${totalPoints} điểm`;
+      
+      const historyList = document.getElementById('history-list');
+      historyList.innerHTML = "Đang tải nhật ký giao dịch...";
+
+      fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(sdt)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success' && data.history && data.history.length > 0) {
+            let html = '';
+            data.history.reverse().forEach(h => {
+              let isPlus = h.ly > 0;
+              let color = isPlus ? '#30d158' : '#ff453a';
+              let text = isPlus ? `+${h.ly} ly (Tích điểm)` : `${h.ly} ly (Đổi quà)`;
+              
+              html += `
+                <div class="history-item">
+                  <span>🕒 ${h.time}</span>
+                  <b style="color:${color};">${text}</b>
+                </div>
+              `;
+            });
+            historyList.innerHTML = html;
+          } else {
+            historyList.innerHTML = "<p style='text-align:center; color:#8e8e93;'>Chưa có nhật ký giao dịch.</p>";
+          }
+        });
+    }
+
+    function closeHistory() {
+      document.getElementById('historyModal').style.display = 'none';
+    }
+
+    // CHỈNH SỬA / RESET ĐIỂM THỦ CÔNG CỦA KHÁCH
+    function manualAdjustPoints() {
+      let adjust = prompt(`Nhập số điểm cần cộng hoặc trừ cho SĐT ${selectedCustomerSDT}\n(Ví dụ: Nhập 5 để cộng 5 điểm, nhập -10 để trừ 10 điểm):`);
+      if (!adjust || isNaN(adjust) || parseInt(adjust) === 0) return;
+
+      let val = parseInt(adjust);
+      fetch(`${SCRIPT_URL}?action=add_points&sdt=${encodeURIComponent(selectedCustomerSDT)}&ly=${val}&txid=MANUAL_${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert(`✅ Đã điều chỉnh ${val > 0 ? '+' : ''}${val} điểm thành công!`);
+            closeHistory();
+            fetchLeaderboardData();
+          } else {
+            alert(data.message);
+          }
+        });
+    }
+  </script>
+</body>
+</html>

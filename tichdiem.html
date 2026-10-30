@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác Nhận Tích Điểm</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+    body { background: #f2f2f7; margin: 0; padding: 15px; color: #1c1c1e; }
+    .card { background: #fff; padding: 20px; border-radius: 16px; max-width: 420px; margin: 0 auto 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    h2 { text-align: center; color: #007aff; margin-top: 0; font-size: 20px; }
+    label { font-size: 14px; font-weight: 600; display: block; margin-top: 10px; }
+    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #c7c7cc; border-radius: 10px; margin-top: 6px; outline: none; }
+    .btn { width: 100%; padding: 14px; background: #007aff; color: #fff; border: none; font-size: 16px; font-weight: bold; border-radius: 10px; margin-top: 12px; cursor: pointer; }
+    .btn-home { background: #34c759; text-decoration: none; display: block; text-align: center; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e5e5ea; font-size: 15px; }
+    .reward-box { background: #fff9e6; border: 1px solid #ffe58f; padding: 12px; border-radius: 10px; margin-top: 12px; text-align: center; }
+    .select-item { width: 100%; padding: 10px; border-radius: 8px; margin-top: 8px; font-size: 15px; }
+  </style>
+</head>
+<body>
+
+  <!-- CARD 1: THÔNG BÁO TÍCH ĐIỂM -->
+  <div class="card" id="process-card">
+    <h2>TÍCH ĐIỂM ĐƠN HÀNG</h2>
+    <div id="status-content">Đang tải dữ liệu...</div>
+
+    <!-- Form nếu chủ quán chưa nhập SĐT -->
+    <div id="input-sdt-box" style="display: none;">
+      <p style="font-size:14px; color:#ff9500; text-align:center;">Chủ quán chưa nhập SĐT. Vui lòng nhập SĐT của bạn để tích điểm:</p>
+      <label>Số điện thoại của bạn:</label>
+      <input type="tel" id="cust-sdt" placeholder="Ví dụ: 0862695269">
+      <button class="btn" onclick="submitManualPoint()">XÁC NHẬN TÍCH ĐIỂM</button>
+    </div>
+  </div>
+
+  <!-- CARD 2: ĐỔI QUÀ (HIỂN THỊ KHI ĐỦ 10 ĐIỂM) -->
+  <div class="card" id="redeem-card" style="display: none;">
+    <h3 style="margin-top:0; text-align:center; color:#ff9500;">🎁 ĐỔI QUÀ MIỄN PHÍ</h3>
+    <p style="font-size: 13px; text-align: center; margin: 0;">Bạn đang có <b id="reward-count" style="color:#d97706; font-size:16px;">0</b> phần quà (10 điểm/phần)!</p>
+
+    <label>Chọn món bạn muốn nhận:</label>
+    <select id="gift-select" class="select-item">
+      <option value="Bí đao 1L">1 Ly Bí Đao 1 Lít</option>
+      <option value="Trà tắc 1L">1 Ly Trà Tắc 1 Lít</option>
+    </select>
+    <button class="btn" style="background:#ff9500;" onclick="redeemGift()">ĐỔI QUÀ NGAY TẠI QUẦY</button>
+  </div>
+
+  <!-- CARD 3: ĐIỀU HƯỚNG MUA HÀNG -->
+  <div class="card">
+    <a href="menu.html" class="btn btn-home">📜 XEM MENU & ĐẶT MÓN</a>
+  </div>
+
+  <script>
+    // Gắn sẵn URL Google Apps Script của bạn
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+    let urlParams = new URLSearchParams(window.location.search);
+    let txid = urlParams.get('txid');
+    let ly = urlParams.get('ly');
+    let sdt = urlParams.get('sdt');
+    let currentCustSDT = "";
+
+    window.onload = function() {
+      if (!txid || !ly) {
+        document.getElementById('status-content').innerHTML = "<p style='color:red; text-align:center;'>Mã QR không hợp lệ!</p>";
+        return;
+      }
+
+      if (sdt) {
+        currentCustSDT = sdt;
+        savePoint(sdt, ly, txid);
+      } else {
+        document.getElementById('status-content').innerHTML = `<p style='text-align:center;'>Bạn vừa mua <b>${ly} ly</b>.<br>Vui lòng nhập SĐT bên dưới để nhận điểm.</p>`;
+        document.getElementById('input-sdt-box').style.display = 'block';
+      }
+    };
+
+    function submitManualPoint() {
+      const inputSDT = document.getElementById('cust-sdt').value.trim();
+      if (!inputSDT) return alert("Vui lòng nhập số điện thoại!");
+      currentCustSDT = inputSDT;
+      document.getElementById('input-sdt-box').style.display = 'none';
+      savePoint(inputSDT, ly, txid);
+    }
+
+    function savePoint(phone, cups, transactionId) {
+      document.getElementById('status-content').innerHTML = "<p style='text-align:center;'>Đang ghi nhận điểm...</p>";
+
+      fetch(`${SCRIPT_URL}?action=add_points&sdt=${encodeURIComponent(phone)}&ly=${cups}&txid=${transactionId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            renderSuccess(data);
+          } else {
+            document.getElementById('status-content').innerHTML = `<p style='color:red; font-weight:bold; text-align:center;'>⚠️ ${data.message}</p>`;
+          }
+        })
+        .catch(() => {
+          document.getElementById('status-content').innerHTML = "<p style='color:red; text-align:center;'>Lỗi kết nối máy chủ!</p>";
+        });
+    }
+
+    function renderSuccess(data) {
+      let html = `
+        <div style="text-align:center; color:#34c759; font-weight:bold; font-size:18px; margin-bottom:12px;">✅ TÍCH ĐIỂM THÀNH CÔNG!</div>
+        <div class="info-row"><span>Số điện thoại:</span> <b>${data.sdt}</b></div>
+        <div class="info-row"><span>Số ly vừa mua:</span> <b>+${data.lyAdded} ly</b></div>
+        <div class="info-row"><span>Thời gian:</span> <b>${data.time}</b></div>
+        <div class="info-row" style="border:none;"><span>Tổng điểm hiện tại:</span> <b style="color:#007aff; font-size:20px;">${data.totalPoints} Điểm</b></div>
+      `;
+
+      if (data.rewards > 0) {
+        document.getElementById('redeem-card').style.display = 'block';
+        document.getElementById('reward-count').innerText = data.rewards;
+      } else {
+        html += `<div class="reward-box">💡 Còn <b>${data.nextReward} ly</b> nữa bạn sẽ nhận được 1 ly Bí đao hoặc Trà tắc 1L miễn phí!</div>`;
+      }
+
+      document.getElementById('status-content').innerHTML = html;
+    }
+
+    function redeemGift() {
+      const gift = document.getElementById('gift-select').value;
+      if (!confirm(`Xác nhận đổi 10 điểm lấy 1 ${gift}? (Đưa màn hình cho chủ quán xem để nhận món)`)) return;
+
+      fetch(`${SCRIPT_URL}?action=redeem&sdt=${encodeURIComponent(currentCustSDT)}&item=${encodeURIComponent(gift)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert(`🎉 ${data.message}`);
+            location.reload();
+          } else {
+            alert(data.message);
+          }
+        });
+    }
+  </script>
+</body>
+</html>
