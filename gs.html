@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gia Sư Toán Lớp 6 - v1.0</title>
+    <title>Gia Sư Toán Lớp 6 - v1.1</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         h2 { color: #2c3e50; text-align: center; margin-bottom: 2px; }
-        p.version { text-align: center; color: #e67e22; font-size: 0.85em; font-weight: bold; margin-top: 0; margin-bottom: 5px; }
+        p.version { text-align: center; color: #27ae60; font-size: 0.85em; font-weight: bold; margin-top: 0; margin-bottom: 5px; }
         p.subtitle { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 0.95em; }
         .chat-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .api-box { background: #fff8e1; border: 1px dashed #f39c12; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
@@ -33,11 +33,10 @@
 <body>
 
     <h2>📐 Gia Sư Toán Lớp 6</h2>
-    <p class="version">Phiên bản: v1.0 (Gemini 3.8 Flash)</p>
+    <p class="version">Phiên bản: v1.1 (Gemini 2.0 Flash - Siêu ổn định)</p>
     <p class="subtitle">Chụp ảnh đề bài hoặc giữ nút micro để nói chuyện với Thầy/Cô nhé!</p>
 
     <div class="chat-box">
-        <!-- Ô cài đặt API Key kèm nút Lưu và Xóa -->
         <div class="api-box">
             <label for="apiKeyInput">🔑 <b>Google Gemini API Key của bạn:</b></label>
             <input type="password" id="apiKeyInput" placeholder="Dán API Key vào đây...">
@@ -80,7 +79,6 @@
             alert("Đã lưu API Key thành công!");
         };
 
-        // Tính năng xóa nhanh API Key khỏi bộ nhớ
         window.clearApiKey = function() {
             localStorage.removeItem("gemini_math_apikey");
             document.getElementById("apiKeyInput").value = "";
@@ -195,8 +193,9 @@
 
             try {
                 const genAI = new GoogleGenerativeAI(currentKey);
+                // Dùng model gemini-2.0-flash chạy cực kỳ ổn định và mượt mà
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-3.8-flash",
+                    model: "gemini-2.0-flash",
                     systemInstruction: systemInstruction 
                 });
                 
@@ -209,6 +208,7 @@
                 if (imageInput.files.length > 0) {
                     const imageFile = imageInput.files[0];
                     const compressedImagePart = await compressImageAndGetPart(imageFile);
+                    contentToSend.export = true; // safe fallback
                     contentToSend.push(compressedImagePart);
                 }
 
@@ -226,7 +226,7 @@
                 imageInput.value = ""; 
 
             } catch (error) {
-                resultDiv.innerText = "❌ Có lỗi xảy ra rồi: " + error.message + "\n(Vui lòng kiểm tra lại API Key xem đã chính xác chưa).";
+                resultDiv.innerText = "❌ Kết nối bị gián đoạn: " + error.message + "\n(Vui lòng kiểm tra lại kết nối mạng hoặc API Key).";
             }
         }
     </script>
