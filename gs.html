@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gia Sư Toán Lớp 6 - v1.2</title>
+    <title>Gia Sư Toán Lớp 6 - v1.3</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
         h2 { color: #2c3e50; text-align: center; margin-bottom: 2px; }
-        p.version { text-align: center; color: #2980b9; font-size: 0.85em; font-weight: bold; margin-top: 0; margin-bottom: 5px; }
+        p.version { text-align: center; color: #8e44ad; font-size: 0.85em; font-weight: bold; margin-top: 0; margin-bottom: 5px; }
         p.subtitle { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 0.95em; }
         .chat-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .api-box { background: #fff8e1; border: 1px dashed #f39c12; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
@@ -33,7 +33,7 @@
 <body>
 
     <h2>📐 Gia Sư Toán Lớp 6</h2>
-    <p class="version">Phiên bản: v1.2 (Gemini 3.8 Flash Chuẩn)</p>
+    <p class="version">Phiên bản: v1.3 (Tối ưu kết nối trực tiếp)</p>
     <p class="subtitle">Chụp ảnh đề bài hoặc giữ nút micro để nói chuyện với Thầy/Cô nhé!</p>
 
     <div class="chat-box">
@@ -61,9 +61,7 @@
         <div id="result">Hãy nhập API Key ở trên, sau đó tải ảnh lên hoặc nói/gõ câu hỏi để bắt đầu nhé!</div>
     </div>
 
-    <script type="module">
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-
+    <script>
         const savedKey = localStorage.getItem("gemini_math_apikey");
         if (savedKey) {
             document.getElementById("apiKeyInput").value = savedKey;
@@ -85,19 +83,17 @@
             alert("Đã xóa API Key khỏi thiết bị!");
         };
 
-        const systemInstruction = `
-        Bạn là một giáo viên dạy Toán lớp 6 cực kỳ tâm lý, vui vẻ, kiên nhẫn và tận tụy.
-        Nhiệm vụ của bạn là giải đáp các bài toán hoặc khái niệm Toán lớp 6 cho một học sinh tự học ở nhà.
+        const systemInstructionText = 
+        "Bạn là một giáo viên dạy Toán lớp 6 cực kỳ tâm lý, vui vẻ, kiên nhẫn và tận tụy. " +
+        "Nhiệm vụ của bạn là giải đáp các bài toán hoặc khái niệm Toán lớp 6 cho một học sinh tự học ở nhà. " +
+        "NGUYÊN TẮC GIẢNG DẠY: " +
+        "1. Ngôn ngữ: Thân thiện, xưng 'Thầy/Cô' và gọi học sinh là 'con' hoặc 'em'. " +
+        "2. Từng bước một (Step-by-step): Không đưa ngay đáp án cuối cùng một cách khô khan. Hãy chia bài toán thành từng bước nhỏ, giải thích rõ 'TẠI SAO' lại làm như vậy. " +
+        "3. Dễ hiểu: Sử dụng ẩn dụ hoặc ví dụ đời sống (chia kẹo, mua sắm...) để giải thích các khái niệm lớp 6. " +
+        "4. Khen ngợi & Động viên: Luôn có lời động viên để bé có hứng thú học tập.";
 
-        NGUYÊN TẮC GIẢNG DẠY:
-        1. Ngôn ngữ: Thân thiện, xưng "Thầy/Cô" và gọi học sinh là "con" hoặc "em".
-        2. Từng bước một (Step-by-step): Không đưa ngay đáp án cuối cùng một cách khô khan. Hãy chia bài toán thành từng bước nhỏ, giải thích rõ "TẠI SAO" lại làm như vậy.
-        3. Dễ hiểu: Sử dụng ẩn dụ hoặc ví dụ đời sống (chia kẹo, mua sắm...) để giải thích các khái niệm lớp 6.
-        4. Khen ngợi & Động viên: Luôn có lời động viên để bé có hứng thú học tập.
-        5. Nếu học sinh hỏi lại về chỗ chưa hiểu trong câu trả lời trước, hãy kiên nhẫn giảng lại bằng một góc nhìn khác dễ hiểu hơn.
-        `;
-
-        async function compressImageAndGetPart(file) {
+        // Hàm nén ảnh trả về chuỗi base64 thuần túy
+        async function getBase64Image(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -108,24 +104,17 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-
                         const MAX_WIDTH = 1000;
                         if (width > MAX_WIDTH) {
                             height = Math.round((height * MAX_WIDTH) / width);
                             width = MAX_WIDTH;
                         }
-
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                        const base64Data = dataUrl.split(',')[1];
-
-                        resolve({
-                            inlineData: { data: base64Data, mimeType: 'image/jpeg' },
-                        });
+                        resolve(dataUrl.split(',')[1]);
                     };
                 };
             });
@@ -175,7 +164,7 @@
 
         window.askGiaSu = async function() {
             const currentKey = document.getElementById("apiKeyInput").value.trim();
-            const promptText = userInput.value;
+            const promptText = userInput.value.trim();
             const imageInput = document.getElementById("imageInput");
             const resultDiv = document.getElementById("result");
             
@@ -184,7 +173,7 @@
                 return;
             }
 
-            if (!promptText.trim() && imageInput.files.length === 0) {
+            if (!promptText && imageInput.files.length === 0) {
                 alert("Con chưa nói, chưa nhập câu hỏi hoặc chưa chọn ảnh kìa!");
                 return;
             }
@@ -192,40 +181,55 @@
             resultDiv.innerHTML = "⏳ <i>Thầy/Cô đang xem đề bài và suy nghĩ cách giảng cho con...</i>";
 
             try {
-                const genAI = new GoogleGenerativeAI(currentKey);
-                // CHUẨN XÁC MODEL GEMINI-3.8-FLASH THEO YÊU CẦU MỚI NHẤT
-                const model = genAI.getGenerativeModel({ 
-                    model: "gemini-3.8-flash",
-                    systemInstruction: systemInstruction 
-                });
-                
-                if (!window.chatSession) {
-                    window.chatSession = model.startChat({ history: [] });
-                }
+                let parts = [];
 
-                let contentToSend = [];
-                
                 if (imageInput.files.length > 0) {
-                    const imageFile = imageInput.files[0];
-                    const compressedImagePart = await compressImageAndGetPart(imageFile);
-                    contentToSend.push(compressedImagePart);
+                    const base64Data = await getBase64Image(imageInput.files[0]);
+                    parts.push({
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: base64Data
+                        }
+                    });
                 }
 
-                if (promptText.trim()) {
-                    contentToSend.push(promptText);
-                } else if (imageInput.files.length > 0) {
-                    contentToSend.push("Thầy/Cô hãy đọc đề trong hình và hướng dẫn con giải bài toán này thật chi tiết, dễ hiểu từng bước một nhé.");
+                let finalPrompt = promptText;
+                if (!finalPrompt && imageInput.files.length > 0) {
+                    finalPrompt = "Thầy/Cô hãy đọc đề trong hình và hướng dẫn con giải bài toán này thật chi tiết, dễ hiểu từng bước một nhé.";
+                }
+                parts.push({ text: finalPrompt });
+
+                // Gọi trực tiếp qua REST API fetch để chống lỗi Load failed trên thiết bị di động
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${currentKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        system_instruction: {
+                            parts: [{ text: systemInstructionText }]
+                        },
+                        contents: [{
+                            parts: parts
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errJson = await response.json();
+                    throw new Error(errJson.error?.message || `Mã lỗi HTTP: ${response.status}`);
                 }
 
-                const result = await window.chatSession.sendMessage(contentToSend);
-                const response = await result.response;
-                resultDiv.innerText = response.text();
+                const data = await response.json();
+                const aiResponseText = data.candidates[0].content.parts[0].text;
+                
+                resultDiv.innerText = aiResponseText;
 
                 userInput.value = "";
                 imageInput.value = ""; 
 
             } catch (error) {
-                resultDiv.innerText = "❌ Kết nối bị gián đoạn: " + error.message + "\n(Vui lòng kiểm tra lại kết nối mạng hoặc API Key).";
+                resultDiv.innerText = "❌ Lỗi kết nối: " + error.message + "\n(Vui lòng kiểm tra lại đường truyền mạng hoặc API Key của bạn).";
             }
         }
     </script>
