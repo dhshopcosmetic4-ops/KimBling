@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gia Sư Toán Lớp 6 - Bạn Đồng Hành Của Con</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 20px auto; padding: 15px; background-color: #f4f7f6; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 0.95em; }
+        .chat-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        .api-box { background: #fff8e1; border: 1px dashed #f39c12; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
+        .api-box input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        
+        textarea { width: 100%; height: 90px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; resize: vertical; outline: none; margin-top: 10px; }
+        textarea:focus { border-color: #3498db; }
+        .file-upload { margin: 10px 0; font-size: 14px; color: #555; }
+        
+        .action-container { display: flex; gap: 10px; margin-top: 10px; }
+        
+        #micBtn { flex: 1; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; user-select: none; }
+        #micBtn.recording { background: #c0392b; animation: pulse 1.5s infinite; }
+        
+        #sendBtn { flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        #sendBtn:hover { background: #27ae60; }
+
+        #result { margin-top: 20px; white-space: pre-wrap; background: #eef9f1; padding: 18px; border-radius: 8px; border-left: 5px solid #2ecc71; line-height: 1.6; font-size: 15px; color: #2c3e50; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📐 Gia Sư Toán Lớp 6</h2>
+    <p class="subtitle">Chụp ảnh đề bài hoặc giữ nút micro để nói chuyện với Thầy/Cô nhé!</p>
+
+    <div class="chat-box">
+        <div class="api-box">
+            <label for="apiKeyInput">🔑 <b>Google Gemini API Key của bạn:</b></label>
+            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                <input type="password" id="apiKeyInput" placeholder="Dán API Key vào đây..." style="margin-top: 0; flex: 1;">
+                <button onclick="saveApiKey()" style="padding: 0 15px; background: #f39c12; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Lưu lại</button>
+            </div>
+        </div>
+
+        <div class="file-upload">
+            <label for="imageInput">📷 <b>Chọn hoặc chụp ảnh đề bài (nếu có):</b></label><br>
+            <input type="file" id="imageInput" accept="image/*" style="margin-top: 5px;">
+        </div>
+
+        <textarea id="userInput" placeholder="Bấm giữ nút '🎙️ Giữ để nói' bên dưới hoặc gõ câu hỏi vào đây..."></textarea>
+        
+        <div class="action-container">
+            <button id="micBtn">🎙️ Giữ để nói</button>
+            <button id="sendBtn" onclick="askGiaSu()">Gửi cho Thầy/Cô</button>
+        </div>
+        
+        <div id="result">Hãy nhập API Key ở trên, sau đó tải ảnh lên hoặc nói/gõ câu hỏi để bắt đầu nhé!</div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        const savedKey = localStorage.getItem("gemini_math_apikey");
+        if (savedKey) {
+            document.getElementById("apiKeyInput").value = savedKey;
+        }
+
+        window.saveApiKey = function() {
+            const key = document.getElementById("apiKeyInput").value.trim();
+            if (!key) {
+                alert("Vui lòng nhập API Key hợp lệ!");
+                return;
+            }
+            localStorage.setItem("gemini_math_apikey", key);
+            alert("Đã lưu API Key thành công! Bây giờ con có thể hỏi bài thoải mái.");
+        };
+
+        const systemInstruction = `
+        Bạn là một giáo viên dạy Toán lớp 6 cực kỳ tâm lý, vui vẻ, kiên nhẫn và tận tụy.
+        Nhiệm vụ của bạn là giải đáp các bài toán hoặc khái niệm Toán lớp 6 cho một học sinh tự học ở nhà.
+
+        NGUYÊN TẮC GIẢNG DẠY:
+        1. Ngôn ngữ: Thân thiện, xưng "Thầy/Cô" và gọi học sinh là "con" hoặc "em".
+        2. Từng bước một (Step-by-step): Không đưa ngay đáp án cuối cùng một cách khô khan. Hãy chia bài toán thành từng bước nhỏ, giải thích rõ "TẠI SAO" lại làm như vậy.
+        3. Dễ hiểu: Sử dụng ẩn dụ hoặc ví dụ đời sống (chia kẹo, mua sắm...) để giải thích các khái niệm lớp 6.
+        4. Khen ngợi & Động viên: Luôn có lời động viên để bé có hứng thú học tập.
+        5. Nếu học sinh hỏi lại về chỗ chưa hiểu trong câu trả lời trước, hãy kiên nhẫn giảng lại bằng một góc nhìn khác dễ hiểu hơn.
+        `;
+
+        // Hàm tự động nén ảnh trước khi gửi để tiết kiệm dung lượng
+        async function compressImageAndGetPart(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        const MAX_WIDTH = 1000;
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        const base64Data = dataUrl.split(',')[1];
+
+                        resolve({
+                            inlineData: { data: base64Data, mimeType: 'image/jpeg' },
+                        });
+                    };
+                };
+            });
+        }
+
+        const micBtn = document.getElementById("micBtn");
+        const userInput = document.getElementById("userInput");
+        let recognition = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'vi-VN';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                userInput.value = transcript;
+            };
+
+            recognition.onerror = () => {
+                micBtn.innerText = "🎙️ Giữ để nói";
+                micBtn.classList.remove("recording");
+            };
+
+            recognition.onend = () => {
+                micBtn.innerText = "🎙️ Giữ để nói";
+                micBtn.classList.remove("recording");
+            };
+
+            micBtn.addEventListener("mousedown", () => {
+                micBtn.innerText = "🔴 Đang nghe con nói...";
+                micBtn.classList.add("recording");
+                try { recognition.start(); } catch(e) {}
+            });
+
+            micBtn.addEventListener("mouseup", () => {
+                try { recognition.stop(); } catch(e) {}
+            });
+
+            micBtn.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                micBtn.innerText = "🔴 Đang nghe con nói...";
+                micBtn.classList.add("recording");
+                try { recognition.start(); } catch(e) {}
+            });
+
+            micBtn.addEventListener("touchend", (e) => {
+                e.preventDefault();
+                try { recognition.stop(); } catch(e) {}
+            });
+
+        } else {
+            micBtn.innerText = "❌ Trình duyệt không hỗ trợ Mic";
+            micBtn.disabled = true;
+        }
+
+        window.askGiaSu = async function() {
+            const currentKey = document.getElementById("apiKeyInput").value.trim();
+            const promptText = userInput.value;
+            const imageInput = document.getElementById("imageInput");
+            const resultDiv = document.getElementById("result");
+            
+            if (!currentKey) {
+                alert("Vui lòng nhập và bấm 'Lưu lại' API Key trước nhé!");
+                return;
+            }
+
+            if (!promptText.trim() && imageInput.files.length === 0) {
+                alert("Con chưa nói, chưa nhập câu hỏi hoặc chưa chọn ảnh kìa!");
+                return;
+            }
+
+            resultDiv.innerHTML = "⏳ <i>Thầy/Cô đang xem đề bài và suy nghĩ cách giảng cho con...</i>";
+
+            try {
+                const genAI = new GoogleGenerativeAI(currentKey);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-1.5-flash",
+                    systemInstruction: systemInstruction 
+                });
+                
+                if (!window.chatSession) {
+                    window.chatSession = model.startChat({ history: [] });
+                }
+
+                let contentToSend = [];
+                
+                if (imageInput.files.length > 0) {
+                    const imageFile = imageInput.files[0];
+                    const compressedImagePart = await compressImageAndGetPart(imageFile);
+                    contentToSend.push(compressedImagePart);
+                }
+
+                if (promptText.trim()) {
+                    contentToSend.push(promptText);
+                } else if (imageInput.files.length > 0) {
+                    contentToSend.push("Thầy/Cô hãy đọc đề trong hình và hướng dẫn con giải bài toán này thật chi tiết, dễ hiểu từng bước một nhé.");
+                }
+
+                const result = await window.chatSession.sendMessage(contentToSend);
+                const response = await result.response;
+                resultDiv.innerText = response.text();
+
+                userInput.value = "";
+                imageInput.value = ""; 
+
+            } catch (error) {
+                resultDiv.innerText = "❌ Có lỗi xảy ra rồi: " + error.message + "\n(Vui lòng kiểm tra lại API Key xem đã chính xác chưa).";
+            }
+        }
+    </script>
+</body>
+</html>
