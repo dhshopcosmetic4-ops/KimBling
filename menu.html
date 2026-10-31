@@ -3045,218 +3045,223 @@ function resetPinInput() {
             throw new Error('Chưa tìm thấy mã đơn trong tab DON_HANG sau khi gửi. ' + (lastError ? lastError.message : 'Kiểm tra Apps Script đã triển khai phiên bản mới và đúng Google Sheet.'));
         }
 
-              async function processOrderSubmit() {
-            const msg = generateOrderMessage();
-            if (!msg) return;
+async function processOrderSubmit() {
+    const msg = generateOrderMessage();
+    if (!msg) return;
 
-            const phone = document.getElementById('customerPhone').value.trim();
-            const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
-            const payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
+    const phone = document.getElementById('customerPhone').value.trim();
+    const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+    const payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
 
-            let foodTotal = calculateFoodSubtotal();
-            let shipFee = getShippingFee();
-            const discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
-            const discountAmount = discountValK * 1000;
-            let total = Math.max(0, foodTotal + shipFee - discountAmount);
+    let foodTotal = calculateFoodSubtotal();
+    let shipFee = getShippingFee();
+    const discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
+    const discountAmount = discountValK * 1000;
+    let total = Math.max(0, foodTotal + shipFee - discountAmount);
 
-            // KIỂM TRA MÃ PIN VÀ SỐ DƯ KHI THANH TOÁN BẰNG TÚI 💎
-            let customerPin = '';
-            if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
-                const pinInput = document.getElementById('customerDiamondPin');
-                customerPin = pinInput ? pinInput.value.trim() : '';
-                if (!customerPin || customerPin.length !== 4) {
-                    alert('⚠️ Vui lòng nhập đúng mã PIN 4 số của Túi 💎 để thanh toán!');
-                    if (pinInput) pinInput.focus();
-                    return;
-                }
-
-                let currentBalanceText = document.getElementById('mainDiamondDisplay').innerText;
-                let currentBalance = parseInt(currentBalanceText.replace(/[^0-9]/g, '')) || 0;
-                let requiredDiamonds = Math.round((total / 1000) * 20);
-
-                if (currentBalance < requiredDiamonds) {
-                    alert(`❌ Số dư Túi 💎 không đủ!\nĐơn hàng cần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${currentBalance.toLocaleString('vi-VN')} 💎.\nVui lòng chọn hình thức thanh toán khác hoặc nạp thêm kim cương.`);
-                    return;
-                }
-            }
-
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-            btnSubmit.innerText = "⏳ Đang gửi đơn...";
-            btnSubmit.disabled = true;
-            btnSubmit.classList.remove('pulse-attention');
-
-            const name = document.getElementById('customerName').value.trim();
-            const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            const address = document.getElementById('customerAddress').value.trim();
-            const note = document.getElementById('customerNote').value.trim();
-            const orderId = 'KB' + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
-            
-            const itemsSummary = cart.map(item => {
-                const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()})` : '';
-                return `${item.name}${options} x${item.qty} = ${Number(item.price * item.qty).toLocaleString('vi-VN')}đ`;
-            }).join(' | ');
-
-            const sheetPayload = {
-                type: 'saveOrder',
-                orderId: orderId,
-                timestamp: new Date().toISOString(),
-                name: name,
-                customerName: name,
-                phone: phone,
-                customerPhone: phone,
-                orderType: orderType,
-                customerAddress: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
-                address: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
-                items: itemsSummary,
-                itemsSummary: itemsSummary,
-                total: total,
-                totalAmount: total,
-                payment: payMethod,
-                paymentMethod: payMethod,
-                payMethod: payMethod,
-                customerPin: customerPin,
-                note: note + (discountAmount > 0 ? ` | Giảm giá: ${discountAmount.toLocaleString('vi-VN')}đ` : '') +
-                    ` | Tiền món: ${foodTotal.toLocaleString('vi-VN')}đ | Phí ship: ${shipFee.toLocaleString('vi-VN')}đ`,
-                discountAmount: discountAmount,
-                foodTotal: foodTotal,
-                shippingFee: shipFee
-            };
-
-            let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
-            let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
-
-            try {
-                await saveOrderToGoogleSheets(sheetPayload);
-            } catch (syncError) {
-                console.error('Không lưu được đơn lên Google Sheets:', syncError);
-                alert('Chưa đồng bộ được đơn hàng lên Google Sheets. Vui lòng kiểm tra kết nối và thử lại. Chi tiết: ' + syncError.message);
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = 'ĐẶT HÀNG NGAY';
-                btnSubmit.classList.add('pulse-attention');
-                return;
-            }
-
-            await sendTelegramMessage(msg, phone);
-
-            if (payMethod === 'Chuyển khoản') {
-                await sendTelegramMessage(`💳 <b>THÔNG TIN CHUYỂN KHOẢN</b>:\nLink mã QR: ${qrImageUrl}`);
-            }
-
-            setTimeout(async () => {
-                let alertMsg = `⚠️ <b>CẢNH BÁO ĐƠN MỚI</b>\n🔔 Vui lòng kiểm tra và xác nhận đơn của khách <b>${document.getElementById('customerName').value.trim()}</b> (SĐT: <code>${phone}</code>)!`;
-                await sendTelegramMessage(alertMsg);
-            }, 30000);
-
-            const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-
-            setTimeout(() => {
-                let itemsSummaryHTML = cart.map(item => `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
-                        <div>
-                            <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
-                            <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
-                        </div>
-                        <span style="font-weight: bold; color: #d32f2f;">${formatPrice(item.price * item.qty)}</span>
-                    </div>
-                `).join('');
-
-                let shipNoticeText = shipFee === 0 
-                    ? '<span style="color: #2e7d32; font-weight: bold; font-size: 14px;">🎉 FREESHIP (0đ)</span>' 
-                    : `<span style="color: #d32f2f; font-weight: bold; font-size: 15px;">🚚 ${formatPrice(shipFee)}</span>`;
-
-                let transferSectionHTML = '';
-                if (payMethod === 'Chuyển khoản') {
-                    transferSectionHTML = `
-                        <div style="background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 10px; padding: 12px; margin-top: 10px; text-align: center;">
-                            <div style="font-weight: bold; color: #0288d1; font-size: 13px; margin-bottom: 4px;">💳 MÃ QR THANH TOÁN CHUYỂN KHOẢN</div>
-                            <div style="font-size: 13px; color: #d32f2f; font-weight: bold;">Cần thanh toán: ${Number(total).toLocaleString('vi-VN')}đ</div>
-                            <div style="font-size: 11px; color: #333; margin-top: 2px;">Techcombank: <b>19076231479012</b> - LE MINH DUNG</div>
-                            <div>
-                                <img src="${qrImageUrl}" alt="Mã QR Chuyển Khoản" style="width: 160px; height: 160px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 8px 0;">
-                            </div>
-                            <a href="${qrImageUrl}" target="_blank" style="display: block; background: #2196F3; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; margin-top: 4px;">Mở Link Ảnh QR Gốc</a>
-                        </div>
-                    `;
-                } else if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
-                    transferSectionHTML = `
-                        <div style="background: #fff8e1; border: 1.5px dashed #ffb300; border-radius: 10px; padding: 10px; margin-top: 10px; text-align: center;">
-                            <div style="font-weight: bold; color: #b78103; font-size: 13px;">💎 ĐÃ THANH TOÁN QUA TÚI 💎</div>
-                            <div style="font-size: 12px; color: #333; margin-top: 2px;">Hệ thống đã tự động trừ điểm trong ví của bạn.</div>
-                        </div>
-                    `;
-                }
-
-                let existingPopup = document.getElementById('orderSuccessModalOverlay');
-                if (existingPopup) existingPopup.remove();
-
-                let modalOverlay = document.createElement('div');
-                modalOverlay.id = 'orderSuccessModalOverlay';
-                modalOverlay.style.cssText = "display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(3px);";
-
-                modalOverlay.innerHTML = `
-                    <div class="shake-popup" style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); position: relative; max-height: 90vh; overflow-y: auto; border: 3px solid #2e7d32;">
-                        
-                        <button onclick="closeSuccessOrderPopup()" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333;">✕</button>
-
-                        <div style="text-align: center; margin-bottom: 12px;">
-                            <div style="font-size: 18px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;">
-                                ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!
-                            </div>
-                            <div style="background: #e8f5e9; border: 1px dashed #4caf50; border-radius: 8px; padding: 8px; margin-top: 6px;">
-                                <span style="font-size: 13px; font-weight: bold; color: #2e7d32; display: block;">
-                                    👩‍🍳 QUÁN ĐÃ NHẬN ĐƠN VÀ ĐANG CHUẨN BỊ MÓN!
-                                </span>
-                                <span style="font-size: 12px; font-weight: bold; color: #d32f2f; display: block; margin-top: 2px;">
-                                    ⏱️ Dự kiến sẵn sàng lúc: ${timeString}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div style="background: #fdfdfd; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 15px; text-align: left;">
-                            <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
-                                📋 XÁC NHẬN ĐƠN HÀNG ĐÃ GỬI
-                            </div>
-                            
-                            <div style="max-height: 120px; overflow-y: auto; margin-bottom: 8px;">
-                                ${itemsSummaryHTML}
-                            </div>
-
-                            <div style="background: #fff3e0; border: 1.5px solid #ff9800; padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                <span style="font-size: 13px; font-weight: bold; color: #e65100;">🛵 PHÍ GIAO HÀNG (SHIP):</span>
-                                ${shipNoticeTest}
-                            </div>
-
-                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; color: #333; margin-top: 4px; padding-top: 6px; border-top: 1px solid #eee;">
-                                <span>TỔNG THANH TOÁN:</span>
-                                <span style="color: #d32f2f; font-size: 17px;">${formatPrice(total)}</span>
-                            </div>
-
-                            ${transferSectionHTML}
-                        </div>
-
-                        <button onclick="closeSuccessOrderPopup()" style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.4);">
-                            ĐÓNG & TIẾP TỤC XEM MENU
-                        </button>
-                    </div>
-                `;
-                document.body.appendChild(modalOverlay);
-
-                closeCheckoutModal();
-
-                localStorage.removeItem('kimbling_applied_discount_code');
-                localStorage.removeItem('kimbling_applied_discount_value');
-                localStorage.removeItem('kimbling_applied_discount_id');
-                const noticeBox = document.getElementById('appliedDiscountNotice');
-                if (noticeBox) noticeBox.style.display = 'none';
-
-                const gameModal = document.getElementById('gamePopupModal');
-                if (gameModal) gameModal.style.display = 'none';
-
-                cart = [];
-                renderCartBar();
-            }, 600);
+    // KIỂM TRA MÃ PIN VÀ SỐ DƯ KHI THANH TOÁN BẰNG TÚI 💎
+    let customerPin = '';
+    if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+        const pinInput = document.getElementById('customerDiamondPin');
+        customerPin = pinInput ? pinInput.value.trim() : '';
+        if (!customerPin || customerPin.length !== 4) {
+            alert('⚠️ Vui lòng nhập đúng mã PIN 4 số của Túi 💎 để thanh toán!');
+            if (pinInput) pinInput.focus();
+            return;
         }
 
+        let currentBalanceText = document.getElementById('mainDiamondDisplay').innerText;
+        let currentBalance = parseInt(currentBalanceText.replace(/[^0-9]/g, '')) || 0;
+        let requiredDiamonds = Math.round((total / 1000) * 20);
+
+        if (currentBalance < requiredDiamonds) {
+            alert(`❌ Số dư Túi 💎 không đủ!\nĐơn hàng cần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${currentBalance.toLocaleString('vi-VN')} 💎.\nVui lòng chọn hình thức thanh toán khác hoặc nạp thêm kim cương.`);
+            return;
+        }
+    }
+
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    btnSubmit.innerText = "⏳ Đang gửi đơn...";
+    btnSubmit.disabled = true;
+    btnSubmit.classList.remove('pulse-attention');
+
+    const name = document.getElementById('customerName').value.trim();
+    const orderType = document.querySelector('input[name="orderType"]:checked').value;
+    const address = document.getElementById('customerAddress').value.trim();
+    const note = document.getElementById('customerNote').value.trim();
+    const orderId = 'KB' + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
+    
+    const itemsSummary = cart.map(item => {
+        const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()})` : '';
+        return `${item.name}${options} x${item.qty} = ${Number(item.price * item.qty).toLocaleString('vi-VN')}đ`;
+    }).join(' | ');
+
+    const sheetPayload = {
+        type: 'saveOrder',
+        orderId: orderId,
+        timestamp: new Date().toISOString(),
+        name: name,
+        customerName: name,
+        phone: phone,
+        customerPhone: phone,
+        orderType: orderType,
+        customerAddress: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
+        address: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
+        items: itemsSummary,
+        itemsSummary: itemsSummary,
+        total: total,
+        totalAmount: total,
+        payment: payMethod,
+        paymentMethod: payMethod,
+        payMethod: payMethod,
+        customerPin: customerPin,
+        note: note + (discountAmount > 0 ? ` | Giảm giá: ${discountAmount.toLocaleString('vi-VN')}đ` : '') +
+            ` | Tiền món: ${foodTotal.toLocaleString('vi-VN')}đ | Phí ship: ${shipFee.toLocaleString('vi-VN')}đ`,
+        discountAmount: discountAmount,
+        foodTotal: foodTotal,
+        shippingFee: shipFee
+    };
+
+    let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
+    let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+
+    // 1. GỬI NGẦM LÊN GOOGLE SHEETS (KHÔNG CHỜ PHẢN HỒI ĐỂ TRÁNH BỊ KẸT MẠNG)
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(sheetPayload)
+    }).catch(err => console.log("Lỗi gửi ngầm sheets:", err));
+
+    // 2. GỬI THÔNG BÁO TELEGRAM NGAY LẬP TỨC
+    sendTelegramMessage(msg, phone);
+
+    if (payMethod === 'Chuyển khoản') {
+        sendTelegramMessage(`💳 <b>THÔNG TIN CHUYỂN KHOẢN</b>:\nLink mã QR: ${qrImageUrl}`);
+    }
+
+    setTimeout(() => {
+        let alertMsg = `⚠️ <b>CẢNH BÁO ĐƠN MỚI</b>\n🔔 Vui lòng kiểm tra và xác nhận đơn của khách <b>${document.getElementById('customerName').value.trim()}</b> (SĐT: <code>${phone}</code>)!`;
+        sendTelegramMessage(alertMsg);
+    }, 30000);
+
+    const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+
+    // 3. HIỂN THỊ POPUP THÀNH CÔNG NGAY LẬP TỨC CHO KHÁCH
+    let itemsSummaryHTML = cart.map(item => `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
+            <div>
+                <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
+                <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
+            </div>
+            <span style="font-weight: bold; color: #d32f2f;">${formatPrice(item.price * item.qty)}</span>
+        </div>
+    `).join('');
+
+    let shipNoticeText = shipFee === 0 
+        ? '<span style="color: #2e7d32; font-weight: bold; font-size: 14px;">🎉 FREESHIP (0đ)</span>' 
+        : `<span style="color: #d32f2f; font-weight: bold; font-size: 15px;">🚚 ${formatPrice(shipFee)}</span>`;
+
+    let transferSectionHTML = '';
+    if (payMethod === 'Chuyển khoản') {
+        transferSectionHTML = `
+            <div style="background: #f0f7ff; border: 1.5px dashed #2196F3; border-radius: 10px; padding: 12px; margin-top: 10px; text-align: center;">
+                <div style="font-weight: bold; color: #0288d1; font-size: 13px; margin-bottom: 4px;">💳 MÃ QR THANH TOÁN CHUYỂN KHOẢN</div>
+                <div style="font-size: 13px; color: #d32f2f; font-weight: bold;">Cần thanh toán: ${Number(total).toLocaleString('vi-VN')}đ</div>
+                <div style="font-size: 11px; color: #333; margin-top: 2px;">Techcombank: <b>19076231479012</b> - LE MINH DUNG</div>
+                <div>
+                    <img src="${qrImageUrl}" alt="Mã QR Chuyển Khoản" style="width: 160px; height: 160px; object-fit: contain; background: #fff; padding: 4px; border-radius: 6px; border: 1px solid #ccc; margin: 8px 0;">
+                </div>
+                <a href="${qrImageUrl}" target="_blank" style="display: block; background: #2196F3; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; margin-top: 4px;">Mở Link Ảnh QR Gốc</a>
+            </div>
+        `;
+    } else if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+        transferSectionHTML = `
+            <div style="background: #fff8e1; border: 1.5px dashed #ffb300; border-radius: 10px; padding: 10px; margin-top: 10px; text-align: center;">
+                <div style="font-weight: bold; color: #b78103; font-size: 13px;">💎 ĐÃ THANH TOÁN QUA TÚI 💎</div>
+                <div style="font-size: 12px; color: #333; margin-top: 2px;">Hệ thống đã tự động trừ điểm trong ví của bạn.</div>
+            </div>
+        `;
+    }
+
+    let existingPopup = document.getElementById('orderSuccessModalOverlay');
+    if (existingPopup) existingPopup.remove();
+
+    let modalOverlay = document.createElement('div');
+    modalOverlay.id = 'orderSuccessModalOverlay';
+    modalOverlay.style.cssText = "display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(3px);";
+
+    modalOverlay.innerHTML = `
+        <div class="shake-popup" style="background: #ffffff; width: 100%; max-width: 440px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); position: relative; max-height: 90vh; overflow-y: auto; border: 3px solid #2e7d32;">
+            
+            <button onclick="closeSuccessOrderPopup()" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333;">✕</button>
+
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 18px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;">
+                    ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!
+                </div>
+                <div style="background: #e8f5e9; border: 1px dashed #4caf50; border-radius: 8px; padding: 8px; margin-top: 6px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #2e7d32; display: block;">
+                        👩‍🍳 QUÁN ĐÃ NHẬN ĐƠN VÀ ĐANG CHUẨN BỊ MÓN!
+                    </span>
+                    <span style="font-size: 12px; font-weight: bold; color: #d32f2f; display: block; margin-top: 2px;">
+                        ⏱️ Dự kiến sẵn sàng lúc: ${timeString}
+                    </span>
+                </div>
+            </div>
+
+            <div style="background: #fdfdfd; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 15px; text-align: left;">
+                <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+                    📋 XÁC NHẬN ĐƠN HÀNG ĐÃ GỬI
+                </div>
+                
+                <div style="max-height: 120px; overflow-y: auto; margin-bottom: 8px;">
+                    ${itemsSummaryHTML}
+                </div>
+
+                <div style="background: #fff3e0; border: 1.5px solid #ff9800; padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #e65100;">🛵 PHÍ GIAO HÀNG (SHIP):</span>
+                    ${shipNoticeText}
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; color: #333; margin-top: 4px; padding-top: 6px; border-top: 1px solid #eee;">
+                    <span>TỔNG THANH TOÁN:</span>
+                    <span style="color: #d32f2f; font-size: 17px;">${formatPrice(total)}</span>
+                </div>
+
+                ${transferSectionHTML}
+            </div>
+
+            <button onclick="closeSuccessOrderPopup()" style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.4);">
+                ĐÓNG & TIẾP TỤC XEM MENU
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    updateSubmitButtonText();
+    btnSubmit.disabled = false;
+    btnSubmit.classList.add('pulse-attention');
+
+    closeCheckoutModal();
+
+    localStorage.removeItem('kimbling_applied_discount_code');
+    localStorage.removeItem('kimbling_applied_discount_value');
+    localStorage.removeItem('kimbling_applied_discount_id');
+    const noticeBox = document.getElementById('appliedDiscountNotice');
+    if (noticeBox) noticeBox.style.display = 'none';
+
+    const gameModal = document.getElementById('gamePopupModal');
+    if (gameModal) gameModal.style.display = 'none';
+
+    cart = [];
+    renderCartBar();
+}
+
+function closeSuccessOrderPopup() {
+    const modal = document.getElementById('orderSuccessModalOverlay');
+    if (modal) modal.remove();
+}
 
 
         function closeSuccessOrderPopup() {
