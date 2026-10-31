@@ -92,7 +92,7 @@
 <body>
   <!-- Thẻ âm thanh ẩn giúp giữ tiến trình chạy ngầm trên iOS -->
   <audio id="silentBackgroundAudio" loop preload="auto">
-    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
+    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
   </audio>
 
   <div id="adminApp">
@@ -642,12 +642,18 @@
       isFetchingOrders = true; 
       try {
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
+        
+        // Tính số kim cương theo chuẩn tỷ lệ 1k = 1 💎 (Ví dụ: Tổng 20.000đ -> 20 💎)
+        const totalAmount = Number(orderObj.total || 0);
+        const earnedDiamonds = Math.round(totalAmount / 1000);
+
         const payload = {
           type: 'pushOnlineOrder',
           action: 'pushOnlineOrder',
           sourceOrderId: String(orderId),
           orderId: String(orderId),
-          total: Number(orderObj.total || 0),
+          total: totalAmount,
+          diamonds: earnedDiamonds, // Gửi chuẩn số kim cương theo tỷ lệ 1k = 1 💎
           items: parsedCartItems,
           name: String(orderObj.name || 'Khách lẻ'),
           phone: String(orderObj.phone || '').replace(/'/g, '').trim(),
@@ -666,7 +672,7 @@
         if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-        alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`);
+        alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales và cộng/trừ kim cương thành công!`);
         lastRenderedDataSignature = ""; 
         fetchOrders();
       } catch (err) {
