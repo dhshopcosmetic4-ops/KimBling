@@ -1,5 +1,5 @@
 /**
- * KIM BLING POS — Google Apps Script Hoàn Chỉnh (Cố định NV3 cho đơn online, giữ nguyên POS + Cập nhật ship)
+ * KIM BLING POS & WALLET — Google Apps Script Hoàn Chỉnh (Cộng/Trừ Kim Cương & Xử lý Đơn Online)
  */
 const POS_CONFIG_SHEET = 'POS_Data';
 const POS_ATTENDANCE_SHEET = 'Attendance';
@@ -7,13 +7,24 @@ const POS_HISTORY_SHEET = 'Sales';
 const POS_CLOSING_SHEET = 'ShiftClosing';
 const POS_VIOLATION_SHEET = 'ShiftViolations';
 const ORDER_SHEET = 'DON_HANG';
+const SHEET_POINTS = 'diemthuong'; // Tab tích điểm đổi ly
+const WALLET_SHEET = 'HATKIM';    // Tab Túi Kim Cương (Ví 💎)
+
+// Hàm phụ trợ chuẩn hóa SĐT luôn có số 0 ở đầu
+function formatPhoneDisplay_(phone) {
+  var str = String(phone || "").trim().replace(/\D/g, "");
+  if (str.length > 0 && !str.startsWith("0")) {
+    str = "0" + str;
+  }
+  return str;
+}
 
 function doGet(e) {
   try {
     processOverdueShifts_();
-    const type = String((e && e.parameter && (e.parameter.type || e.parameter.action)) || '');
+    const action = String((e && e.parameter && (e.parameter.action || e.parameter.type)) || '');
     let result;
-    switch (type) {
+    switch (action) {
       case 'getMenu':
         result = { 
           menu: getConfig_('menu', []), 
@@ -64,6 +75,167 @@ function doGet(e) {
         result = { shiftClosing: readPayloadRows_(POS_CLOSING_SHEET) };
         break;
       
+      // TRA CỨU ĐIỂM ĐỔI LY
+      case 'get_info': {
+        var sdtInput = formatPhoneDisplay_(e.parameter.sdt);
+        var ss = getSpreadsheet_();
+        var sheet = ss.getSheetByName(SHEET_POINTS);
+        
+        if (!sheet) {
+          result = { status: "success", totalPoints: 0, rewards: 0, nextReward: 10, history: [] };
+          break;
+        }
+        
+        var data = sheet.getDataRange().getValues();
+        var total = 0;
+        var history = [];
+
+        for (var i = 1; i < data.length; i++) {
+          var rowSdt = formatPhoneDisplay_(data[i][1]);
+          if (rowSdt === sdtInput) {
+            var ly = parseInt(data[i][2]) || 0;
+            total += ly;
+            history.push({
+              time: data[i][0],
+              ly: ly,
+              txid: data[i][3]
+            });
+          }
+        }
+
+        var rewards = Math.floor(total / 10);
+        var nextReward = 10 - (total % 10);
+        if (nextReward === 10 && total > 0) nextReward = 10;
+
+        result = {
+          status: "success",
+          totalPoints: total,
+          rewards: rewards,
+          nextReward: nextReward,
+          history: history
+        };
+        break;
+      }
+
+      // LẤY BẢNG XẾP HẠNG TÍCH ĐIỂM
+      case 'get_leaderboard': {
+        var ss = getSpreadsheet_();
+        var sheet = ss.getSheetByName(SHEET_POINTS);
+        if (!sheet) {
+          result = { status: "success", leaderboard: [] };
+          break;
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var pointsMap = {};
+
+        for (var i = 1; i < data.length; i++) {
+          var sdt = formatPhoneDisplay_(data[i][1]);
+          var ly = parseInt(data[i][2]) || 0;
+          if (sdt && sdt !== "0") {
+            if (!pointsMap[sdt]) pointsMap[sdt] = 0;
+            pointsMap[sdt] += ly;
+          }
+        }
+
+        var list = [];
+        for (var phoneNum in pointsMap) {
+          var total = pointsMap[phoneNum];
+          list.push({
+            sdt: phoneNum,
+            total: total,
+            rewards: Math.floor(total / 10),
+            next: 10 - (total % 10)
+          });
+        }
+
+        list.sort(function(a, b) { return b.total - a.total; });
+        result = { status: "success", leaderboard: list };
+        break;
+      }
+
+      // DUYỆT ĐỔI QUÀ
+      case 'redeem': {
+        var sdt = formatPhoneDisplay_(e.parameter.sdt);
+        var ss = getSpreadsheet_();
+        var sheet = ss.getSheetByName(SHEET_POINTS);
+        if (!sheet) {
+          result = { status: "error", message: "Chưa có tab diemthuong" };
+          break;
+        }
+
+        var data = sheet.getDataRange().getValues();
+        var currentTotal = 0;
+        for (var i = 1; i < data.length; i++) {
+          if (formatPhoneDisplay_(data[i][1]) === sdt) {
+            currentTotal += parseInt(data[i][2]) || 0;
+          }
+        }
+
+        if (currentTotal < 10) {
+          result = { status: "error", message: "Khách chưa đủ 10 điểm để đổi quà!" };
+          break;
+        }
+
+        var timeStr = new Date().toLocaleString("vi-VN");
+        sheet.appendRow([timeStr, "'" + sdt, -10, "REDEEM_" + Date.now()]);
+        var newTotal = currentTotal - 10;
+        result = {
+          status: "success",
+          message: "Đổi quà thành công!",
+          newTotal: newTotal,
+          rewardsLeft: Math.floor(newTotal / 10)
+        };
+        break;
+      }
+
+      // ==========================================
+      // API TÚI KIM CƯƠNG (HATKIM) - VÍ ĐIỆN TỬ
+      // ==========================================
+      case 'adminGetCustomerInfo': {
+        let phone = formatPhoneDisplay_(e.parameter.phone);
+        let ss = getSpreadsheet_();
+        let sheet = ss.getSheetByName(WALLET_SHEET);
+        let walletInfo = { hatKim: 0, customerName: '', pin: '' };
+        
+        if (sheet && phone) {
+          let data = sheet.getDataRange().getValues();
+          for (let i = 1; i < data.length; i++) {
+            let cellPhone = formatPhoneDisplay_(data[i][0]);
+            if (cellPhone === phone) {
+              walletInfo.hatKim = parseInt(data[i][2]) || 0;
+              walletInfo.customerName = String(data[i][1] || '');
+              walletInfo.pin = String(data[i][3] || '');
+              break;
+            }
+          }
+        }
+        result = walletInfo;
+        break;
+      }
+
+      case 'adminGetAllHatKim': {
+        let ss = getSpreadsheet_();
+        let sheet = ss.getSheetByName(WALLET_SHEET);
+        let list = [];
+        if (sheet) {
+          let data = sheet.getDataRange().getValues();
+          for (let i = 1; i < data.length; i++) {
+            if (data[i][0]) {
+              list.push({
+                phone: String(data[i][0]),
+                name: String(data[i][1] || ''),
+                hatKim: parseInt(data[i][2]) || 0,
+                pin: String(data[i][3] || ''),
+                updatedTime: String(data[i][4] || '')
+              });
+            }
+          }
+        }
+        result = list;
+        break;
+      }
+      
       case 'checkStatus': {
         const rawPhone = e.parameter.phone ? String(e.parameter.phone).trim() : '';
         const ss = getSpreadsheet_();
@@ -101,7 +273,7 @@ function doGet(e) {
       }
 
       default:
-        result = { ok: true, service: 'Kim Bling POS Apps Script Final Fix', message: 'Endpoint hoạt động.' };
+        result = { ok: true, service: 'Kim Bling POS & Wallet Final', message: 'Endpoint hoạt động.' };
     }
     return jsonOutput_(result);
   } catch (err) {
@@ -115,45 +287,6 @@ function doPost(e) {
     lock.waitLock(20000);
     const raw = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
     const body = JSON.parse(raw);
-
-    if (body.callback_query) {
-      const callbackData = body.callback_query.data; 
-      const callbackId = body.callback_query.id;
-      const botToken = "8862119099:AAH9UC0RZmiYnTLk4ytHbmgLDxMoW0xruds";
-      
-      try {
-        UrlFetchApp.fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: 'post',
-          contentType: 'application/json',
-          payload: JSON.stringify({ callback_query_id: callbackId, text: "⏳ Đang cập nhật Google Sheets...", show_alert: false })
-        });
-      } catch (err) {}
-
-      if (callbackData) {
-        const ss = getSpreadsheet_();
-        const sheet = ss.getSheetByName(ORDER_SHEET);
-        if (sheet) {
-          const data = sheet.getDataRange().getValues();
-          let newStatus = '1';
-          let targetPhone = '';
-
-          if (callbackData.indexOf('STATUS_') === 0) {
-            const parts = callbackData.split('_');
-            newStatus = parts[1] || '1';
-            targetPhone = parts[2] || '';
-          }
-
-          for (let i = data.length - 1; i >= 1; i--) {
-            const rowStr = JSON.stringify(data[i]);
-            if ((targetPhone && rowStr.indexOf(targetPhone) !== -1) || !targetPhone) {
-              sheet.getRange(i + 1, 10).setValue(newStatus);
-              break; 
-            }
-          }
-        }
-      }
-      return jsonOutput_({ ok: true });
-    }
 
     const type = String(body.type || body.action || '');
     switch (type) {
@@ -188,7 +321,64 @@ function doPost(e) {
         deletePayloadRow_(POS_ATTENDANCE_SHEET, body.id);
         break;
       
-      // XỬ LÝ LỊCH SỬ BÁN HÀNG TỪ POS
+      // CỘNG ĐIỂM TỪ MÃ QR HOẶC THỦ CÔNG
+      case 'add_points': {
+        var sdt = formatPhoneDisplay_(body.sdt);
+        var ly = parseInt(body.ly) || 0;
+        var txid = String(body.txid || "MANUAL_" + Date.now()).trim();
+        var timeStr = new Date().toLocaleString("vi-VN");
+
+        var ss = getSpreadsheet_();
+        var sheet = ss.getSheetByName(SHEET_POINTS);
+        if (!sheet) {
+          sheet = ss.insertSheet(SHEET_POINTS);
+          sheet.appendRow(["Thời Gian", "SoDienThoai", "SoMon", "MaGiaoDich"]);
+        }
+
+        sheet.appendRow([timeStr, "'" + sdt, ly, txid]);
+        return jsonOutput_({ status: "success", message: "Cộng điểm thành công!" });
+      }
+
+      // NẠP / CẬP NHẬT TÚI KIM CƯƠNG (HATKIM)
+      case 'updateHatKim': {
+        let phone = formatPhoneDisplay_(body.phone);
+        let addAmount = parseInt(body.amount) || 0;
+        let newPin = body.pin ? String(body.pin).trim() : '';
+        let customerName = body.name ? String(body.name).trim() : '';
+        
+        let ss = getSpreadsheet_();
+        let sheet = ss.getSheetByName(WALLET_SHEET);
+        if (!sheet) {
+          sheet = ss.insertSheet(WALLET_SHEET);
+          sheet.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
+        }
+        
+        let data = sheet.getDataRange().getValues();
+        let foundRow = -1;
+        
+        for (let i = 1; i < data.length; i++) {
+          if (formatPhoneDisplay_(data[i][0]) === phone) {
+            foundRow = i + 1;
+            break;
+          }
+        }
+        
+        if (foundRow > 0) {
+          let currentHatKim = parseInt(sheet.getRange(foundRow, 3).getValue()) || 0;
+          let updatedHatKim = Math.max(0, currentHatKim + addAmount);
+          
+          sheet.getRange(foundRow, 3).setValue(updatedHatKim);
+          if (customerName) sheet.getRange(foundRow, 2).setValue(customerName);
+          if (newPin && newPin.length === 4) sheet.getRange(foundRow, 4).setValue(newPin);
+          sheet.getRange(foundRow, 5).setValue(new Date());
+        } else {
+          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), newPin || '1234', new Date()]);
+        }
+        
+        return jsonOutput_({ status: 'success', message: 'Cập nhật Hạt Kim thành công' });
+      }
+
+      // LỊCH SỬ BÁN HÀNG TỪ POS
       case 'history': {
         const ss = getSpreadsheet_();
         let sheet = ss.getSheetByName(POS_HISTORY_SHEET);
@@ -241,7 +431,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // XỬ LÝ ĐẨY ĐƠN ONLINE TỪ QLDON
+      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS VÀ TỰ ĐỘNG CỘNG KIM CƯƠNG CHO KHÁCH (1k = 1 💎)
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -267,6 +457,8 @@ function doPost(e) {
         const now = new Date();
         const tz = getPosTimeZone_();
         const orderTotal = Number(body.total !== undefined ? body.total : orderRow[6]) || 0;
+        const customerPhone = formatPhoneDisplay_(body.phone || orderRow[3]);
+        const customerName = String(body.name || orderRow[2] || 'Khách lẻ');
         const incomingItems = Array.isArray(body.items) ? body.items : [];
         
         const items = incomingItems.map(function(item, index) {
@@ -278,18 +470,11 @@ function doPost(e) {
           }
 
           let toppingsArr = Array.isArray(item.rawToppings) ? item.rawToppings : [];
-          if (toppingsArr.length === 0 && optStr.includes('+')) {
-            const parts = optStr.split('+');
-            if (parts[1]) {
-              toppingsArr = parts[1].split(',').map(function(t) { return t.trim(); }).filter(Boolean);
-            }
-          }
-
           return {
             cartId: Number(item.cartId || (Date.now() + index + Math.random())),
             id: Number(item.id || (index + 1)),
             name: nameStr,
-            basePrice: Number(item.basePrice !== undefined ? item.basePrice : item.price) || (nameStr.toLowerCase().includes('bạc hà') ? 30000 : 26000),
+            basePrice: Number(item.basePrice !== undefined ? item.basePrice : item.price) || 26000,
             optionsText: optStr,
             quantity: Math.max(1, Number(item.quantity || item.qty || 1) || 1),
             rawToppings: toppingsArr
@@ -307,8 +492,8 @@ function doPost(e) {
           fullDateStr: Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm:ss'),
           total: orderTotal,
           items: items,
-          name: String(body.name || orderRow[2] || 'Khách lẻ'),
-          phone: String(body.phone || orderRow[3] || ''),
+          name: customerName,
+          phone: customerPhone,
           address: String(body.address || orderRow[4] || ''),
           payment: String(body.payment || orderRow[7] || 'Tiền mặt'),
           note: String(body.note || orderRow[8] || ''),
@@ -332,16 +517,45 @@ function doPost(e) {
           Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm:ss')
         ]);
 
+        // ========================================================
+        // TỰ ĐỘNG CỘNG HẠT KIM (💎) KHI ĐẨY ĐƠN THÀNH CÔNG (Tỷ lệ: 1k = 1 💎)
+        // ========================================================
+        if (customerPhone && orderTotal > 0) {
+          let diamondsToAdd = Math.round(orderTotal / 1000);
+          let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
+          if (!sheetHatKim) {
+            sheetHatKim = ss.insertSheet(WALLET_SHEET);
+            sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
+          }
+          
+          let dataHK = sheetHatKim.getDataRange().getValues();
+          let foundRow = -1;
+          for (let i = 1; i < dataHK.length; i++) {
+            if (formatPhoneDisplay_(dataHK[i][0]) === customerPhone) {
+              foundRow = i + 1;
+              break;
+            }
+          }
+          
+          if (foundRow > 0) {
+            let currentBal = parseInt(sheetHatKim.getRange(foundRow, 3).getValue()) || 0;
+            sheetHatKim.getRange(foundRow, 3).setValue(currentBal + diamondsToAdd);
+            sheetHatKim.getRange(foundRow, 5).setValue(new Date());
+          } else {
+            sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsToAdd, '1234', new Date()]);
+          }
+        }
+
         orderSheet.getRange(orderRowNumber, 10).setValue('4');
         return jsonOutput_({
           success: true,
-          message: 'Đã lưu đơn online vào Sales thành công.',
+          message: 'Đã đẩy đơn, lưu lịch sử và cộng Hạt Kim thành công.',
           orderId: sourceOrderId,
           historyId: numericOnlineId
         });
       }
 
-      // XỬ LÝ CẬP NHẬT ĐỊA CHỈ, PHÍ SHIP VÀ TỔNG TIỀN TỪ QLDON
+      // CẬP NHẬT ĐỊA CHỈ & PHÍ SHIP
       case 'updateOrderAddressAndFee': {
         const targetId = String(body.orderId || '').trim();
         const newAddress = String(body.newAddress || '').trim();
@@ -376,7 +590,6 @@ function doPost(e) {
             foodPrice = Math.max(0, currentTotal - oldShip);
 
             let newTotal = foodPrice + newShippingFee;
-
             let newNote = currentNote;
             if (newNote.includes('Phí ship:')) {
               newNote = newNote.replace(/Phí ship:\s*[\d\.]+đ?/i, `Phí ship: ${newShippingFee.toLocaleString('vi-VN')}đ`);
@@ -393,14 +606,15 @@ function doPost(e) {
         }
 
         if (updated) {
-          return jsonOutput_({ success: true, message: '✅ Đã cập nhật địa chỉ và tính lại phí ship thành công!' });
+          return jsonOutput_({ success: true, message: '✅ Đã cập nhật địa chỉ và phí ship thành công!' });
         } else {
-          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng cần sửa.' });
+          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng.' });
         }
       }
 
-      // XỬ LÝ XÓA MỘT ĐƠN HÀNG ĐƠN LẺ TỪ QLDON
-      case 'deleteSingleOrder': {
+      // XÓA ĐƠN HÀNG
+      case 'deleteSingleOrder':
+      case 'deleteOrder': {
         const inputPin = String(body.pin || '');
         const savedPin = getConfig_('adminPin', '1234');
         if (inputPin !== String(savedPin) && inputPin !== '1234' && inputPin !== '0') {
@@ -430,21 +644,75 @@ function doPost(e) {
         }
 
         if (deleted) {
-          return jsonOutput_({ success: true, message: `✅ Đã xóa thành công đơn hàng #${targetId}!` });
+          return jsonOutput_({ success: true, message: `✅ Đã xóa đơn hàng #${targetId}!` });
         } else {
-          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng cần xóa trong trang DON_HANG.' });
+          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng.' });
         }
       }
 
-      case 'shiftClosing':
-        if (body.shiftClosing) upsertPayloadRow_(POS_CLOSING_SHEET, body.shiftClosing, 'id');
-        break;
-      case 'shiftViolation':
-        if (body.violation) upsertPayloadRow_(POS_VIOLATION_SHEET, body.violation, 'id');
-        break;
-      
+      // LƯU ĐƠN HÀNG MỚI (Hỗ trợ Tự thiết lập mã PIN lần đầu khi thanh toán Túi Kim Cương)
       case 'saveOrder': {
         const ss = getSpreadsheet_();
+        
+        const phone = formatPhoneDisplay_(body.phone || body.customerPhone);
+        const paymentMethod = body.payment || body.paymentMethod || body.payMethod || 'Tiền mặt';
+        const totalAmount = parseInt(body.total || body.totalAmount) || 0;
+        const customerPin = String(body.customerPin || '').trim();
+
+        // Nếu khách chọn thanh toán bằng Túi Kim Cương
+        if (paymentMethod === 'Túi Kim Cương') {
+          let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
+          if (!sheetHatKim) {
+            return jsonOutput_({ ok: false, success: false, error: 'Sheet HATKIM chưa được khởi tạo' });
+          }
+          
+          let dataHK = sheetHatKim.getDataRange().getValues();
+          let customerRow = -1;
+          let currentBalance = 0;
+          let correctPin = '';
+          
+          for (let i = 1; i < dataHK.length; i++) {
+            if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
+              customerRow = i + 1;
+              currentBalance = parseInt(dataHK[i][2]) || 0;
+              correctPin = String(dataHK[i][3] || '').trim();
+              break;
+            }
+          }
+          
+          // Trường hợp khách chưa có tài khoản ví -> Tự động tạo mới và lưu PIN khách tự đặt
+          if (customerRow === -1) {
+            if (!customerPin || customerPin.length !== 4) {
+              return jsonOutput_({ ok: false, success: false, error: 'Vui lòng nhập mã PIN 4 số mới để tạo tài khoản Túi Kim Cương.' });
+            }
+            sheetHatKim.appendRow(['\'' + phone, body.name || body.customerName || 'Khách hàng', 0, customerPin, new Date()]);
+            return jsonOutput_({ ok: false, success: false, error: 'Tài khoản ví mới đã được tạo với PIN bạn vừa nhập. Vui lòng bấm thanh toán lại lần nữa!' });
+          }
+          
+          // Trường hợp tài khoản đã tồn tại nhưng chưa có PIN hoặc đang để mặc định 1234 -> Cho khách thiết lập PIN mới
+          if (!correctPin || correctPin === '' || correctPin === '1234') {
+            if (!customerPin || customerPin.length !== 4) {
+              return jsonOutput_({ ok: false, success: false, error: 'Vui lòng đặt mã PIN 4 số mới cho lần đầu thanh toán.' });
+            }
+            sheetHatKim.getRange(customerRow, 4).setValue(customerPin);
+            correctPin = customerPin;
+          }
+          
+          // Kiểm tra mã PIN
+          if (customerPin !== correctPin) {
+            return jsonOutput_({ ok: false, success: false, error: 'Mã PIN 4 số không chính xác!' });
+          }
+          
+          let requiredDiamonds = Math.round(totalAmount / 1000); // Tỷ lệ mới: 1k = 1 💎
+          if (currentBalance < requiredDiamonds) {
+            return jsonOutput_({ ok: false, success: false, error: 'Số dư Túi 💎 không đủ thanh toán (' + currentBalance + '/' + requiredDiamonds + ' 💎)' });
+          }
+          
+          let newBalance = currentBalance - requiredDiamonds;
+          sheetHatKim.getRange(customerRow, 3).setValue(newBalance);
+          sheetHatKim.getRange(customerRow, 5).setValue(new Date());
+        }
+
         const sheet = ss.getSheetByName(ORDER_SHEET) || ss.insertSheet(ORDER_SHEET);
         if (sheet.getLastRow() === 0) {
           sheet.appendRow(['Timestamp', 'OrderId', 'Name', 'Phone', 'Address', 'Items', 'Total', 'Payment', 'Note', 'Status']);
@@ -459,9 +727,7 @@ function doPost(e) {
           finalAddress = '🛵 Giao tận nơi: ' + rawAddr;
         }
 
-        const rawPhoneVal = String(body.phone || body.customerPhone || '').trim();
-        const formattedPhone = rawPhoneVal ? ('\'' + rawPhoneVal) : '';
-        const paymentMethod = body.payment || body.paymentMethod || body.payMethod || 'Tiền mặt';
+        const formattedPhone = phone ? ('\'' + phone) : '';
 
         sheet.appendRow([
           body.timestamp || new Date(),
@@ -470,7 +736,7 @@ function doPost(e) {
           formattedPhone,
           finalAddress,
           body.items || body.itemsSummary || '',
-          body.total || body.totalAmount || 0,
+          totalAmount,
           paymentMethod,
           body.note || '',
           '1'
@@ -541,13 +807,13 @@ function doPost(e) {
           sheet.getRange(1, 1, newRows.length, newRows[0].length).setValues(newRows);
         }
 
-        return jsonOutput_({ success: true, message: `✅ Đã dọn dẹp thành công ${deletedCount} đơn hàng cũ!` });
+        return jsonOutput_({ success: true, message: `✅ Đã dọn dẹp ${deletedCount} đơn hàng cũ!` });
       }
 
       default:
         throw new Error('Loại dữ liệu không được hỗ trợ: ' + type);
     }
-    return jsonOutput_({ ok: true, type: type });
+    return jsonOutput_({ ok: true });
   } catch (err) {
     return jsonOutput_({ ok: false, error: String(err && err.message || err) });
   } finally {
@@ -691,7 +957,7 @@ function getOrCreateDataSheet_(name) {
 
 function upsertPayloadRow_(sheetName, payload, idField) {
   if (!payload || payload[idField] === undefined || payload[idField] === null || payload[idField] === '') {
-    throw new Error('Thiếu mã định danh (' + idField + ') cho ' + sheetName);
+    throw new Error('Thiếu định danh (' + idField + ') cho ' + sheetName);
   }
   const sh = getOrCreateDataSheet_(sheetName);
   const id = String(payload[idField]);

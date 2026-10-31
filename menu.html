@@ -1346,11 +1346,7 @@ function fetchCustomerDiamondBalance(phone) {
     fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`)
         .then(res => res.json())
         .then(data => {
-            // Lấy giá trị thô từ Google Sheets
-            let rawValue = (data && data.hatKim) ? parseInt(data.hatKim) : 0;
-            
-            // SỬA Ở ĐÂY: Áp dụng đúng chuẩn 1.000đ = 1 💎 (Chia cho 1000)
-            let balance = Math.round(rawValue / 1000);
+            let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
 
             if (displayEl) {
                 displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
@@ -1362,16 +1358,19 @@ function fetchCustomerDiamondBalance(phone) {
 }
 
 
+
 // Gọi hàm khởi chạy ngay khi trang tải xong
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(initDiamondBalanceCheck, 300);
 });
 
 
+// Hàm tính số 💎 tương ứng với giá tiền VND (Tỷ lệ chuẩn: 1.000đ = 1 💎)
 function formatDiamondPrice(vndPrice) {
-    let diamonds = (vndPrice / 1000) * 20;
+    let diamonds = Math.round(Number(vndPrice || 0) / 1000);
     return diamonds.toLocaleString('vi-VN') + ' 💎';
 }
+
 
 
 // Hàm tính số 💎 cần trả dựa trên giá tiền VND (Hệ số x20)

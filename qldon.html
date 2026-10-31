@@ -153,6 +153,13 @@
     let isFirstLoad = true;
     let continuousAlarmTimer = null;
 
+    // HÀM ĐỊNH DẠNG TIỀN TỆ SANG K (Ví dụ: 17000 -> 17k)
+    function formatMoneyK(amount) {
+      const num = Number(amount || 0);
+      if (num === 0) return '0đ';
+      return Math.round(num / 1000) + 'k';
+    }
+
     // HÀM ĐIỀU KHIỂN POPUP QR TÍCH ĐIỂM
     function toggleQrPopup(isOpen) {
       const popup = document.getElementById('qrPopupModal');
@@ -341,7 +348,7 @@
               if (!isFirstLoad) {
                 if ("Notification" in window && Notification.permission === "granted") {
                   new Notification(`🚨 ĐƠN MỚI #${orderId} - Kim Bling`, {
-                    body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${Number(order.total || 0).toLocaleString('vi-VN')}đ`,
+                    body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${formatMoneyK(order.total)}`,
                     icon: 'logo.jpg',
                     tag: orderId,
                     renotify: true
@@ -423,7 +430,7 @@
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
-                <div class="order-footer">${qrTagHtml}<span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span></div>
+                <div class="order-footer">${qrTagHtml}<span class="total-price">${formatMoneyK(order.total)}</span></div>
                 <div class="status-group">
                   <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
                   <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '2')">2. Chờ Shipper</button>
@@ -587,7 +594,7 @@
 
       return itemsArr.map((item, idx) => {
         const uniqueId = `item_row_${idx}_${Math.random().toString(36).substring(2, 6)}`;
-        const formattedPrice = Number(item.basePrice || 0).toLocaleString('vi-VN') + 'đ';
+        const formattedPrice = formatMoneyK(item.basePrice);
 
         return `
           <div class="pos-item-row" id="${uniqueId}" onclick="toggleItemRow('${uniqueId}')">
@@ -643,7 +650,6 @@
       try {
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
         
-        // ĐÃ SỬA CHUẨN TỶ LỆ: 1.000đ = 1 💎 (Ví dụ: Tổng 17.000đ -> 17 💎)
         const totalAmount = Number(orderObj.total || 0);
         const earnedDiamonds = Math.round(totalAmount / 1000);
 
@@ -653,7 +659,7 @@
           sourceOrderId: String(orderId),
           orderId: String(orderId),
           total: totalAmount,
-          diamonds: earnedDiamonds, // Gửi chuẩn số kim cương theo tỷ lệ 1k = 1 💎
+          diamonds: earnedDiamonds, 
           items: parsedCartItems,
           name: String(orderObj.name || 'Khách lẻ'),
           phone: String(orderObj.phone || '').replace(/'/g, '').trim(),
