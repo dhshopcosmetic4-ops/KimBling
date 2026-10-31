@@ -1280,6 +1280,67 @@
 
     <script>
 
+// Biến lưu trạng thái hiển thị hiện tại ('K' hoặc 'DIAMOND'). Mặc định là 'K'.
+let currentPriceMode = localStorage.getItem('kimbling_price_mode') || 'K';
+
+// Hàm xử lý khi bấm nút chuyển đổi chế độ
+function setPriceDisplayMode(mode) {
+    currentPriceMode = mode;
+    localStorage.setItem('kimbling_price_mode', mode);
+    
+    const btnK = document.getElementById('btnPriceModeK');
+    const btnDiamond = document.getElementById('btnPriceModeDiamond');
+    
+    if (mode === 'K') {
+        if (btnK) {
+            btnK.style.background = '#2196F3';
+            btnK.style.color = '#white';
+            btnK.style.border = 'none';
+        }
+        if (btnDiamond) {
+            btnDiamond.style.background = '#fff3e0';
+            btnDiamond.style.color = '#e65100';
+            btnDiamond.style.border = '1.5px solid #ff9800';
+        }
+    } else {
+        if (btnDiamond) {
+            btnDiamond.style.background = '#ff9800';
+            btnDiamond.style.color = '#white';
+            btnDiamond.style.border = 'none';
+        }
+        if (btnK) {
+            btnK.style.background = '#f0f0f0';
+            btnK.style.color = '#555';
+            btnK.style.border = '1px solid #ddd';
+        }
+    }
+    
+    // Gọi lại hàm vẽ menu và giỏ hàng để cập nhật ngay lập tức giao diện giá mới
+    renderMenu();
+    updateCartDisplay();
+}
+
+// Hàm dùng chung để lấy định dạng giá theo chế độ người dùng đang chọn
+
+function formatDynamicPrice(vndPrice) {
+    let priceNum = Number(vndPrice || 0);
+    if (currentPriceMode === 'DIAMOND') {
+        // Giá hiển thị trên món ăn nhân lên 20 lần (Ví dụ: 20k VND hiển thị là 400 💎)
+        let diamondsDisplay = Math.round((priceNum / 1000) * 20);
+        return diamondsDisplay.toLocaleString('vi-VN') + ' 💎';
+    } else {
+        // Mặc định hiển thị dạng K (Ví dụ: 20000đ -> 20k)
+        return Math.round(priceNum / 1000) + 'k';
+    }
+}
+
+
+// Khởi chạy kích hoạt màu sắc nút khi vừa tải trang xong
+window.addEventListener('DOMContentLoaded', () => {
+    setPriceDisplayMode(currentPriceMode);
+});
+
+
 // Lắng nghe sự kiện khi khách nhập đủ 4 số PIN của Túi 💎
 document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'customerDiamondPin') {
@@ -1864,7 +1925,7 @@ function formatDiamondPrice(vndPrice) {
             return 'MilkTea';
         }
 
-                function renderMenu() {
+                        function renderMenu() {
             const rawKw = document.getElementById('searchInput').value.trim();
             const kw = removeDiacritics(rawKw);
             const grid = document.getElementById('menuGrid');
@@ -1888,7 +1949,7 @@ function formatDiamondPrice(vndPrice) {
                     return `<div style="grid-column:1/-1; margin:4px 0; font-weight:bold; font-size:14px; color:#333; border-bottom:1px solid #ddd; padding-bottom:4px;">${icon} ${title}</div>` + visible.map(t => `
                         <div class="menu-item" style="cursor:default; padding:10px 8px;">
                             <h4 style="font-size:13px; min-height:auto;">${t.name}</h4>
-                            <div class="price" style="margin-top:4px; margin-bottom:0;">${Number(t.price || 0).toLocaleString('vi-VN')}đ</div>
+                            <div class="price" style="margin-top:4px; margin-bottom:0;">${formatDynamicPrice(t.price)}</div>
                         </div>`).join('');
                 };
                 grid.innerHTML = renderGroup('Topping Thức Uống', drinkToppings, '🥤') + renderGroup('Topping Ăn Vặt', snackToppings, '🍟');
@@ -1907,7 +1968,6 @@ function formatDiamondPrice(vndPrice) {
                 filteredMenu = menu.filter(item => {
                     const descNorm = removeDiacritics(getItemDescription(item.name));
                     
-                    // Sử dụng smartMatch để hỗ trợ tìm kiếm linh hoạt (xuôi, ngược, đảo từ, không dấu)
                     const matchKw = !kw || smartMatch(kw, item.name) || smartMatch(kw, descNorm);
                     
                     if (!matchKw) return false;
@@ -1953,17 +2013,16 @@ function formatDiamondPrice(vndPrice) {
                             <div class="item-desc" onclick="${clickAction}">${getItemDescription(item.name)}</div>
                         </div>
                         <div>
-                         <div class="price" style="display: flex; flex-direction: column; gap: 2px;">
-    <span>${formatPrice(item.price)}</span>
-    <span style="font-size: 11px; color: #ff9800; font-weight: bold;">hoặc ${formatDiamondPrice(item.price)}</span>
-</div>
-
+                            <div class="price" style="display: flex; flex-direction: column; gap: 2px;">
+                                <span>${formatDynamicPrice(item.price)}</span>
+                            </div>
                             ${btnActionHtml}
                         </div>
                     </div>
                 `;
             });
         }
+
 
 
         function openTiktokModal(index) {
@@ -2244,7 +2303,7 @@ function renderTiktokCard() {
             }
         }
 
-                function openOptionsModal(id) {
+                        function openOptionsModal(id) {
     document.body.classList.add('no-scroll');
     selectedProduct = menu.find(m => m.id === id);
     if (!selectedProduct) return;
@@ -2272,10 +2331,10 @@ function renderTiktokCard() {
     const sizeGroupEl = document.getElementById('sizeGroupContainer');
     if (sizeGroupEl) {
         sizeGroupEl.style.display = cannotUpsize ? 'none' : 'block';
-        // Hiển thị giá kim cương (+200 💎) cạnh Upsize 1 Lít (+10k)
+        // Hiển thị giá động cho tuỳ chọn Upsize 1 Lít (+10k hoặc quy đổi tương ứng)
         sizeGroupEl.querySelector('.option-list').innerHTML = `
             <label><input type="radio" name="sizeOption" value="Bình thường" checked onchange="updateModalTotal()"> Size bình thường</label>
-            <label><input type="radio" name="sizeOption" value="Upsize 1 Lít" onchange="updateModalTotal()"> Upsize 1 Lít (+10k / +200 💎)</label>
+            <label><input type="radio" name="sizeOption" value="Upsize 1 Lít" onchange="updateModalTotal()"> Upsize 1 Lít (${formatDynamicPrice(10000)})</label>
         `;
     }
 
@@ -2292,13 +2351,12 @@ function renderTiktokCard() {
         currentModalToppings[t.name] = 0;
         let safeKey = t.name.replace(/[^a-zA-Z0-9]/g, '_');
         
-        // Tính quy đổi Kim Cương cho từng Topping: (giá / 1000) * 20
-        let toppingDiamond = (t.price / 1000) * 20;
-        let diamondLabel = t.price > 0 ? ` / +${toppingDiamond.toLocaleString('vi-VN')} 💎` : '';
+        // Sử dụng formatDynamicPrice để tự động đổi qua lại giữa K và 💎 cho Topping
+        let priceExtraStr = t.price > 0 ? ` (+${formatDynamicPrice(t.price)})` : '';
 
         toppingListEl.innerHTML += `
             <div class="topping-item">
-                <span>${t.name} (+${formatPrice(t.price)}${diamondLabel})</span>
+                <span>${t.name}${priceExtraStr}</span>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <button type="button" class="topping-qty-btn" onclick="changeToppingQty('${t.name}', -1)">-</button>
                     <span id="top-qty-${safeKey}" style="font-weight:bold;">0</span>
@@ -2315,6 +2373,7 @@ function renderTiktokCard() {
     if (modalContent) modalContent.scrollTop = 0;
 }
 
+
 function updateModalTotal() {
     const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
     let price = selectedProduct.price;
@@ -2330,9 +2389,13 @@ function updateModalTotal() {
         }
     }
     
-    // Cập nhật tổng giá VND & Kim Cương khi chọn/bỏ chọn size và topping
-    document.getElementById('modalDishPrice').innerHTML = `${formatPrice(price)} <span style="font-size: 13px; color: #ff9800; font-weight: bold;">(hoặc ${formatDiamondPrice(price)})</span>`;
+        // Cập nhật giá động theo đúng chế độ người dùng đang chọn (K hoặc DIAMOND)
+    const priceDisplayEl = document.getElementById('modalDishPrice');
+    if (priceDisplayEl) {
+        priceDisplayEl.innerHTML = formatDynamicPrice(price);
+    }
 }
+
 
 // Hàm tăng giảm số lượng topping trong popup chọn món
 function changeToppingQty(toppingName, delta) {
@@ -2549,7 +2612,7 @@ function changeToppingQty(toppingName, delta) {
             updateCartDisplay();
         }
 
-                        function updateCartDisplay() {
+                                function updateCartDisplay() {
             let foodTotal = calculateFoodSubtotal();
             let shipFee = getShippingFee();
 
@@ -2557,14 +2620,13 @@ function changeToppingQty(toppingName, delta) {
             let discountAmount = discountValK * 1000;
 
             let grandTotal = Math.max(0, foodTotal + shipFee - discountAmount);
-            let grandTotalDiamonds = Math.round((grandTotal / 1000) * 20);
-            let foodTotalDiamonds = Math.round((foodTotal / 1000) * 20);
 
-            // Hiển thị Tiền món kèm Kim Cương
-            document.getElementById('foodSubtotal').innerHTML = `${formatPrice(foodTotal)} <span style="font-size: 12px; color: #ff9800; font-weight: bold;">(hoặc ${foodTotalDiamonds.toLocaleString('vi-VN')} 💎)</span>`;
+            // Hiển thị Tiền món tự động theo chế độ (K hoặc 💎)
+            document.getElementById('foodSubtotal').innerHTML = `${formatDynamicPrice(foodTotal)}`;
             document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
             
-            document.getElementById('checkoutTotalAmount').innerHTML = `${formatPrice(grandTotal)} <span style="font-size: 14px; color: #ff9800; font-weight: bold;">(hoặc ${grandTotalDiamonds.toLocaleString('vi-VN')} 💎)</span>`;
+            // Hiển thị Tổng cộng tự động theo chế độ (K hoặc 💎)
+            document.getElementById('checkoutTotalAmount').innerHTML = `${formatDynamicPrice(grandTotal)}`;
 
             const listEl = document.getElementById('checkoutList');
             listEl.innerHTML = '';
@@ -2574,13 +2636,12 @@ function changeToppingQty(toppingName, delta) {
             } else {
                 cart.forEach((item, index) => {
                     let sum = item.price * item.qty;
-                    let sumDiamonds = Math.round((sum / 1000) * 20);
                     
                     listEl.innerHTML += `
                         <div class="checkout-item-row">
                             <div style="flex:1; padding-right:6px;">
                                 <div style="font-weight:bold;">${item.name}</div>
-                                <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatPrice(sum)}</span> <span style="color:#ff9800; font-weight:bold;">(hoặc ${sumDiamonds.toLocaleString('vi-VN')} 💎)</span></div>
+                                <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatDynamicPrice(sum)}</span></div>
                             </div>
                             <div style="display:flex; align-items:center; gap:4px;">
                                 <button onclick="changeCartItemQty(${index}, -1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
@@ -2594,6 +2655,7 @@ function changeToppingQty(toppingName, delta) {
             }
             updatePaymentUI();
         }
+
 
 
         function changeCartItemQty(index, delta) {
@@ -3066,7 +3128,7 @@ async function processOrderSubmit() {
     if (!msg) return;
 
     const phone = document.getElementById('customerPhone').value.trim();
-    const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+    const payMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
     const payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
 
     let foodTotal = calculateFoodSubtotal();
@@ -3075,9 +3137,13 @@ async function processOrderSubmit() {
     const discountAmount = discountValK * 1000;
     let total = Math.max(0, foodTotal + shipFee - discountAmount);
 
-    // KIỂM TRA MÃ PIN VÀ SỐ DƯ KHI THANH TOÁN BẰNG TÚI 💎
+    // KIỂM TRA MÃ PIN VÀ SỐ DƯ KHI THANH TOÁN BẰNG TÚI 💎 (NHÂN 20 LẦN THEO GIÁ HIỂN THỊ)
+    let requiredDiamonds = 0;
     let customerPin = '';
+    
     if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+        requiredDiamonds = Math.round((total / 1000) * 20);
+
         const pinInput = document.getElementById('customerDiamondPin');
         customerPin = pinInput ? pinInput.value.trim() : '';
         if (!customerPin || customerPin.length !== 4) {
@@ -3087,28 +3153,29 @@ async function processOrderSubmit() {
         }
 
         let currentBalanceText = document.getElementById('mainDiamondDisplay').innerText;
-        let currentBalance = parseInt(currentBalanceText.replace(/[^0-9]/g, '')) || 0;
-        let requiredDiamonds = Math.round((total / 1000) * 20);
+        let currentBalance = parseInt(currentBalanceText.replace(/[^0-9]/g, ''), 10) || 0;
 
         if (currentBalance < requiredDiamonds) {
-            alert(`❌ Số dư Túi 💎 không đủ!\nĐơn hàng cần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${currentBalance.toLocaleString('vi-VN')} 💎.\nVui lòng chọn hình thức thanh toán khác hoặc nạp thêm kim cương.`);
+            alert(`❌ Số dư Túi 💎 không đủ!\nĐơn hàng cần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${currentBalance.toLocaleString('vi-VN')} 💎.\nVui lòng chọn hình thức thanh toán khác.`);
             return;
         }
     }
 
     const btnSubmit = document.getElementById('btnSubmitOrder');
-    btnSubmit.innerText = "⏳ Đang gửi đơn...";
-    btnSubmit.disabled = true;
-    btnSubmit.classList.remove('pulse-attention');
+    if (btnSubmit) {
+        btnSubmit.innerText = "⏳ Đang gửi đơn...";
+        btnSubmit.disabled = true;
+        btnSubmit.classList.remove('pulse-attention');
+    }
 
     const name = document.getElementById('customerName').value.trim();
     const orderType = document.querySelector('input[name="orderType"]:checked').value;
     const address = document.getElementById('customerAddress').value.trim();
     const note = document.getElementById('customerNote').value.trim();
     const orderId = 'KB' + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
-    
+
     const itemsSummary = cart.map(item => {
-        const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()})` : '';
+        const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()}) ` : '';
         return `${item.name}${options} x${item.qty} = ${Number(item.price * item.qty).toLocaleString('vi-VN')}đ`;
     }).join(' | ');
 
@@ -3124,15 +3191,15 @@ async function processOrderSubmit() {
         customerAddress: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
         address: orderType === 'Tự ra lấy' ? 'Khách đến quán lấy' : address,
         items: itemsSummary,
-        itemsSummary: itemsSummary,
+        itemssummary: itemsSummary,
         total: total,
         totalAmount: total,
         payment: payMethod,
         paymentMethod: payMethod,
         payMethod: payMethod,
         customerPin: customerPin,
-        note: note + (discountAmount > 0 ? ` | Giảm giá: ${discountAmount.toLocaleString('vi-VN')}đ` : '') +
-            ` | Tiền món: ${foodTotal.toLocaleString('vi-VN')}đ | Phí ship: ${shipFee.toLocaleString('vi-VN')}đ`,
+        requiredDiamonds: requiredDiamonds,
+        note: note + (discountAmount > 0 ? ` | Giảm giá: ${discountAmount.toLocaleString('vi-VN')}đ` : '') + ` | Tiền món: ${foodTotal.toLocaleString('vi-VN')}đ | Phí ship: ${shipFee.toLocaleString('vi-VN')}đ`,
         discountAmount: discountAmount,
         foodTotal: foodTotal,
         shippingFee: shipFee
@@ -3141,7 +3208,7 @@ async function processOrderSubmit() {
     let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
     let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
-    // 1. GỬI NGẦM LÊN GOOGLE SHEETS (KHÔNG CHỜ PHẢN HỒI ĐỂ TRÁNH BỊ KẸT MẠNG)
+    // 1. GỬI NGẦM LÊN GOOGLE SHEETS
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -3435,16 +3502,27 @@ function closeSuccessOrderPopup() {
             }
         });
 
+                let searchTimer = null;
+
         function handleSearchInput() {
             const input = document.getElementById('searchInput');
             const clearBtn = document.getElementById('searchClearBtn');
+            
             if (input.value.trim().length > 0) {
                 clearBtn.style.display = 'flex';
             } else {
                 clearBtn.style.display = 'none';
             }
-            renderMenu();
+
+            // Hủy lịch hẹn tìm kiếm trước đó nếu khách vẫn đang gõ liên tục
+            clearTimeout(searchTimer);
+
+            // Chỉ thực thi tìm kiếm sau khi khách đã dừng gõ khoảng 600 mili-giây
+            searchTimer = setTimeout(() => {
+                renderMenu();
+            }, 600);
         }
+
 
         function clearSearchInput() {
             const input = document.getElementById('searchInput');
