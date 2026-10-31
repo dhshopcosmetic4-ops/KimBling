@@ -12,11 +12,7 @@
     h2 { text-align: center; margin-top: 0; color: #0a84ff; font-size: 20px; }
     label { font-size: 13px; color: #8e8e93; display: block; margin-top: 10px; }
     input { width: 100%; padding: 12px; font-size: 18px; border-radius: 10px; border: 1px solid #3a3a3c; background: #1c1c1e; color: #fff; text-align: center; margin-top: 4px; outline: none; }
-    
-    /* Bàn phím số */
-    .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-    .num-btn { background: #3a3a3c; border: none; color: #fff; font-size: 20px; font-weight: bold; padding: 12px; border-radius: 10px; cursor: pointer; }
-    .num-btn:active { background: #48484a; }
+    input:focus { border-color: #0a84ff; }
     
     .btn-create { width: 100%; padding: 14px; background: #30d158; color: #fff; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; }
     .btn-manage { width: 100%; padding: 12px; background: #ff9f0a; color: #fff; font-size: 15px; font-weight: bold; border: none; border-radius: 10px; margin-top: 10px; cursor: pointer; }
@@ -49,22 +45,7 @@
     <h2>TẠO MÃ TÍCH ĐIỂM</h2>
 
     <label>SỐ ĐIỆN THOẠI KHÁCH (Bỏ trống nếu để khách tự nhập):</label>
-    <input type="tel" id="sdt" placeholder="Chưa nhập SĐT" readonly>
-
-    <div class="numpad">
-      <button class="num-btn" onclick="pressNum('1')">1</button>
-      <button class="num-btn" onclick="pressNum('2')">2</button>
-      <button class="num-btn" onclick="pressNum('3')">3</button>
-      <button class="num-btn" onclick="pressNum('4')">4</button>
-      <button class="num-btn" onclick="pressNum('5')">5</button>
-      <button class="num-btn" onclick="pressNum('6')">6</button>
-      <button class="num-btn" onclick="pressNum('7')">7</button>
-      <button class="num-btn" onclick="pressNum('8')">8</button>
-      <button class="num-btn" onclick="pressNum('9')">9</button>
-      <button class="num-btn" style="background:#ff453a;" onclick="clearNum()">Xóa</button>
-      <button class="num-btn" onclick="pressNum('0')">0</button>
-      <button class="num-btn" style="background:#ff9f0a;" onclick="backspaceNum()">⌫</button>
-    </div>
+    <input type="tel" id="sdt" placeholder="Nhập số điện thoại khách..." inputmode="numeric" pattern="[0-9]*" onblur="normalizePhoneInput()">
 
     <label>SỐ LƯỢNG MÓN MUA (Tính cả đồ ăn & thức uống):</label>
     <input type="number" id="ly" value="2" min="1" style="font-size:22px; font-weight:bold; color:#0a84ff;">
@@ -83,7 +64,7 @@
       
       <!-- Ô tìm kiếm SĐT nhanh -->
       <div class="search-customer-box">
-        <input type="tel" id="searchCustomerInput" placeholder="🔍 Tìm nhanh theo số điện thoại..." oninput="renderLeaderboard()" style="font-size: 14px; padding: 10px;">
+        <input type="tel" id="searchCustomerInput" placeholder="🔍 Tìm nhanh theo số điện thoại..." inputmode="numeric" pattern="[0-9]*" oninput="renderLeaderboard()" style="font-size: 14px; padding: 10px;">
       </div>
 
       <!-- Bộ lọc -->
@@ -124,14 +105,18 @@
     let currentFilter = 'all';
     let selectedCustomerSDT = "";
 
-    function pressNum(num) { document.getElementById('sdt').value += num; }
-    function clearNum() { document.getElementById('sdt').value = ''; }
-    function backspaceNum() {
-      let v = document.getElementById('sdt').value;
-      document.getElementById('sdt').value = v.substring(0, v.length - 1);
+    // Hàm chuẩn hóa SĐT: Giữ chắc chắn số 0 ở đầu, chống bị Google Sheets hoặc trình duyệt cắt mất
+    function normalizePhoneInput() {
+      let inputEl = document.getElementById('sdt');
+      let cleaned = inputEl.value.replace(/\D/g, ""); // Chỉ giữ lại ký tự số
+      if (cleaned.length > 0 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned; // Tự động thêm số 0 ở đầu nếu người dùng quên gõ
+      }
+      inputEl.value = cleaned;
     }
 
     function generateQR() {
+      normalizePhoneInput();
       const sdt = document.getElementById('sdt').value.trim();
       const ly = document.getElementById('ly').value.trim();
       const noteEl = document.getElementById('note-text');

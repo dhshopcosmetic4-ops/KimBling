@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Túi 💎</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 15px; background: #fff; color: #333; }
+        h3 { margin-top: 0; color: #e65100; font-size: 17px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #fff3e0; padding-bottom: 8px; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        input[type="text"] { flex: 1; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        input[type="text"]:focus { border-color: #ff9800; }
+        button { background: #e65100; color: white; border: none; padding: 0 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 5px rgba(230,81,0,0.3); }
+        .result-box { display: none; background: #fff8e1; border: 1.5px solid #ffe082; padding: 14px; border-radius: 10px; font-size: 13px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .row span { color: #666; }
+        .pin-box { border-top: 1px dashed #ffb74d; padding-top: 10px; margin-top: 10px; }
+        .btn-green { background: #2e7d32; padding: 8px; border-radius: 6px; font-size: 12px; flex: 1; box-shadow: 0 2px 5px rgba(46,125,50,0.3); }
+    </style>
+</head>
+<body>
+
+    <h3><span>💎</span> Quản Lý Túi Thần Tài & PIN</h3>
+    
+    <!-- Ô tìm kiếm SĐT (Chỉ cho nhập số, tự động bật bàn phím số trên mobile) -->
+    <div class="search-box">
+        <input type="tel" id="adminSearchPhone" placeholder="Nhập SĐT khách (VD: 086...)" inputmode="numeric" pattern="[0-9]*" style="flex: 1; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none;" onkeydown="if(event.key==='Enter') adminLookupCustomerWallet()">
+        <button onclick="adminLookupCustomerWallet()">Tra cứu</button>
+    </div>
+    
+    <!-- Kết quả tra cứu -->
+    <div id="adminWalletResultBox" class="result-box">
+        <div class="row"><span>Số điện thoại:</span> <b id="adminResPhone">---</b></div>
+        <div class="row"><span>Số dư Túi 💎:</span> <b id="adminResHatKim" style="color: #d32f2f; font-size: 15px;">0 💎</b></div>
+        <div class="row" style="align-items: center;"><span>Mã PIN hiện tại:</span> <b id="adminResPin" style="color: #1565c0; font-size: 15px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">---</b></div>
+        
+        <div class="pin-box">
+            <div style="font-weight: bold; color: #e65100; margin-bottom: 6px; font-size: 12px;">Cấp lại mã PIN mới cho khách:</div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="adminNewPinInput" maxlength="4" placeholder="PIN 4 số" inputmode="numeric" pattern="[0-9]*" style="width: 110px; text-align: center; font-weight: bold; letter-spacing: 2px;">
+                <button class="btn-green" onclick="adminResetCustomerPin()">Cập nhật PIN mới</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "URL_GOOGLE_SCRIPT_CỦA_ANH"; // Thay bằng link Web App thực tế
+let currentSearchedPhone = "";
+
+// Hàm chuẩn hóa SĐT: Ép buộc luôn giữ số 0 ở đầu, chặn lỗi Google Sheet cắt số 0
+function normalizePhoneNumber(rawPhone) {
+    if (!rawPhone) return "";
+    let cleaned = rawPhone.replace(/\D/g, ""); // Chỉ lấy số, xóa khoảng trắng và ký tự lạ
+    if (cleaned.length > 0 && !cleaned.startsWith("0")) {
+        cleaned = "0" + cleaned; // Nếu thiếu số 0 ở đầu thì tự động bù vào
+    }
+    return cleaned;
+}
+
+async function adminLookupCustomerWallet() {
+    let rawInput = document.getElementById('adminSearchPhone').value.trim();
+    let phone = normalizePhoneNumber(rawInput);
+    
+    if (!phone || phone.length < 9) {
+        alert("Vui lòng nhập số điện thoại hợp lệ!");
+        return;
+    }
+    
+    // Gán lại ô input giá trị đã chuẩn hóa để chủ quán thấy rõ số 0 ở đầu
+    document.getElementById('adminSearchPhone').value = phone;
+    currentSearchedPhone = phone;
+
+    try {
+        let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
+        let data = await res.json();
+
+        document.getElementById('adminResPhone').innerText = phone;
+        document.getElementById('adminResHatKim').innerText = parseInt(data.hatKim || 0).toLocaleString('vi-VN') + " 💎";
+        document.getElementById('adminResPin').innerText = data.pin || "Chưa tạo";
+        
+        document.getElementById('adminWalletResultBox').style.display = 'block';
+    } catch (e) {
+        console.log("Lỗi tra cứu quản lý", e);
+        alert("Không thể kết nối đến hệ thống!");
+    }
+}
+
+async function adminResetCustomerPin() {
+    let newPin = document.getElementById('adminNewPinInput').value.trim();
+    if (!currentSearchedPhone || newPin.length !== 4) {
+        alert("Vui lòng tra cứu SĐT khách và nhập đúng mã PIN mới gồm 4 chữ số!");
+        return;
+    }
+
+    if (!confirm(`Đổi mã PIN thành [${newPin}] cho số ${currentSearchedPhone}?`)) return;
+
+    try {
+        let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminUpdatePin&phone=${encodeURIComponent(currentSearchedPhone)}&pin=${encodeURIComponent(newPin)}`);
+        let data = await res.json();
+        
+        if (data.status === "SUCCESS") {
+            alert("Đã cập nhật mã PIN mới thành công!");
+            document.getElementById('adminResPin').innerText = newPin;
+            document.getElementById('adminNewPinInput').value = "";
+        } else {
+            alert("Lỗi: " + (data.message || "Không thể cập nhật"));
+        }
+    } catch (e) {
+        console.log("Lỗi cập nhật PIN", e);
+        alert("Lỗi kết nối khi cập nhật mã PIN!");
+    }
+}
+</script>
+</body>
+</html>

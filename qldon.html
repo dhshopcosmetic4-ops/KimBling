@@ -62,7 +62,7 @@
     .btn-map-route:hover { background:#0369a1; }
     .btn-edit-addr { background:#0284c7; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:11px; cursor:pointer; margin-left:6px; font-weight:bold; }
 
-    /* CSS CHO POPUP TẠO QR TÍCH ĐIỂM */
+    /* CSS CHO CÁC POPUP DÙNG CHUNG */
     .qr-popup-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
@@ -102,7 +102,12 @@
         <span id="orderCount" style="font-size:13px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
       <div class="header-btns">
+        <!-- Nút 1: Tạo QR Tích Điểm -->
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Tạo QR Tích Điểm</button>
+        
+        <!-- Nút 2: Quản Lý Túi 💎 (Gọi file tuikimcuong.html cùng cấp) -->
+        <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Quản Lý Túi 💎</button>
+
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Nền & Chuông</button>
         <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders();">🔄 Tải lại</button>
       </div>
@@ -110,7 +115,7 @@
     <div id="ordersContainer"><div class="empty-state">Đang tải dữ liệu đơn hàng...</div></div>
   </div>
 
-  <!-- POPUP NHÚNG TRANG QRTICHDIEM.HTML -->
+  <!-- POPUP 1: NHÚNG TRANG QRTICHDIEM.HTML -->
   <div id="qrPopupModal" class="qr-popup-overlay">
     <div class="qr-popup-container">
       <div class="qr-popup-header">
@@ -119,6 +124,19 @@
       </div>
       <div class="qr-popup-body">
         <iframe id="qrIframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 2: NHÚNG TRANG TUIKIMCUONG.HTML CÙNG CẤP -->
+  <div id="hatKimPopupModal" class="qr-popup-overlay">
+    <div class="qr-popup-container" style="border-color: #ff9800;">
+      <div class="qr-popup-header" style="background: #2c1810; border-bottom: 1px solid #ff9800;">
+        <span class="qr-popup-title" style="color: #ff9800;">💎 Quản Lý Túi Thần Tài & Mã PIN</span>
+        <button class="qr-close-btn" onclick="toggleHatKimPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body">
+        <iframe id="hatKimIframe" src=""></iframe>
       </div>
     </div>
   </div>
@@ -135,13 +153,27 @@
     let isFirstLoad = true;
     let continuousAlarmTimer = null;
 
-    // HÀM ĐIỀU KHIỂN MỞ / ĐÓNG POPUP TẠO QR TÍCH ĐIỂM
+    // HÀM ĐIỀU KHIỂN POPUP QR TÍCH ĐIỂM
     function toggleQrPopup(isOpen) {
       const popup = document.getElementById('qrPopupModal');
       const iframe = document.getElementById('qrIframe');
       if (isOpen) {
-        if (!iframe.src || iframe.src === window.location.href) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
           iframe.src = 'qrtichdiem.html';
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+      }
+    }
+
+    // HÀM ĐIỀU KHIỂN POPUP QUẢN LÝ TÚI 💎 (TUIKIMCUONG.HTML CÙNG CẤP)
+    function toggleHatKimPopup(isOpen) {
+      const popup = document.getElementById('hatKimPopupModal');
+      const iframe = document.getElementById('hatKimIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'tuikimcuong.html';
         }
         popup.classList.add('active');
       } else {
@@ -328,7 +360,6 @@
 
           isFirstLoad = false;
 
-          // Chống load lại giao diện khi danh sách đơn không đổi
           if (currentDataSignature === lastRenderedDataSignature) {
             return;
           }
@@ -608,7 +639,7 @@
       const originalText = button ? button.textContent : '';
       if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
       
-      isFetchingOrders = true; // Khóa quét ngầm
+      isFetchingOrders = true; 
       try {
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
         const payload = {
@@ -657,7 +688,7 @@
       }
 
       stopContinuousAlarm();
-      isFetchingOrders = true; // Khóa quét ngầm chống nhảy lùi
+      isFetchingOrders = true; 
 
       fetch(SCRIPT_URL, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -676,7 +707,7 @@
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
       if (!pin) return;
 
-      isFetchingOrders = true; // Khóa quét ngầm
+      isFetchingOrders = true; 
       fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
         .then(res => res.json())
         .then(res => { 

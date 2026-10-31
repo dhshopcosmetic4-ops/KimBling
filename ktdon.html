@@ -35,17 +35,33 @@
       background: var(--primary); color: #000; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
     }
 
+    /* 1. THẺ THÀNH VIÊN TÍCH ĐIỂM (CŨ) */
     .loyalty-card {
       background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 2px solid #34c759;
       border-radius: 14px;
       padding: 14px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       box-shadow: 0 4px 12px rgba(52, 199, 89, 0.2);
     }
     .loyalty-title { font-size: 13px; font-weight: bold; color: #34c759; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
     .loyalty-stats { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
     .loyalty-badge { background: #34c759; color: #000; font-weight: bold; padding: 4px 10px; border-radius: 8px; font-size: 15px; }
+
+    /* 2. Ô THÔNG TIN MỚI: TÚI 💎 TÍCH LŨY */
+    .diamond-box {
+      background: linear-gradient(135deg, #2c1810, #1e293b);
+      border: 1.5px solid #ff9800;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .diamond-title { font-size: 13px; font-weight: bold; color: #ff9800; display: flex; align-items: center; gap: 6px; }
+    .diamond-balance { font-size: 17px; font-weight: bold; color: #ff4d4d; background: #0f172a; padding: 4px 10px; border-radius: 8px; border: 1px solid #ff9800; }
 
     .step-animation-banner {
       background: #0f172a; border: 1.5px solid var(--primary); border-radius: 10px; padding: 10px; text-align: center; margin: 10px 0; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -155,7 +171,7 @@
 
     <div class="search-box">
       <div class="search-group">
-        <input type="tel" id="phoneInput" class="search-input" placeholder="Nhập số điện thoại của bạn..." maxlength="11">
+        <input type="tel" id="phoneInput" class="search-input" placeholder="Nhập số điện thoại của bạn..." maxlength="11" onkeydown="if(event.key==='Enter') searchAll(true)">
         <button class="search-btn" onclick="searchAll(true)">🔍 Tra cứu</button>
       </div>
     </div>
@@ -216,11 +232,12 @@
       resultArea.innerHTML = '<div class="empty-state">Đang tra cứu dữ liệu đơn hàng và điểm tích lũy...</div>';
 
       Promise.all([
-        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${phone}`).then(res => res.json()).catch(() => ({ success: false })),
-        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' }))
+        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
+        fetch(`${SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
       ])
-      .then(([orderData, pointData]) => {
-        renderCombinedResult(orderData, pointData, phone);
+      .then(([orderData, pointData, walletData]) => {
+        renderCombinedResult(orderData, pointData, walletData, phone);
         if (!autoRefreshTimer) {
           autoRefreshTimer = setInterval(() => { silentRefresh(); }, 15000);
         }
@@ -234,18 +251,20 @@
     function silentRefresh() {
       if (!currentSearchedPhone) return;
       Promise.all([
-        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${currentSearchedPhone}`).then(res => res.json()).catch(() => ({ success: false })),
-        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' }))
+        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
+        fetch(`${SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
       ])
-      .then(([orderData, pointData]) => {
-        renderCombinedResult(orderData, pointData, currentSearchedPhone);
+      .then(([orderData, pointData, walletData]) => {
+        renderCombinedResult(orderData, pointData, walletData, currentSearchedPhone);
       });
     }
 
-    function renderCombinedResult(orderData, pointData, phone) {
+    function renderCombinedResult(orderData, pointData, walletData, phone) {
       const resultArea = document.getElementById('resultArea');
       let html = '';
 
+      // Dữ liệu điểm ly tích lũy cũ
       let totalPoints = 0;
       let rewards = 0;
       let nextLy = 10;
@@ -255,6 +274,10 @@
         nextLy = pointData.nextReward || 10;
       }
 
+      // Dữ liệu Túi 💎 tích lũy mới
+      let hatKimBalance = (walletData && walletData.hatKim) ? parseInt(walletData.hatKim) : 0;
+
+      // 1. Thẻ thành viên cũ
       html += `
         <div class="loyalty-card">
           <div class="loyalty-title">
@@ -276,6 +299,18 @@
           <button onclick="openCustomerPointHistory('${phone}')" style="width: 100%; margin-top: 10px; background: rgba(52, 199, 89, 0.15); border: 1px solid #34c759; color: #34c759; padding: 6px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">
             📜 Xem lịch sử tích điểm & đổi quà chi tiết
           </button>
+        </div>
+      `;
+
+      // 2. Ô THÔNG TIN MỚI: TÚI 💎 TÍCH LŨY
+      html += `
+        <div class="diamond-box">
+          <div class="diamond-title">
+            <span>💎 TÚI 💎 TÍCH LŨY:</span>
+          </div>
+          <div class="diamond-balance">
+            ${hatKimBalance.toLocaleString('vi-VN')} 💎
+          </div>
         </div>
       `;
 
