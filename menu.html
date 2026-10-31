@@ -1341,10 +1341,30 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// Lắng nghe sự kiện khi khách nhập đủ 4 số PIN của Túi 💎
+// Biến lưu trạng thái xác thực PIN tạm thời trong phiên (không lưu vào localStorage)
+let isDiamondPinVerified = false;
+
+// Lắng nghe sự kiện khi khách nhập mã PIN
 document.addEventListener('input', function(e) {
     if (e.target && e.target.id === 'customerDiamondPin') {
         const pinVal = e.target.value.trim();
+        const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+        const payMethod = payMethodRadio ? payMethodRadio.value : '';
+        const isDiamond = (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương');
+
+        if (!isDiamond) return;
+
+        // Nếu chưa đủ 4 số thì ẩn nút đặt hàng
+        if (pinVal.length < 4) {
+            isDiamondPinVerified = false;
+            const btnSubmit = document.getElementById('btnSubmitOrder');
+            if (btnSubmit) btnSubmit.style.display = 'none';
+            let noticeBox = document.getElementById('pinSuccessNotice');
+            if (noticeBox) noticeBox.remove();
+            return;
+        }
+
+        // Khi gõ đủ 4 số -> tiến hành kiểm tra
         if (pinVal.length === 4) {
             verifyCustomerPinLive(pinVal);
         }
@@ -1353,9 +1373,13 @@ document.addEventListener('input', function(e) {
 
 async function verifyCustomerPinLive(pin) {
     const phone = document.getElementById('customerPhone').value.trim();
+    const pinInput = document.getElementById('customerDiamondPin');
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+
     if (!phone || phone.length < 9) {
         alert("Vui lòng nhập số điện thoại trước khi nhập mã PIN Túi 💎!");
         document.getElementById('customerPhone').focus();
+        if (pinInput) pinInput.value = '';
         return;
     }
 
@@ -1363,11 +1387,49 @@ async function verifyCustomerPinLive(pin) {
         let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
         let data = await res.json();
         
-        let serverPin = String(data.pin || '1234'); // Mặc định 1234 nếu chưa cấu hình
-        let balance = (data && data.hatKim) ? parseInt(data.hatKim) : 0;
+        let serverPin = String(data.pin || '').trim(); 
+        let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
+
+        // Chỉ tính tiền món cho Túi Kim Cương (không bao gồm ship)
+        let foodTotal = calculateFoodSubtotal();
+        let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
+        let foodTotalAfterDiscount = Math.max(0, foodTotal - (discountValK * 1000));
+        let requiredDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20); // Hệ số x20 giá trị tiền món
+
+        // Xử lý trường hợp tài khoản có số dư nhưng CHƯA CÓ MÃ PIN (Cột PIN để trống)
+        let createPinBtn = document.getElementById('btnCreateNewPin');
+        if (!serverPin) {
+            if (!createPinBtn) {
+                createPinBtn = document.createElement('button');
+                createPinBtn.id = 'btnCreateNewPin';
+                createPinBtn.type = 'button';
+                createPinBtn.style.cssText = 'width: 100%; background: #ff9800; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer;';
+                createPinBtn.innerText = '🔑 Tạo mã PIN mới cho tài khoản';
+                createPinBtn.onclick = () => createNewCustomerPin(phone, pin);
+                document.getElementById('diamondPinBox').appendChild(createPinBtn);
+            } else {
+                createPinBtn.style.display = 'block';
+            }
+            alert("⚠️ Tài khoản của bạn chưa có mã PIN. Vui lòng bấm nút 'Tạo mã PIN mới' vừa xuất hiện bên dưới ô nhập!");
+            if (btnSubmit) btnSubmit.style.display = 'none';
+            return;
+        } else {
+            if (createPinBtn) createPinBtn.style.display = 'none';
+        }
 
         if (pin === serverPin) {
-            // Hiển thị thông báo thành công kèm số kim cương khách có
+            if (balance < requiredDiamonds) {
+                alert(`❌ Số dư Túi 💎 không đủ!\nCần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 cho tiền món nhưng bạn chỉ có ${balance.toLocaleString('vi-VN')} 💎.`);
+                if (pinInput) pinInput.value = '';
+                return;
+            }
+
+            // ĐÚNG PIN: Khóa cứng ô input lại không cho xóa/sửa, không lưu localStorage
+            isDiamondPinVerified = true;
+            if (pinInput) {
+                pinInput.disabled = true; 
+            }
+
             let noticeBox = document.getElementById('pinSuccessNotice');
             if (!noticeBox) {
                 noticeBox = document.createElement('div');
@@ -1375,21 +1437,56 @@ async function verifyCustomerPinLive(pin) {
                 noticeBox.style.cssText = 'background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 6px; text-align: center;';
                 document.getElementById('diamondPinBox').appendChild(noticeBox);
             }
-            noticeBox.innerHTML = `✅ Nhập mã PIN thành công! Bạn hãy tiến hành đặt hàng bằng <b>${balance.toLocaleString('vi-VN')} 💎</b> hiện có trong túi.`;
             
-            // Đổi text nút đặt hàng trực quan hơn
-            const btnSubmit = document.getElementById('btnSubmitOrder');
+            // Thông báo số 💎 khách có và số 💎 thanh toán tiền món (không gồm ship)
+            noticeBox.innerHTML = `✅ Xác thực PIN thành công!<br>💎 Ví của bạn có: <b>${balance.toLocaleString('vi-VN')} 💎</b><br>🛒 Thanh toán tiền món: <b>${requiredDiamonds.toLocaleString('vi-VN')} 💎</b> (Chưa gồm ship).`;
+            
+            // HIỆN NÚT BẮT ĐẦU THANH TOÁN
             if(btnSubmit) {
-                btnSubmit.innerHTML = `🚀 ĐẶT HÀNG NGAY BẰNG TÚI 💎<br><span style="font-size: 11px; font-weight: normal;">(Trừ trực tiếp vào ví kim cương của bạn)</span>`;
+                btnSubmit.style.display = 'block';
+                btnSubmit.disabled = false;
+                btnSubmit.classList.add('pulse-attention');
+                btnSubmit.innerHTML = `🚀 XÁC NHẬN TRỪ ${requiredDiamonds.toLocaleString('vi-VN')} 💎 NGAY`;
             }
         } else {
-            alert("❌ Mã PIN Túi 💎 không chính xác! Vui lòng kiểm tra lại.");
-            e.target.value = '';
+            alert("❌ Mã PIN 4 số không chính xác! Vui lòng nhập lại.");
+            if (pinInput) pinInput.value = '';
+            if (btnSubmit) btnSubmit.style.display = 'none';
         }
     } catch (err) {
         console.error("Lỗi xác thực PIN:", err);
     }
 }
+
+// Hàm hỗ trợ tạo mã PIN mới cho tài khoản số mới đã có 💎 nhưng chưa có PIN
+async function createNewCustomerPin(phone, pin) {
+    if (!pin || pin.length !== 4) {
+        alert("Vui lòng nhập đúng 4 số vào ô PIN trước khi bấm tạo!");
+        return;
+    }
+
+    try {
+        let res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({ type: 'updateHatKim', phone: phone, pin: pin, amount: 0 })
+        });
+        
+        alert("✅ Tạo mã PIN thành công! Vui lòng nhập lại 4 số PIN vừa tạo vào ô bên trên để xác thực thanh toán.");
+        const createPinBtn = document.getElementById('btnCreateNewPin');
+        if (createPinBtn) createPinBtn.style.display = 'none';
+        
+        const pinInput = document.getElementById('customerDiamondPin');
+        if (pinInput) {
+            pinInput.value = '';
+            pinInput.focus();
+        }
+    } catch (e) {
+        alert("Không thể tạo mã PIN. Vui lòng thử lại.");
+    }
+}
+
 
 
 // Hàm tự động tải SĐT cũ và tra cứu số dư 💎 khi load trang
@@ -2472,10 +2569,11 @@ function changeToppingQty(toppingName, delta) {
         }
 
         function renderCartBar() {
-            let total = 0, count = 0;
-            cart.forEach(i => { total += i.price * i.qty; count += i.qty; });
-            document.getElementById('cartCount').innerText = count + " món";
-            document.getElementById('cartTotal').innerText = formatPrice(total);
+    let total = 0, count = 0;
+    cart.forEach(i => { total += i.price * i.qty; count += i.qty; });
+    document.getElementById('cartCount').innerText = count + " món";
+    // Đổi thành formatDynamicPrice để tự động đổi qua lại giữa K và 💎 chuẩn xác
+    document.getElementById('cartTotal').innerHTML = formatDynamicPrice(total);
 
             const btnViewCart = document.querySelector('.btn-view-cart');
             if (btnViewCart) {
@@ -2680,6 +2778,7 @@ function changeToppingQty(toppingName, delta) {
         }
 
         // Hàm cập nhật trạng thái hiển thị ô PIN và nút Đặt hàng theo hình thức thanh toán
+
 function updatePaymentUI() {
     updateSubmitButtonText();
     const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
@@ -2692,21 +2791,32 @@ function updatePaymentUI() {
 
     if (pinBox) {
         pinBox.style.display = isDiamond ? 'block' : 'none';
+        
+        // TỰ ĐỘNG CHÈN NÚT TẠO MÃ PIN VÀO KHUNG NẾU CHƯA CÓ
+        let existingCreateBtn = document.getElementById('btnCreateNewPin');
+        if (isDiamond && !existingCreateBtn) {
+            let createBtn = document.createElement('button');
+            createBtn.id = 'btnCreateNewPin';
+            createBtn.type = 'button';
+            createBtn.style.cssText = 'width: 100%; background: #ff9800; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer; font-size: 13px;';
+            createBtn.innerText = '🔑 Tạo / Đổi mã PIN 4 số cho Túi 💎';
+            createBtn.onclick = () => triggerCreatePinFromUI();
+            pinBox.appendChild(createBtn);
+        } else if (!isDiamond && existingCreateBtn) {
+            existingCreateBtn.remove();
+        }
     }
 
     if (isDiamond) {
-        // Nếu chọn thanh toán bằng Túi 💎 mà chưa xác thực PIN thành công thì ẩn/khóa nút đặt hàng
-        const isVerified = pinInput && pinInput.getAttribute('data-verified') === 'true';
-        if (!isVerified && btnSubmit) {
-            btnSubmit.style.display = 'none'; // Ẩn nút đặt hàng
+        if (!isDiamondPinVerified && btnSubmit) {
+            btnSubmit.style.display = 'none'; // Ẩn nút đặt hàng cho đến khi nhập đúng PIN
         }
     } else {
-        // Nếu chọn Tiền mặt hoặc Chuyển khoản thì hiển thị lại nút đặt hàng bình thường và reset trạng thái PIN
         if (pinInput) {
             pinInput.value = '';
             pinInput.disabled = false;
-            pinInput.removeAttribute('data-verified');
         }
+        isDiamondPinVerified = false;
         let noticeBox = document.getElementById('pinSuccessNotice');
         if (noticeBox) noticeBox.remove();
 
@@ -2718,6 +2828,42 @@ function updatePaymentUI() {
     }
     document.getElementById('transferBox').style.display = 'none';
 }
+
+// Hàm hỗ trợ bấm nút tạo hoặc đổi mã PIN trực tiếp từ giao diện thanh toán
+async function triggerCreatePinFromUI() {
+    const phone = document.getElementById('customerPhone').value.trim();
+    const pinInput = document.getElementById('customerDiamondPin');
+    const pinVal = pinInput ? pinInput.value.trim() : '';
+
+    if (!phone || phone.length < 9) {
+        alert("⚠️ Vui lòng nhập số điện thoại khách hàng ở bên trên trước!");
+        document.getElementById('customerPhone').focus();
+        return;
+    }
+
+    if (!pinVal || pinVal.length !== 4) {
+        alert("⚠️ Vui lòng nhập đúng 4 chữ số vào ô 'Nhập PIN 4 số' bên trên để làm mã PIN mới!");
+        if (pinInput) pinInput.focus();
+        return;
+    }
+
+    try {
+        let res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({ type: 'updateHatKim', phone: phone, pin: pinVal, amount: 0 })
+        });
+        
+        alert(`✅ Đã tạo/cập nhật mã PIN thành công cho SĐT ${phone}!\nBây giờ bạn hãy nhập lại 4 số PIN vừa tạo vào ô bên trên để xác thực thanh toán.`);
+        pinInput.value = '';
+        pinInput.focus();
+    } catch (e) {
+        alert("Lỗi kết nối khi tạo mã PIN. Vui lòng thử lại.");
+    }
+}
+
+
 
 // Lắng nghe sự kiện gõ mã PIN
 document.addEventListener('input', function(e) {
@@ -2830,41 +2976,67 @@ function resetPinInput() {
 
 
         function openCheckoutModal() {
-            if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
-            document.body.classList.add('no-scroll');
+    if (cart.length === 0) { alert("Chưa có món nào trong giỏ hàng!"); return; }
+    document.body.classList.add('no-scroll');
 
-            if (typeof checkAndApplyDiscountCode === 'function') {
-                checkAndApplyDiscountCode();
-            }
+    if (typeof checkAndApplyDiscountCode === 'function') {
+        checkAndApplyDiscountCode();
+    }
 
-            const savedName = localStorage.getItem('kimbling_cust_name');
-            const savedPhone = localStorage.getItem('kimbling_cust_phone');
-            const savedAddr = localStorage.getItem('kimbling_cust_addr');
+    const savedName = localStorage.getItem('kimbling_cust_name');
+    const savedPhone = localStorage.getItem('kimbling_cust_phone');
+    const savedAddr = localStorage.getItem('kimbling_cust_addr');
 
-            if (savedName) document.getElementById('customerName').value = savedName;
-            if (savedPhone) document.getElementById('customerPhone').value = savedPhone;
-            
-            const orderType = document.querySelector('input[name="orderType"]:checked').value;
-            if (orderType === 'Giao hàng' && savedAddr) {
-                document.getElementById('customerAddress').value = savedAddr;
-                autoCalculateShippingFromMenu();
-            }
+    if (savedName) document.getElementById('customerName').value = savedName;
+    if (savedPhone) document.getElementById('customerPhone').value = savedPhone;
+    
+    const orderType = document.querySelector('input[name="orderType"]:checked').value;
+    if (orderType === 'Giao hàng' && savedAddr) {
+        document.getElementById('customerAddress').value = savedAddr;
+        autoCalculateShippingFromMenu();
+    }
 
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-            if (btnSubmit) {
-                btnSubmit.style.display = 'block';
-                btnSubmit.disabled = false;
-                btnSubmit.classList.add('pulse-attention');
-            }
+    // --- ĐOẠN ĐIỀU CHỈNH ẨN/HIỆN PHƯƠNG THỨC THANH TOÁN THEO CHẾ ĐỘ ---
+    const radioTienMat = document.querySelector('input[name="payMethod"][value="Tiền mặt"]');
+    const radioChuyenKhoan = document.querySelector('input[name="payMethod"][value="Chuyển khoản"]');
+    const radioTuiKimCuong = document.querySelector('input[name="payMethod"][value="Túi Kim Cương"]');
 
-            document.getElementById('transferBox').style.display = 'none';
-            document.getElementById('successNotify').style.display = 'none';
-            document.getElementById('btnZaloOptional').style.display = 'none';
+    // Lấy thẻ chứa từng lựa chọn thanh toán để ẩn/hiện
+    const parentTienMat = radioTienMat ? radioTienMat.closest('label') : null;
+    const parentChuyenKhoan = radioChuyenKhoan ? radioChuyenKhoan.closest('label') : null;
+    const parentTuiKimCuong = radioTuiKimCuong ? radioTuiKimCuong.closest('label') : null;
 
-            updateCartDisplay();
-            document.getElementById('checkoutModal').style.display = 'flex';
-            checkStoreOpenStatus();
-        }
+    if (currentPriceMode === 'DIAMOND') {
+        // Nếu mua bằng Túi 💎: Ẩn tiền mặt và chuyển khoản, chỉ hiện Túi Kim Cương và tự chọn nó
+        if (parentTienMat) parentTienMat.style.display = 'none';
+        if (parentChuyenKhoan) parentChuyenKhoan.style.display = 'none';
+        if (parentTuiKimCuong) parentTuiKimCuong.style.display = 'inline-block';
+        if (radioTuiKimCuong) radioTuiKimCuong.checked = true;
+    } else {
+        // Nếu mua bằng Tiền (K): Hiện tiền mặt và chuyển khoản, ẩn Túi Kim Cương đi
+        if (parentTienMat) parentTienMat.style.display = 'inline-block';
+        if (parentChuyenKhoan) parentChuyenKhoan.style.display = 'inline-block';
+        if (parentTuiKimCuong) parentTuiKimCuong.style.display = 'none';
+        if (radioTienMat) radioTienMat.checked = true;
+    }
+    // -----------------------------------------------------------------
+
+    const btnSubmit = document.getElementById('btnSubmitOrder');
+    if (btnSubmit) {
+        btnSubmit.style.display = 'block';
+        btnSubmit.disabled = false;
+        btnSubmit.classList.add('pulse-attention');
+    }
+
+    document.getElementById('transferBox').style.display = 'none';
+    document.getElementById('successNotify').style.display = 'none';
+    document.getElementById('btnZaloOptional').style.display = 'none';
+
+    updateCartDisplay();
+    document.getElementById('checkoutModal').style.display = 'flex';
+    checkStoreOpenStatus();
+}
+
 
         function closeCheckoutModal() {
             document.body.classList.remove('no-scroll');
