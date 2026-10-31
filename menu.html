@@ -1330,7 +1330,6 @@ function initDiamondBalanceCheck() {
     }
 }
 
-// Hàm gọi API lấy số dư Túi 💎 từ Google Sheets
 function fetchCustomerDiamondBalance(phone) {
     const cleanPhone = String(phone || '').trim();
     const displayEl = document.getElementById('mainDiamondDisplay');
@@ -1339,7 +1338,6 @@ function fetchCustomerDiamondBalance(phone) {
         return;
     }
 
-    // Lưu lại SĐT đồng bộ hệ thống
     localStorage.setItem('kimbling_cust_phone', cleanPhone);
     localStorage.setItem('kb_customer_phone', cleanPhone);
     
@@ -1348,13 +1346,21 @@ function fetchCustomerDiamondBalance(phone) {
     fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`)
         .then(res => res.json())
         .then(data => {
-            let balance = (data && data.hatKim) ? parseInt(data.hatKim) : 0;
-            if (displayEl) displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
+            // Lấy giá trị thô từ Google Sheets
+            let rawValue = (data && data.hatKim) ? parseInt(data.hatKim) : 0;
+            
+            // SỬA Ở ĐÂY: Áp dụng đúng chuẩn 1.000đ = 1 💎 (Chia cho 1000)
+            let balance = Math.round(rawValue / 1000);
+
+            if (displayEl) {
+                displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
+            }
         })
         .catch(() => {
             if (displayEl) displayEl.innerText = "0 💎";
         });
 }
+
 
 // Gọi hàm khởi chạy ngay khi trang tải xong
 window.addEventListener('DOMContentLoaded', () => {
