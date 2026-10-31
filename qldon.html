@@ -47,7 +47,11 @@
     .pay-cash { background:#334155; color:#cbd5e1; }
     .pay-transfer { background:#065f46; color:#34d399; border:1px solid #059669; cursor:pointer; transition:all .2s; }
     .pay-transfer:hover { background:#047857; transform:scale(1.05); }
+    .pay-diamond { background:rgba(0, 188, 212, 0.15); color:#00bcd4; border:1px solid #00bcd4; font-weight: bold; }
+    
     .total-price { font-weight:bold; color:#4ade80; font-size:17px; white-space:nowrap; }
+    .total-price.diamond-price { color:#00bcd4; }
+
     .status-group { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
     .status-btn { padding:10px 4px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:var(--subtext); font-size:13px; font-weight:bold; cursor:pointer; text-align:center; transition:background .15s,color .15s,border-color .15s; }
     .status-btn.active-1 { background:#eab308; color:#000; border-color:#eab308; }
@@ -105,7 +109,7 @@
         <!-- Nút 1: Tạo QR Tích Điểm -->
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Tạo QR Tích Điểm</button>
         
-        <!-- Nút 2: Quản Lý Túi 💎 (Gọi file tuikimcuong.html cùng cấp) -->
+        <!-- Nút 2: Quản Lý Túi 💎 -->
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Quản Lý Túi 💎</button>
 
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Nền & Chuông</button>
@@ -128,7 +132,7 @@
     </div>
   </div>
 
-  <!-- POPUP 2: NHÚNG TRANG TUIKIMCUONG.HTML CÙNG CẤP -->
+  <!-- POPUP 2: NHÚNG TRANG TUIKIMCUONG.HTML -->
   <div id="hatKimPopupModal" class="qr-popup-overlay">
     <div class="qr-popup-container" style="border-color: #ff9800;">
       <div class="qr-popup-header" style="background: #2c1810; border-bottom: 1px solid #ff9800;">
@@ -153,7 +157,7 @@
     let isFirstLoad = true;
     let continuousAlarmTimer = null;
 
-    // HÀM ĐỊNH DẠNG TIỀN TỆ SANG K (Ví dụ: 17000 -> 17k)
+    // HÀM ĐỊNH DẠNG TIỀN TỆ SANG K
     function formatMoneyK(amount) {
       const num = Number(amount || 0);
       if (num === 0) return '0đ';
@@ -174,7 +178,7 @@
       }
     }
 
-    // HÀM ĐIỀU KHIỂN POPUP QUẢN LÝ TÚI 💎 (TUIKIMCUONG.HTML CÙNG CẤP)
+    // HÀM ĐIỀU KHIỂN POPUP QUẢN LÝ TÚI 💎
     function toggleHatKimPopup(isOpen) {
       const popup = document.getElementById('hatKimPopupModal');
       const iframe = document.getElementById('hatKimIframe');
@@ -229,7 +233,6 @@
         }
 
         const now = audioContext.currentTime;
-        
         const osc1 = audioContext.createOscillator();
         const gain1 = audioContext.createGain();
         osc1.type = 'sine';
@@ -333,7 +336,6 @@
           }
 
           const currentDataSignature = data.orders.map(o => `${o.orderId}_${o.status}`).join('|');
-
           let hasStatus1Order = false;
 
           data.orders.forEach(order => {
@@ -381,17 +383,33 @@
             const buzzClass = currentStatus === '1' ? 'new-buzz' : '';
             const noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${escapeHtml(order.note)}</div>` : '';
             const formattedItems = parseAdminItemsToList(order.items);
+            
             const paymentText = String(order.payment || 'Tiền mặt');
+            // Kiểm tra xem đơn có thanh toán bằng Túi Kim Cương hay không
+            const isDiamondPayment = paymentText.toLowerCase().includes('túi') || paymentText.toLowerCase().includes('trừ túi');
             const isTransfer = paymentText.toLowerCase().includes('chuyển');
-            const paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
-            let qrTagHtml = '';
-            if (isTransfer) {
+
+            let paymentTagHtml = '';
+            let priceDisplayHtml = '';
+
+            if (isDiamondPayment) {
+              // Thanh toán bằng Túi Kim Cương
+              paymentTagHtml = `<span class="payment-tag pay-diamond">💎 Túi Kim Cương (Đã trả trước)</span>`;
+              // Quy đổi ra số lượng kim cương tương ứng (ví dụ: 41.000đ -> 820 💎)
+              const totalAmountNum = Number(order.total || 0);
+              const diamondsVal = Math.round((totalAmountNum / 1000) * 20);
+              priceDisplayHtml = `<span class="total-price diamond-price">${diamondsVal.toLocaleString('vi-VN')} 💎</span>`;
+            } else if (isTransfer) {
+              // Thanh toán Chuyển khoản
               const totalAmount = Number(order.total || 0);
               const syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${orderId}`;
               const qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
-              qrTagHtml = `<span class="payment-tag ${paymentClass}" onclick="window.open('${qrUrl}', '_blank')">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
+              paymentTagHtml = `<span class="payment-tag pay-transfer" onclick="window.open('${qrUrl}', '_blank')">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
+              priceDisplayHtml = `<span class="total-price">${formatMoneyK(order.total)}</span>`;
             } else {
-              qrTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${escapeHtml(paymentText)}</span>`;
+              // Thanh toán Tiền mặt
+              paymentTagHtml = `<span class="payment-tag pay-cash">💵 Tiền mặt</span>`;
+              priceDisplayHtml = `<span class="total-price">${formatMoneyK(order.total)}</span>`;
             }
             
             let rawAddress = String(order.address || '🏠 Tại quán');
@@ -430,7 +448,7 @@
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
-                <div class="order-footer">${qrTagHtml}<span class="total-price">${formatMoneyK(order.total)}</span></div>
+                <div class="order-footer">${paymentTagHtml}${priceDisplayHtml}</div>
                 <div class="status-group">
                   <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
                   <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '2')">2. Chờ Shipper</button>

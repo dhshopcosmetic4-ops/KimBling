@@ -372,7 +372,7 @@ function doPost(e) {
           if (newPin && newPin.length === 4) sheet.getRange(foundRow, 4).setValue(newPin);
           sheet.getRange(foundRow, 5).setValue(new Date());
         } else {
-          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), newPin || '1234', new Date()]);
+          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), newPin && newPin.length === 4 ? newPin : '', new Date()]);
         }
         
         return jsonOutput_({ status: 'success', message: 'Cập nhật Hạt Kim thành công' });
@@ -431,7 +431,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS VÀ TỰ ĐỘNG CỘNG KIM CƯƠNG CHO KHÁCH (1k = 1 💎)
+      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -517,39 +517,10 @@ function doPost(e) {
           Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm:ss')
         ]);
 
-        // ========================================================
-        // TỰ ĐỘNG CỘNG HẠT KIM (💎) KHI ĐẨY ĐƠN THÀNH CÔNG (Tỷ lệ: 1k = 1 💎)
-        // ========================================================
-        if (customerPhone && orderTotal > 0) {
-          let diamondsToAdd = Math.round(orderTotal / 1000);
-          let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
-          if (!sheetHatKim) {
-            sheetHatKim = ss.insertSheet(WALLET_SHEET);
-            sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
-          }
-          
-          let dataHK = sheetHatKim.getDataRange().getValues();
-          let foundRow = -1;
-          for (let i = 1; i < dataHK.length; i++) {
-            if (formatPhoneDisplay_(dataHK[i][0]) === customerPhone) {
-              foundRow = i + 1;
-              break;
-            }
-          }
-          
-          if (foundRow > 0) {
-            let currentBal = parseInt(sheetHatKim.getRange(foundRow, 3).getValue()) || 0;
-            sheetHatKim.getRange(foundRow, 3).setValue(currentBal + diamondsToAdd);
-            sheetHatKim.getRange(foundRow, 5).setValue(new Date());
-          } else {
-            sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsToAdd, '1234', new Date()]);
-          }
-        }
-
         orderSheet.getRange(orderRowNumber, 10).setValue('4');
         return jsonOutput_({
           success: true,
-          message: 'Đã đẩy đơn, lưu lịch sử và cộng Hạt Kim thành công.',
+          message: 'Đã đẩy đơn và lưu lịch sử thành công.',
           orderId: sourceOrderId,
           historyId: numericOnlineId
         });
@@ -650,7 +621,7 @@ function doPost(e) {
         }
       }
 
-      // LƯU ĐƠN HÀNG MỚI (Hỗ trợ Tự thiết lập mã PIN lần đầu khi thanh toán Túi Kim Cương)
+      // LƯU ĐƠN HÀNG MỚI (TỰ ĐỘNG TRỪ VÍ TÚI KIM CƯƠNG THEO TIỀN MÓN)
       case 'saveOrder': {
         const ss = getSpreadsheet_();
         
@@ -660,7 +631,7 @@ function doPost(e) {
         const customerPin = String(body.customerPin || '').trim();
 
         // Nếu khách chọn thanh toán bằng Túi Kim Cương
-        if (paymentMethod === 'Túi Kim Cương') {
+        if (paymentMethod === 'Túi Kim Cương' || paymentMethod === 'Trừ Túi 💎') {
           let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
           if (!sheetHatKim) {
             return jsonOutput_({ ok: false, success: false, error: 'Sheet HATKIM chưa được khởi tạo' });
@@ -680,7 +651,6 @@ function doPost(e) {
             }
           }
           
-          // Trường hợp khách chưa có tài khoản ví -> Tự động tạo mới và lưu PIN khách tự đặt
           if (customerRow === -1) {
             if (!customerPin || customerPin.length !== 4) {
               return jsonOutput_({ ok: false, success: false, error: 'Vui lòng nhập mã PIN 4 số mới để tạo tài khoản Túi Kim Cương.' });
@@ -689,21 +659,20 @@ function doPost(e) {
             return jsonOutput_({ ok: false, success: false, error: 'Tài khoản ví mới đã được tạo với PIN bạn vừa nhập. Vui lòng bấm thanh toán lại lần nữa!' });
           }
           
-          // Trường hợp tài khoản đã tồn tại nhưng chưa có PIN hoặc đang để mặc định 1234 -> Cho khách thiết lập PIN mới
-          if (!correctPin || correctPin === '' || correctPin === '1234') {
+          if (!correctPin || correctPin === '') {
             if (!customerPin || customerPin.length !== 4) {
-              return jsonOutput_({ ok: false, success: false, error: 'Vui lòng đặt mã PIN 4 số mới cho lần đầu thanh toán.' });
+              return jsonOutput_({ ok: false, success: false, error: 'Tài khoản chưa có mã PIN. Vui lòng nhập mã PIN 4 số mới để thiết lập.' });
             }
             sheetHatKim.getRange(customerRow, 4).setValue(customerPin);
             correctPin = customerPin;
           }
           
-          // Kiểm tra mã PIN
           if (customerPin !== correctPin) {
             return jsonOutput_({ ok: false, success: false, error: 'Mã PIN 4 số không chính xác!' });
           }
           
-          let requiredDiamonds = Math.round(totalAmount / 1000); // Tỷ lệ mới: 1k = 1 💎
+          // Tỷ lệ quy đổi: 1.000đ = 1 💎, nhân hệ số x20 giá trị tiền món (hoặc theo cấu hình của bạn)
+          let requiredDiamonds = Math.round((totalAmount / 1000) * 20); 
           if (currentBalance < requiredDiamonds) {
             return jsonOutput_({ ok: false, success: false, error: 'Số dư Túi 💎 không đủ thanh toán (' + currentBalance + '/' + requiredDiamonds + ' 💎)' });
           }

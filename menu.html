@@ -3267,41 +3267,19 @@ function resetPinInput() {
 }
 
 
-                                async function saveOrderToGoogleSheets(orderPayload) {
-            // Apps Script POST responses may be unreadable cross-origin. Send a simple request,
-            // then verify the generated orderId through the same GET endpoint used by the menu.
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                body: JSON.stringify(orderPayload),
-                redirect: 'follow'
-            });
-
-            const verifyUrl = GOOGLE_SCRIPT_URL + '?type=checkOrder&orderId=' + encodeURIComponent(orderPayload.orderId) + '&_=' + Date.now();
-            let lastError = null;
-            for (let attempt = 0; attempt < 12; attempt++) {
-                if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 700));
-                try {
-                    const response = await fetch(verifyUrl, { method: 'GET', cache: 'no-store' });
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    const result = await response.json();
-                    if (result && result.ok === true && result.found === true && result.orderId === orderPayload.orderId) return result;
-                    if (result && result.ok === false) throw new Error(result.error || 'Apps Script trả về lỗi.');
-                } catch (err) {
-                    lastError = err;
-                }
-            }
-            throw new Error('Chưa tìm thấy mã đơn trong tab DON_HANG sau khi gửi. ' + (lastError ? lastError.message : 'Kiểm tra Apps Script đã triển khai phiên bản mới và đúng Google Sheet.'));
-        }
-
-async function processOrderSubmit() {
+                                async function processOrderSubmit() {
     const msg = generateOrderMessage();
     if (!msg) return;
 
     const phone = document.getElementById('customerPhone').value.trim();
-    const payMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
-    const payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
+    
+    // --- CHUẨN HÓA PHƯƠNG THỨC THANH TOÁN ---
+    const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+    let payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
+    if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+        payMethod = 'Túi Kim Cương';
+    }
+    // ----------------------------------------
 
     let foodTotal = calculateFoodSubtotal();
     let shipFee = getShippingFee();
@@ -3309,11 +3287,10 @@ async function processOrderSubmit() {
     const discountAmount = discountValK * 1000;
     let total = Math.max(0, foodTotal + shipFee - discountAmount);
 
-    // KIỂM TRA MÃ PIN VÀ SỐ DƯ KHI THANH TOÁN BẰNG TÚI 💎 (NHÂN 20 LẦN THEO GIÁ HIỂN THỊ)
     let requiredDiamonds = 0;
     let customerPin = '';
     
-    if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+    if (payMethod === 'Túi Kim Cương') {
         requiredDiamonds = Math.round((total / 1000) * 20);
 
         const pinInput = document.getElementById('customerDiamondPin');
@@ -3388,7 +3365,7 @@ async function processOrderSubmit() {
         body: JSON.stringify(sheetPayload)
     }).catch(err => console.log("Lỗi gửi ngầm sheets:", err));
 
-    // 2. GỬI THÔNG BÁO TELEGRAM NGAY LẬP TỨC
+    // 2. GỬI THÔNG BÁO TELEGRAM
     sendTelegramMessage(msg, phone);
 
     if (payMethod === 'Chuyển khoản') {
@@ -3402,20 +3379,45 @@ async function processOrderSubmit() {
 
     const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
-    // 3. HIỂN THỊ POPUP THÀNH CÔNG NGAY LẬP TỨC CHO KHÁCH
-    let itemsSummaryHTML = cart.map(item => `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
-            <div>
-                <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
-                <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
+    // 3. XỬ LÝ HIỂN THỊ TRONG POPUP (QUY ĐỔI RA 💎 NẾU THANH TOÁN QUA TÚI)
+    let itemsSummaryHTML = cart.map(item => {
+        const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()}) ` : '';
+        let itemPriceDisplay = formatPrice(item.price * item.qty);
+        let itemPriceColor = '#d32f2f';
+        
+        if (payMethod === 'Túi Kim Cương') {
+            const itemDiamondVal = Math.round(((item.price * item.qty) / 1000) * 20);
+            itemPriceDisplay = `${itemDiamondVal.toLocaleString('vi-VN')} 💎`;
+            itemPriceColor = '#00bcd4';
+        }
+
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed #eee; font-size: 13px;">
+                <div>
+                    <span style="font-weight: bold; color: #1976D2;">${item.name} (x${item.qty})</span>
+                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${item.options}</div>
+                </div>
+                <span style="font-weight: bold; color: ${itemPriceColor};">${itemPriceDisplay}</span>
             </div>
-            <span style="font-weight: bold; color: #d32f2f;">${formatPrice(item.price * item.qty)}</span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     let shipNoticeText = shipFee === 0 
         ? '<span style="color: #2e7d32; font-weight: bold; font-size: 14px;">🎉 FREESHIP (0đ)</span>' 
         : `<span style="color: #d32f2f; font-weight: bold; font-size: 15px;">🚚 ${formatPrice(shipFee)}</span>`;
+
+    if (payMethod === 'Túi Kim Cương' && shipFee > 0) {
+        const shipDiamondVal = Math.round((shipFee / 1000) * 20);
+        shipNoticeText = `<span style="color: #00bcd4; font-weight: bold; font-size: 15px;">🚚 ${shipDiamondVal.toLocaleString('vi-VN')} 💎</span>`;
+    }
+
+    let totalDisplayHtml = formatPrice(total);
+    let totalColorStyle = '#d32f2f';
+    if (payMethod === 'Túi Kim Cương') {
+        const totalDiamonds = Math.round((total / 1000) * 20);
+        totalDisplayHtml = `${totalDiamonds.toLocaleString('vi-VN')} 💎`;
+        totalColorStyle = '#00bcd4';
+    }
 
     let transferSectionHTML = '';
     if (payMethod === 'Chuyển khoản') {
@@ -3430,7 +3432,7 @@ async function processOrderSubmit() {
                 <a href="${qrImageUrl}" target="_blank" style="display: block; background: #2196F3; color: white; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; text-decoration: none; margin-top: 4px;">Mở Link Ảnh QR Gốc</a>
             </div>
         `;
-    } else if (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương') {
+    } else if (payMethod === 'Túi Kim Cương') {
         transferSectionHTML = `
             <div style="background: #fff8e1; border: 1.5px dashed #ffb300; border-radius: 10px; padding: 10px; margin-top: 10px; text-align: center;">
                 <div style="font-weight: bold; color: #b78103; font-size: 13px;">💎 ĐÃ THANH TOÁN QUA TÚI 💎</div>
@@ -3451,8 +3453,8 @@ async function processOrderSubmit() {
             
             <button onclick="closeSuccessOrderPopup()" style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.1); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333;">✕</button>
 
-            <div style="text-align: center; margin-bottom: 12px;">
-                <div style="font-size: 18px; font-weight: bold; color: #1b5e20; margin-bottom: 4px;">
+            <div style="text-align: center; margin-bottom: 12px; position: relative;">
+                <div style="font-size: 18px; font-weight: bold; color: #1b5e20; margin-bottom: 4px; padding-right: 25px;">
                     ✅ ĐÃ GỬI ĐƠN HÀNG THÀNH CÔNG!
                 </div>
                 <div style="background: #e8f5e9; border: 1px dashed #4caf50; border-radius: 8px; padding: 8px; margin-top: 6px;">
@@ -3481,7 +3483,7 @@ async function processOrderSubmit() {
 
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; color: #333; margin-top: 4px; padding-top: 6px; border-top: 1px solid #eee;">
                     <span>TỔNG THANH TOÁN:</span>
-                    <span style="color: #d32f2f; font-size: 17px;">${formatPrice(total)}</span>
+                    <span style="color: ${totalColorStyle}; font-size: 17px;">${totalDisplayHtml}</span>
                 </div>
 
                 ${transferSectionHTML}
@@ -3517,6 +3519,7 @@ function closeSuccessOrderPopup() {
     const modal = document.getElementById('orderSuccessModalOverlay');
     if (modal) modal.remove();
 }
+
 
 
         function closeSuccessOrderPopup() {
