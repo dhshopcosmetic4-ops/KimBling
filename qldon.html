@@ -697,13 +697,15 @@
 
         const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
 
+        // 🔄 GỬI LỆNH ĐẨY ĐƠN KÈM TÍN HIỆU YÊU CẦU RESET TRÒ CHƠI CHO SĐT NÀY LÊN GAS
         const payloadPOS = {
           type: 'pushOnlineOrder', action: 'pushOnlineOrder',
           sourceOrderId: String(orderId), orderId: String(orderId),
           total: totalAmount, diamonds: diamondsValue, 
           items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
           phone: customerPhone, address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
+          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || ''),
+          triggerGameReset: true // Gắn cờ yêu cầu reset game trên cloud cho khách
         };
 
         await fetch(KIMBLING_API_URL, {
@@ -727,22 +729,8 @@
         }
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-        
-        // 💎 TỰ ĐỘNG CỘNG MẶC ĐỊNH +3 LƯỢT MỞ QUẢ QUẢN LÝ KHI ĐẨY ĐƠN THÀNH CÔNG
-        let pendingTurns = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10) + 3;
-        localStorage.setItem('kimbling_pending_bonus_turns', pendingTurns);
 
-        // 🚀 BẮN TÍN HIỆU SANG TRANG TRÒ CHƠI NẾU ĐANG MỞ
-        try {
-            const allIframes = document.querySelectorAll('iframe');
-            allIframes.forEach(iframe => {
-                try { iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*'); } catch(e){}
-            });
-            if (window.opener) window.opener.postMessage('ADD_BONUS_TURNS', '*');
-            if (window.parent && window.parent !== window) window.parent.postMessage('ADD_BONUS_TURNS', '*');
-        } catch(e) {}
-
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales, cấp +3 lượt quay mở hộp quà thành công!`;
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và gửi lệnh reset trò chơi thành công!`;
         if (isTichDiemChecked) {
           successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách (${customerPhone}).`;
         }
