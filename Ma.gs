@@ -369,10 +369,15 @@ function doPost(e) {
           
           sheet.getRange(foundRow, 3).setValue(updatedHatKim);
           if (customerName) sheet.getRange(foundRow, 2).setValue(customerName);
-          if (newPin && newPin.length === 4) sheet.getRange(foundRow, 4).setValue(newPin);
+          
+          // Thêm dấu nháy đơn ' trước PIN để Google Sheets lưu giữ nguyên số 0 ở đầu (ví dụ: '0123)[span_1](start_span)[span_1](end_span)
+          if (newPin && newPin.length === 4) {
+            sheet.getRange(foundRow, 4).setValue("'" + newPin);
+          }
           sheet.getRange(foundRow, 5).setValue(new Date());
         } else {
-          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), newPin && newPin.length === 4 ? newPin : '', new Date()]);
+          let pinSave = (newPin && newPin.length === 4) ? ("'" + newPin) : '';
+          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), pinSave, new Date()]);
         }
         
         return jsonOutput_({ status: 'success', message: 'Cập nhật Hạt Kim thành công' });
@@ -693,7 +698,7 @@ function doPost(e) {
             if (!customerPin || customerPin.length !== 4) {
               return jsonOutput_({ ok: false, success: false, error: 'Vui lòng nhập mã PIN 4 số mới để tạo tài khoản Túi Kim Cương.' });
             }
-            sheetHatKim.appendRow(['\'' + phone, body.name || body.customerName || 'Khách hàng', 0, customerPin, new Date()]);
+            sheetHatKim.appendRow(['\'' + phone, body.name || body.customerName || 'Khách hàng', 0, "'" + customerPin, new Date()]);
             return jsonOutput_({ ok: false, success: false, error: 'Tài khoản ví mới đã được tạo với PIN bạn vừa nhập. Vui lòng bấm thanh toán lại lần nữa!' });
           }
           
@@ -701,7 +706,7 @@ function doPost(e) {
             if (!customerPin || customerPin.length !== 4) {
               return jsonOutput_({ ok: false, success: false, error: 'Tài khoản chưa có mã PIN. Vui lòng nhập mã PIN 4 số mới để thiết lập.' });
             }
-            sheetHatKim.getRange(customerRow, 4).setValue(customerPin);
+            sheetHatKim.getRange(customerRow, 4).setValue("'" + customerPin);
             correctPin = customerPin;
           }
           
