@@ -431,7 +431,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS
+      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS VÀ CẬP NHẬT KIM CƯƠNG
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -459,8 +459,47 @@ function doPost(e) {
         const orderTotal = Number(body.total !== undefined ? body.total : orderRow[6]) || 0;
         const customerPhone = formatPhoneDisplay_(body.phone || orderRow[3]);
         const customerName = String(body.name || orderRow[2] || 'Khách lẻ');
-        const incomingItems = Array.isArray(body.items) ? body.items : [];
+        const paymentType = String(body.payment || orderRow[7] || 'Tiền mặt').toLowerCase();
         
+        // --- XỬ LÝ CỘNG / TRỪ KIM CƯƠNG VÀO VÍ (HATKIM) ---
+        let diamondsValue = parseInt(body.diamonds) || 0;
+        if (diamondsValue === 0) {
+          const isDiamondPay = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
+          if (isDiamondPay) {
+            diamondsValue = -Math.abs(Math.round((orderTotal / 1000) * 20));
+          } else {
+            diamondsValue = Math.round(orderTotal / 1000); // Tiền K: Cứ 1.000đ = 1 💎
+          }
+        }
+
+        if (customerPhone && customerPhone !== '0') {
+          let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
+          if (!sheetHatKim) {
+            sheetHatKim = ss.insertSheet(WALLET_SHEET);
+            sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
+          }
+          
+          let dataHK = sheetHatKim.getDataRange().getValues();
+          let customerRow = -1;
+          for (let i = 1; i < dataHK.length; i++) {
+            if (formatPhoneDisplay_(dataHK[i][0]) === customerPhone) {
+              customerRow = i + 1;
+              break;
+            }
+          }
+
+          if (customerRow > 0) {
+            let currentBal = parseInt(sheetHatKim.getRange(customerRow, 3).getValue()) || 0;
+            let newBal = Math.max(0, currentBal + diamondsValue);
+            sheetHatKim.getRange(customerRow, 3).setValue(newBal);
+            sheetHatKim.getRange(customerRow, 5).setValue(new Date());
+          } else if (diamondsValue > 0) {
+            sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsValue, '', new Date()]);
+          }
+        }
+        // ----------------------------------------------------
+
+        const incomingItems = Array.isArray(body.items) ? body.items : [];
         const items = incomingItems.map(function(item, index) {
           item = item || {};
           let nameStr = String(item.name || item.title || 'Món nước').replace(/\([^)]*\)/g, '').trim();
@@ -520,7 +559,7 @@ function doPost(e) {
         orderSheet.getRange(orderRowNumber, 10).setValue('4');
         return jsonOutput_({
           success: true,
-          message: 'Đã đẩy đơn và lưu lịch sử thành công.',
+          message: 'Đã đẩy đơn và cập nhật kim cương thành công.',
           orderId: sourceOrderId,
           historyId: numericOnlineId
         });
@@ -630,7 +669,6 @@ function doPost(e) {
         const totalAmount = parseInt(body.total || body.totalAmount) || 0;
         const customerPin = String(body.customerPin || '').trim();
 
-        // Nếu khách chọn thanh toán bằng Túi Kim Cương
         if (paymentMethod === 'Túi Kim Cương' || paymentMethod === 'Trừ Túi 💎') {
           let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
           if (!sheetHatKim) {
@@ -671,7 +709,6 @@ function doPost(e) {
             return jsonOutput_({ ok: false, success: false, error: 'Mã PIN 4 số không chính xác!' });
           }
           
-          // Tỷ lệ quy đổi: 1.000đ = 1 💎, nhân hệ số x20 giá trị tiền món (hoặc theo cấu hình của bạn)
           let requiredDiamonds = Math.round((totalAmount / 1000) * 20); 
           if (currentBalance < requiredDiamonds) {
             return jsonOutput_({ ok: false, success: false, error: 'Số dư Túi 💎 không đủ thanh toán (' + currentBalance + '/' + requiredDiamonds + ' 💎)' });

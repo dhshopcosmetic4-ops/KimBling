@@ -1294,7 +1294,7 @@ function setPriceDisplayMode(mode) {
     if (mode === 'K') {
         if (btnK) {
             btnK.style.background = '#2196F3';
-            btnK.style.color = '#white';
+            btnK.style.color = '#ffffff';
             btnK.style.border = 'none';
         }
         if (btnDiamond) {
@@ -1305,7 +1305,7 @@ function setPriceDisplayMode(mode) {
     } else {
         if (btnDiamond) {
             btnDiamond.style.background = '#ff9800';
-            btnDiamond.style.color = '#white';
+            btnDiamond.style.color = '#ffffff';
             btnDiamond.style.border = 'none';
         }
         if (btnK) {
@@ -1321,11 +1321,10 @@ function setPriceDisplayMode(mode) {
 }
 
 // Hàm dùng chung để lấy định dạng giá theo chế độ người dùng đang chọn
-
 function formatDynamicPrice(vndPrice) {
     let priceNum = Number(vndPrice || 0);
     if (currentPriceMode === 'DIAMOND') {
-        // Giá hiển thị trên món ăn nhân lên 20 lần (Ví dụ: 20k VND hiển thị là 400 💎)
+        // Giá hiển thị quy đổi sang Hạt Kim (Ví dụ: 20k VND hiển thị là 400 💎)
         let diamondsDisplay = Math.round((priceNum / 1000) * 20);
         return diamondsDisplay.toLocaleString('vi-VN') + ' 💎';
     } else {
@@ -2242,8 +2241,10 @@ function renderTiktokCard() {
 
     document.getElementById('tiktokTitle').innerText = item.name;
     
-    // HIỂN THỊ GIÁ SONG SONG VND VÀ 💎 TRONG POPUP TIKTOK
-    document.getElementById('tiktokPrice').innerHTML = `${formatPrice(item.price)} <span style="font-size: 14px; color: #ff9800; font-weight: bold;">(hoặc ${formatDiamondPrice(item.price)})</span>`;
+
+// HIỂN THỊ ĐÚNG 1 GIÁ DUY NHẤT THEO CHẾ ĐỘ ĐANG CHỌN (K HOẶC 💎)
+document.getElementById('tiktokPrice').innerHTML = formatDynamicPrice(item.price);
+
 
     let descEl = document.getElementById('tiktokDesc');
     if (!descEl) {
