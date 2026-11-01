@@ -1,364 +1,335 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hộp Quà May Mắn - Kim Bling Coffee & Tea</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
-        
-        .game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
-        
-        h2 { color: #d32f2f; font-size: 19px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
-        p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
-        .turn-badge { background: #fff3e0; color: #e65100; font-weight: bold; font-size: 12px; padding: 3px 10px; border-radius: 14px; display: inline-block; margin-bottom: 6px; border: 1.5px solid #ffe0b2; }
-
-        .grid-boxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
-        
-        .box-item { 
-            background: linear-gradient(135deg, #ff9800, #f57c00); 
-            color: #fff; 
-            border-radius: 10px; 
-            height: 76px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 30px; 
-            cursor: pointer; 
-            transition: all 0.2s ease; 
-            box-shadow: 0 3px 6px rgba(0,0,0,0.18); 
-            user-select: none; 
-            position: relative; 
-            line-height: 1.2;
-        }
-        .box-item:active { transform: scale(0.92); }
-        
-        .box-item.user-opened { 
-            background: #fff8e1 !important; 
-            color: #d84315 !important; 
-            font-size: 11px !important; 
-            font-weight: bold !important; 
-            cursor: default !important; 
-            border: 2px solid #f57c00 !important; 
-        }
-        .box-item.winner-box { 
-            background: #e0f7fa !important; 
-            color: #00838f !important; 
-            border: 2px solid #00acc1 !important; 
-            animation: shakeWin 0.6s ease-in-out infinite alternate !important; 
-            font-size: 11px !important; 
-            font-weight: bold !important; 
-        }
-        
-        .box-item.auto-revealed { 
-            background: #f9f9f9 !important; 
-            color: #666 !important; 
-            font-size: 10px !important; 
-            font-weight: 500 !important; 
-            cursor: default !important; 
-            border: 1px dashed #ccc !important; 
-            opacity: 0.85 !important; 
-        }
-
-        .box-item span.item-title {
-            font-size: 10px !important;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-
-        @keyframes shakeWin {
-            0% { transform: rotate(-3deg) scale(1.02); }
-            100% { transform: rotate(3deg) scale(1.02); }
-        }
-
-        .result-box { display: none; background: #e0f7fa; border: 1.5px dashed #00acc1; padding: 8px 10px; border-radius: 10px; margin-top: 4px; text-align: center; }
-        .action-choice-row { display: flex; gap: 6px; margin-top: 6px; justify-content: center; }
-        .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hộp Quà May Mắn - Kim Bling Coffee & Tea</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
+.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
+h2 { color: #d32f2f; font-size: 19px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
+p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
+.turn-badge { background: #fff3e0; color: #e65100; font-weight: bold; font-size: 12px; padding: 3px 10px; border-radius: 14px; display: inline-block; margin-bottom: 6px; border: 1.5px solid #ffe0b2; }
+.grid-boxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.box-item {
+background: linear-gradient(135deg, #ff9800, #f57c00);
+color: #fff;
+border-radius: 10px;
+height: 76px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+font-size: 30px;
+cursor: pointer;
+transition: all 0.2s ease;
+box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+user-select: none;
+position: relative;
+line-height: 1.2;
+}
+.box-item:active { transform: scale(0.92); }
+.box-item.user-opened {
+background: #fff8e1 !important;
+color: #d84315 !important;
+font-size: 11px !important;
+font-weight: bold !important;
+cursor: default !important;
+border: 2px solid #f57c00 !important;
+}
+.box-item.winner-box {
+background: #e0f7fa !important;
+color: #00838f !important;
+border: 2px solid #00acc1 !important;
+animation: shakeWin 0.6s ease-in-out infinite alternate !important;
+font-size: 11px !important;
+font-weight: bold !important;
+}
+.box-item.auto-revealed {
+background: #f9f9f9 !important;
+color: #666 !important;
+font-size: 10px !important;
+font-weight: 500 !important;
+cursor: default !important;
+border: 1px dashed #ccc !important;
+opacity: 0.85 !important;
+}
+.box-item span.item-title {
+font-size: 10px !important;
+font-weight: bold;
+margin-top: 2px;
+}
+@keyframes shakeWin {
+0% { transform: rotate(-3deg) scale(1.02); }
+100% { transform: rotate(3deg) scale(1.02); }
+}
+.result-box { display: none; background: #e0f7fa; border: 1.5px dashed #00acc1; padding: 8px 10px; border-radius: 10px; margin-top: 4px; text-align: center; }
+.action-choice-row { display: flex; gap: 6px; margin-top: 6px; justify-content: center; }
+.btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
+.btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+</style>
 </head>
 <body>
+<div class="game-card">
+<button class="close-btn" onclick="closeGame()">✕</button>
+<h2>🎁 HỘP QUÀ MAY MẮN</h2>
+<p class="subtitle">Săn Kim Cương 💎 - Đặt đơn nhận thêm lượt quay!</p>
+<div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
+<div id="wonPrizesDisplay" style="font-size: 11px; color: #00838f; font-weight: bold; margin-bottom: 6px;">💎 Mở hộp quà tích lũy Kim Cương ngay!</div>
+<div class="grid-boxes" id="gridBoxes">
+<div class="box-item" onclick="openBox(0)">🎁</div>
+<div class="box-item" onclick="openBox(1)">🎁</div>
+<div class="box-item" onclick="openBox(2)">🎁</div>
+<div class="box-item" onclick="openBox(3)">🎁</div>
+<div class="box-item" onclick="openBox(4)">🎁</div>
+<div class="box-item" onclick="openBox(5)">🎁</div>
+<div class="box-item" onclick="openBox(6)">🎁</div>
+<div class="box-item" onclick="openBox(7)">🎁</div>
+<div class="box-item" onclick="openBox(8)">🎁</div>
+</div>
+<div class="result-box" id="resultBox">
+<div id="resultText" style="font-size: 12px; line-height: 1.3;"></div>
+<div class="action-choice-row" id="choiceRow" style="display: none;">
+<button class="btn-choice-next" onclick="startNextGame()">🎮 Mở lượt tiếp theo</button>
+</div>
+<button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY</button>
+</div>
+</div>
+<script>
+const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+function getTodayString() {
+const now = new Date();
+return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+}
+function shuffleArray(array) {
+let arr = [...array];
+for (let i = arr.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[arr[i], arr[j]] = [arr[j], arr[i]];
+}
+return arr;
+}
+function createNewBoard(currentWonTotal) {
+let board = [
+{ type: 'DIAMOND', value: 3, text: '+3 Kim Cương', icon: '💎' },
+{ type: 'DIAMOND', value: 2, text: '+2 Kim Cương', icon: '💎' },
+{ type: 'DIAMOND', value: 1, text: '+1 Kim Cương', icon: '💎' },
+{ type: 'FAKE', text: '300 Kim Cương', icon: '💎' },
+{ type: 'FAKE', text: '200 Kim Cương', icon: '💎' },
+{ type: 'FAKE', text: '100 Kim Cương', icon: '💎' },
+{ type: 'FAKE', text: 'Voucher 50K', icon: '🎟️' },
+{ type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' }
+];
+const isTenDiamondLucky = Math.random() < 0.05;
+if (isTenDiamondLucky && (currentWonTotal + 10 <= 10)) {
+board.push({ type: 'DIAMOND', value: 10, text: '+10 Kim Cương', icon: '💎' });
+} else {
+board.push({ type: 'FAKE', text: 'Ly Free', icon: '🥤' });
+}
+return shuffleArray(board);
+}
+function getGameState() {
+const today = getTodayString();
+const savedState = localStorage.getItem('kimbling_game_state_v45');
+let pendingTurnsBonus = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
 
-    <div class="game-card">
-        <button class="close-btn" onclick="closeGame()">✕</button>
-        <h2>🎁 HỘP QUÀ MAY MẮN</h2>
-        <p class="subtitle">Săn Kim Cương 💎 - Đặt đơn nhận thêm lượt quay!</p>
-        <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
-        <div id="wonPrizesDisplay" style="font-size: 11px; color: #00838f; font-weight: bold; margin-bottom: 6px;">💎 Mở hộp quà tích lũy Kim Cương ngay!</div>
+if (pendingTurnsBonus > 0) {
+localStorage.removeItem('kimbling_pending_bonus_turns');
+}
 
-        <div class="grid-boxes" id="gridBoxes">
-            <div class="box-item" onclick="openBox(0)">🎁</div>
-            <div class="box-item" onclick="openBox(1)">🎁</div>
-            <div class="box-item" onclick="openBox(2)">🎁</div>
-            <div class="box-item" onclick="openBox(3)">🎁</div>
-            <div class="box-item" onclick="openBox(4)">🎁</div>
-            <div class="box-item" onclick="openBox(5)">🎁</div>
-            <div class="box-item" onclick="openBox(6)">🎁</div>
-            <div class="box-item" onclick="openBox(7)">🎁</div>
-            <div class="box-item" onclick="openBox(8)">🎁</div>
-        </div>
+if (savedState) {
+try {
+const parsed = JSON.parse(savedState);
+if (parsed && parsed.date === today) {
+if (pendingTurnsBonus > 0) {
+parsed.maxTurnsAllowed += pendingTurnsBonus;
+}
+return parsed;
+}
+} catch(e) {}
+}
 
-        <div class="result-box" id="resultBox">
-            <div id="resultText" style="font-size: 12px; line-height: 1.3;"></div>
-            <div class="action-choice-row" id="choiceRow" style="display: none;">
-                <button class="btn-choice-next" onclick="startNextGame()">🎮 Mở lượt tiếp theo</button>
-            </div>
-            <button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY</button>
-        </div>
-    </div>
+const newState = {
+date: today,
+maxTurnsAllowed: 5 + pendingTurnsBonus,
+gamesPlayed: 0,
+wonDiamondsTotal: 0,
+isCurrentGameFinished: false,
+currentBoard: createNewBoard(0),
+selectedBoxIndex: null
+};
+localStorage.setItem('kimbling_game_state_v45', JSON.stringify(newState));
+return newState;
+}
 
-    <script>
-        const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+let gameState = getGameState();
 
-        function getTodayString() {
-            const now = new Date();
-            return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-        }
+function updateUI() {
+const turnsLeft = Math.max(0, gameState.maxTurnsAllowed - gameState.gamesPlayed);
+document.getElementById('turnBadge').innerText = `Lượt chơi còn lại: ${turnsLeft} lượt`;
+const wonDisplay = document.getElementById('wonPrizesDisplay');
+if (gameState.wonDiamondsTotal > 0) {
+wonDisplay.innerText = `🎉 ĐÃ TÍCH LŨY: +${gameState.wonDiamondsTotal} 💎 KIM CƯƠNG`;
+wonDisplay.style.color = `#00838f`;
+} else {
+wonDisplay.innerText = `💎 Mở hộp quà - Săn Kim Cương tích lũy ngay!`;
+wonDisplay.style.color = `#e65100`;
+}
+const boxElements = document.querySelectorAll('.box-item');
+if (gameState.isCurrentGameFinished && gameState.selectedBoxIndex !== null) {
+boxElements.forEach((box, idx) => {
+const item = gameState.currentBoard[idx];
+if (idx === gameState.selectedBoxIndex) {
+if (item.type === 'DIAMOND') {
+box.innerHTML = `<span style="font-size:22px;">💎</span><span class="item-title">${item.text}</span>`;
+box.className = 'box-item user-opened winner-box';
+} else {
+box.innerHTML = `<span style="font-size:22px;">😋</span><span class="item-title">Ngon miệng!</span>`;
+box.className = 'box-item user-opened';
+}
+} else {
+box.innerHTML = `<span style="font-size:18px;">${item.icon}</span><span style="font-size:9px; font-weight:normal;">${item.text}</span>`;
+box.className = 'box-item auto-revealed';
+}
+});
+showResultBox();
+} else {
+boxElements.forEach(box => {
+box.innerHTML = '🎁';
+box.className = 'box-item';
+});
+document.getElementById('resultBox').style.display = 'none';
+}
+}
 
-        function shuffleArray(array) {
-            let arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
+function openBox(index) {
+if (gameState.isCurrentGameFinished || gameState.gamesPlayed >= gameState.maxTurnsAllowed) {
+return;
+}
+gameState.gamesPlayed++;
+gameState.isCurrentGameFinished = true;
+gameState.selectedBoxIndex = index;
+let item = gameState.currentBoard[index];
+let exactWonThisTurn = 0;
+if (item.type === 'DIAMOND') {
+if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
+item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+} else {
+exactWonThisTurn = item.value;
+gameState.wonDiamondsTotal += item.value;
+if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+}
+} else {
+item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+}
+gameState.currentBoard[index] = item;
+localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+if (exactWonThisTurn > 0) {
+syncSingleRewardToSheet(exactWonThisTurn);
+}
+updateUI();
+}
 
-        function createNewBoard(currentWonTotal) {
-            let board = [
-                { type: 'DIAMOND', value: 3, text: '+3 Kim Cương', icon: '💎' },
-                { type: 'DIAMOND', value: 2, text: '+2 Kim Cương', icon: '💎' },
-                { type: 'DIAMOND', value: 1, text: '+1 Kim Cương', icon: '💎' },
-                { type: 'FAKE', text: '300 Kim Cương', icon: '💎' },
-                { type: 'FAKE', text: '200 Kim Cương', icon: '💎' },
-                { type: 'FAKE', text: '100 Kim Cương', icon: '💎' },
-                { type: 'FAKE', text: 'Voucher 50K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' }
-            ];
+function showResultBox() {
+const resultBox = document.getElementById('resultBox');
+const resultText = document.getElementById('resultText');
+const choiceRow = document.getElementById('choiceRow');
+const btnCloseGame = document.getElementById('btnCloseGameAction');
+const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
+let htmlMsg = "";
+if (selectedItem.type === 'DIAMOND') {
+htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG +${selectedItem.value} 💎 KIM CƯƠNG!</b><br>`;
+} else {
+htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Thử vận may ở ô tiếp theo nhé!<br>`;
+}
+if (gameState.gamesPlayed < gameState.maxTurnsAllowed) {
+choiceRow.style.display = 'flex';
+btnCloseGame.style.display = 'none';
+} else {
+choiceRow.style.display = 'none';
+btnCloseGame.style.display = 'block';
+if (gameState.wonDiamondsTotal > 0) {
+htmlMsg += `<br>💎 <b>BẠN ĐÃ TÍCH LŨY ĐƯỢC +${gameState.wonDiamondsTotal} KIM CƯƠNG!</b><br>Đã cộng vào tài khoản của bạn!`;
+} else {
+htmlMsg += `<br>🛵 Bấm nút bên dưới để hoàn tất đơn hàng nhé!`;
+}
+}
+resultText.innerHTML = htmlMsg;
+resultBox.style.display = 'block';
+}
 
-            const isTenDiamondLucky = Math.random() < 0.05;
-            if (isTenDiamondLucky && (currentWonTotal + 10 <= 10)) {
-                board.push({ type: 'DIAMOND', value: 10, text: '+10 Kim Cương', icon: '💎' });
-            } else {
-                board.push({ type: 'FAKE', text: 'Ly Free', icon: '🥤' });
-            }
+function startNextGame() {
+if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
+gameState.isCurrentGameFinished = false;
+gameState.selectedBoxIndex = null;
+gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
+localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+updateUI();
+}
 
-            return shuffleArray(board);
-        }
+function finishFiveTurnsAndCheckout() {
+closeGame();
+}
 
-        function getGameState() {
-            const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v45');
-            
-            if (savedState) {
-                try {
-                    const parsed = JSON.parse(savedState);
-                    if (parsed && parsed.date === today) {
-                        return parsed;
-                    }
-                } catch(e) {}
-            }
+function closeGame() {
+if (window.parent) {
+window.parent.postMessage('CLOSE_GAME_POPUP', '*');
+}
+}
 
-            const newState = {
-                date: today,
-                maxTurnsAllowed: 5,
-                gamesPlayed: 0,
-                wonDiamondsTotal: 0,
-                isCurrentGameFinished: false,
-                currentBoard: createNewBoard(0),
-                selectedBoxIndex: null
-            };
+async function syncSingleRewardToSheet(amount) {
+let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+let newTotalDiamonds = currentAccountDiamonds + amount;
+localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
+let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
+if (customerPhone && amount > 0) {
+try {
+await fetch(KIMBLING_API_URL, {
+method: 'POST',
+mode: 'no-cors',
+headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+body: JSON.stringify({
+action: 'add_hatkim',
+type: 'add_hatkim',
+phone: customerPhone,
+amount: amount
+})
+});
+} catch (e) {
+console.log("Lỗi đồng bộ kim cương về Google Sheets:", e);
+}
+}
+if (window.parent) {
+window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: amount }, '*');
+}
+}
 
-            localStorage.setItem('kimbling_game_state_v45', JSON.stringify(newState));
-            return newState;
-        }
+// 🟢 LẮNG NGHE TÍN HIỆU ĐẨY ĐƠN VÀ CỘNG CHÍNH XÁC +3 LƯỢT QUAY
+window.addEventListener('message', function(event) {
+    if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
+        let pendingBonus = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
+        let turnsToAdd = pendingBonus > 0 ? pendingBonus : 3; // Mặc định cộng 3 lượt chuẩn xác từ đơn đẩy POS
 
-        let gameState = getGameState();
-
-        function updateUI() {
-            const turnsLeft = Math.max(0, gameState.maxTurnsAllowed - gameState.gamesPlayed);
-            document.getElementById('turnBadge').innerText = `Lượt chơi còn lại: ${turnsLeft} lượt`;
-
-            const wonDisplay = document.getElementById('wonPrizesDisplay');
-            if (gameState.wonDiamondsTotal > 0) {
-                wonDisplay.innerText = `🎉 ĐÃ TÍCH LŨY: +${gameState.wonDiamondsTotal} 💎 KIM CƯƠNG`;
-                wonDisplay.style.color = `#00838f`;
-            } else {
-                wonDisplay.innerText = `💎 Mở hộp quà - Săn Kim Cương tích lũy ngay!`;
-                wonDisplay.style.color = `#e65100`;
-            }
-
-            const boxElements = document.querySelectorAll('.box-item');
-
-            if (gameState.isCurrentGameFinished && gameState.selectedBoxIndex !== null) {
-                boxElements.forEach((box, idx) => {
-                    const item = gameState.currentBoard[idx];
-                    if (idx === gameState.selectedBoxIndex) {
-                        if (item.type === 'DIAMOND') {
-                            box.innerHTML = `<span style="font-size:22px;">💎</span><span class="item-title">${item.text}</span>`;
-                            box.className = 'box-item user-opened winner-box';
-                        } else {
-                            box.innerHTML = `<span style="font-size:22px;">😋</span><span class="item-title">Ngon miệng!</span>`;
-                            box.className = 'box-item user-opened';
-                        }
-                    } else {
-                        box.innerHTML = `<span style="font-size:18px;">${item.icon}</span><span style="font-size:9px; font-weight:normal;">${item.text}</span>`;
-                        box.className = 'box-item auto-revealed';
-                    }
-                });
-
-                showResultBox();
-
-            } else {
-                boxElements.forEach(box => {
-                    box.innerHTML = '🎁';
-                    box.className = 'box-item';
-                });
-                document.getElementById('resultBox').style.display = 'none';
-            }
-        }
-
-        function openBox(index) {
-            if (gameState.isCurrentGameFinished || gameState.gamesPlayed >= gameState.maxTurnsAllowed) {
-                return;
-            }
-
-            gameState.gamesPlayed++;
-            gameState.isCurrentGameFinished = true;
-            gameState.selectedBoxIndex = index;
-
-            let item = gameState.currentBoard[index];
-            let exactWonThisTurn = 0;
-
-            if (item.type === 'DIAMOND') {
-                if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
-                    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-                } else {
-                    exactWonThisTurn = item.value; // Chỉ lấy đúng số kim cương của lượt này
-                    gameState.wonDiamondsTotal += item.value;
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                }
-            } else {
-                item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-            }
-
-            gameState.currentBoard[index] = item;
-            localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
-
-            // NGAY KHI TRÚNG Ở LƯỢT NÀY, GỬI ĐÚNG SỐ LƯỢNG CỦA LƯỢT NÀY LÊN GOOGLE SHEETS
-            if (exactWonThisTurn > 0) {
-                syncSingleRewardToSheet(exactWonThisTurn);
-            }
-
-            updateUI();
-        }
-
-        function showResultBox() {
-            const resultBox = document.getElementById('resultBox');
-            const resultText = document.getElementById('resultText');
-            const choiceRow = document.getElementById('choiceRow');
-            const btnCloseGame = document.getElementById('btnCloseGameAction');
-
-            const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
-
-            let htmlMsg = "";
-            if (selectedItem.type === 'DIAMOND') {
-                htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG +${selectedItem.value} 💎 KIM CƯƠNG!</b><br>`;
-            } else {
-                htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Thử vận may ở ô tiếp theo nhé!<br>`;
-            }
-
-            if (gameState.gamesPlayed < gameState.maxTurnsAllowed) {
-                choiceRow.style.display = 'flex';
-                btnCloseGame.style.display = 'none';
-            } else {
-                choiceRow.style.display = 'none';
-                btnCloseGame.style.display = 'block';
-
-                if (gameState.wonDiamondsTotal > 0) {
-                    htmlMsg += `<br>💎 <b>BẠN ĐÃ TÍCH LŨY ĐƯỢC +${gameState.wonDiamondsTotal} KIM CƯƠNG!</b><br>Đã cộng vào tài khoản của bạn!`;
-                } else {
-                    htmlMsg += `<br>🛵 Bấm nút bên dưới để hoàn tất đơn hàng nhé!`;
-                }
-            }
-
-            resultText.innerHTML = htmlMsg;
-            resultBox.style.display = 'block';
-        }
-
-        function startNextGame() {
-            if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
-            
-            gameState.isCurrentGameFinished = false;
-            gameState.selectedBoxIndex = null;
-            gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
-            
-            localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
-            updateUI();
-        }
-
-        function finishFiveTurnsAndCheckout() {
-            closeGame();
-        }
-
-        function closeGame() {
-            if (window.parent) {
-                window.parent.postMessage('CLOSE_GAME_POPUP', '*');
-            }
-        }
-
-        // HÀM GỬI LÊN APPS SCRIPT NGAY TỪNG LƯỢT TRÚNG THƯỞNG
-        async function syncSingleRewardToSheet(amount) {
-            let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
-            let newTotalDiamonds = currentAccountDiamonds + amount;
-            
-            localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
-
-            let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
-            
-            if (customerPhone && amount > 0) {
-                try {
-                    await fetch(KIMBLING_API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-                        body: JSON.stringify({
-                            action: 'add_hatkim',
-                            type: 'add_hatkim',
-                            phone: customerPhone,
-                            amount: amount // Chỉ cộng đúng số lượng của lượt này
-                        })
-                    });
-                } catch (e) {
-                    console.log("Lỗi đồng bộ kim cương về Google Sheets:", e);
-                }
-            }
-
-            if (window.parent) {
-                window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: amount }, '*');
-            }
-        }
-
-        window.addEventListener('message', function(event) {
-            if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
-                gameState.maxTurnsAllowed += 3;
-                gameState.isCurrentGameFinished = false;
-                gameState.selectedBoxIndex = null;
-                gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
-                
-                localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
-                updateUI();
-            }
-            if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v45');
-                location.reload();
-            }
-        });
-
+        gameState.maxTurnsAllowed += turnsToAdd;
+        gameState.isCurrentGameFinished = false;
+        gameState.selectedBoxIndex = null;
+        gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
+        
+        localStorage.removeItem('kimbling_pending_bonus_turns');
+        localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+        
         updateUI();
-    </script>
+    }
+    
+    if (event.data === 'RESET_GAME_DATA') {
+        localStorage.removeItem('kimbling_game_state_v45');
+        location.reload();
+    }
+});
+
+updateUI();
+</script>
 </body>
 </html>

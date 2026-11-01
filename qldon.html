@@ -26,17 +26,10 @@
     .order-time { font-size:13px; color:var(--subtext); }
     
     .btn-delete-single { 
-      position: absolute; 
-      top: 12px; 
-      left: 14px; 
-      background: rgba(239,68,68,.15); 
-      color: #f87171; 
-      border: 1px solid #ef4444; 
-      padding: 3px 8px; 
-      border-radius: 6px; 
-      font-size: 11px; 
-      font-weight: bold; 
-      cursor: pointer; 
+      position: absolute; top: 12px; left: 14px; 
+      background: rgba(239,68,68,.15); color: #f87171; 
+      border: 1px solid #ef4444; padding: 3px 8px; 
+      border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; 
     }
     .btn-delete-single:hover { background:#ef4444; color:#fff; }
 
@@ -106,23 +99,13 @@
     .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
 
     #loadingOverlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(15, 23, 42, 0.85);
-      z-index: 99999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #f8fafc;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); z-index: 99999;
+      flex-direction: column; align-items: center; justify-content: center; color: #f8fafc;
     }
     .spinner {
-      width: 42px; height: 42px;
-      border: 4px solid #334155;
-      border-top: 4px solid #c29b38;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
+      width: 42px; height: 42px; border: 4px solid #334155; border-top: 4px solid #c29b38;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
@@ -235,9 +218,7 @@
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
+      if (audioContext.state === 'suspended') { audioContext.resume(); }
 
       const silentAudio = document.getElementById('silentBackgroundAudio');
       if (silentAudio) {
@@ -264,57 +245,38 @@
 
     function playChimeSound() {
       try {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
+        if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
 
         const now = audioContext.currentTime;
         const osc1 = audioContext.createOscillator();
         const gain1 = audioContext.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(880, now);
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(880, now);
         gain1.gain.setValueAtTime(0.5, now);
         gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-        osc1.connect(gain1);
-        gain1.connect(audioContext.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.5);
+        osc1.connect(gain1); gain1.connect(audioContext.destination);
+        osc1.start(now); osc1.stop(now + 0.5);
 
         const osc2 = audioContext.createOscillator();
         const gain2 = audioContext.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1174.66, now + 0.2);
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(1174.66, now + 0.2);
         gain2.gain.setValueAtTime(0.6, now + 0.2);
         gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
-        osc2.start(now + 0.2);
-        osc2.stop(now + 0.8);
+        osc2.connect(gain2); gain2.connect(audioContext.destination);
+        osc2.start(now + 0.2); osc2.stop(now + 0.8);
 
-        if ("vibrate" in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 400]);
-        }
-      } catch (e) {
-        console.log("Lỗi âm thanh:", e);
-      }
+        if ("vibrate" in navigator) { navigator.vibrate([200, 100, 200, 100, 400]); }
+      } catch (e) { console.log("Lỗi âm thanh:", e); }
     }
 
     function startContinuousAlarm() {
       if (continuousAlarmTimer) return;
       playChimeSound();
-      continuousAlarmTimer = setInterval(() => {
-        playChimeSound();
-      }, 3000);
+      continuousAlarmTimer = setInterval(() => { playChimeSound(); }, 3000);
     }
 
     function stopContinuousAlarm() {
-      if (continuousAlarmTimer) {
-        clearInterval(continuousAlarmTimer);
-        continuousAlarmTimer = null;
-      }
+      if (continuousAlarmTimer) { clearInterval(continuousAlarmTimer); continuousAlarmTimer = null; }
     }
 
     window.onload = function() {
@@ -322,12 +284,8 @@
       setInterval(() => fetchOrders(false), 15000);
 
       document.body.addEventListener('click', function unlockAudio() {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
+        if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
         const silentAudio = document.getElementById('silentBackgroundAudio');
         if (silentAudio && silentAudio.paused) {
           silentAudio.volume = 0.01;
@@ -383,18 +341,14 @@
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
 
-            if (currentStatus === '1') {
-              hasStatus1Order = true;
-            }
+            if (currentStatus === '1') { hasStatus1Order = true; }
 
             if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
               if (!isFirstLoad) {
                 if ("Notification" in window && Notification.permission === "granted") {
                   new Notification(`🚨 ĐƠN MỚI #${orderId} - KimBling`, {
                     body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${formatMoneyK(order.total)}`,
-                    icon: 'logo.jpg',
-                    tag: orderId,
-                    renotify: true
+                    icon: 'logo.jpg', tag: orderId, renotify: true
                   });
                 }
               }
@@ -402,17 +356,10 @@
             knownOrderIds.add(orderId);
           });
 
-          if (hasStatus1Order && !isFirstLoad) {
-            startContinuousAlarm();
-          } else {
-            stopContinuousAlarm();
-          }
-
+          if (hasStatus1Order && !isFirstLoad) { startContinuousAlarm(); } else { stopContinuousAlarm(); }
           isFirstLoad = false;
 
-          if (currentDataSignature === lastRenderedDataSignature) {
-            return;
-          }
+          if (currentDataSignature === lastRenderedDataSignature) { return; }
           lastRenderedDataSignature = currentDataSignature;
 
           let html = '';
@@ -547,12 +494,8 @@
           } else {
             distanceKm = calculateHaversineKm(STORE_LAT, STORE_LNG, destLat, destLng);
           }
-        } else {
-          distanceKm = 1.0;
-        }
-      } catch (e) {
-        distanceKm = 1.0;
-      }
+        } else { distanceKm = 1.0; }
+      } catch (e) { distanceKm = 1.0; }
 
       let newShippingFee = calculateShippingFee(distanceKm);
       let formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
@@ -704,7 +647,6 @@
 
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
-      
       if (button && button.disabled) return;
 
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
@@ -739,9 +681,7 @@
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
         
         let totalItemsCount = 0;
-        parsedCartItems.forEach(item => {
-          totalItemsCount += Number(item.quantity || 1);
-        });
+        parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
 
         const totalAmount = Number(orderObj.total || 0);
         const paymentType = String(orderObj.payment || '').toLowerCase();
@@ -758,18 +698,12 @@
         const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
 
         const payloadPOS = {
-          type: 'pushOnlineOrder',
-          action: 'pushOnlineOrder',
-          sourceOrderId: String(orderId),
-          orderId: String(orderId),
-          total: totalAmount,
-          diamonds: diamondsValue, 
-          items: parsedCartItems,
-          name: String(orderObj.name || 'Khách lẻ'),
-          phone: customerPhone,
-          address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'),
-          note: String(orderObj.note || '')
+          type: 'pushOnlineOrder', action: 'pushOnlineOrder',
+          sourceOrderId: String(orderId), orderId: String(orderId),
+          total: totalAmount, diamonds: diamondsValue, 
+          items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
+          phone: customerPhone, address: String(orderObj.address || ''),
+          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
         };
 
         await fetch(KIMBLING_API_URL, {
@@ -786,21 +720,19 @@
             method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
-              action: 'add_points',
-              sdt: customerPhone,
-              ly: totalItemsCount,
-              txid: `ONLINE_${orderId}`
+              action: 'add_points', sdt: customerPhone,
+              ly: totalItemsCount, txid: `ONLINE_${orderId}`
             })
           });
         }
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
         
-        // 💎 LƯU TRỮ LƯỢT QUAY CHỜ NHẬN VÀO BỘ NHỚ TRÌNH DUYỆT ĐỂ ĐẢM BẢO KHÔNG BỎ SÓT
-        let pendingTurns = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0') + 3;
+        // 💎 TỰ ĐỘNG CỘNG MẶC ĐỊNH +3 LƯỢT MỞ QUẢ QUẢN LÝ KHI ĐẨY ĐƠN THÀNH CÔNG
+        let pendingTurns = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10) + 3;
         localStorage.setItem('kimbling_pending_bonus_turns', pendingTurns);
 
-        // 🚀 BẮN TÍN HIỆU CỘNG +3 LƯỢT QUAY SANG MINIGAME (ĐÃ TÍCH HỢP)
+        // 🚀 BẮN TÍN HIỆU SANG TRANG TRÒ CHƠI NẾU ĐANG MỞ
         try {
             const allIframes = document.querySelectorAll('iframe');
             allIframes.forEach(iframe => {
@@ -810,7 +742,7 @@
             if (window.parent && window.parent !== window) window.parent.postMessage('ADD_BONUS_TURNS', '*');
         } catch(e) {}
 
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và cập nhật kim cương, cấp +3 lượt quay thành công!`;
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales, cấp +3 lượt quay mở hộp quà thành công!`;
         if (isTichDiemChecked) {
           successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách (${customerPhone}).`;
         }
@@ -845,13 +777,9 @@
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
       })
-      .then(() => {
-        lastRenderedDataSignature = ""; 
-      })
+      .then(() => { lastRenderedDataSignature = ""; })
       .catch(err => console.error(err))
-      .finally(() => {
-        setTimeout(() => { isFetchingOrders = false; }, 3000);
-      });
+      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
     }
 
     function requestDeleteSingleOrder(orderId) {
