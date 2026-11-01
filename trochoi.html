@@ -111,6 +111,8 @@
     </div>
 
     <script>
+        const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
         function getTodayString() {
             const now = new Date();
             return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
@@ -125,7 +127,6 @@
             return arr;
         }
 
-        // TẠO BẢNG QUÀ VỚI CÁC Ô MỒI (300, 200, 100 💎, VOUCHER 50K) VÀ MỐC THẬT (10, 3, 2, 1 💎)
         function createNewBoard(currentWonTotal) {
             let board = [
                 { type: 'DIAMOND', value: 3, text: '+3 Kim Cương', icon: '💎' },
@@ -138,7 +139,6 @@
                 { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' }
             ];
 
-            // Tỉ lệ 5% trúng ô 10💎 thật (hoặc tùy chỉnh)
             const isTenDiamondLucky = Math.random() < 0.05;
             if (isTenDiamondLucky && (currentWonTotal + 10 <= 10)) {
                 board.push({ type: 'DIAMOND', value: 10, text: '+10 Kim Cương', icon: '💎' });
@@ -232,9 +232,7 @@
 
             let item = gameState.currentBoard[index];
 
-            // XỬ LÝ KHI MỞ HỘP
             if (item.type === 'DIAMOND') {
-                // Nếu đã đạt trần 10💎 hoặc cộng thêm vượt trần -> Hoán đổi thành "Ngon miệng!"
                 if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
                     item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
                 } else {
@@ -242,7 +240,6 @@
                     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 }
             } else {
-                // Ô mồi giả lập -> Tự động hóa thành "Ngon miệng!" khi bấm mở
                 item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
@@ -295,7 +292,6 @@
             updateUI();
         }
 
-        // 1. KHI BẤM "ĐẶT MÓN NGAY" -> CỘNG THẲNG KIM CƯƠNG VÀO TÀI KHOẢN VÀ ĐÓNG GAME
         function finishFiveTurnsAndCheckout() {
             if (gameState.wonDiamondsTotal > 0) {
                 saveDiamondsToCustomerAccount(gameState.wonDiamondsTotal);
@@ -303,7 +299,6 @@
             closeGame();
         }
 
-        // 2. KHI BẤM NÚT "X" (THOÁT TRÒ CHƠI) -> CỘNG THẲNG KIM CƯƠNG VÀO TÀI KHOẢN NGAY LẬP TỨC
         function closeGame() {
             if (gameState.wonDiamondsTotal > 0) {
                 saveDiamondsToCustomerAccount(gameState.wonDiamondsTotal);
@@ -313,25 +308,43 @@
             }
         }
 
-        // HÀM LƯU VÀ CỘNG THẲNG KIM CƯƠNG VÀO VÍ TÀI KHOẢN KHÁCH
-        function saveDiamondsToCustomerAccount(diamondsCount) {
+        // HÀM LƯU VÀ GỌI API CỘNG TRỰC TIẾP LÊN GOOGLE SHEETS
+        async function saveDiamondsToCustomerAccount(diamondsCount) {
             let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
             let newTotalDiamonds = currentAccountDiamonds + diamondsCount;
             
-            // Lưu ví điểm mới
             localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
             localStorage.setItem('kimbling_game_won_diamonds', diamondsCount);
 
-            // Bắn tín hiệu sang trang menu để cập nhật hiển thị số dư ngay lập tức
+            // Lấy SĐT khách từ localStorage (hoặc parent window)
+            let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
+            
+            if (customerPhone && diamondsCount > 0) {
+                try {
+                    await fetch(KIMBLING_API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                        body: JSON.stringify({
+                            action: 'add_hatkim',
+                            type: 'add_hatkim',
+                            phone: customerPhone,
+                            amount: diamondsCount
+                        })
+                    });
+                } catch (e) {
+                    console.log("Lỗi đồng bộ kim cương về Google Sheets:", e);
+                }
+            }
+
             if (window.parent) {
                 window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: diamondsCount }, '*');
             }
         }
 
-        // 3. LẮNG NGHE TÍN HIỆU TỪ CHỦ QUÁN (ĐẨY POS) ĐỂ CỘNG THÊM +3 LƯỢT QUAY MỚI
         window.addEventListener('message', function(event) {
             if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
-                gameState.maxTurnsAllowed += 3; // Cộng thêm đúng 3 lượt quay
+                gameState.maxTurnsAllowed += 3;
                 gameState.isCurrentGameFinished = false;
                 gameState.selectedBoxIndex = null;
                 gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
