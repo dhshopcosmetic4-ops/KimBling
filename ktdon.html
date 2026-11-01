@@ -35,7 +35,7 @@
       background: var(--primary); color: #000; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
     }
 
-    /* 1. THẺ THÀNH VIÊN TÍCH ĐIỂM (CŨ) */
+    /* 1. THẺ THÀNH VIÊN TÍCH ĐIỂM */
     .loyalty-card {
       background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 2px solid #34c759;
@@ -48,20 +48,22 @@
     .loyalty-stats { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
     .loyalty-badge { background: #34c759; color: #000; font-weight: bold; padding: 4px 10px; border-radius: 8px; font-size: 15px; }
 
-    /* 2. Ô THÔNG TIN MỚI: TÚI 💎 TÍCH LŨY */
+    /* 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY & GIAO DỊCH GẦN NHẤT */
     .diamond-box {
       background: linear-gradient(135deg, #2c1810, #1e293b);
       border: 1.5px solid #ff9800;
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 14px;
       margin-bottom: 14px;
       box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
+    .diamond-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .diamond-title { font-size: 13px; font-weight: bold; color: #ff9800; display: flex; align-items: center; gap: 6px; }
-    .diamond-balance { font-size: 17px; font-weight: bold; color: #ff4d4d; background: #0f172a; padding: 4px 10px; border-radius: 8px; border: 1px solid #ff9800; }
+    .diamond-balance { font-size: 18px; font-weight: bold; color: #ff4d4d; background: #0f172a; padding: 4px 10px; border-radius: 8px; border: 1px solid #ff9800; }
+    
+    .diamond-latest-log {
+      font-size: 12px; color: #cbd5e1; background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 8px; border-left: 3px solid #ff9800; display: flex; justify-content: space-between; align-items: center;
+    }
 
     .step-animation-banner {
       background: #0f172a; border: 1.5px solid var(--primary); border-radius: 10px; padding: 10px; text-align: center; margin: 10px 0; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -271,7 +273,7 @@
       Promise.all([
         fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ success: false })),
         fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
-        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
+        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0, logs: [] }))
       ])
       .then(([orderData, pointData, walletData]) => {
         renderCombinedResult(orderData, pointData, walletData, phone);
@@ -293,7 +295,7 @@
       Promise.all([
         fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ success: false })),
         fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
-        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
+        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0, logs: [] }))
       ])
       .then(([orderData, pointData, walletData]) => {
         renderCombinedResult(orderData, pointData, walletData, currentSearchedPhone);
@@ -313,7 +315,42 @@
         nextLy = pointData.nextReward || 10;
       }
 
-      let hatKimBalance = (walletData && walletData.hatKim) ? parseInt(walletData.hatKim) : 0;
+      let hatKimBalance = (walletData && walletData.hatKim !== undefined) ? parseInt(walletData.hatKim) : 0;
+      
+      let logs = (walletData && Array.isArray(walletData.logs)) ? walletData.logs : [];
+      let latestLogHtml = '';
+      
+      if (logs.length > 0) {
+        let lastItem = logs[logs.length - 1]; 
+        let amt = parseInt(lastItem.amount || lastItem.value || 0);
+        let timeStr = lastItem.time || lastItem.date || lastItem.timestamp || 'Gần đây';
+        let colorStyle = amt >= 0 ? 'color: #34c759;' : 'color: #ef4444;';
+        let prefixSymbol = amt >= 0 ? '+' : '';
+        
+        latestLogHtml = `
+          <div class="diamond-latest-log">
+            <span>🕒 Cập nhật (${timeStr}):</span>
+            <b style="${colorStyle}">${prefixSymbol}${amt.toLocaleString('vi-VN')} 💎</b>
+          </div>
+        `;
+      } else {
+        let updateTime = walletData.updatedTime || walletData.time || walletData.date || "";
+        if (updateTime) {
+          latestLogHtml = `
+            <div class="diamond-latest-log">
+              <span>🕒 Cập nhật lần cuối:</span>
+              <b style="color: #34c759;">${updateTime}</b>
+            </div>
+          `;
+        } else {
+          latestLogHtml = `
+            <div class="diamond-latest-log">
+              <span>🕒 Cập nhật gần nhất:</span>
+              <span style="color: var(--subtext);">Chưa có ghi nhận giao dịch</span>
+            </div>
+          `;
+        }
+      }
 
       // 1. Thẻ thành viên tích điểm
       html += `
@@ -343,12 +380,15 @@
       // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY
       html += `
         <div class="diamond-box">
-          <div class="diamond-title">
-            <span>💎 TÚI 💎 TÍCH LŨY:</span>
+          <div class="diamond-header" style="margin-bottom: ${logs.length > 0 || walletData.updatedTime ? '8px' : '0'};">
+            <div class="diamond-title">
+              <span>💎 TÚI 💎 TÍCH LŨY:</span>
+            </div>
+            <div class="diamond-balance">
+              ${hatKimBalance.toLocaleString('vi-VN')} 💎
+            </div>
           </div>
-          <div class="diamond-balance">
-            ${hatKimBalance.toLocaleString('vi-VN')} 💎
-          </div>
+          ${latestLogHtml}
         </div>
       `;
 
@@ -492,7 +532,7 @@
     }
 
     function sendHurryOrder(orderId, name, phone, address, items, total) {
-      if (!confirm("Bạn có chắc chắn muốn gửi yêu cầu hối giao đơn hàng này không?")) return;
+      if (!confirm("Hối giao đơn hàng này?")) return;
 
       localStorage.setItem(`hurried_${orderId}`, 'true');
       let btn = document.getElementById(`btnHurry_${orderId}`);
@@ -518,7 +558,7 @@
           note: "Khách bấm hối giao đơn hàng này!"
         })
       })
-      .then(() => alert("⚡ Quán đã nhận được lời hối của bạn và sẽ cố gắng giao đơn hàng nhanh nhất có thể nhé!"))
+      .then(() => alert("⚡ Quán đã nhận được lời hối của bạn!"))
       .catch(err => console.error("Lỗi kết nối:", err))
       .finally(() => hideLoading());
     }

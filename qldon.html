@@ -471,6 +471,15 @@
                 </div>
                 ${noteHtml}
                 <div class="items-box">${formattedItems}</div>
+                
+                <!-- Ô Checkbox Tích Điểm Món Nhanh -->
+                <div style="margin: 8px 0; padding: 6px 10px; background: rgba(52, 199, 89, 0.1); border: 1px dashed #34c759; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+                  <label style="font-size: 12px; color: #34c759; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <input type="checkbox" id="tichdiem_check_${escapeHtml(orderId)}" style="width: 16px; height: 16px; accent-color: #34c759;"> 
+                    🎁 Tích điểm món vào hệ thống (1 món = 1 điểm)
+                  </label>
+                </div>
+
                 <div class="order-footer">${paymentTagHtml}${priceDisplayHtml}</div>
                 <div class="status-group">
                   <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
@@ -681,22 +690,55 @@
 
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
+      
+      // Kiểm tra khóa chống trùng lặp cục bộ
       if (localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true') {
-        alert(`Đơn #${orderId} đã được đánh dấu đẩy trước đó.`);
+        alert(`⚠️ Đơn #${orderId} đã được đẩy qua POS trước đó rồi! Không thể đẩy lại.`);
+        if (button) {
+          button.classList.add('pushed');
+          button.disabled = true;
+          button.textContent = '✅ Đã đẩy đơn';
+        }
         return;
       }
+
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
       if (!pin) return;
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      showLoading(`Đang kết nối KimBling đẩy đơn #${orderId} sang POS...`);
+      // Đọc trạng thái của checkbox tích điểm món
+      const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
+      const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
+
+      showLoading(`Đang kết nối KimBling xử lý đơn #${orderId}...`);
       if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
       
       isFetchingOrders = true; 
       try {
+        // Kiểm tra chống trùng từ server
+        const checkRes = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
+        const checkData = await checkRes.json();
+        
+        if (checkData && checkData.success && checkData.saved) {
+          localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+          alert(`⚠️ Đơn #${orderId} đã tồn tại trong hệ thống POS từ trước! Hệ thống đã tự động khóa lại.`);
+          if (button) {
+            button.classList.add('pushed');
+            button.disabled = true;
+            button.textContent = '✅ Đã đẩy đơn';
+          }
+          return;
+        }
+
         const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
         
+        // Tính tổng số lượng món để cộng điểm tích điểm tương ứng (1 món = 1 điểm)
+        let totalItemsCount = 0;
+        parsedCartItems.forEach(item => {
+          totalItemsCount += Number(item.quantity || 1);
+        });
+
         const totalAmount = Number(orderObj.total || 0);
         const paymentType = String(orderObj.payment || '').toLowerCase();
         
@@ -709,7 +751,10 @@
             diamondsValue = Math.round(totalAmount / 1000); 
         }
 
-        const payload = {
+        const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
+
+        // 1. NHIỆM VỤ 1 & 2: Đẩy đơn qua POS và cập nhật Túi Kim Cương
+        const payloadPOS = {
           type: 'pushOnlineOrder',
           action: 'pushOnlineOrder',
           sourceOrderId: String(orderId),
@@ -718,7 +763,7 @@
           diamonds: diamondsValue, 
           items: parsedCartItems,
           name: String(orderObj.name || 'Khách lẻ'),
-          phone: String(orderObj.phone || '').replace(/'/g, '').trim(),
+          phone: customerPhone,
           address: String(orderObj.address || ''),
           payment: String(orderObj.payment || 'Tiền mặt'),
           note: String(orderObj.note || '')
@@ -727,14 +772,36 @@
         await fetch(KIMBLING_API_URL, {
           method: 'POST', mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payloadPOS)
         });
 
         const saved = await waitForSalesOrder(String(orderId), 18, 1000);
         if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
 
+        // 3. NHIỆM VỤ 3: Nếu chủ quán tick chọn -> Cộng điểm món vào hệ thống tichdiem
+        if (isTichDiemChecked && customerPhone.length >= 9) {
+          showLoading(`Đang cộng ${totalItemsCount} điểm món vào hệ thống tích điểm cho SĐT ${customerPhone}...`);
+          
+          await fetch(KIMBLING_API_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'add_points',
+              sdt: customerPhone,
+              ly: totalItemsCount,
+              txid: `ONLINE_${orderId}`
+            })
+          });
+        }
+
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-        alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales và cập nhật kim cương thành công!`);
+        
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và cập nhật kim cương thành công!`;
+        if (isTichDiemChecked) {
+          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách (${customerPhone}).`;
+        }
+
+        alert(successMsg);
         lastRenderedDataSignature = ""; 
         fetchOrders(true);
       } catch (err) {
