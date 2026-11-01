@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Đổi Mã PIN Túi 💎 — Kim Bling Coffee & Tea</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <style>
+        :root {
+            --primary: #c29b38;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --border: #334155;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 16px; font-size: 15px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        .container { width: 100%; max-width: 400px; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); text-align: center; }
+
+        h2 { color: var(--primary); font-size: 20px; margin-bottom: 6px; }
+        p { color: var(--subtext); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
+
+        .input-group { margin-bottom: 14px; text-align: left; }
+        label { font-size: 12px; font-weight: bold; color: var(--subtext); display: block; margin-bottom: 6px; }
+        
+        .input-field {
+            width: 100%; background: #0f172a; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; font-size: 16px; outline: none; text-align: center; font-weight: bold; letter-spacing: 1px;
+        }
+        .input-field:focus { border-color: var(--primary); }
+
+        .btn-submit {
+            width: 100%; background: linear-gradient(135deg, #c29b38, #997524); color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(194,155,56,0.3); transition: opacity 0.2s; margin-top: 10px;
+        }
+        .btn-submit:active { opacity: 0.8; }
+
+        .nav-links-box {
+            display: flex; gap: 8px; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px;
+        }
+        .btn-nav {
+            flex: 1; background: #334155; color: #fff; border: none; padding: 10px 6px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; transition: background 0.2s;
+        }
+        .btn-nav:hover { background: #475569; }
+
+        .result-box { margin-top: 15px; font-size: 14px; font-weight: bold; }
+
+        /* Hiệu ứng lớp phủ Loading chờ kết nối KimBling */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+        }
+        .spinner {
+            width: 42px; height: 42px;
+            border: 4px solid #334155;
+            border-top: 4px solid #c29b38;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Màn hình Loading KimBling -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Đang kết nối KimBling... Vui lòng chờ xíu nhé!</div>
+    </div>
+
+    <div class="container">
+        <h2>KIM BLING COFFEE & TEA</h2>
+        <p>Cập nhật hoặc đổi mới mã PIN bảo mật Túi 💎</p>
+
+        <div class="input-group">
+            <label>Số điện thoại của bạn:</label>
+            <input type="tel" id="inputPhone" class="input-field" placeholder="Nhập SĐT..." inputmode="numeric" pattern="[0-9]*" maxlength="11">
+        </div>
+
+        <div class="input-group">
+            <label>Nhập mã PIN mới (Gồm 4 chữ số):</label>
+            <input type="password" id="inputNewPin" class="input-field" placeholder="••••" inputmode="numeric" pattern="[0-9]*" maxlength="4" style="letter-spacing: 6px; font-size: 20px;">
+        </div>
+
+        <button class="btn-submit" id="btnSubmit" onclick="submitChangePin()">🔒 XÁC NHẬN ĐỔI MÃ PIN</button>
+
+        <div id="resultMsg" class="result-box"></div>
+
+        <div class="nav-links-box">
+            <a href="menu.html" class="btn-nav">📋 Xem Menu</a>
+            <a href="ktdon.html" class="btn-nav">⭐ Tra Cứu Điểm</a>
+        </div>
+    </div>
+
+    <script>
+        const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+        function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
+            document.getElementById('loadingText').innerText = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const phoneParam = urlParams.get('phone');
+            if (phoneParam) {
+                document.getElementById('inputPhone').value = phoneParam;
+            } else {
+                const savedPhone = localStorage.getItem('kb_customer_phone');
+                if (savedPhone) {
+                    document.getElementById('inputPhone').value = savedPhone;
+                }
+            }
+        };
+
+        function normalizePhoneNumber(rawPhone) {
+            if (!rawPhone) return "";
+            let cleaned = rawPhone.replace(/\D/g, "");
+            if (cleaned.length > 0 && !cleaned.startsWith("0")) {
+                cleaned = "0" + cleaned;
+            }
+            return cleaned;
+        }
+
+        async function submitChangePin() {
+            let rawPhone = document.getElementById('inputPhone').value.trim();
+            let phone = normalizePhoneNumber(rawPhone);
+            let newPin = document.getElementById('inputNewPin').value.trim();
+            let msgEl = document.getElementById('resultMsg');
+            let btn = document.getElementById('btnSubmit');
+
+            if (!phone || phone.length < 9) {
+                alert("Vui lòng nhập số điện thoại hợp lệ!");
+                return;
+            }
+
+            if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+                alert("Mã PIN mới phải bao gồm đúng 4 chữ số!");
+                return;
+            }
+
+            localStorage.setItem('kb_customer_phone', phone);
+            showLoading("Đang kết nối KimBling cập nhật mã PIN mới...");
+
+            try {
+                await fetch(KIMBLING_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                    body: JSON.stringify({
+                        type: 'updateHatKim',
+                        phone: phone,
+                        pin: newPin,
+                        amount: 0,
+                        logNote: 'Khách tự đổi mã PIN bảo mật'
+                    })
+                });
+                
+                msgEl.innerHTML = `<span style="color: #34c759;">🎉 Đổi mã PIN thành công!<br>Hãy ghi nhớ mã PIN mới của bạn nhé ❤️</span>`;
+                btn.style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                msgEl.innerHTML = `<span style="color: #ef4444;">Lỗi kết nối KimBling. Vui lòng thử lại!</span>`;
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>

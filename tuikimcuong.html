@@ -2,52 +2,141 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản Lý Túi 💎</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quản Lý Túi 💎 & Lịch Sử — KimBling</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
+    <!-- Thư viện hỗ trợ tạo mã QR nhanh chóng -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 15px; background: #fff; color: #333; }
-        h3 { margin-top: 0; color: #e65100; font-size: 17px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #fff3e0; padding-bottom: 8px; }
+        :root {
+            --primary: #c29b38;
+            --bg: #fff;
+            --text: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 15px; font-size: 14px; }
+        
+        h3 { margin-top: 0; color: #e65100; font-size: 17px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #fff3e0; padding-bottom: 8px; margin-bottom: 15px; }
+        
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        input[type="text"] { flex: 1; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
-        input[type="text"]:focus { border-color: #ff9800; }
+        input[type="tel"], input[type="text"] { flex: 1; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus { border-color: #ff9800; }
+        
         button { background: #e65100; color: white; border: none; padding: 0 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 5px rgba(230,81,0,0.3); }
-        .result-box { display: none; background: #fff8e1; border: 1.5px solid #ffe082; padding: 14px; border-radius: 10px; font-size: 13px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        button:active { opacity: 0.8; }
+
+        .result-box { display: none; background: #fff8e1; border: 1.5px solid #ffe082; padding: 14px; border-radius: 10px; font-size: 13px; margin-bottom: 15px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
         .row span { color: #666; }
+        
         .pin-box { border-top: 1px dashed #ffb74d; padding-top: 10px; margin-top: 10px; }
-        .btn-green { background: #2e7d32; padding: 8px; border-radius: 6px; font-size: 12px; flex: 1; box-shadow: 0 2px 5px rgba(46,125,50,0.3); }
+        .btn-green { background: #2e7d32; padding: 10px; border-radius: 6px; font-size: 12px; flex: 1; box-shadow: 0 2px 5px rgba(46,125,50,0.3); }
+        
+        /* Khu vực hiển thị QR đổi PIN */
+        .qr-section { margin-top: 12px; background: #fff; border: 1px dashed #c29b38; padding: 12px; border-radius: 8px; text-align: center; }
+        #qrcode { display: inline-block; margin-top: 8px; padding: 6px; background: #fff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* Bảng hiển thị lịch sử log */
+        .log-container { display: none; background: #f9f9f9; border: 1.5px solid #e0e0e0; padding: 12px; border-radius: 10px; }
+        .log-title { font-weight: bold; color: #333; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .log-table th, .log-table td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+        .log-table th { background: #f1f1f1; color: #444; }
+
+        /* Hiệu ứng lớp phủ Loading chờ dữ liệu KimBling */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+        }
+        .spinner {
+            width: 42px; height: 42px;
+            border: 4px solid #334155;
+            border-top: 4px solid #c29b38;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
     </style>
 </head>
 <body>
 
-    <h3><span>💎</span> Quản Lý Túi Thần Tài & PIN</h3>
+    <!-- Màn hình Loading KimBling -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Đang kết nối KimBling... Vui lòng chờ xíu nhé!</div>
+    </div>
+
+    <h3><span>💎</span> Quản Lý Túi Thần Tài, PIN & Lịch Sử</h3>
     
-    <!-- Ô tìm kiếm SĐT (Chỉ cho nhập số, tự động bật bàn phím số trên mobile) -->
+    <!-- Ô tìm kiếm SĐT -->
     <div class="search-box">
-        <input type="tel" id="adminSearchPhone" placeholder="Nhập SĐT khách (VD: 086...)" inputmode="numeric" pattern="[0-9]*" style="flex: 1; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; outline: none;" onkeydown="if(event.key==='Enter') adminLookupCustomerWallet()">
+        <input type="tel" id="adminSearchPhone" placeholder="Nhập SĐT khách (VD: 086...)" inputmode="numeric" pattern="[0-9]*" onkeydown="if(event.key==='Enter') adminLookupCustomerWallet()">
         <button onclick="adminLookupCustomerWallet()">Tra cứu</button>
     </div>
     
-    <!-- Kết quả tra cứu -->
+    <!-- Kết quả tra cứu thông tin -->
     <div id="adminWalletResultBox" class="result-box">
         <div class="row"><span>Số điện thoại:</span> <b id="adminResPhone">---</b></div>
         <div class="row"><span>Số dư Túi 💎:</span> <b id="adminResHatKim" style="color: #d32f2f; font-size: 15px;">0 💎</b></div>
-        <div class="row" style="align-items: center;"><span>Mã PIN hiện tại:</span> <b id="adminResPin" style="color: #1565c0; font-size: 15px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">---</b></div>
+        <div class="row"><span>Mã PIN hiện tại:</span> <b id="adminResPin" style="color: #1565c0; font-size: 15px; background: #e3f2fd; padding: 2px 8px; border-radius: 4px;">---</b></div>
         
         <div class="pin-box">
-            <div style="font-weight: bold; color: #e65100; margin-bottom: 6px; font-size: 12px;">Cấp lại mã PIN mới cho khách:</div>
-            <div style="display: flex; gap: 8px;">
+            <div style="font-weight: bold; color: #e65100; margin-bottom: 6px; font-size: 12px;">Cập nhật lại mã PIN mới thủ công:</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                 <input type="text" id="adminNewPinInput" maxlength="4" placeholder="PIN 4 số" inputmode="numeric" pattern="[0-9]*" style="width: 110px; text-align: center; font-weight: bold; letter-spacing: 2px;">
-                <button class="btn-green" onclick="adminResetCustomerPin()">Cập nhật PIN mới</button>
+                <button class="btn-green" onclick="adminResetCustomerPin()">Cập nhật PIN</button>
+            </div>
+            
+            <!-- Khu vực tạo mã QR Đổi PIN cho khách quét -->
+            <div class="qr-section">
+                <div style="font-size: 12px; font-weight: bold; color: #c29b38;">Mã QR cho khách tự quét đổi PIN:</div>
+                <div id="qrcode"></div>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">Khách quét mã này để tự đổi PIN trên điện thoại của họ</div>
             </div>
         </div>
     </div>
 
+    <!-- Khu vực hiển thị bảng Lịch Sử Log Cộng 💎 -->
+    <div id="adminLogContainer" class="log-container">
+        <div class="log-title">📜 Lịch sử biến động 💎 của khách</div>
+        <div style="max-height: 220px; overflow-y: auto;">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Biến động</th>
+                        <th>Nội dung / Nguồn</th>
+                    </tr>
+                </thead>
+                <tbody id="adminLogTableBody">
+                    <!-- Dữ liệu log tự động chèn vào đây -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 <script>
-// Đã điền sẵn link Google Script chuẩn của hệ thống
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
 let currentSearchedPhone = "";
 
-// Hàm chuẩn hóa SĐT: Ép buộc luôn giữ số 0 ở đầu, chặn lỗi Google Sheet cắt số 0
+function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
+    document.getElementById('loadingText').innerText = text;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
 function normalizePhoneNumber(rawPhone) {
     if (!rawPhone) return "";
     let cleaned = rawPhone.replace(/\D/g, ""); 
@@ -69,8 +158,10 @@ async function adminLookupCustomerWallet() {
     document.getElementById('adminSearchPhone').value = phone;
     currentSearchedPhone = phone;
 
+    showLoading("Đang kết nối KimBling tra cứu dữ liệu... Vui lòng chờ!");
+
     try {
-        let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
+        let res = await fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
         let data = await res.json();
 
         document.getElementById('adminResPhone').innerText = phone;
@@ -78,24 +169,76 @@ async function adminLookupCustomerWallet() {
         document.getElementById('adminResPin').innerText = data.pin && data.pin !== "" ? data.pin : "Chưa tạo";
         
         document.getElementById('adminWalletResultBox').style.display = 'block';
+        renderCustomerLogs(data.logs || []);
+
+        // Tự động sinh mã QR đổi PIN gắn sẵn SĐT của khách này
+        generateCustomerPinQR(phone);
+
     } catch (e) {
         console.log("Lỗi tra cứu quản lý", e);
-        alert("Không thể kết nối đến hệ thống!");
+        alert("Không thể kết nối đến hệ thống KimBling!");
+    } finally {
+        hideLoading();
     }
+}
+
+// Hàm tạo mã QR động dẫn đến doipin.html kèm tham số ?phone=...
+function generateCustomerPinQR(phone) {
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = ""; // Xóa mã QR cũ nếu có
+    
+    // Lấy đường dẫn hiện tại của trang doipin.html trên GitHub Pages (hoặc thay link thủ công của bạn vào đây)
+    let currentPath = window.location.href;
+    let baseUrl = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+    let targetUrl = baseUrl + "doipin.html?phone=" + phone;
+
+    // Tạo mã QR bằng thư viện qrcode.js
+    new QRCode(qrContainer, {
+        text: targetUrl,
+        width: 130,
+        height: 130,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
+}
+
+function renderCustomerLogs(logsArray) {
+    const logContainer = document.getElementById('adminLogContainer');
+    const tbody = document.getElementById('adminLogTableBody');
+    tbody.innerHTML = "";
+
+    if (!logsArray || logsArray.length === 0) {
+        logContainer.style.display = 'none';
+        return;
+    }
+
+    logsArray.forEach(log => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${log.time || '---'}</td>
+            <td style="color: #2e7d32; font-weight: bold;">+${log.amount || 0} 💎</td>
+            <td>${log.note || 'POS đơn hàng / Thưởng'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    logContainer.style.display = 'block';
 }
 
 async function adminResetCustomerPin() {
     let newPin = document.getElementById('adminNewPinInput').value.trim();
-    if (!currentSearchedPhone || newPin.length !== 4) {
+    if (!currentSearchedPhone || newPin.length !== 4 || isNaN(newPin)) {
         alert("Vui lòng tra cứu SĐT khách và nhập đúng mã PIN mới gồm 4 chữ số!");
         return;
     }
 
     if (!confirm(`Đổi mã PIN thành [${newPin}] cho số ${currentSearchedPhone}?`)) return;
 
+    showLoading("Đang kết nối KimBling cập nhật mã PIN mới...");
+
     try {
-        // Đã sửa lại dùng phương thức POST gửi type: 'updateHatKim' khớp với Google Script
-        let res = await fetch(GOOGLE_SCRIPT_URL, {
+        await fetch(KIMBLING_API_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
@@ -103,17 +246,19 @@ async function adminResetCustomerPin() {
                 type: 'updateHatKim',
                 phone: currentSearchedPhone,
                 pin: newPin,
-                amount: 0 // Không thay đổi số dư 💎, chỉ cập nhật PIN
+                amount: 0,
+                logNote: 'Quản lý đổi mã PIN trực tiếp'
             })
         });
         
-        // Do dùng chế độ no-cors, hệ thống sẽ mặc định thành công khi gửi lệnh tới GAS
         alert("Đã cập nhật mã PIN mới thành công!");
         document.getElementById('adminResPin').innerText = newPin;
         document.getElementById('adminNewPinInput').value = "";
     } catch (e) {
         console.log("Lỗi cập nhật PIN", e);
-        alert("Lỗi kết nối khi cập nhật mã PIN!");
+        alert("Lỗi kết nối KimBling khi cập nhật mã PIN!");
+    } finally {
+        hideLoading();
     }
 }
 </script>

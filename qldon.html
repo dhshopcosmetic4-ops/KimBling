@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Quản Lý Đơn Hàng — Kim Bling</title>
+  <title>Quản Lý Đơn Hàng — KimBling</title>
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="QLĐ Kim Bling">
+  <meta name="apple-mobile-web-app-title" content="QLĐ KimBling">
   <link rel="apple-touch-icon" href="logo.jpg">
 
   <style>
@@ -89,9 +89,38 @@
     }
     .qr-popup-body { flex: 1; width: 100%; overflow-y: auto; background: #0f172a; }
     .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
+
+    /* Hiệu ứng lớp phủ Loading kết nối KimBling */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 99999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #f8fafc;
+    }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 4px solid #334155;
+      border-top: 4px solid #c29b38;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
   </style>
 </head>
 <body>
+  <!-- Màn hình Loading KimBling -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Đang kết nối KimBling... Vui lòng chờ xíu nhé!</div>
+  </div>
+
   <audio id="silentBackgroundAudio" loop preload="auto">
     <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
   </audio>
@@ -106,10 +135,10 @@
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Tạo QR Tích Điểm</button>
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Quản Lý Túi 💎</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Nền & Chuông</button>
-        <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders();">🔄 Tải lại</button>
+        <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders(true);">🔄 Tải lại</button>
       </div>
     </div>
-    <div id="ordersContainer"><div class="empty-state">Đang tải dữ liệu đơn hàng...</div></div>
+    <div id="ordersContainer"><div class="empty-state">Đang kết nối KimBling tải dữ liệu đơn hàng...</div></div>
   </div>
 
   <div id="qrPopupModal" class="qr-popup-overlay">
@@ -137,7 +166,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
     const STORE_LAT = 10.74955; 
     const STORE_LNG = 106.63099;
     let isFetchingOrders = false;
@@ -147,6 +176,15 @@
     let knownOrderIds = new Set();
     let isFirstLoad = true;
     let continuousAlarmTimer = null;
+
+    function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
+      document.getElementById('loadingText').innerText = text;
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
 
     function formatMoneyK(amount) {
       const num = Number(amount || 0);
@@ -267,8 +305,8 @@
     }
 
     window.onload = function() {
-      fetchOrders();
-      setInterval(fetchOrders, 15000);
+      fetchOrders(true);
+      setInterval(() => fetchOrders(false), 15000);
 
       document.body.addEventListener('click', function unlockAudio() {
         if (!audioContext) {
@@ -308,10 +346,12 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    function fetchOrders() {
+    function fetchOrders(showLoader = false) {
       if (isFetchingOrders) return;
       isFetchingOrders = true;
-      fetch(`${SCRIPT_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'})
+      if (showLoader) showLoading("Đang kết nối KimBling tải danh sách đơn hàng...");
+
+      fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'})
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('ordersContainer');
@@ -337,7 +377,7 @@
             if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
               if (!isFirstLoad) {
                 if ("Notification" in window && Notification.permission === "granted") {
-                  new Notification(`🚨 ĐƠN MỚI #${orderId} - Kim Bling`, {
+                  new Notification(`🚨 ĐƠN MỚI #${orderId} - KimBling`, {
                     body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${formatMoneyK(order.total)}`,
                     icon: 'logo.jpg',
                     tag: orderId,
@@ -444,7 +484,10 @@
           document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
         })
         .catch(err => console.error(err))
-        .finally(() => { isFetchingOrders = false; });
+        .finally(() => { 
+          isFetchingOrders = false;
+          if (showLoader) hideLoading();
+        });
     }
 
     async function requestUpdateAddressAndCalculateFee(orderId, oldAddress) {
@@ -464,7 +507,7 @@
         fullAddress += ", Hồ Chí Minh";
       }
 
-      alert("⏳ Hệ thống đang quét tọa độ và tính lại phí ship tự động...");
+      showLoading("Đang kết nối KimBling quét tọa độ và tính phí ship tự động...");
 
       let distanceKm = 0;
       try {
@@ -492,7 +535,7 @@
       let formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
 
       isFetchingOrders = true;
-      fetch(SCRIPT_URL, {
+      fetch(KIMBLING_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
@@ -508,11 +551,14 @@
         alert(res.message || 'Đã cập nhật thành công.');
         if (res.success) {
           lastRenderedDataSignature = ""; 
-          fetchOrders();
+          fetchOrders(true);
         }
       })
-      .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'))
-      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
+      .catch(err => alert('⚠️ Lỗi kết nối KimBling!'))
+      .finally(() => { 
+        hideLoading();
+        setTimeout(() => { isFetchingOrders = false; }, 3000); 
+      });
     }
 
     function parseOrderItemsForPOS(orderObj, orderId) {
@@ -617,7 +663,7 @@
     async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
       for (let i = 0; i < attempts; i++) {
         try {
-          const response = await fetch(`${SCRIPT_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
+          const response = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
           const data = await response.json();
           if (data && data.success && data.saved) return true;
         } catch (err) {}
@@ -644,7 +690,7 @@
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      const originalText = button ? button.textContent : '';
+      showLoading(`Đang kết nối KimBling đẩy đơn #${orderId} sang POS...`);
       if (button) { button.disabled = true; button.textContent = '⏳ Đang đồng bộ...'; }
       
       isFetchingOrders = true; 
@@ -654,7 +700,6 @@
         const totalAmount = Number(orderObj.total || 0);
         const paymentType = String(orderObj.payment || '').toLowerCase();
         
-        // KIỂM TRA HÌNH THỨC THANH TOÁN ĐỂ QUYẾT ĐỊNH CỘNG HAY TRỪ KIM CƯƠNG
         let diamondsValue = 0;
         const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
 
@@ -679,7 +724,7 @@
           note: String(orderObj.note || '')
         };
 
-        await fetch(SCRIPT_URL, {
+        await fetch(KIMBLING_API_URL, {
           method: 'POST', mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
@@ -691,13 +736,14 @@
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
         alert(`✅ Đã lưu hóa đơn online #${orderId} vào Sales và cập nhật kim cương thành công!`);
         lastRenderedDataSignature = ""; 
-        fetchOrders();
+        fetchOrders(true);
       } catch (err) {
-        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối máy chủ.'}`);
+        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối KimBling.'}`);
       } finally {
+        hideLoading();
         if (button && !button.classList.contains('pushed')) {
           button.disabled = false;
-          button.textContent = originalText || '🚀 Đẩy qua POS';
+          button.textContent = '🚀 Đẩy qua POS';
         }
         setTimeout(() => { isFetchingOrders = false; }, 3000);
       }
@@ -713,7 +759,7 @@
       stopContinuousAlarm();
       isFetchingOrders = true; 
 
-      fetch(SCRIPT_URL, {
+      fetch(KIMBLING_API_URL, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
       })
@@ -730,19 +776,21 @@
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
       if (!pin) return;
 
+      showLoading(`Đang kết nối KimBling xóa đơn #${orderId}...`);
       isFetchingOrders = true; 
-      fetch(SCRIPT_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
+      fetch(KIMBLING_API_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
         .then(res => res.json())
         .then(res => { 
           alert(res.message); 
           if (res.success) {
             stopContinuousAlarm();
             lastRenderedDataSignature = ""; 
-            fetchOrders();
+            fetchOrders(true);
           } 
         })
-        .catch(err => alert('⚠️ Lỗi kết nối máy chủ!'))
+        .catch(err => alert('⚠️ Lỗi kết nối KimBling!'))
         .finally(() => {
+          hideLoading();
           setTimeout(() => { isFetchingOrders = false; }, 3000);
         });
     }

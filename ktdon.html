@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tra Cứu Đơn Hàng & Điểm Tích Lũy — Kim Bling Coffee & Tea</title>
+  <title>Tra Cứu Đơn Hàng & Điểm Tích Lũy — KimBling Coffee & Tea</title>
   <link rel="icon" type="image/jpeg" href="logo.jpg">
   <style>
     :root {
@@ -159,9 +159,38 @@
     .payment-tag { padding: 3px 6px; border-radius: 6px; font-size: 11px; font-weight: bold; }
     .pay-cash { background: #334155; color: #cbd5e1; }
     .pay-transfer { background: #065f46; color: #34d399; border: 1px solid #059669; }
+
+    /* Hiệu ứng lớp phủ Loading chờ kết nối KimBling */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      z-index: 99999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #f8fafc;
+    }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 4px solid #334155;
+      border-top: 4px solid #c29b38;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
   </style>
 </head>
 <body>
+
+  <!-- Màn hình Loading KimBling -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Đang kết nối KimBling... Vui lòng chờ xíu nhé!</div>
+  </div>
 
   <div class="container">
     <div class="brand-header">
@@ -196,7 +225,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
     
     const STEP_GIFS = {
       '1': { url: "https://lh3.googleusercontent.com/d/1N3HNNIPELUOAQmhucwxOI75pfwtiHS6T", title: "1. Đang pha chế món...", desc: "Quán đang chuẩn bị nguyên liệu và tất bật pha chế món ngon cho bạn." },
@@ -207,6 +236,15 @@
 
     let autoRefreshTimer = null;
     let currentSearchedPhone = "";
+
+    function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
+      document.getElementById('loadingText').innerText = text;
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
 
     window.onload = function() {
       const savedPhone = localStorage.getItem('kb_customer_phone');
@@ -228,13 +266,12 @@
       currentSearchedPhone = phone;
       localStorage.setItem('kb_customer_phone', phone);
 
-      const resultArea = document.getElementById('resultArea');
-      resultArea.innerHTML = '<div class="empty-state">Đang tra cứu dữ liệu đơn hàng và điểm tích lũy...</div>';
+      if (isManual) showLoading("Đang kết nối KimBling tra cứu đơn hàng & Túi 💎...");
 
       Promise.all([
-        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ success: false })),
-        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
-        fetch(`${SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
+        fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
+        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
       ])
       .then(([orderData, pointData, walletData]) => {
         renderCombinedResult(orderData, pointData, walletData, phone);
@@ -244,16 +281,19 @@
       })
       .catch(err => {
         console.error(err);
-        resultArea.innerHTML = '<div class="empty-state" style="color: #ef4444;">Lỗi kết nối đến máy chủ. Vui lòng thử lại!</div>';
+        document.getElementById('resultArea').innerHTML = '<div class="empty-state" style="color: #ef4444;">Lỗi kết nối KimBling. Vui lòng thử lại!</div>';
+      })
+      .finally(() => {
+        if (isManual) hideLoading();
       });
     }
 
     function silentRefresh() {
       if (!currentSearchedPhone) return;
       Promise.all([
-        fetch(`${SCRIPT_URL}?type=checkStatus&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ success: false })),
-        fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
-        fetch(`${SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
+        fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ status: 'error' })),
+        fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0 }))
       ])
       .then(([orderData, pointData, walletData]) => {
         renderCombinedResult(orderData, pointData, walletData, currentSearchedPhone);
@@ -264,7 +304,6 @@
       const resultArea = document.getElementById('resultArea');
       let html = '';
 
-      // Dữ liệu điểm ly tích lũy cũ
       let totalPoints = 0;
       let rewards = 0;
       let nextLy = 10;
@@ -274,10 +313,9 @@
         nextLy = pointData.nextReward || 10;
       }
 
-      // Dữ liệu Túi 💎 tích lũy mới
       let hatKimBalance = (walletData && walletData.hatKim) ? parseInt(walletData.hatKim) : 0;
 
-      // 1. Thẻ thành viên cũ
+      // 1. Thẻ thành viên tích điểm
       html += `
         <div class="loyalty-card">
           <div class="loyalty-title">
@@ -302,7 +340,7 @@
         </div>
       `;
 
-      // 2. Ô THÔNG TIN MỚI: TÚI 💎 TÍCH LŨY
+      // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY
       html += `
         <div class="diamond-box">
           <div class="diamond-title">
@@ -464,9 +502,9 @@
         btn.innerHTML = "✅ Đã gửi hối giao cho quán";
       }
 
-      alert("⚡ Quán đã nhận được lời hối của bạn và sẽ cố gắng giao đơn hàng nhanh nhất có thể nhé!");
+      showLoading("Đang gửi yêu cầu hối giao tới hệ thống KimBling...");
 
-      fetch(SCRIPT_URL, {
+      fetch(KIMBLING_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ 
@@ -479,7 +517,10 @@
           totalAmount: total,
           note: "Khách bấm hối giao đơn hàng này!"
         })
-      }).catch(err => console.error("Lỗi kết nối:", err));
+      })
+      .then(() => alert("⚡ Quán đã nhận được lời hối của bạn và sẽ cố gắng giao đơn hàng nhanh nhất có thể nhé!"))
+      .catch(err => console.error("Lỗi kết nối:", err))
+      .finally(() => hideLoading());
     }
 
     function renderCompactOrderCard(order) {
@@ -512,9 +553,9 @@
       document.getElementById('customerHistoryModal').style.display = 'flex';
       document.getElementById('modalPhoneSubtitle').innerText = `Số điện thoại: ${phone}`;
       const listEl = document.getElementById('customerHistoryList');
-      listEl.innerHTML = "Đang tải dữ liệu...";
+      listEl.innerHTML = "Đang kết nối KimBling tải lịch sử...";
 
-      fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`)
+      fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success' && data.history && data.history.length > 0) {
@@ -537,7 +578,7 @@
           }
         })
         .catch(() => {
-          listEl.innerHTML = "<p style='text-align: center; color: #ef4444;'>Không thể kết nối máy chủ để tải lịch sử!</p>";
+          listEl.innerHTML = "<p style='text-align: center; color: #ef4444;'>Không thể kết nối KimBling để tải lịch sử!</p>";
         });
     }
 
