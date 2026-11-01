@@ -134,17 +134,17 @@ function getGameState() {
 const today = getTodayString();
 const savedState = localStorage.getItem('kimbling_game_state_v45');
 let pendingTurnsBonus = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
-
-if (pendingTurnsBonus > 0) {
-localStorage.removeItem('kimbling_pending_bonus_turns');
-}
+if (!Number.isFinite(pendingTurnsBonus) || pendingTurnsBonus < 0) pendingTurnsBonus = 0;
 
 if (savedState) {
 try {
 const parsed = JSON.parse(savedState);
 if (parsed && parsed.date === today) {
 if (pendingTurnsBonus > 0) {
-parsed.maxTurnsAllowed += pendingTurnsBonus;
+parsed.maxTurnsAllowed = Number(parsed.maxTurnsAllowed || 0) + pendingTurnsBonus;
+// Lưu trạng thái mới trước khi xóa lượt thưởng đang chờ.
+localStorage.setItem('kimbling_game_state_v45', JSON.stringify(parsed));
+localStorage.removeItem('kimbling_pending_bonus_turns');
 }
 return parsed;
 }
@@ -161,6 +161,9 @@ currentBoard: createNewBoard(0),
 selectedBoxIndex: null
 };
 localStorage.setItem('kimbling_game_state_v45', JSON.stringify(newState));
+if (pendingTurnsBonus > 0) {
+localStorage.removeItem('kimbling_pending_bonus_turns');
+}
 return newState;
 }
 
@@ -306,23 +309,33 @@ window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: ne
 }
 }
 
-// 🟢 LẮNG NGHE TÍN HIỆU ĐẨY ĐƠN VÀ CỘNG CHÍNH XÁC +3 LƯỢT QUAY
+// Nhận lượt thưởng do qldon cấp thông qua menu.html.
+// Chỉ cộng số lượt thực sự đang chờ; không tự cộng mặc định 3 lượt.
+function applyPendingBonusTurns() {
+    let pendingBonus = parseInt(
+        localStorage.getItem('kimbling_pending_bonus_turns') || '0',
+        10
+    );
+
+    if (!Number.isFinite(pendingBonus) || pendingBonus <= 0) return false;
+
+    gameState.maxTurnsAllowed = Number(gameState.maxTurnsAllowed || 0) + pendingBonus;
+    gameState.isCurrentGameFinished = false;
+    gameState.selectedBoxIndex = null;
+    gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
+
+    // Ghi trạng thái trước, sau đó mới xóa lượt thưởng chờ để tránh mất lượt.
+    localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+    localStorage.removeItem('kimbling_pending_bonus_turns');
+    updateUI();
+    return true;
+}
+
 window.addEventListener('message', function(event) {
     if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
-        let pendingBonus = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
-        let turnsToAdd = pendingBonus > 0 ? pendingBonus : 3; // Mặc định cộng 3 lượt chuẩn xác từ đơn đẩy POS
-
-        gameState.maxTurnsAllowed += turnsToAdd;
-        gameState.isCurrentGameFinished = false;
-        gameState.selectedBoxIndex = null;
-        gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
-        
-        localStorage.removeItem('kimbling_pending_bonus_turns');
-        localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
-        
-        updateUI();
+        applyPendingBonusTurns();
     }
-    
+
     if (event.data === 'RESET_GAME_DATA') {
         localStorage.removeItem('kimbling_game_state_v45');
         location.reload();
