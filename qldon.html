@@ -705,7 +705,6 @@
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       
-      // KHÓA NGAY LẬP TỨC NẾU NÚT ĐANG BỊ KẸT
       if (button && button.disabled) return;
 
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
@@ -718,7 +717,6 @@
 
       isFetchingOrders = true; 
       try {
-        // 🛡️ LỚP BẢO VỆ ĐỒNG BỘ: Kiểm tra trực tiếp từ Google Sheets xem đơn đã đẩy ở trình duyệt/thiết bị khác chưa
         const checkRes = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
         const checkData = await checkRes.json();
         
@@ -798,8 +796,15 @@
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
         
-        if (window.opener) window.opener.postMessage('ADD_BONUS_TURNS', '*');
-        if (window.parent) window.parent.postMessage('ADD_BONUS_TURNS', '*');
+        // 🚀 BẮN TÍN HIỆU CỘNG +3 LƯỢT QUAY SANG MINIGAME (ĐÃ TÍCH HỢP)
+        try {
+            const allIframes = document.querySelectorAll('iframe');
+            allIframes.forEach(iframe => {
+                try { iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*'); } catch(e){}
+            });
+            if (window.opener) window.opener.postMessage('ADD_BONUS_TURNS', '*');
+            if (window.parent && window.parent !== window) window.parent.postMessage('ADD_BONUS_TURNS', '*');
+        } catch(e) {}
 
         let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và cập nhật kim cương, cấp +3 lượt quay thành công!`;
         if (isTichDiemChecked) {
