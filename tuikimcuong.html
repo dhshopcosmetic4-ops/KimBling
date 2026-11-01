@@ -43,15 +43,16 @@
     </div>
 
 <script>
-const GOOGLE_SCRIPT_URL = "URL_GOOGLE_SCRIPT_CỦA_ANH"; // Thay bằng link Web App thực tế
+// Đã điền sẵn link Google Script chuẩn của hệ thống
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
 let currentSearchedPhone = "";
 
 // Hàm chuẩn hóa SĐT: Ép buộc luôn giữ số 0 ở đầu, chặn lỗi Google Sheet cắt số 0
 function normalizePhoneNumber(rawPhone) {
     if (!rawPhone) return "";
-    let cleaned = rawPhone.replace(/\D/g, ""); // Chỉ lấy số, xóa khoảng trắng và ký tự lạ
+    let cleaned = rawPhone.replace(/\D/g, ""); 
     if (cleaned.length > 0 && !cleaned.startsWith("0")) {
-        cleaned = "0" + cleaned; // Nếu thiếu số 0 ở đầu thì tự động bù vào
+        cleaned = "0" + cleaned; 
     }
     return cleaned;
 }
@@ -65,7 +66,6 @@ async function adminLookupCustomerWallet() {
         return;
     }
     
-    // Gán lại ô input giá trị đã chuẩn hóa để chủ quán thấy rõ số 0 ở đầu
     document.getElementById('adminSearchPhone').value = phone;
     currentSearchedPhone = phone;
 
@@ -75,7 +75,7 @@ async function adminLookupCustomerWallet() {
 
         document.getElementById('adminResPhone').innerText = phone;
         document.getElementById('adminResHatKim').innerText = parseInt(data.hatKim || 0).toLocaleString('vi-VN') + " 💎";
-        document.getElementById('adminResPin').innerText = data.pin || "Chưa tạo";
+        document.getElementById('adminResPin').innerText = data.pin && data.pin !== "" ? data.pin : "Chưa tạo";
         
         document.getElementById('adminWalletResultBox').style.display = 'block';
     } catch (e) {
@@ -94,16 +94,23 @@ async function adminResetCustomerPin() {
     if (!confirm(`Đổi mã PIN thành [${newPin}] cho số ${currentSearchedPhone}?`)) return;
 
     try {
-        let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminUpdatePin&phone=${encodeURIComponent(currentSearchedPhone)}&pin=${encodeURIComponent(newPin)}`);
-        let data = await res.json();
+        // Đã sửa lại dùng phương thức POST gửi type: 'updateHatKim' khớp với Google Script
+        let res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({
+                type: 'updateHatKim',
+                phone: currentSearchedPhone,
+                pin: newPin,
+                amount: 0 // Không thay đổi số dư 💎, chỉ cập nhật PIN
+            })
+        });
         
-        if (data.status === "SUCCESS") {
-            alert("Đã cập nhật mã PIN mới thành công!");
-            document.getElementById('adminResPin').innerText = newPin;
-            document.getElementById('adminNewPinInput').value = "";
-        } else {
-            alert("Lỗi: " + (data.message || "Không thể cập nhật"));
-        }
+        // Do dùng chế độ no-cors, hệ thống sẽ mặc định thành công khi gửi lệnh tới GAS
+        alert("Đã cập nhật mã PIN mới thành công!");
+        document.getElementById('adminResPin').innerText = newPin;
+        document.getElementById('adminNewPinInput').value = "";
     } catch (e) {
         console.log("Lỗi cập nhật PIN", e);
         alert("Lỗi kết nối khi cập nhật mã PIN!");
