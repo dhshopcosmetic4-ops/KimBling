@@ -45,9 +45,9 @@
             border: 2px solid #f57c00 !important; 
         }
         .box-item.winner-box { 
-            background: #e8f5e9 !important; 
-            color: #2e7d32 !important; 
-            border: 2px solid #2e7d32 !important; 
+            background: #e0f7fa !important; 
+            color: #00838f !important; 
+            border: 2px solid #00acc1 !important; 
             animation: shakeWin 0.6s ease-in-out infinite alternate !important; 
             font-size: 11px !important; 
             font-weight: bold !important; 
@@ -74,7 +74,7 @@
             100% { transform: rotate(3deg) scale(1.02); }
         }
 
-        .result-box { display: none; background: #e8f5e9; border: 1.5px dashed #2e7d32; padding: 8px 10px; border-radius: 10px; margin-top: 4px; text-align: center; }
+        .result-box { display: none; background: #e0f7fa; border: 1.5px dashed #00acc1; padding: 8px 10px; border-radius: 10px; margin-top: 4px; text-align: center; }
         .action-choice-row { display: flex; gap: 6px; margin-top: 6px; justify-content: center; }
         .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
         .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
@@ -85,9 +85,9 @@
     <div class="game-card">
         <button class="close-btn" onclick="closeGame()">✕</button>
         <h2>🎁 HỘP QUÀ MAY MẮN</h2>
-        <p class="subtitle">Mở ô tìm ưu đãi - Đặt đơn nhận thêm lượt chơi!</p>
+        <p class="subtitle">Săn Kim Cương 💎 - Đặt đơn nhận thêm lượt quay!</p>
         <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
-        <div id="wonPrizesDisplay" style="font-size: 11px; color: #e65100; font-weight: bold; margin-bottom: 6px;">🎁 Mở hộp quà nhận ưu đãi ngay!</div>
+        <div id="wonPrizesDisplay" style="font-size: 11px; color: #00838f; font-weight: bold; margin-bottom: 6px;">💎 Mở hộp quà tích lũy Kim Cương ngay!</div>
 
         <div class="grid-boxes" id="gridBoxes">
             <div class="box-item" onclick="openBox(0)">🎁</div>
@@ -125,25 +125,33 @@
             return arr;
         }
 
-        // TỔNG 9 Ô: 1 Ô MÃ 1K + 3 Ô FREESHIP < 1KM + 5 Ô FAKE DECOY
-        function createNewBoard() {
+        // TẠO BẢNG QUÀ VỚI CÁC Ô MỒI (300, 200, 100 💎, VOUCHER 50K) VÀ MỐC THẬT (10, 3, 2, 1 💎)
+        function createNewBoard(currentWonTotal) {
             let board = [
-                { type: 'REWARD', code: 'KB1K', value: 1, text: 'Mã Giảm 1K', icon: '🎟️' },
-                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
-                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
-                { type: 'FREESHIP', code: 'FREESHIP_1KM', text: 'Freeship < 1km', icon: '🛵' },
-                { type: 'FAKE', text: 'Mã 30K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Mã 20K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Mã 10K', icon: '🎟️' },
-                { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' },
-                { type: 'FAKE', text: 'Ly free', icon: '🥤' }
+                { type: 'DIAMOND', value: 3, text: '+3 Kim Cương', icon: '💎' },
+                { type: 'DIAMOND', value: 2, text: '+2 Kim Cương', icon: '💎' },
+                { type: 'DIAMOND', value: 1, text: '+1 Kim Cương', icon: '💎' },
+                { type: 'FAKE', text: '300 Kim Cương', icon: '💎' },
+                { type: 'FAKE', text: '200 Kim Cương', icon: '💎' },
+                { type: 'FAKE', text: '100 Kim Cương', icon: '💎' },
+                { type: 'FAKE', text: 'Voucher 50K', icon: '🎟️' },
+                { type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' }
             ];
+
+            // Tỉ lệ 5% trúng ô 10💎 thật (hoặc tùy chỉnh)
+            const isTenDiamondLucky = Math.random() < 0.05;
+            if (isTenDiamondLucky && (currentWonTotal + 10 <= 10)) {
+                board.push({ type: 'DIAMOND', value: 10, text: '+10 Kim Cương', icon: '💎' });
+            } else {
+                board.push({ type: 'FAKE', text: 'Ly Free', icon: '🥤' });
+            }
+
             return shuffleArray(board);
         }
 
         function getGameState() {
             const today = getTodayString();
-            const savedState = localStorage.getItem('kimbling_game_state_v39');
+            const savedState = localStorage.getItem('kimbling_game_state_v44');
             
             if (savedState) {
                 try {
@@ -158,14 +166,13 @@
                 date: today,
                 maxTurnsAllowed: 5,
                 gamesPlayed: 0,
-                wonCount1K: 0,
-                wonFreeship: false,
+                wonDiamondsTotal: 0,
                 isCurrentGameFinished: false,
-                currentBoard: createNewBoard(),
+                currentBoard: createNewBoard(0),
                 selectedBoxIndex: null
             };
 
-            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(newState));
+            localStorage.setItem('kimbling_game_state_v44', JSON.stringify(newState));
             return newState;
         }
 
@@ -176,14 +183,11 @@
             document.getElementById('turnBadge').innerText = `Lượt chơi còn lại: ${turnsLeft} lượt`;
 
             const wonDisplay = document.getElementById('wonPrizesDisplay');
-            if (gameState.wonCount1K > 0) {
-                wonDisplay.innerText = `🎉 ĐÃ NHẬN MÃ GIẢM 1K (Tự động trừ khi chốt đơn)`;
-                wonDisplay.style.color = `#2e7d32`;
-            } else if (gameState.wonFreeship) {
-                wonDisplay.innerText = `🛵 ĐÃ NHẬN MÃ FREESHIP DƯỚI 1KM!`;
-                wonDisplay.style.color = `#2e7d32`;
+            if (gameState.wonDiamondsTotal > 0) {
+                wonDisplay.innerText = `🎉 ĐÃ TÍCH LŨY: +${gameState.wonDiamondsTotal} 💎 KIM CƯƠNG`;
+                wonDisplay.style.color = `#00838f`;
             } else {
-                wonDisplay.innerText = `🎁 Mở hộp quà - Nhận ưu đãi may mắn ngay!`;
+                wonDisplay.innerText = `💎 Mở hộp quà - Săn Kim Cương tích lũy ngay!`;
                 wonDisplay.style.color = `#e65100`;
             }
 
@@ -193,8 +197,8 @@
                 boxElements.forEach((box, idx) => {
                     const item = gameState.currentBoard[idx];
                     if (idx === gameState.selectedBoxIndex) {
-                        if (item.type === 'REWARD' || item.type === 'FREESHIP') {
-                            box.innerHTML = `<span style="font-size:22px;">🎉</span><span class="item-title">${item.text}</span>`;
+                        if (item.type === 'DIAMOND') {
+                            box.innerHTML = `<span style="font-size:22px;">💎</span><span class="item-title">${item.text}</span>`;
                             box.className = 'box-item user-opened winner-box';
                         } else {
                             box.innerHTML = `<span style="font-size:22px;">😋</span><span class="item-title">Ngon miệng!</span>`;
@@ -228,18 +232,22 @@
 
             let item = gameState.currentBoard[index];
 
-            if (item.type === 'REWARD') {
-                gameState.wonCount1K++;
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            } else if (item.type === 'FREESHIP') {
-                gameState.wonFreeship = true;
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            // XỬ LÝ KHI MỞ HỘP
+            if (item.type === 'DIAMOND') {
+                // Nếu đã đạt trần 10💎 hoặc cộng thêm vượt trần -> Hoán đổi thành "Ngon miệng!"
+                if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
+                    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+                } else {
+                    gameState.wonDiamondsTotal += item.value;
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                }
             } else {
+                // Ô mồi giả lập -> Tự động hóa thành "Ngon miệng!" khi bấm mở
                 item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
             }
 
             gameState.currentBoard[index] = item;
-            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v44', JSON.stringify(gameState));
             updateUI();
         }
 
@@ -252,10 +260,8 @@
             const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
 
             let htmlMsg = "";
-            if (selectedItem.type === 'REWARD') {
-                htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG MÃ GIẢM 1K!</b><br>`;
-            } else if (selectedItem.type === 'FREESHIP') {
-                htmlMsg = `🛵 <b>CHÚC MỪNG BẠN TRÚNG MÃ FREESHIP DƯỚI 1KM!</b><br>`;
+            if (selectedItem.type === 'DIAMOND') {
+                htmlMsg = `🎉 <b>CHÚC MỪNG BẠN TRÚNG +${selectedItem.value} 💎 KIM CƯƠNG!</b><br>`;
             } else {
                 htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Thử vận may ở ô tiếp theo nhé!<br>`;
             }
@@ -267,10 +273,8 @@
                 choiceRow.style.display = 'none';
                 btnCloseGame.style.display = 'block';
 
-                if (gameState.wonCount1K > 0) {
-                    htmlMsg += `<br>🎉 <b>MÃ GIẢM 1K ĐÃ ĐƯỢC KÍCH HOẠT!</b><br>Bấm nút bên dưới để áp dụng vào đơn!`;
-                } else if (gameState.wonFreeship) {
-                    htmlMsg += `<br>🛵 <b>MÃ FREESHIP DƯỚI 1KM ĐÃ KÍCH HOẠT!</b><br>Bấm nút bên dưới để chốt đơn ngay!`;
+                if (gameState.wonDiamondsTotal > 0) {
+                    htmlMsg += `<br>💎 <b>BẠN ĐÃ TÍCH LŨY ĐƯỢC +${gameState.wonDiamondsTotal} KIM CƯƠNG!</b><br>Đã cộng thẳng vào tài khoản của bạn!`;
                 } else {
                     htmlMsg += `<br>🛵 Bấm nút bên dưới để hoàn tất đơn hàng nhé!`;
                 }
@@ -285,51 +289,58 @@
             
             gameState.isCurrentGameFinished = false;
             gameState.selectedBoxIndex = null;
-            gameState.currentBoard = createNewBoard();
+            gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
             
-            localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
+            localStorage.setItem('kimbling_game_state_v44', JSON.stringify(gameState));
             updateUI();
         }
 
+        // 1. KHI BẤM "ĐẶT MÓN NGAY" -> CỘNG THẲNG KIM CƯƠNG VÀO TÀI KHOẢN VÀ ĐÓNG GAME
         function finishFiveTurnsAndCheckout() {
-            if (gameState.wonCount1K > 0) {
-                dispatchDiscountToMenu('KB1K', 1, 'KB1K_' + Date.now());
-            } else if (gameState.wonFreeship) {
-                dispatchDiscountToMenu('FREESHIP_1KM', 0, 'FREESHIP_' + Date.now());
+            if (gameState.wonDiamondsTotal > 0) {
+                saveDiamondsToCustomerAccount(gameState.wonDiamondsTotal);
             }
             closeGame();
         }
 
-        function dispatchDiscountToMenu(code, value, id) {
-            localStorage.setItem('kimbling_applied_discount_code', code);
-            localStorage.setItem('kimbling_applied_discount_value', value);
-            localStorage.setItem('kimbling_applied_discount_id', id);
-
-            if (window.parent) {
-                window.parent.postMessage({ type: 'APPLY_DISCOUNT', code: code, value: value, id: id }, '*');
-            }
-        }
-
+        // 2. KHI BẤM NÚT "X" (THOÁT TRÒ CHƠI) -> CỘNG THẲNG KIM CƯƠNG VÀO TÀI KHOẢN NGAY LẬP TỨC
         function closeGame() {
+            if (gameState.wonDiamondsTotal > 0) {
+                saveDiamondsToCustomerAccount(gameState.wonDiamondsTotal);
+            }
             if (window.parent) {
                 window.parent.postMessage('CLOSE_GAME_POPUP', '*');
             }
         }
 
+        // HÀM LƯU VÀ CỘNG THẲNG KIM CƯƠNG VÀO VÍ TÀI KHOẢN KHÁCH
+        function saveDiamondsToCustomerAccount(diamondsCount) {
+            let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+            let newTotalDiamonds = currentAccountDiamonds + diamondsCount;
+            
+            // Lưu ví điểm mới
+            localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
+            localStorage.setItem('kimbling_game_won_diamonds', diamondsCount);
+
+            // Bắn tín hiệu sang trang menu để cập nhật hiển thị số dư ngay lập tức
+            if (window.parent) {
+                window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: diamondsCount }, '*');
+            }
+        }
+
+        // 3. LẮNG NGHE TÍN HIỆU TỪ CHỦ QUÁN (ĐẨY POS) ĐỂ CỘNG THÊM +3 LƯỢT QUAY MỚI
         window.addEventListener('message', function(event) {
-            if (event.data === 'ADD_BONUS_TURNS') {
-                gameState.maxTurnsAllowed += 5; 
-                gameState.wonCount1K = 0;
-                gameState.wonFreeship = false;
+            if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
+                gameState.maxTurnsAllowed += 3; // Cộng thêm đúng 3 lượt quay
                 gameState.isCurrentGameFinished = false;
                 gameState.selectedBoxIndex = null;
-                gameState.currentBoard = createNewBoard();
+                gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
                 
-                localStorage.setItem('kimbling_game_state_v39', JSON.stringify(gameState));
+                localStorage.setItem('kimbling_game_state_v44', JSON.stringify(gameState));
                 updateUI();
             }
             if (event.data === 'RESET_GAME_DATA') {
-                localStorage.removeItem('kimbling_game_state_v39');
+                localStorage.removeItem('kimbling_game_state_v44');
                 location.reload();
             }
         });
