@@ -3754,24 +3754,43 @@ function forwardPendingGameTurns() {
 
 
 // Mở popup trò chơi
-function openLuckyGiftPopup() {
+
+// Mở popup trò chơi và tự động kiểm tra lệnh reset từ server
+async function openLuckyGiftPopup() {
     const modal = document.getElementById('gamePopupModal');
     const iframe = document.getElementById('gameIframe');
+    const phone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || '';
+
+    if (phone && iframe) {
+        try {
+            // Kiểm tra xem server có yêu cầu reset trò chơi cho SĐT này không
+            let res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkGameReset&phone=${encodeURIComponent(phone)}`);
+            let data = await res.json();
+            
+            if (data && data.shouldReset) {
+                // Nếu có lệnh reset, gửi thông điệp yêu cầu reset xuống iframe trò chơi
+                iframe.contentWindow.postMessage('RESET_GAME_DATA', '*');
+                localStorage.removeItem('kimbling_game_state_v17'); // Xóa trạng thái cũ nếu lưu ở client
+            }
+        } catch (e) {
+            console.log("Không thể kiểm tra trạng thái reset:", e);
+        }
+    }
 
     if (iframe) {
         // Đợi trò chơi tải xong mới chuyển lượt thưởng
         iframe.onload = function() {
             forwardPendingGameTurns();
         };
-
-        // Tải lại trò chơi
-        iframe.src = iframe.src;
+        // Tải lại trò chơi (thêm timestamp để tránh bị cache trình duyệt)
+        iframe.src = 'trochoi.html?t=' + Date.now();
     }
 
     if (modal) {
         modal.style.display = 'flex';
     }
 }
+
 
 // Nhận tín hiệu cộng lượt thưởng từ qldon hoặc POS
 window.addEventListener('message', function(event) {
