@@ -3731,12 +3731,75 @@ function closeSuccessOrderPopup() {
             }
         }
 
-        function openLuckyGiftPopup() {
-            const modal = document.getElementById('gamePopupModal');
-            const iframe = document.getElementById('gameIframe');
-            if (iframe) iframe.src = iframe.src;
-            if (modal) modal.style.display = 'flex';
-        }
+        // Chuyển lượt thưởng đang chờ sang trò chơi
+function forwardPendingGameTurns() {
+    const iframe = document.getElementById('gameIframe');
+
+    const pending = parseInt(
+        localStorage.getItem('kimbling_pending_bonus_turns') || '0',
+        10
+    );
+
+    if (
+        pending > 0 &&
+        iframe &&
+        iframe.contentWindow
+    ) {
+        iframe.contentWindow.postMessage(
+            'ADD_BONUS_TURNS',
+            '*'
+        );
+    }
+}
+
+
+// Mở popup trò chơi
+function openLuckyGiftPopup() {
+    const modal = document.getElementById('gamePopupModal');
+    const iframe = document.getElementById('gameIframe');
+
+    if (iframe) {
+        // Đợi trò chơi tải xong mới chuyển lượt thưởng
+        iframe.onload = function() {
+            forwardPendingGameTurns();
+        };
+
+        // Tải lại trò chơi
+        iframe.src = iframe.src;
+    }
+
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Nhận tín hiệu cộng lượt thưởng từ qldon hoặc POS
+window.addEventListener('message', function(event) {
+
+    if (
+        event.data === 'ADD_BONUS_TURNS' ||
+        (
+            event.data &&
+            event.data.type === 'ADD_BONUS_TURNS'
+        )
+    ) {
+        forwardPendingGameTurns();
+    }
+
+});
+
+
+// Theo dõi lượt thưởng được cập nhật từ tab khác
+window.addEventListener('storage', function(event) {
+
+    if (
+        event.key === 'kimbling_pending_bonus_turns' &&
+        Number(event.newValue) > 0
+    ) {
+        forwardPendingGameTurns();
+    }
+
+});
 
         function closeGamePopup() {
             const gameModal = document.getElementById('gamePopupModal');
