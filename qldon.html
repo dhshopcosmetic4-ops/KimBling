@@ -400,6 +400,9 @@
               rawAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
             }
 
+            // Logic tự động tick nếu là khách đến quán lấy hoặc tại quán
+            const isPickup = (!rawAddress.includes('Giao tận nơi') || rawAddress.includes('Khách đến quán lấy') || rawAddress.includes('Tại quán'));
+
             let mapButtonHtml = '';
             if (!rawAddress.includes('Tại quán') && !rawAddress.includes('Khách đến quán lấy')) {
               const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
@@ -428,7 +431,7 @@
 
                 <div style="margin: 4px 0 10px 0; padding: 6px 10px; background: rgba(52, 199, 89, 0.1); border: 1px dashed #34c759; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
                   <label style="font-size: 12px; color: #34c759; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: bold;">
-                    <input type="checkbox" id="tichdiem_check_${escapeHtml(orderId)}" style="width: 16px; height: 16px; accent-color: #34c759;"> 
+                    <input type="checkbox" id="tichdiem_check_${escapeHtml(orderId)}" ${isPickup ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #34c759;"> 
                     🎁 Tích điểm món vào hệ thống (1 món = 1 điểm)
                   </label>
                 </div>
@@ -703,8 +706,7 @@
           total: totalAmount, diamonds: diamondsValue, 
           items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
           phone: customerPhone, address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || ''),
-          triggerGameReset: true // Gửi lệnh yêu cầu hệ thống cloud ghi nhận reset game theo SĐT
+          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
         };
 
         await fetch(KIMBLING_API_URL, {
@@ -729,11 +731,7 @@
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-        // 🧹 XÓA BỘ NHỚ LƯỢT CHƠI TRÊN MÁY CHỦ QUÁN (LOCAL STORAGE)
-        localStorage.removeItem('kimbling_game_state_v45');
-        localStorage.removeItem('kimbling_game_state_v17');
-
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và gửi lệnh reset lượt chơi theo SĐT (${customerPhone}) thành công!`;
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`;
         if (isTichDiemChecked) {
           successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách.`;
         }
