@@ -12,7 +12,6 @@ body { background: transparent; color: #333; display: flex; justify-content: cen
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
 p.subtitle { font-size: 11px; color: #666; margin-bottom: 4px; }
 
-/* Khung hiển thị tổng số kim cương hiện có của khách */
 .user-diamond-bar {
   background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
   border: 1px solid #00acc1;
@@ -85,18 +84,36 @@ margin-top: 2px;
 .action-choice-row { display: flex; gap: 6px; margin-top: 6px; justify-content: center; }
 .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
 .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+
+/* CSS MÀN HÌNH LOADING KHI VÀO GAME */
+#gameLoadingOverlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255, 255, 255, 0.95); z-index: 999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 20px;
+}
+.game-spinner {
+  width: 36px; height: 36px; border: 4px solid #eee; border-top: 4px solid #d32f2f;
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="game-card">
+  <!-- MÀN HÌNH LOADING ĐỒNG BỘ TÀI KHOẢN -->
+  <div id="gameLoadingOverlay">
+    <div class="game-spinner"></div>
+    <div style="font-size: 13px; font-weight: bold; color: #d32f2f;">Đang đồng bộ kho đồ Kim Cương...</div>
+  </div>
+
 <button class="close-btn" onclick="closeGame()">✕</button>
 <h2>🎁 HỘP QUÀ MAY MẮN</h2>
 <p class="subtitle">Săn Kim Cương 💎 - Mở hộp tích lũy ngay!</p>
 
-<!-- KHUNG HIỂN THỊ TỔNG SỐ KIM CƯƠNG HIỆN CÓ -->
 <div class="user-diamond-bar">
   <span>💎 Kho đồ của bạn:</span>
-  <span id="headerTotalDiamonds" style="font-size: 14px; font-weight: 900; color: #d32f2f;">0 💎</span>
+  <span id="headerTotalDiamonds" style="font-size: 14px; font-weight: 900; color: #d32f2f;">... 💎</span>
 </div>
 
 <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
@@ -189,10 +206,36 @@ return newState;
 let gameState = getGameState();
 let sessionAddedDiamonds = 0; 
 
-// Cập nhật hiển thị tổng số Kim Cương của khách lên giao diện
+function getUserRealDiamonds() {
+  return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+}
+
 function updateHeaderDiamondDisplay() {
-  let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+  let currentAccountDiamonds = getUserRealDiamonds();
   document.getElementById('headerTotalDiamonds').innerText = `${currentAccountDiamonds.toLocaleString('vi-VN')} 💎`;
+}
+
+// 🚀 HÀM ĐỒNG BỘ DỮ LIỆU TỪ SHEET KHI VỪA MỞ GAME (BẮT BUỘC THÀNH CÔNG MỚI CHO CHƠI)
+async function initSyncUserDiamonds() {
+  let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
+  if (customerPhone) {
+    try {
+      let res = await fetch(`${KIMBLING_API_URL}?type=checkHatKim&phone=${encodeURIComponent(customerPhone)}&t=${Date.now()}`);
+      let data = await res.json();
+      if (data && data.success && typeof data.diamonds !== 'undefined') {
+        let sheetDiamonds = parseInt(data.diamonds || '0');
+        // Lưu đồng bộ trực tiếp vào localStorage chính xác với sheet
+        localStorage.setItem('kim_bling_user_diamonds', sheetDiamonds);
+      }
+    } catch(e) {
+      console.log("Không tải được dữ liệu mạng, dùng tạm bộ nhớ máy");
+    }
+  }
+  
+  // Sau khi đồng bộ xong (hoặc thất bại mạng thì lấy giá trị máy), tắt loading cho phép chơi
+  updateHeaderDiamondDisplay();
+  document.getElementById('gameLoadingOverlay').style.display = 'none';
+  updateUI();
 }
 
 function updateUI() {
@@ -262,8 +305,7 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 gameState.currentBoard[index] = item;
 localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 
-// Cộng trực tiếp vào kho kim cương trên máy khách để cập nhật ngay thanh tiêu đề
-let currentAccountDiamonds = parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+let currentAccountDiamonds = getUserRealDiamonds();
 let newTotalDiamonds = currentAccountDiamonds + exactWonThisTurn;
 localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
 
@@ -374,7 +416,8 @@ window.addEventListener('message', function(event) {
 });
 
 checkGameResetStatusFromCloud();
-updateUI();
+// Chạy hàm đồng bộ khi khởi động game
+initSyncUserDiamonds();
 </script>
 </body>
 </html>
