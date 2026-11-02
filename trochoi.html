@@ -10,20 +10,18 @@ body { background: transparent; color: #333; display: flex; justify-content: cen
 .game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
 .close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
-p.subtitle { font-size: 11px; color: #666; margin-bottom: 4px; }
+p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
 
 .user-diamond-bar {
-  background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-  border: 1px solid #00acc1;
-  color: #006064;
-  padding: 6px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: bold;
+  background: linear-gradient(135deg, #2c1810, #1e293b);
+  border: 1.5px solid #ff9800;
+  border-radius: 12px;
+  padding: 8px 10px;
   margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
 }
 
 .turn-badge { background: #fff3e0; color: #e65100; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 14px; display: inline-block; margin-bottom: 6px; border: 1.5px solid #ffe0b2; }
@@ -84,35 +82,22 @@ margin-top: 2px;
 .action-choice-row { display: flex; gap: 6px; margin-top: 6px; justify-content: center; }
 .btn-choice-next { flex: 1; background: #ff9800; color: #fff; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; }
 .btn-close-game { background: #28a745; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-
-#gameLoadingOverlay {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.95); z-index: 999;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border-radius: 20px;
-  display: none; /* Mặc định tắt loading vì đã đọc trực tiếp từ bộ nhớ máy cực nhanh */
-}
-.game-spinner {
-  width: 36px; height: 36px; border: 4px solid #eee; border-top: 4px solid #d32f2f;
-  border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="game-card">
-  <div id="gameLoadingOverlay">
-    <div class="game-spinner"></div>
-    <div style="font-size: 13px; font-weight: bold; color: #d32f2f;">Đang đồng bộ kho đồ Kim Cương...</div>
-  </div>
-
 <button class="close-btn" onclick="closeGame()">✕</button>
 <h2>🎁 HỘP QUÀ MAY MẮN</h2>
 <p class="subtitle">Săn Kim Cương 💎 - Mở hộp tích lũy ngay!</p>
 
 <div class="user-diamond-bar">
-  <span>💎 Kho đồ của bạn:</span>
-  <span id="headerTotalDiamonds" style="font-size: 14px; font-weight: 900; color: #d32f2f;">0 💎</span>
+    <div style="display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 6px;">
+        <span style="font-size: 12px; font-weight: bold; color: #ff9800; white-space: nowrap;">💎 Túi 💎:</span>
+        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT xem 💎..." maxlength="11" onchange="fetchGameDiamondBalance(this.value)" onkeyup="if(event.key==='Enter') fetchGameDiamondBalance(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
+    </div>
+    <div id="headerTotalDiamonds" onclick="reloadGameDiamonds()" style="font-size: 15px; font-weight: bold; color: #ff4d4f; background: #0f172a; padding: 4px 8px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 60px; text-align: center; cursor: pointer;" title="Bấm để làm mới số dư">
+        0 💎
+    </div>
 </div>
 
 <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
@@ -195,7 +180,7 @@ return newState;
 }
 
 let gameState = getGameState();
-let sessionAddedDiamonds = 0; 
+let sessionAddedDiamonds = 0; // Biến lưu tạm điểm kiếm được trong phiên chơi hiện tại
 
 function getUserRealDiamonds() {
   return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
@@ -206,10 +191,54 @@ function updateHeaderDiamondDisplay() {
   document.getElementById('headerTotalDiamonds').innerText = `${currentAccountDiamonds.toLocaleString('vi-VN')} 💎`;
 }
 
-// 🚀 LẤY NGAY SỐ DƯ TỪ BỘ NHỚ MÁY RA HIỂN THỊ LẬP TỨC (KHÔNG CẦN CHỜ MẠNG)
-function initLocalGameData() {
-  updateHeaderDiamondDisplay();
+function initGamePhoneAndBalance() {
+  const phoneInput = document.getElementById('gameCustomerPhone');
+  let savedPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_cust_phone') || '';
+  if (phoneInput && savedPhone) {
+    phoneInput.value = savedPhone;
+    fetchGameDiamondBalance(savedPhone);
+  } else {
+    updateHeaderDiamondDisplay();
+  }
   updateUI();
+}
+
+async function fetchGameDiamondBalance(phone) {
+    const cleanPhone = String(phone || '').trim();
+    const displayEl = document.getElementById('headerTotalDiamonds');
+    if (!cleanPhone || cleanPhone.length < 9) {
+        if (displayEl) displayEl.innerText = "0 💎";
+        return;
+    }
+
+    localStorage.setItem('kb_customer_phone', cleanPhone);
+    localStorage.setItem('kimbling_cust_phone', cleanPhone);
+    
+    if (displayEl) displayEl.innerText = "⏳...";
+
+    try {
+        let res = await fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`);
+        let data = await res.json();
+        let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
+        localStorage.setItem('kim_bling_user_diamonds', balance);
+        if (displayEl) displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
+        
+        if (window.parent) {
+            window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: balance, added: 0 }, '*');
+        }
+    } catch (e) {
+        updateHeaderDiamondDisplay();
+    }
+}
+
+function reloadGameDiamonds() {
+    const phoneInput = document.getElementById('gameCustomerPhone');
+    if (phoneInput && phoneInput.value.trim()) {
+        fetchGameDiamondBalance(phoneInput.value.trim());
+    } else {
+        alert("Vui lòng nhập số điện thoại trước khi bấm làm mới số dư!");
+        if (phoneInput) phoneInput.focus();
+    }
 }
 
 function updateUI() {
@@ -253,7 +282,15 @@ document.getElementById('resultBox').style.display = 'none';
 }
 }
 
+// 🎁 MỞ HỘP QUÀ: CỘNG NHANH VÀO BỘ NHỚ MÁY TRƯỚC
 function openBox(index) {
+const phoneInput = document.getElementById('gameCustomerPhone');
+if (!phoneInput || !phoneInput.value.trim()) {
+    alert("⚠️ Vui lòng nhập số điện thoại của bạn ở ô phía trên trước khi mở hộp quà!");
+    phoneInput.focus();
+    return;
+}
+
 if (gameState.isCurrentGameFinished || gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
 gameState.gamesPlayed++;
 gameState.isCurrentGameFinished = true;
@@ -267,7 +304,7 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 } else {
 exactWonThisTurn = item.value;
 gameState.wonDiamondsTotal += item.value;
-sessionAddedDiamonds += item.value; 
+sessionAddedDiamonds += item.value; // Tích lũy vào biến tạm trong phiên
 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 }
 } else {
@@ -277,7 +314,7 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 gameState.currentBoard[index] = item;
 localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 
-// Cập nhật ngay vào bộ nhớ máy và bắn tín hiệu ra trang chính
+// Cộng thẳng siêu tốc vào bộ nhớ máy để khách thấy tăng điểm ngay lập tức
 let currentAccountDiamonds = getUserRealDiamonds();
 let newTotalDiamonds = currentAccountDiamonds + exactWonThisTurn;
 localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
@@ -324,10 +361,10 @@ localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 updateUI();
 }
 
-// 🚀 ĐỒNG BỘ LÊN GOOGLE SHEETS VÀ XÓA TẠM BỘ NHỚ KHI THOÁT
+// 🚀 ĐỒNG BỘ DỮ LIỆU CUỐI CÙNG LÊN CLOUD KHI THOÁT GAME HOẶC ĐẶT MÓN
 async function syncRewardsToCloudAndExit() {
 if (sessionAddedDiamonds > 0) {
-let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
+let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
 if (customerPhone) {
 try {
 await fetch(KIMBLING_API_URL, {
@@ -345,7 +382,6 @@ amount: sessionAddedDiamonds
 }
 sessionAddedDiamonds = 0; 
 }
-// Clear trống bộ nhớ tạm phiên chơi khi thoát
 localStorage.removeItem('kimbling_game_state_v45');
 closeGame();
 }
@@ -354,15 +390,15 @@ function finishFiveTurnsAndCheckout() {
 syncRewardsToCloudAndExit();
 }
 
+// Khi khách bấm nút X đóng game ngang ➔ Tự động bắn dữ liệu đồng bộ chốt hạ
 function closeGame() {
 if (sessionAddedDiamonds > 0) {
-let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
+let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
 if (customerPhone) {
 navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ action: 'add_hatkim', type: 'add_hatkim', phone: customerPhone, amount: sessionAddedDiamonds })) : null;
 }
 sessionAddedDiamonds = 0;
 }
-// Clear trống bộ nhớ tạm phiên chơi khi thoát
 localStorage.removeItem('kimbling_game_state_v45');
 
 if (window.parent) {
@@ -378,8 +414,7 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Khởi chạy trực tiếp từ bộ nhớ máy
-initLocalGameData();
+initGamePhoneAndBalance();
 </script>
 </body>
 </html>
