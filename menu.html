@@ -906,7 +906,7 @@
             <span style="font-size: 13px; font-weight: bold; color: #ff9800; white-space: nowrap;">💎 Túi 💎:</span>
             <input type="tel" id="mainCustomerPhone" placeholder="Nhập SĐT xem 💎..." maxlength="11" onchange="fetchCustomerDiamondBalance(this.value)" onkeyup="if(event.key==='Enter') fetchCustomerDiamondBalance(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 6px 8px; border-radius: 6px; font-size: 14px !important; width: 100%; outline: none;">
         </div>
-        <div id="mainDiamondDisplay" style="font-size: 16px; font-weight: bold; color: #ff4d4d; background: #0f172a; padding: 4px 10px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 65px; text-align: center;">
+          <div id="mainDiamondDisplay" onclick="reloadUserDiamonds()" style="font-size: 16px; font-weight: bold; color: #ff4d4f; background: #0f172a; padding: 4px 10px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 65px; text-align: center; cursor: pointer;" title="Bấm để làm mới số dư">
             0 💎
         </div>
     </div>
@@ -1279,6 +1279,34 @@
     </div>
 
     <script>
+
+// Hàm gọi làm mới số dư khi khách bấm vào ô Kim Cương
+function reloadUserDiamonds() {
+    const phoneInput = document.getElementById('mainCustomerPhone');
+    if (phoneInput && phoneInput.value.trim()) {
+        fetchCustomerDiamondBalance(phoneInput.value.trim());
+        // Hiệu ứng phản hồi nhỏ khi bấm
+        const displayEl = document.getElementById('mainDiamondDisplay');
+        if (displayEl) {
+            displayEl.style.transform = 'scale(0.95)';
+            setTimeout(() => { displayEl.style.transform = 'scale(1)'; }, 150);
+        }
+    } else {
+        alert("Vui lòng nhập số điện thoại ở ô bên cạnh trước khi bấm làm mới số dư!");
+        if (phoneInput) phoneInput.focus();
+    }
+}
+
+// Lắng nghe sự kiện đóng game hoặc cập nhật điểm từ iframe trò chơi / hộp quà
+window.addEventListener('message', function(event) {
+    if (event.data === 'CLOSE_GAME_POPUP' || event.data === 'REFRESH_DIAMONDS') {
+        const phoneInput = document.getElementById('mainCustomerPhone');
+        if (phoneInput && phoneInput.value.trim()) {
+            fetchCustomerDiamondBalance(phoneInput.value.trim());
+        }
+    }
+});
+
 
 // Hàm xử lý khi bấm vào nút thông báo đã tặng 5 lần mở hộp quà trên popup thành công đơn hàng
 function openAlreadyResetGamePopup() {
