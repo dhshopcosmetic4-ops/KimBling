@@ -3753,80 +3753,75 @@ function forwardPendingGameTurns() {
 }
 
 
-// Mở popup trò chơi
+// Hỗ trợ chuyển lượt thưởng đang chờ sang trò chơi
+function forwardPendingGameTurns() {
+    const iframe = document.getElementById('gameIframe');
+    const pending = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
 
-// Mở popup trò chơi và tự động kiểm tra lệnh reset từ server
+    if (pending > 0 && iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*');
+    }
+}
+
+// Mở popup trò chơi ngay lập tức không bị delay
 async function openLuckyGiftPopup() {
     const modal = document.getElementById('gamePopupModal');
     const iframe = document.getElementById('gameIframe');
     const phone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || '';
 
-    if (phone && iframe) {
-        try {
-            // Kiểm tra xem server có yêu cầu reset trò chơi cho SĐT này không
-            let res = await fetch(`${GOOGLE_SCRIPT_URL}?action=checkGameReset&phone=${encodeURIComponent(phone)}`);
-            let data = await res.json();
-            
-            if (data && data.shouldReset) {
-                // Nếu có lệnh reset, gửi thông điệp yêu cầu reset xuống iframe trò chơi
-                iframe.contentWindow.postMessage('RESET_GAME_DATA', '*');
-                localStorage.removeItem('kimbling_game_state_v17'); // Xóa trạng thái cũ nếu lưu ở client
-            }
-        } catch (e) {
-            console.log("Không thể kiểm tra trạng thái reset:", e);
-        }
-    }
-
-    if (iframe) {
-        // Đợi trò chơi tải xong mới chuyển lượt thưởng
-        iframe.onload = function() {
-            forwardPendingGameTurns();
-        };
-        // Tải lại trò chơi (thêm timestamp để tránh bị cache trình duyệt)
-        iframe.src = 'trochoi.html?t=' + Date.now();
-    }
-
+    // 1. Hiển thị popup ngay lập tức cho khách
     if (modal) {
         modal.style.display = 'flex';
     }
-}
 
+    if (iframe) {
+        iframe.onload = function() {
+            if (typeof forwardPendingGameTurns === 'function') {
+                forwardPendingGameTurns();
+            }
+        };
+        // Tải trò chơi với timestamp để tránh cache
+        iframe.src = 'trochoi.html?t=' + Date.now();
+    }
+
+    // 2. Kiểm tra lệnh reset chạy ngầm ở phía sau
+    if (phone) {
+        fetch(`${GOOGLE_SCRIPT_URL}?action=checkGameReset&phone=${encodeURIComponent(phone)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.shouldReset && iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('RESET_GAME_DATA', '*');
+                    localStorage.removeItem('kimbling_game_state_v17');
+                }
+            })
+            .catch(e => {
+                console.log("Kiểm tra reset ngầm:", e);
+            });
+    }
+}
 
 // Nhận tín hiệu cộng lượt thưởng từ qldon hoặc POS
 window.addEventListener('message', function(event) {
-
-    if (
-        event.data === 'ADD_BONUS_TURNS' ||
-        (
-            event.data &&
-            event.data.type === 'ADD_BONUS_TURNS'
-        )
-    ) {
+    if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
         forwardPendingGameTurns();
     }
-
 });
-
 
 // Theo dõi lượt thưởng được cập nhật từ tab khác
 window.addEventListener('storage', function(event) {
-
-    if (
-        event.key === 'kimbling_pending_bonus_turns' &&
-        Number(event.newValue) > 0
-    ) {
+    if (event.key === 'kimbling_pending_bonus_turns' && Number(event.newValue) > 0) {
         forwardPendingGameTurns();
     }
-
 });
 
-        function closeGamePopup() {
-            const gameModal = document.getElementById('gamePopupModal');
-            if (gameModal) {
-                gameModal.style.display = 'none';
-            }
-            checkAndApplyDiscountCode();
-        }
+function closeGamePopup() {
+    const gameModal = document.getElementById('gamePopupModal');
+    if (gameModal) {
+        gameModal.style.display = 'none';
+    }
+    checkAndApplyDiscountCode();
+}
+
 
         window.addEventListener('message', function(event) {
             if (event.data === 'CLOSE_GAME_POPUP') {
