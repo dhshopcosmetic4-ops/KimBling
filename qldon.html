@@ -697,7 +697,6 @@
 
         const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
 
-        // 🔄 GỬI LỆNH ĐẨY ĐƠN KÈM TÍN HIỆU YÊU CẦU RESET TRÒ CHƠI CHO SĐT NÀY LÊN GAS
         const payloadPOS = {
           type: 'pushOnlineOrder', action: 'pushOnlineOrder',
           sourceOrderId: String(orderId), orderId: String(orderId),
@@ -705,7 +704,7 @@
           items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
           phone: customerPhone, address: String(orderObj.address || ''),
           payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || ''),
-          triggerGameReset: true // Gắn cờ yêu cầu reset game trên cloud cho khách
+          triggerGameReset: true // Gửi lệnh yêu cầu hệ thống cloud ghi nhận reset game theo SĐT
         };
 
         await fetch(KIMBLING_API_URL, {
@@ -730,9 +729,13 @@
 
         localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và gửi lệnh reset trò chơi thành công!`;
+        // 🧹 XÓA BỘ NHỚ LƯỢT CHƠI TRÊN MÁY CHỦ QUÁN (LOCAL STORAGE)
+        localStorage.removeItem('kimbling_game_state_v45');
+        localStorage.removeItem('kimbling_game_state_v17');
+
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales và gửi lệnh reset lượt chơi theo SĐT (${customerPhone}) thành công!`;
         if (isTichDiemChecked) {
-          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách (${customerPhone}).`;
+          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách.`;
         }
 
         alert(successMsg);
