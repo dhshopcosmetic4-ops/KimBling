@@ -180,7 +180,7 @@ return newState;
 }
 
 let gameState = getGameState();
-let sessionAddedDiamonds =[span_4](start_span)[span_4](end_span); // Biến lưu tạm điểm kiếm được trong phiên chơi hiện tại
+let sessionAddedDiamonds = 0; 
 
 function getUserRealDiamonds() {
   return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
@@ -304,7 +304,7 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 } else {
 exactWonThisTurn = item.value;
 gameState.wonDiamondsTotal += item.value;
-sessionAddedDiamonds += item.value; // Tích lũy vào biến tạm trong phiên[span_5](start_span)[span_5](end_span)
+sessionAddedDiamonds += item.value; 
 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 }
 } else {
@@ -361,7 +361,7 @@ localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 updateUI();
 }
 
-// 🚀 ĐỒNG BỘ DỮ LIỆU CUỐI CÙNG LÊN CLOUD KHI THOÁT GAME HOẶC ĐẶT MÓN
+// 🚀 ĐỒNG BỘ DỮ LIỆU LÊN CLOUD VÀ GIỮ LẠI TRẠNG THÁI SỐ LƯỢT ĐÃ CHƠI
 async function syncRewardsToCloudAndExit() {
 if (sessionAddedDiamonds > 0) {
 let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
@@ -382,7 +382,7 @@ amount: sessionAddedDiamonds
 }
 sessionAddedDiamonds = 0; 
 }
-localStorage.removeItem('kimbling_game_state_v45');
+// KHÔNG xóa trạng thái game ở đây để lưu lại số lượt đã chơi
 closeGame();
 }
 
@@ -390,7 +390,7 @@ function finishFiveTurnsAndCheckout() {
 syncRewardsToCloudAndExit();
 }
 
-// Khi khách bấm nút X đóng game ngang ➔ Tự động bắn dữ liệu đồng bộ chốt hạ
+// Khi khách bấm nút X đóng game ngang ➔ Gửi điểm tích lũy ngầm nhưng KHÔNG reset lượt chơi
 function closeGame() {
 if (sessionAddedDiamonds > 0) {
 let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
@@ -399,7 +399,8 @@ navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ a
 }
 sessionAddedDiamonds = 0;
 }
-localStorage.removeItem('kimbling_game_state_v45');
+// Giữ lại trạng thái lượt chơi để lần sau mở lên vẫn nhớ số lượt đã dùng
+// localStorage.removeItem('kimbling_game_state_v45'); 
 
 if (window.parent) {
 window.parent.postMessage('CLOSE_GAME_POPUP', '*');
