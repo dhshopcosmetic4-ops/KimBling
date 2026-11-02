@@ -90,6 +90,7 @@ margin-top: 2px;
   background: rgba(255, 255, 255, 0.95); z-index: 999;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   border-radius: 20px;
+  display: none; /* Mặc định tắt loading vì đã đọc trực tiếp từ bộ nhớ máy cực nhanh */
 }
 .game-spinner {
   width: 36px; height: 36px; border: 4px solid #eee; border-top: 4px solid #d32f2f;
@@ -111,7 +112,7 @@ margin-top: 2px;
 
 <div class="user-diamond-bar">
   <span>💎 Kho đồ của bạn:</span>
-  <span id="headerTotalDiamonds" style="font-size: 14px; font-weight: 900; color: #d32f2f;">... 💎</span>
+  <span id="headerTotalDiamonds" style="font-size: 14px; font-weight: 900; color: #d32f2f;">0 💎</span>
 </div>
 
 <div class="turn-badge" id="turnBadge">Lượt chơi: Còn 5 lượt</div>
@@ -205,20 +206,9 @@ function updateHeaderDiamondDisplay() {
   document.getElementById('headerTotalDiamonds').innerText = `${currentAccountDiamonds.toLocaleString('vi-VN')} 💎`;
 }
 
-async function initSyncUserDiamonds() {
-  let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
-  if (customerPhone) {
-    try {
-      let res = await fetch(`${KIMBLING_API_URL}?type=checkHatKim&phone=${encodeURIComponent(customerPhone)}&t=${Date.now()}`);
-      let data = await res.json();
-      if (data && data.success && typeof data.diamonds !== 'undefined') {
-        let sheetDiamonds = parseInt(data.diamonds || '0');
-        localStorage.setItem('kim_bling_user_diamonds', sheetDiamonds);
-      }
-    } catch(e) {}
-  }
+// 🚀 LẤY NGAY SỐ DƯ TỪ BỘ NHỚ MÁY RA HIỂN THỊ LẬP TỨC (KHÔNG CẦN CHỜ MẠNG)
+function initLocalGameData() {
   updateHeaderDiamondDisplay();
-  document.getElementById('gameLoadingOverlay').style.display = 'none';
   updateUI();
 }
 
@@ -287,6 +277,7 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 gameState.currentBoard[index] = item;
 localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 
+// Cập nhật ngay vào bộ nhớ máy và bắn tín hiệu ra trang chính
 let currentAccountDiamonds = getUserRealDiamonds();
 let newTotalDiamonds = currentAccountDiamonds + exactWonThisTurn;
 localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
@@ -333,6 +324,7 @@ localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
 updateUI();
 }
 
+// 🚀 ĐỒNG BỘ LÊN GOOGLE SHEETS VÀ XÓA TẠM BỘ NHỚ KHI THOÁT
 async function syncRewardsToCloudAndExit() {
 if (sessionAddedDiamonds > 0) {
 let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
@@ -353,6 +345,8 @@ amount: sessionAddedDiamonds
 }
 sessionAddedDiamonds = 0; 
 }
+// Clear trống bộ nhớ tạm phiên chơi khi thoát
+localStorage.removeItem('kimbling_game_state_v45');
 closeGame();
 }
 
@@ -368,23 +362,12 @@ navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ a
 }
 sessionAddedDiamonds = 0;
 }
+// Clear trống bộ nhớ tạm phiên chơi khi thoát
+localStorage.removeItem('kimbling_game_state_v45');
+
 if (window.parent) {
 window.parent.postMessage('CLOSE_GAME_POPUP', '*');
 }
-}
-
-async function checkGameResetStatusFromCloud() {
-    let customerPhone = localStorage.getItem('kb_customer_phone') || localStorage.getItem('kimbling_current_phone') || '';
-    if (!customerPhone) return;
-    try {
-        let res = await fetch(`${KIMBLING_API_URL}?type=checkGameReset&phone=${encodeURIComponent(customerPhone)}&t=${Date.now()}`);
-        let data = await res.json();
-        if (data && data.shouldReset) {
-            localStorage.removeItem('kimbling_game_state_v45');
-            sessionAddedDiamonds = 0;
-            location.reload();
-        }
-    } catch(e) {}
 }
 
 window.addEventListener('message', function(event) {
@@ -395,8 +378,8 @@ window.addEventListener('message', function(event) {
     }
 });
 
-checkGameResetStatusFromCloud();
-initSyncUserDiamonds();
+// Khởi chạy trực tiếp từ bộ nhớ máy
+initLocalGameData();
 </script>
 </body>
 </html>
