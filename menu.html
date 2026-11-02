@@ -1294,7 +1294,7 @@ function setPriceDisplayMode(mode) {
     if (mode === 'K') {
         if (btnK) {
             btnK.style.background = '#2196F3';
-            btnK.style.color = '#ffffff';
+            btnK.style.color = '#white';
             btnK.style.border = 'none';
         }
         if (btnDiamond) {
@@ -1305,7 +1305,7 @@ function setPriceDisplayMode(mode) {
     } else {
         if (btnDiamond) {
             btnDiamond.style.background = '#ff9800';
-            btnDiamond.style.color = '#ffffff';
+            btnDiamond.style.color = '#white';
             btnDiamond.style.border = 'none';
         }
         if (btnK) {
@@ -1321,10 +1321,11 @@ function setPriceDisplayMode(mode) {
 }
 
 // Hàm dùng chung để lấy định dạng giá theo chế độ người dùng đang chọn
+
 function formatDynamicPrice(vndPrice) {
     let priceNum = Number(vndPrice || 0);
     if (currentPriceMode === 'DIAMOND') {
-        // Giá hiển thị quy đổi sang Hạt Kim (Ví dụ: 20k VND hiển thị là 400 💎)
+        // Giá hiển thị trên món ăn nhân lên 20 lần (Ví dụ: 20k VND hiển thị là 400 💎)
         let diamondsDisplay = Math.round((priceNum / 1000) * 20);
         return diamondsDisplay.toLocaleString('vi-VN') + ' 💎';
     } else {
@@ -2241,10 +2242,8 @@ function renderTiktokCard() {
 
     document.getElementById('tiktokTitle').innerText = item.name;
     
-
-// HIỂN THỊ ĐÚNG 1 GIÁ DUY NHẤT THEO CHẾ ĐỘ ĐANG CHỌN (K HOẶC 💎)
-document.getElementById('tiktokPrice').innerHTML = formatDynamicPrice(item.price);
-
+    // HIỂN THỊ GIÁ SONG SONG VND VÀ 💎 TRONG POPUP TIKTOK
+    document.getElementById('tiktokPrice').innerHTML = `${formatPrice(item.price)} <span style="font-size: 14px; color: #ff9800; font-weight: bold;">(hoặc ${formatDiamondPrice(item.price)})</span>`;
 
     let descEl = document.getElementById('tiktokDesc');
     if (!descEl) {
@@ -3731,97 +3730,20 @@ function closeSuccessOrderPopup() {
             }
         }
 
-        // Chuyển lượt thưởng đang chờ sang trò chơi
-function forwardPendingGameTurns() {
-    const iframe = document.getElementById('gameIframe');
+        function openLuckyGiftPopup() {
+            const modal = document.getElementById('gamePopupModal');
+            const iframe = document.getElementById('gameIframe');
+            if (iframe) iframe.src = iframe.src;
+            if (modal) modal.style.display = 'flex';
+        }
 
-    const pending = parseInt(
-        localStorage.getItem('kimbling_pending_bonus_turns') || '0',
-        10
-    );
-
-    if (
-        pending > 0 &&
-        iframe &&
-        iframe.contentWindow
-    ) {
-        iframe.contentWindow.postMessage(
-            'ADD_BONUS_TURNS',
-            '*'
-        );
-    }
-}
-
-
-// Hỗ trợ chuyển lượt thưởng đang chờ sang trò chơi
-function forwardPendingGameTurns() {
-    const iframe = document.getElementById('gameIframe');
-    const pending = parseInt(localStorage.getItem('kimbling_pending_bonus_turns') || '0', 10);
-
-    if (pending > 0 && iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('ADD_BONUS_TURNS', '*');
-    }
-}
-
-// Mở popup trò chơi ngay lập tức không bị delay
-async function openLuckyGiftPopup() {
-    const modal = document.getElementById('gamePopupModal');
-    const iframe = document.getElementById('gameIframe');
-    const phone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || '';
-
-    // 1. Hiển thị popup ngay lập tức cho khách
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-
-    if (iframe) {
-        iframe.onload = function() {
-            if (typeof forwardPendingGameTurns === 'function') {
-                forwardPendingGameTurns();
+        function closeGamePopup() {
+            const gameModal = document.getElementById('gamePopupModal');
+            if (gameModal) {
+                gameModal.style.display = 'none';
             }
-        };
-        // Tải trò chơi với timestamp để tránh cache
-        iframe.src = 'trochoi.html?t=' + Date.now();
-    }
-
-    // 2. Kiểm tra lệnh reset chạy ngầm ở phía sau
-    if (phone) {
-        fetch(`${GOOGLE_SCRIPT_URL}?action=checkGameReset&phone=${encodeURIComponent(phone)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.shouldReset && iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage('RESET_GAME_DATA', '*');
-                    localStorage.removeItem('kimbling_game_state_v17');
-                }
-            })
-            .catch(e => {
-                console.log("Kiểm tra reset ngầm:", e);
-            });
-    }
-}
-
-// Nhận tín hiệu cộng lượt thưởng từ qldon hoặc POS
-window.addEventListener('message', function(event) {
-    if (event.data === 'ADD_BONUS_TURNS' || (event.data && event.data.type === 'ADD_BONUS_TURNS')) {
-        forwardPendingGameTurns();
-    }
-});
-
-// Theo dõi lượt thưởng được cập nhật từ tab khác
-window.addEventListener('storage', function(event) {
-    if (event.key === 'kimbling_pending_bonus_turns' && Number(event.newValue) > 0) {
-        forwardPendingGameTurns();
-    }
-});
-
-function closeGamePopup() {
-    const gameModal = document.getElementById('gamePopupModal');
-    if (gameModal) {
-        gameModal.style.display = 'none';
-    }
-    checkAndApplyDiscountCode();
-}
-
+            checkAndApplyDiscountCode();
+        }
 
         window.addEventListener('message', function(event) {
             if (event.data === 'CLOSE_GAME_POPUP') {
