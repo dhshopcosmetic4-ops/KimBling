@@ -127,11 +127,6 @@ margin-top: 2px;
 <script>
 const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
 
-function getTodayString() {
-const now = new Date();
-return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-}
-
 function shuffleArray(array) {
 let arr = [...array];
 for (let i = arr.length - 1; i > 0; i--) {
@@ -161,22 +156,35 @@ board.push({ type: 'FAKE', text: 'Ly Free', icon: '🥤' });
 return shuffleArray(board);
 }
 
-function getGameState() {
-const today = getTodayString();
-const savedState = localStorage.getItem('kimbling_game_state_v45');
-if (savedState) {
-try {
-const parsed = JSON.parse(savedState);
-if (parsed && parsed.date === today) return parsed;
-} catch(e) {}
+// Lấy khóa lưu trữ localStorage riêng biệt theo từng số điện thoại
+function getCurrentPhoneKey() {
+    const phoneInput = document.getElementById('gameCustomerPhone');
+    let phone = phoneInput ? phoneInput.value.trim() : '';
+    if (!phone) {
+        phone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || 'default';
+    }
+    return `kimbling_game_state_v45_${phone}`;
 }
-const newState = {
-date: today, maxTurnsAllowed: 5, gamesPlayed: 0,
-wonDiamondsTotal: 0, isCurrentGameFinished: false,
-currentBoard: createNewBoard(0), selectedBoxIndex: null
-};
-localStorage.setItem('kimbling_game_state_v45', JSON.stringify(newState));
-return newState;
+
+function getGameState() {
+    const storageKey = getCurrentPhoneKey();
+    const savedState = localStorage.getItem(storageKey);
+    if (savedState) {
+        try {
+            const parsed = JSON.parse(savedState);
+            if (parsed) return parsed;
+        } catch(e) {}
+    }
+    const newState = {
+        maxTurnsAllowed: 5, 
+        gamesPlayed: 0,
+        wonDiamondsTotal: 0, 
+        isCurrentGameFinished: false,
+        currentBoard: createNewBoard(0), 
+        selectedBoxIndex: null
+    };
+    localStorage.setItem(storageKey, JSON.stringify(newState));
+    return newState;
 }
 
 let gameState = getGameState();
@@ -200,6 +208,7 @@ function initGamePhoneAndBalance() {
   } else {
     updateHeaderDiamondDisplay();
   }
+  gameState = getGameState(); // Tải lại trạng thái theo SĐT đã nhận
   updateUI();
 }
 
@@ -215,6 +224,10 @@ async function fetchGameDiamondBalance(phone) {
     localStorage.setItem('kimbling_cust_phone', cleanPhone);
     
     if (displayEl) displayEl.innerText = "⏳...";
+
+    // Sau khi đổi/nhập SĐT, cập nhật lại gameState theo SĐT mới này
+    gameState = getGameState();
+    updateUI();
 
     try {
         let res = await fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`);
@@ -282,7 +295,7 @@ document.getElementById('resultBox').style.display = 'none';
 }
 }
 
-// 🎁 MỞ HỘP QUÀ: CỘNG NHANH VÀO BỘ NHỚ MÁY TRƯỚC
+// 🎁 MỞ HỘP QUÀ
 function openBox(index) {
 const phoneInput = document.getElementById('gameCustomerPhone');
 if (!phoneInput || !phoneInput.value.trim()) {
@@ -312,9 +325,8 @@ item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 }
 
 gameState.currentBoard[index] = item;
-localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+localStorage.setItem(getCurrentPhoneKey(), JSON.stringify(gameState));
 
-// Cộng thẳng siêu tốc vào bộ nhớ máy để khách thấy tăng điểm ngay lập tức
 let currentAccountDiamonds = getUserRealDiamonds();
 let newTotalDiamonds = currentAccountDiamonds + exactWonThisTurn;
 localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
@@ -357,11 +369,10 @@ if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
 gameState.isCurrentGameFinished = false;
 gameState.selectedBoxIndex = null;
 gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
-localStorage.setItem('kimbling_game_state_v45', JSON.stringify(gameState));
+localStorage.setItem(getCurrentPhoneKey(), JSON.stringify(gameState));
 updateUI();
 }
 
-// 🚀 ĐỒNG BỘ DỮ LIỆU LÊN CLOUD VÀ GIỮ LẠI TRẠNG THÁI SỐ LƯỢT ĐÃ CHƠI
 async function syncRewardsToCloudAndExit() {
 if (sessionAddedDiamonds > 0) {
 let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
@@ -382,7 +393,6 @@ amount: sessionAddedDiamonds
 }
 sessionAddedDiamonds = 0; 
 }
-// KHÔNG xóa trạng thái game ở đây để lưu lại số lượt đã chơi
 closeGame();
 }
 
@@ -390,7 +400,6 @@ function finishFiveTurnsAndCheckout() {
 syncRewardsToCloudAndExit();
 }
 
-// Khi khách bấm nút X đóng game ngang ➔ Gửi điểm tích lũy ngầm nhưng KHÔNG reset lượt chơi
 function closeGame() {
 if (sessionAddedDiamonds > 0) {
 let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
@@ -399,8 +408,6 @@ navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ a
 }
 sessionAddedDiamonds = 0;
 }
-// Giữ lại trạng thái lượt chơi để lần sau mở lên vẫn nhớ số lượt đã dùng
-// localStorage.removeItem('kimbling_game_state_v45'); 
 
 if (window.parent) {
 window.parent.postMessage('CLOSE_GAME_POPUP', '*');
@@ -417,9 +424,10 @@ window.addEventListener('message', function(event) {
         }
     }
     if (event.data === 'RESET_GAME_DATA') {
-        localStorage.removeItem('kimbling_game_state_v45');
+        localStorage.removeItem(getCurrentPhoneKey());
         sessionAddedDiamonds = 0;
-        location.reload();
+        gameState = getGameState();
+        updateUI();
     }
 });
 
