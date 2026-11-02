@@ -1280,6 +1280,19 @@
 
     <script>
 
+// Hàm xử lý khi bấm vào nút thông báo đã tặng 5 lần mở hộp quà trên popup thành công đơn hàng
+function openAlreadyResetGamePopup() {
+    // 1. Đóng popup thông báo đơn thành công lại
+    closeSuccessOrderPopup();
+
+    // 2. Mở popup trò chơi Hộp Quà May Mắn lên (game đã được tự động reset từ lúc đặt hàng)
+    const gameModal = document.getElementById('gamePopupModal');
+    if (gameModal) {
+        gameModal.style.display = 'flex';
+    }
+}
+
+
 // Biến lưu trạng thái hiển thị hiện tại ('K' hoặc 'DIAMOND'). Mặc định là 'K'.
 let currentPriceMode = localStorage.getItem('kimbling_price_mode') || 'K';
 
@@ -3267,9 +3280,17 @@ function resetPinInput() {
 }
 
 
-                                async function processOrderSubmit() {
+                                  async function processOrderSubmit() {
     const msg = generateOrderMessage();
     if (!msg) return;
+
+    // TỰ ĐỘNG RESET NGẦM TRÒ CHƠI LUÔN KHI ĐẶT HÀNG THÀNH CÔNG
+    localStorage.removeItem('kimbling_game_state_v45');
+    const iframeGame = document.getElementById('gameIframe');
+    if (iframeGame && iframeGame.contentWindow) {
+        iframeGame.contentWindow.postMessage('RESET_GAME_DATA', '*');
+        setTimeout(() => { iframeGame.src = iframeGame.src; }, 100);
+    }
 
     const phone = document.getElementById('customerPhone').value.trim();
     
@@ -3379,7 +3400,7 @@ function resetPinInput() {
 
     const timeString = new Date(Date.now() + 20*60000).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
 
-    // 3. XỬ LÝ HIỂN THỊ TRONG POPUP (QUY ĐỔI RA 💎 NẾU THANH TOÁN QUA TÚI)
+    // 3. XỬ LÝ HIỂN THỊ TRONG POPUP
     let itemsSummaryHTML = cart.map(item => {
         const options = item.options ? ` (${String(item.options).replace(/\s+/g, ' ').trim()}) ` : '';
         let itemPriceDisplay = formatPrice(item.price * item.qty);
@@ -3489,6 +3510,12 @@ function resetPinInput() {
                 ${transferSectionHTML}
             </div>
 
+            <!-- NÚT THÔNG BÁO ĐÃ TẶNG 5 LẦN MỞ HỘP QUÀ VÀ MỞ GAME NGAY -->
+            <button onclick="openAlreadyResetGamePopup()" class="pulse-attention" style="width: 100%; background: linear-gradient(135deg, #e91e63, #d81b60); color: white; border: none; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(233,30,99,0.4); text-align: center; line-height: 1.4;">
+                🎁 ĐÃ TẶNG CHO BẠN 5 LẦN MỞ HỘP QUÀ!<br>
+                <span style="font-size: 11px; font-weight: normal; opacity: 0.95;">(Bấm vào đây để mở hộp quà thử vận may ngay)</span>
+            </button>
+
             <button onclick="closeSuccessOrderPopup()" style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.4);">
                 ĐÓNG & TIẾP TỤC XEM MENU
             </button>
@@ -3514,6 +3541,7 @@ function resetPinInput() {
     cart = [];
     renderCartBar();
 }
+
 
 function closeSuccessOrderPopup() {
     const modal = document.getElementById('orderSuccessModalOverlay');
