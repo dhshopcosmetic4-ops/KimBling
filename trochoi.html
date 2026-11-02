@@ -120,7 +120,7 @@ margin-top: 2px;
 <div class="action-choice-row" id="choiceRow" style="display: none;">
 <button class="btn-choice-next" onclick="startNextGame()">🎮 Mở lượt tiếp theo</button>
 </div>
-<button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY</button>
+<button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY ĐỂ NHẬN THÊM LƯỢT</button>
 </div>
 </div>
 
@@ -163,7 +163,7 @@ function getCurrentPhoneKey() {
     if (!phone) {
         phone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || 'default';
     }
-    return `kimbling_game_state_v45_${phone}`;
+    return `kimbling_game_state_v46_${phone}`;
 }
 
 function getGameState() {
@@ -208,7 +208,7 @@ function initGamePhoneAndBalance() {
   } else {
     updateHeaderDiamondDisplay();
   }
-  gameState = getGameState(); // Tải lại trạng thái theo SĐT đã nhận
+  gameState = getGameState(); 
   updateUI();
 }
 
@@ -225,7 +225,6 @@ async function fetchGameDiamondBalance(phone) {
     
     if (displayEl) displayEl.innerText = "⏳...";
 
-    // Sau khi đổi/nhập SĐT, cập nhật lại gameState theo SĐT mới này
     gameState = getGameState();
     updateUI();
 
@@ -264,8 +263,13 @@ if (gameState.wonDiamondsTotal > 0) {
 wonDisplay.innerText = `🎉 Vừa mở trúng: Tổng +${gameState.wonDiamondsTotal} 💎 phiên này`;
 wonDisplay.style.color = `#00838f`;
 } else {
-wonDisplay.innerText = `👉 Hãy chọn 1 hộp quà bên dưới!`;
-wonDisplay.style.color = `#e65100`;
+    if (turnsLeft === 0) {
+        wonDisplay.innerText = `🔒 Đã hết lượt! Vui lòng đặt hàng để mở tiếp.`;
+        wonDisplay.style.color = `#d32f2f`;
+    } else {
+        wonDisplay.innerText = `👉 Hãy chọn 1 hộp quà bên dưới!`;
+        wonDisplay.style.color = `#e65100`;
+    }
 }
 
 const boxElements = document.querySelectorAll('.box-item');
@@ -304,7 +308,13 @@ if (!phoneInput || !phoneInput.value.trim()) {
     return;
 }
 
-if (gameState.isCurrentGameFinished || gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
+if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) {
+    alert("🔒 Bạn đã sử dụng hết 5 lượt mở hộp quà! Vui lòng đặt món để được cấp thêm lượt mới nhé.");
+    return;
+}
+
+if (gameState.isCurrentGameFinished) return;
+
 gameState.gamesPlayed++;
 gameState.isCurrentGameFinished = true;
 gameState.selectedBoxIndex = index;
@@ -352,20 +362,24 @@ htmlMsg = `🎉 <b>CHÚC MỪNG! BẠN NHẬN ĐƯỢC <span style="color:#d32f2
 htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Ô này không có kim cương nhé.<br>`;
 }
 
+// Kiểm tra nếu đã đủ 5 lượt chơi thì khóa nút mở tiếp, hiện nút đặt món
 if (gameState.gamesPlayed < gameState.maxTurnsAllowed) {
 choiceRow.style.display = 'flex';
 btnCloseGame.style.display = 'none';
 } else {
 choiceRow.style.display = 'none';
 btnCloseGame.style.display = 'block';
-htmlMsg += `<br>✨ <b>Đã hoàn thành 5 lượt chơi!</b> Bấm đặt món để lưu kết quả nhé.`;
+htmlMsg += `<br>🔒 <b>Đã hết 5 lượt mở quà!</b> Bấm đặt món ngay để được cấp thêm 5 lượt mới.`;
 }
 resultText.innerHTML = htmlMsg;
 resultBox.style.display = 'block';
 }
 
 function startNextGame() {
-if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) return;
+if (gameState.gamesPlayed >= gameState.maxTurnsAllowed) {
+    alert("🔒 Bạn đã hết 5 lượt chơi!");
+    return;
+}
 gameState.isCurrentGameFinished = false;
 gameState.selectedBoxIndex = null;
 gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
@@ -414,7 +428,7 @@ window.parent.postMessage('CLOSE_GAME_POPUP', '*');
 }
 }
 
-// Lắng nghe SĐT và Lệnh Reset từ trang chủ menu.html truyền sang
+// Lắng nghe SĐT và Lệnh Reset từ trang chủ menu.html truyền sang khi đặt hàng thành công
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'SYNC_CUSTOMER_PHONE' && event.data.phone) {
         const phoneInput = document.getElementById('gameCustomerPhone');
