@@ -167,8 +167,8 @@ async function fetchGameDiamondBalance(phone) {
         if (displayEl) displayEl.innerText = "0 💎";
         return;
     }
-    localStorage.setItem('kimbling_cust_phone', cleanPhone);
     localStorage.setItem('kb_customer_phone', cleanPhone);
+    localStorage.setItem('kimbling_cust_phone', cleanPhone);
     if (displayEl) displayEl.innerText = "⏳...";
 
     try {
@@ -225,7 +225,6 @@ function startBattle() {
   let betVal = parseInt(document.getElementById('betAmountInput').value) || 1;
   let currentDiamonds = getUserRealDiamonds();
 
-  // So sánh số dư trước khi cho chơi
   if (currentDiamonds < betVal) {
     alert(`⚠️ Kho đồ của bạn chỉ có ${currentDiamonds} 💎, không đủ để cược ${betVal} 💎! Vui lòng chọn mức cược thấp hơn.`);
     document.getElementById('betAmountInput').focus();
@@ -286,17 +285,20 @@ function stopOrResetBattle() {
       (selectedUserChoice === 'keo' && finalMachineChoice === 'bao') ||
       (selectedUserChoice === 'bao' && finalMachineChoice === 'bua')
     ) {
+      // THẮNG: Cộng điểm
       delta = betVal;
       sessionAddedDiamonds += delta;
       resultMsg = `🎉 BẠN THẮNG! Nhận thêm +${delta} 💎`;
       resultColor = "#28a745";
     } else {
+      // THUA: Trừ điểm chính xác
       delta = -betVal;
       sessionAddedDiamonds += delta;
       resultMsg = `😢 BẠN THUA! Bị trừ -${betVal} 💎`;
       resultColor = "#ef4444";
     }
 
+    // Cập nhật số dư mới vào bộ nhớ máy (nếu số dư âm thì ép về 0)
     let newTotal = currentDiamonds + delta;
     if (newTotal < 0) newTotal = 0;
     localStorage.setItem('kim_bling_user_diamonds', newTotal);
@@ -356,6 +358,17 @@ function closeGame() {
     window.parent.postMessage('CLOSE_GAME_POPUP', '*');
   }
 }
+
+// Lắng nghe SĐT truyền từ menu.html sang iframe Oản Tù Tì
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'SYNC_CUSTOMER_PHONE' && event.data.phone) {
+        const phoneInput = document.getElementById('gameCustomerPhone');
+        if (phoneInput) {
+            phoneInput.value = event.data.phone;
+            fetchGameDiamondBalance(event.data.phone);
+        }
+    }
+});
 
 initGame();
 </script>
