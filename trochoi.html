@@ -188,7 +188,6 @@ function getGameState() {
 }
 
 let gameState = getGameState();
-let sessionAddedDiamonds = 0; 
 
 function getUserRealDiamonds() {
   return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
@@ -299,8 +298,8 @@ document.getElementById('resultBox').style.display = 'none';
 }
 }
 
-// 🎁 MỞ HỘP QUÀ
-function openBox(index) {
+// 🎁 MỞ HỘP QUÀ & ĐẨY NGẦM LÊN CLOUD NGAY LẬP TỨC CHO TỪNG LƯỢT
+async function openBox(index) {
 const phoneInput = document.getElementById('gameCustomerPhone');
 if (!phoneInput || !phoneInput.value.trim()) {
     alert("⚠️ Vui lòng nhập số điện thoại của bạn ở ô phía trên trước khi mở hộp quà!");
@@ -322,16 +321,34 @@ let item = gameState.currentBoard[index];
 let exactWonThisTurn = 0;
 
 if (item.type === 'DIAMOND') {
-if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
-item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+    if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
+        item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+    } else {
+        exactWonThisTurn = item.value;
+        gameState.wonDiamondsTotal += item.value;
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+        // 🚀 ĐẨY NGẦM LÊN CLOUD NGAY LẬP TỨC CHO LƯỢT NÀY
+        let customerPhone = phoneInput.value.trim();
+        try {
+            fetch(KIMBLING_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                body: JSON.stringify({
+                    action: 'add_hatkim',
+                    type: 'add_hatkim',
+                    phone: customerPhone,
+                    amount: exactWonThisTurn
+                })
+            });
+        } catch (e) {
+            console.log("Lỗi đẩy điểm ngầm:", e);
+        }
+    }
 } else {
-exactWonThisTurn = item.value;
-gameState.wonDiamondsTotal += item.value;
-sessionAddedDiamonds += item.value; 
-if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-}
-} else {
-item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
 }
 
 gameState.currentBoard[index] = item;
@@ -342,7 +359,7 @@ let newTotalDiamonds = currentAccountDiamonds + exactWonThisTurn;
 localStorage.setItem('kim_bling_user_diamonds', newTotalDiamonds);
 
 if (window.parent) {
-window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: exactWonThisTurn }, '*');
+    window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotalDiamonds, added: exactWonThisTurn }, '*');
 }
 
 updateUI();
@@ -387,44 +404,13 @@ localStorage.setItem(getCurrentPhoneKey(), JSON.stringify(gameState));
 updateUI();
 }
 
-async function syncRewardsToCloudAndExit() {
-if (sessionAddedDiamonds > 0) {
-let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
-if (customerPhone) {
-try {
-await fetch(KIMBLING_API_URL, {
-method: 'POST',
-mode: 'no-cors',
-headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-body: JSON.stringify({
-action: 'add_hatkim',
-type: 'add_hatkim',
-phone: customerPhone,
-amount: sessionAddedDiamonds
-})
-});
-} catch (e) {}
-}
-sessionAddedDiamonds = 0; 
-}
-closeGame();
-}
-
 function finishFiveTurnsAndCheckout() {
-syncRewardsToCloudAndExit();
+    closeGame();
 }
 
 function closeGame() {
-if (sessionAddedDiamonds > 0) {
-let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
-if (customerPhone) {
-navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ action: 'add_hatkim', type: 'add_hatkim', phone: customerPhone, amount: sessionAddedDiamonds })) : null;
-}
-sessionAddedDiamonds = 0;
-}
-
 if (window.parent) {
-window.parent.postMessage('CLOSE_GAME_POPUP', '*');
+    window.parent.postMessage('CLOSE_GAME_POPUP', '*');
 }
 }
 
@@ -439,7 +425,6 @@ window.addEventListener('message', function(event) {
     }
     if (event.data === 'RESET_GAME_DATA') {
         localStorage.removeItem(getCurrentPhoneKey());
-        sessionAddedDiamonds = 0;
         gameState = getGameState();
         updateUI();
     }
