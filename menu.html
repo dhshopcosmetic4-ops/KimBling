@@ -930,20 +930,21 @@
 
 
 
-    <!-- HÀNG NÚT CÀI ỨNG DỤNG, HỘP QUÀ & VÒNG QUAY CHỌN MÓN -->
     <div style="display: flex; justify-content: center; gap: 8px; margin: 10px 12px 2px 12px;">
-        <button onclick="showInstallPrompt()" style="flex: 1; background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
-            📱 Cài App
-        </button>
+    <button onclick="showInstallPrompt()" style="flex: 1; background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+        📱 Cài App
+    </button>
 
-        <button onclick="openLuckyGiftPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #e91e63, #d81b60); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(233, 30, 99, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
-            🎁 Hộp Quà
-        </button>
+    <button onclick="openLuckyGiftPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #e91e63, #d81b60); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(233, 30, 99, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+        🎁 Hộp Quà
+    </button>
 
-        <button onclick="openWheelPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #2196F3, #0d47a1); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(33, 150, 243, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
-            🎡 Hôm Nay Uống Gì?
-        </button>
-    </div>
+    <!-- NÚT MỚI: AI LÀ NGƯỜI MAY MẮN -->
+    <button onclick="openWheelPopup()" class="pulse-attention" style="flex: 1; background: linear-gradient(135deg, #2196F3, #0d47a1); color: white; border: none; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(33, 150, 243, 0.4); display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;">
+        🎉 Ai Là Người May Mắn?
+    </button>
+</div>
+
 
     <div class="container">
         <div class="search-box" style="position: relative;">
@@ -3788,11 +3789,21 @@ function closeSuccessOrderPopup() {
         }
 
         function openLuckyGiftPopup() {
-            const modal = document.getElementById('gamePopupModal');
-            const iframe = document.getElementById('gameIframe');
-            if (iframe) iframe.src = iframe.src;
-            if (modal) modal.style.display = 'flex';
-        }
+    const modal = document.getElementById('gamePopupModal');
+    const iframe = document.getElementById('gameIframe');
+    if (iframe) {
+        iframe.src = iframe.src;
+        // Đợi iframe load xong thì bắn SĐT sang
+        iframe.onload = function() {
+            const phoneVal = document.getElementById('mainCustomerPhone').value.trim();
+            if (phoneVal && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'SYNC_CUSTOMER_PHONE', phone: phoneVal }, '*');
+            }
+        };
+    }
+    if (modal) modal.style.display = 'flex';
+}
+
 
         function closeGamePopup() {
             const gameModal = document.getElementById('gamePopupModal');
@@ -3862,15 +3873,13 @@ function closeSuccessOrderPopup() {
             }
         }
 
-        function openWheelPopup() {
+                function openWheelPopup() {
             const modal = document.getElementById('wheelPopupModal');
             const iframe = document.getElementById('wheelIframe');
             
+            // Trỏ thẳng iframe mở file trung tâm game ailanguoimayman.html
+            if (iframe) iframe.src = "ailanguoimayman.html";
             if (modal) modal.style.display = 'flex';
-            
-            if (iframe && iframe.contentWindow && menu.length > 0) {
-                iframe.contentWindow.postMessage({ type: 'LOAD_WHEEL_MENU', menuData: menu }, '*');
-            }
         }
 
         function closeWheelPopup() {
@@ -3891,6 +3900,7 @@ function closeSuccessOrderPopup() {
                 }
             }
         });
+
                                                 // LẮNG NGHE DỮ LIỆU TỌA ĐỘ VÀ ĐỊA CHỈ TRUYỀN NGƯỢC TỪ POPUP DINHVI.HTML
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'UPDATE_SHIPPING_FROM_MAP') {

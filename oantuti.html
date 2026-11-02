@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oản Tù Tì Đặt Cược - Kim Bling Coffee & Tea</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
+.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
+h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
+p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
+
+.user-diamond-bar {
+  background: linear-gradient(135deg, #2c1810, #1e293b);
+  border: 1.5px solid #ff9800;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+}
+
+.section-box { background: #fff8e1; border: 1.5px solid #ffe0b2; border-radius: 12px; padding: 10px; margin-bottom: 8px; text-align: left; }
+.section-title { font-size: 11px; font-weight: bold; color: #e65100; margin-bottom: 6px; text-align: center; }
+
+.choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+.choice-btn {
+  background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 8px 0; text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.choice-btn div.icon { font-size: 24px; }
+.choice-btn div.label { font-size: 10px; font-weight: bold; color: #555; margin-top: 2px; }
+.choice-btn.selected { border-color: #d32f2f; background: #ffebee; transform: scale(1.03); box-shadow: 0 3px 8px rgba(211,47,47,0.3); }
+.choice-btn.selected div.label { color: #d32f2f; }
+
+.bet-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.bet-input {
+  background: #fff; border: 1.5px solid #ccc; border-radius: 8px; padding: 6px 8px; font-size: 14px; font-weight: bold; width: 90px; text-align: center; outline: none; color: #d32f2f;
+}
+.bet-quick-btns { display: flex; gap: 4px; }
+.bet-chip { background: #ff9800; color: #fff; border: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+
+.battle-arena { display: none; background: #1e293b; border-radius: 12px; padding: 12px; color: #fff; margin-bottom: 8px; text-align: center; }
+.battle-flex { display: flex; justify-content: space-around; align-items: center; margin: 10px 0; }
+.fighter-box { background: #0f172a; border: 2px solid #334155; border-radius: 10px; width: 85px; height: 85px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.fighter-icon { font-size: 36px; }
+.fighter-name { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+.vs-text { font-size: 16px; font-weight: 900; color: #ff9800; font-style: italic; }
+
+.action-main-btn {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c); color: #fff; border: none; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(211,47,47,0.4); text-transform: uppercase;
+}
+.action-main-btn:active { transform: scale(0.97); }
+
+.result-notify { font-size: 13px; font-weight: 900; margin-top: 6px; padding: 6px; border-radius: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="game-card">
+<button class="close-btn" onclick="closeGame()">✕</button>
+<h2>✊ OẢN TÙ TÌ ĐẶT CƯỢC</h2>
+<p class="subtitle">Thắng nhân đôi - Thua mất cược (Tối đa 10💎)</p>
+
+<div class="user-diamond-bar">
+    <div style="display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 6px;">
+        <span style="font-size: 12px; font-weight: bold; color: #ff9800; white-space: nowrap;">💎 Túi 💎:</span>
+        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT..." maxlength="11" onchange="fetchGameDiamondBalance(this.value)" onkeyup="if(event.key==='Enter') fetchGameDiamondBalance(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
+    </div>
+    <div id="headerTotalDiamonds" onclick="reloadGameDiamonds()" style="font-size: 15px; font-weight: bold; color: #ff4d4f; background: #0f172a; padding: 4px 8px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 60px; text-align: center; cursor: pointer;" title="Bấm làm mới số dư">
+        0 💎
+    </div>
+</div>
+
+<!-- KHUNG CHỌN & CƯỢC -->
+<div id="setupSection">
+  <div class="section-box">
+    <div class="section-title">1. CHỌN QUÂN BẠN MUỐN ĐÁNH</div>
+    <div class="choice-grid">
+      <div class="choice-btn" id="choiceBua" onclick="selectUserChoice('bua')">
+        <div class="icon">✊</div>
+        <div class="label">BÚA</div>
+      </div>
+      <div class="choice-btn" id="choiceKeo" onclick="selectUserChoice('keo')">
+        <div class="icon">✌️</div>
+        <div class="label">KÉO</div>
+      </div>
+      <div class="choice-btn" id="choiceBao" onclick="selectUserChoice('bao')">
+        <div class="icon">🖐️</div>
+        <div class="label">BAO</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-box">
+    <div class="section-title">2. NHẬP SỐ KIM CƯƠNG ĐẶT CƯỢC (1 - 10)</div>
+    <div class="bet-row">
+      <input type="number" id="betAmountInput" class="bet-input" value="1" min="1" max="10" onchange="validateBet(this)">
+      <div class="bet-quick-btns">
+        <button class="bet-chip" onclick="setBet(1)">1</button>
+        <button class="bet-chip" onclick="setBet(5)">5</button>
+        <button class="bet-chip" onclick="setBet(10)">MAX</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="action-main-btn" onclick="startBattle()">⚔️ BẮT ĐẦU ĐẤU TRƯỜNG</button>
+</div>
+
+<!-- KHUNG ĐẤU TRƯỜNG QUAY SỐ -->
+<div class="battle-arena" id="battleArena">
+  <div style="font-size: 12px; color: #cbd5e1; font-weight: bold;">HỆ THỐNG ĐANG RA QUÂN...</div>
+  <div class="battle-flex">
+    <div class="fighter-box">
+      <div class="fighter-icon" id="userFighterDisplay">✊</div>
+      <div class="fighter-name">Bạn</div>
+    </div>
+    <div class="vs-text">VS</div>
+    <div class="fighter-box">
+      <div class="fighter-icon" id="machineFighterDisplay">🖐️</div>
+      <div class="fighter-name">Máy</div>
+    </div>
+  </div>
+  <div class="result-notify" id="resultNotifyBox"></div>
+  <button class="action-main-btn" id="battleActionBtn" onclick="stopOrResetBattle()" style="margin-top: 4px;">🛑 DỪNG LẠI (SO KẾT QUẢ)</button>
+</div>
+
+</div>
+
+<script>
+const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+let selectedUserChoice = 'bua'; 
+let sessionAddedDiamonds = 0; 
+let rollingInterval = null;
+let isRolling = false;
+const symbols = ['bua', 'keo', 'bao'];
+const symbolIcons = { 'bua': '✊', 'keo': '✌️', 'bao': '🖐️' };
+
+function getUserRealDiamonds() {
+  return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
+}
+
+function updateHeaderDiamondDisplay() {
+  let currentAccountDiamonds = getUserRealDiamonds();
+  document.getElementById('headerTotalDiamonds').innerText = `${currentAccountDiamonds.toLocaleString('vi-VN')} 💎`;
+}
+
+function initGame() {
+  const phoneInput = document.getElementById('gameCustomerPhone');
+  let savedPhone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || '';
+  if (phoneInput && savedPhone) {
+    phoneInput.value = savedPhone;
+    fetchGameDiamondBalance(savedPhone);
+  } else {
+    updateHeaderDiamondDisplay();
+  }
+  selectUserChoice('bua');
+}
+
+async function fetchGameDiamondBalance(phone) {
+    const cleanPhone = String(phone || '').trim();
+    const displayEl = document.getElementById('headerTotalDiamonds');
+    if (!cleanPhone || cleanPhone.length < 9) {
+        if (displayEl) displayEl.innerText = "0 💎";
+        return;
+    }
+    localStorage.setItem('kimbling_cust_phone', cleanPhone);
+    localStorage.setItem('kb_customer_phone', cleanPhone);
+    if (displayEl) displayEl.innerText = "⏳...";
+
+    try {
+        let res = await fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`);
+        let data = await res.json();
+        let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
+        localStorage.setItem('kim_bling_user_diamonds', balance);
+        if (displayEl) displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
+        if (window.parent) {
+            window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: balance, added: 0 }, '*');
+        }
+    } catch (e) {
+        updateHeaderDiamondDisplay();
+    }
+}
+
+function reloadGameDiamonds() {
+    const phoneInput = document.getElementById('gameCustomerPhone');
+    if (phoneInput && phoneInput.value.trim()) {
+        fetchGameDiamondBalance(phoneInput.value.trim());
+    } else {
+        alert("Vui lòng nhập số điện thoại trước khi làm mới!");
+        if (phoneInput) phoneInput.focus();
+    }
+}
+
+function selectUserChoice(choice) {
+  selectedUserChoice = choice;
+  document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
+  if (choice === 'bua') document.getElementById('choiceBua').classList.add('selected');
+  if (choice === 'keo') document.getElementById('choiceKeo').classList.add('selected');
+  if (choice === 'bao') document.getElementById('choiceBao').classList.add('selected');
+}
+
+function setBet(val) {
+  document.getElementById('betAmountInput').value = val;
+}
+
+function validateBet(input) {
+  let val = parseInt(input.value) || 1;
+  if (val < 1) val = 1;
+  if (val > 10) val = 10;
+  input.value = val;
+}
+
+function startBattle() {
+  const phoneInput = document.getElementById('gameCustomerPhone');
+  if (!phoneInput || !phoneInput.value.trim()) {
+    alert("⚠️ Vui lòng nhập số điện thoại để tham gia đặt cược!");
+    phoneInput.focus();
+    return;
+  }
+
+  let betVal = parseInt(document.getElementById('betAmountInput').value) || 1;
+  let currentDiamonds = getUserRealDiamonds();
+
+  // So sánh số dư trước khi cho chơi
+  if (currentDiamonds < betVal) {
+    alert(`⚠️ Kho đồ của bạn chỉ có ${currentDiamonds} 💎, không đủ để cược ${betVal} 💎! Vui lòng chọn mức cược thấp hơn.`);
+    document.getElementById('betAmountInput').focus();
+    return;
+  }
+
+  document.getElementById('setupSection').style.display = 'none';
+  document.getElementById('battleArena').style.display = 'block';
+  document.getElementById('resultNotifyBox').style.display = 'none';
+  document.getElementById('battleActionBtn').innerText = "🛑 DỪNG LẠI (SO KẾT QUẢ)";
+  document.getElementById('battleActionBtn').style.background = "linear-gradient(135deg, #d32f2f, #b71c1c)";
+  document.getElementById('userFighterDisplay').innerText = symbolIcons[selectedUserChoice];
+
+  isRolling = true;
+  rollingInterval = setInterval(() => {
+    let randomMachineChoice = symbols[Math.floor(Math.random() * symbols.length)];
+    document.getElementById('machineFighterDisplay').innerText = symbolIcons[randomMachineChoice];
+  }, 80);
+}
+
+let finalMachineChoice = '';
+
+// Thuật toán cân bằng 40% Thắng - 25% Hòa - 35% Thua
+function determineMachineChoice(userChoice) {
+  const rand = Math.random() * 100;
+  if (rand < 25) {
+    return userChoice;
+  } else if (rand < 65) {
+    if (userChoice === 'bua') return 'keo';
+    if (userChoice === 'keo') return 'bao';
+    if (userChoice === 'bao') return 'bua';
+  } else {
+    if (userChoice === 'bua') return 'bao';
+    if (userChoice === 'keo') return 'bua';
+    if (userChoice === 'bao') return 'keo';
+  }
+}
+
+function stopOrResetBattle() {
+  if (isRolling) {
+    clearInterval(rollingInterval);
+    isRolling = false;
+
+    finalMachineChoice = determineMachineChoice(selectedUserChoice);
+    document.getElementById('machineFighterDisplay').innerText = symbolIcons[finalMachineChoice];
+
+    let betVal = parseInt(document.getElementById('betAmountInput').value) || 1;
+    let currentDiamonds = getUserRealDiamonds();
+    let delta = 0;
+    let resultMsg = "";
+    let resultColor = "";
+
+    if (selectedUserChoice === finalMachineChoice) {
+      resultMsg = `🤝 HÒA CƯỢC! Không mất cũng không cộng.`;
+      resultColor = "#ff9800";
+    } else if (
+      (selectedUserChoice === 'bua' && finalMachineChoice === 'keo') ||
+      (selectedUserChoice === 'keo' && finalMachineChoice === 'bao') ||
+      (selectedUserChoice === 'bao' && finalMachineChoice === 'bua')
+    ) {
+      delta = betVal;
+      sessionAddedDiamonds += delta;
+      resultMsg = `🎉 BẠN THẮNG! Nhận thêm +${delta} 💎`;
+      resultColor = "#28a745";
+    } else {
+      delta = -betVal;
+      sessionAddedDiamonds += delta;
+      resultMsg = `😢 BẠN THUA! Bị trừ -${betVal} 💎`;
+      resultColor = "#ef4444";
+    }
+
+    let newTotal = currentDiamonds + delta;
+    if (newTotal < 0) newTotal = 0;
+    localStorage.setItem('kim_bling_user_diamonds', newTotal);
+    updateHeaderDiamondDisplay();
+
+    if (window.parent) {
+      window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotal, added: delta }, '*');
+    }
+
+    let notifyBox = document.getElementById('resultNotifyBox');
+    notifyBox.innerHTML = resultMsg;
+    notifyBox.style.color = "#fff";
+    notifyBox.style.background = resultColor;
+    notifyBox.style.display = "block";
+
+    let actionBtn = document.getElementById('battleActionBtn');
+    actionBtn.innerText = "🎮 ĐÁNH VÁN KHÁC";
+    actionBtn.style.background = "linear-gradient(135deg, #2563eb, #1d4ed8)";
+
+  } else {
+    document.getElementById('battleArena').style.display = 'none';
+    document.getElementById('setupSection').style.display = 'block';
+  }
+}
+
+async function syncAndClose() {
+  if (sessionAddedDiamonds !== 0) {
+    let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
+    if (customerPhone) {
+      try {
+        await fetch(KIMBLING_API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify({
+            action: 'add_hatkim',
+            type: 'add_hatkim',
+            phone: customerPhone,
+            amount: sessionAddedDiamonds
+          })
+        });
+      } catch(e) {}
+    }
+    sessionAddedDiamonds = 0;
+  }
+}
+
+function closeGame() {
+  if (sessionAddedDiamonds !== 0) {
+    let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
+    if (customerPhone) {
+      navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ action: 'add_hatkim', type: 'add_hatkim', phone: customerPhone, amount: sessionAddedDiamonds })) : null;
+    }
+    sessionAddedDiamonds = 0;
+  }
+  if (window.parent) {
+    window.parent.postMessage('CLOSE_GAME_POPUP', '*');
+  }
+}
+
+initGame();
+</script>
+</body>
+</html>

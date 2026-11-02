@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ai Là Người May Mắn - Kim Bling Coffee & Tea</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
+.hub-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
+.back-btn { position: absolute; top: 8px; left: 8px; background: #e3f2fd; color: #1976D2; border: none; padding: 4px 10px; border-radius: 14px; font-weight: bold; font-size: 12px; cursor: pointer; z-index: 10; display: none; }
+
+h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
+p.subtitle { font-size: 11px; color: #666; margin-bottom: 12px; }
+
+/* DANH SÁCH GAME */
+.game-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.game-item-card {
+  background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+  border: 1.5px solid #ff9800;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+.game-item-card:active { transform: scale(0.97); }
+.game-icon { font-size: 32px; flex-shrink: 0; }
+.game-info { flex: 1; }
+.game-title { font-size: 14px; font-weight: bold; color: #d32f2f; margin-bottom: 2px; }
+.game-desc { font-size: 11px; color: #555; line-height: 1.3; }
+.btn-play-mini { background: #d32f2f; color: #fff; border: none; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; flex-shrink: 0; }
+
+/* KHUNG CHỨA IFRAME GAME ĐƯỢC CHỌN */
+.game-iframe-wrapper { display: none; width: 100%; height: 500px; border-radius: 14px; overflow: hidden; }
+.game-iframe-wrapper iframe { width: 100%; height: 100%; border: none; }
+</style>
+</head>
+<body>
+<div class="hub-card">
+  <button class="back-btn" id="btnBackToMenu" onclick="showGameMenu()">◀ Chọn Game Khác</button>
+  <button class="close-btn" onclick="closeHub()">✕</button>
+  
+  <div id="headerTitleZone">
+    <h2>🎉 AI LÀ NƯỜI MAY MẮN 🎉</h2>
+    <p class="subtitle">Thử vận may - Tích lũy Kim Cương 💎 - Đổi món cực đã!</p>
+  </div>
+
+  <!-- MAN HINH CHỌN GAME -->
+  <div class="game-grid" id="gameMenuGrid">
+    <div class="game-item-card" onclick="openMiniGame('oantuti.html')">
+      <div class="game-icon">✊</div>
+      <div class="game-info">
+        <div class="game-title">Oản Tù Tì Đặt CƯỢC</div>
+        <div class="game-desc">Thắng nhân đôi kim cương, đặt cược cực cấn (1 - 10 💎)</div>
+      </div>
+      <button class="btn-play-mini">CHƠI</button>
+    </div>
+
+    <div class="game-item-card" onclick="openMiniGame('vongquay.html')" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-color: #2196F3;">
+      <div class="game-icon">🎡</div>
+      <div class="game-info">
+        <div class="game-title" style="color: #1976D2;">Hôm Nay Uống Gì?</div>
+        <div class="game-desc">Vòng quay may mắn chọn món ngẫu nhiên cực đỉnh!</div>
+      </div>
+      <button class="btn-play-mini" style="background: #2196F3;">QUAY</button>
+    </div>
+
+    <!-- Nơi sẽ thêm các Game mới trong tương lai tại đây -->
+  </div>
+
+  <!-- CHỨA GAME KHI ĐANG CHƠI -->
+  <div class="game-iframe-wrapper" id="iframeWrapper">
+    <iframe id="gameHubIframe" src=""></iframe>
+  </div>
+</div>
+
+<script>
+function openMiniGame(url) {
+  document.getElementById('gameMenuGrid').style.display = 'none';
+  document.getElementById('headerTitleZone').style.display = 'none';
+  document.getElementById('btnBackToMenu').style.display = 'block';
+  
+  const wrapper = document.getElementById('iframeWrapper');
+  const iframe = document.getElementById('gameHubIframe');
+  iframe.src = url;
+  wrapper.style.display = 'block';
+}
+
+function showGameMenu() {
+  document.getElementById('gameMenuGrid').style.display = 'flex';
+  document.getElementById('headerTitleZone').style.display = 'block';
+  document.getElementById('btnBackToMenu').style.display = 'none';
+  
+  const wrapper = document.getElementById('iframeWrapper');
+  const iframe = document.getElementById('gameHubIframe');
+  iframe.src = '';
+  wrapper.style.display = 'none';
+}
+
+function closeHub() {
+  if (window.parent) {
+    window.parent.postMessage('CLOSE_GAME_POPUP', '*');
+  }
+}
+</script>
+</body>
+</html>
