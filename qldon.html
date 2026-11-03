@@ -186,7 +186,7 @@
   <script>
     const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
     
-    // Đã cập nhật tọa độ quán mới theo yêu cầu của anh/chị
+    // Tọa độ ghim quán KimBling chuẩn
     const STORE_LAT = 10.749122; 
     const STORE_LNG = 106.631035;
 
@@ -372,6 +372,37 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
+    // NÚT MỞ BẢN ĐỒ THÔNG MINH: Quét tọa độ trước khi ghim lên Google Maps
+    async function openSmartMap(cleanDestAddress) {
+      showLoading("Đang định vị tọa độ địa chỉ khách...");
+      let fullAddress = cleanDestAddress;
+      if (!fullAddress.toLowerCase().includes("hồ chí minh") && !fullAddress.toLowerCase().includes("tp.hcm")) {
+        fullAddress += ", Hồ Chí Minh";
+      }
+
+      let googleMapsUrl = "";
+      try {
+        // Quét tọa độ thực tế của khách qua Photon Komoot
+        let res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullAddress)}&limit=1`);
+        let data = await res.json();
+        
+        if (data && data.features && data.features.length > 0) {
+          let coords = data.features[0].geometry.coordinates;
+          let destLng = coords[0], destLat = coords[1];
+          // Nếu quét ra Tọa độ -> Ép Google Maps ghim thẳng bằng TỌA ĐỘ chuẩn xác 100%
+          googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${destLat},${destLng}&travelmode=walking`;
+        } else {
+          // Nếu không tìm thấy tọa độ -> Truyền chuỗi chữ có địa danh mặc định
+          googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
+        }
+      } catch (e) {
+        googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
+      } finally {
+        hideLoading();
+        window.open(googleMapsUrl, '_blank');
+      }
+    }
+
     function fetchOrders(showLoader = false) {
       if (isFetchingOrders) return;
       isFetchingOrders = true;
@@ -460,11 +491,7 @@
             let mapButtonHtml = '';
             if (!rawAddress.includes('Tại quán') && !rawAddress.includes('Khách đến quán lấy')) {
               const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
-              
-              // Giữ nguyên câu chữ nguyên văn của khách, không cho Google Maps tự đổi tên và ép chế độ ĐI BỘ (walking)
-              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(cleanDestAddress)}&travelmode=walking`;
-              
-              mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" rel="noopener" class="btn-map-route">🗺️ Bấm mở bản đồ Shipper</a>`;
+              mapButtonHtml = `<br><button class="btn-map-route" onclick="openSmartMap('${escapeHtml(cleanDestAddress)}')">🗺️ Bấm mở bản đồ Shipper</button>`;
             }
             const zaloDeepLink = `https://zalo.me/${encodeURIComponent(cleanPhone)}`;
             const isPushed = localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true';
