@@ -36,7 +36,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
   line-height: 1.4;
 }
 
-/* KHUNG MÁY 777: 5 Ô DỌC, MŨI TÊN CHỈ CHÍNH GIỮA */
 .slot-arena { background: #1e293b; border-radius: 14px; padding: 12px; color: #fff; margin-bottom: 8px; text-align: center; }
 .slot-flex { display: flex; justify-content: space-around; align-items: center; gap: 6px; margin: 10px 0; }
 
@@ -53,7 +52,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 }
 .reel-column.active-reel { border-color: #ff9800; box-shadow: 0 0 15px rgba(255, 152, 0, 0.6); }
 
-/* MŨI TÊN CHỈ CHÍNH XÁC Ô THỨ 3 */
 .pointer-left, .pointer-right {
   position: absolute;
   top: 50%;
@@ -67,7 +65,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 .pointer-left { left: 4px; }
 .pointer-right { right: 4px; }
 
-/* DẢI SẢN PHẨM TRƯỢT DỌC TỐI ƯU GPU */
 .reel-strip {
   position: absolute;
   width: 100%;
@@ -87,7 +84,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
   font-size: 22px;
 }
 .reel-label { font-size: 8px; color: #94a3b8; font-weight: bold; margin-top: -2px; }
-
 .reel-name-title { font-size: 9px; color: #94a3b8; margin-top: 4px; font-weight: bold; }
 
 .action-main-btn {
@@ -102,7 +98,7 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 <body>
 <div class="game-card">
 <h2>🎰 777 VÒNG QUAY GẠT CẦN</h2>
-<p class="subtitle">Vé tham gia: 1 💎 | 3 hình 🎰 nhận ngay 10 💎 !</p>
+<p class="subtitle">Vé tham gia: 1 💎 | 3 hình 🎰 nhận ngay 100 💎 !</p>
 
 <div class="user-diamond-bar">
     <div style="display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 6px;">
@@ -118,16 +114,14 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
   <b>📜 Thể lệ:</b><br>
   • Khác nhau hết: Mất 1 💎 vé.<br>
   • Có 2 vòng giống nhau: Hoàn lại 1 💎 vé.<br>
-  • 3 vòng giống nhau: Nhận **+5 💎**.<br>
-  • 3 hình 🎰 (Jackpot ~1.5%): Nhận **+10 💎**.
+  • 3 vòng giống nhau: Nhận <b>+5 💎</b>.<br>
+  • 3 hình 🎰 (Jackpot): Nhận ngay <b>+100 💎</b> siêu khủng!
 </div>
 
-<!-- KHUNG MÁY 777 GẠT CẦN 5 Ô DỌC -->
 <div class="slot-arena">
   <div style="font-size: 11px; color: #cbd5e1; font-weight: bold; margin-bottom: 4px;" id="slotStatusText">HỆ THỐNG SẴN SÀNG - HÃY GẠT CẦN VÒNG 1</div>
   
   <div class="slot-flex">
-    <!-- CỘT 1 -->
     <div>
       <div class="reel-column" id="reelCol1">
         <div class="pointer-left">▶</div>
@@ -136,7 +130,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
       </div>
       <div class="reel-name-title">VÒNG 1</div>
     </div>
-    <!-- CỘT 2 -->
     <div>
       <div class="reel-column" id="reelCol2">
         <div class="pointer-left">▶</div>
@@ -145,7 +138,6 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
       </div>
       <div class="reel-name-title">VÒNG 2</div>
     </div>
-    <!-- CỘT 3 -->
     <div>
       <div class="reel-column" id="reelCol3">
         <div class="pointer-left">▶</div>
@@ -222,15 +214,6 @@ function playSound(type) {
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
     osc.start(now);
     osc.stop(now + 0.4);
-  } else if (type === 'jackpot') {
-    osc.frequency.setValueAtTime(587.33, now);
-    osc.frequency.setValueAtTime(739.99, now + 0.1);
-    osc.frequency.setValueAtTime(880, now + 0.2);
-    osc.frequency.setValueAtTime(1174.66, now + 0.3);
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-    osc.start(now);
-    osc.stop(now + 0.6);
   } else if (type === 'lose') {
     osc.frequency.setValueAtTime(280, now);
     osc.frequency.setValueAtTime(180, now + 0.15);
@@ -297,12 +280,11 @@ function reloadGameDiamonds() {
 }
 
 function determineSlotOutcome() {
-  const randJackpot = Math.random() * 100;
-  if (randJackpot < 1.5) return ['🎰', '🎰', '🎰'];
-
-  let r1 = symbols[Math.floor(Math.random() * (symbols.length - 1))];
-  let r2 = symbols[Math.floor(Math.random() * (symbols.length - 1))];
-  let r3 = symbols[Math.floor(Math.random() * (symbols.length - 1))];
+  let safeSymbols = ['☕', '🧋', '🥐', '🍩', '🍒'];
+  
+  let r1 = safeSymbols[Math.floor(Math.random() * safeSymbols.length)];
+  let r2 = safeSymbols[Math.floor(Math.random() * safeSymbols.length)];
+  let r3 = safeSymbols[Math.floor(Math.random() * safeSymbols.length)];
 
   let checkRoll = Math.random() * 100;
   if (checkRoll < 25) {
@@ -336,14 +318,14 @@ function handleLeverAction() {
     document.getElementById('resultNotifyBox').style.display = 'none';
     finalResult = determineSlotOutcome();
 
-    startReelSmooth(1, 3.0);
+    startReelSmooth(1, 4.0);
     gameState = 1;
-    document.getElementById('slotStatusText').innerText = "🕹️ VÒNG 1 Đang CHẠY... BẤM DỪNG KỊP THỜI!";
+    document.getElementById('slotStatusText').innerText = "🕹️ VÒNG 1 ĐANG CHẠY... BẤM DỪNG KỊP THỜI!";
     document.getElementById('slotActionBtn').innerText = "🛑 DỪNG VÒNG 1";
     document.getElementById('reelCol1').classList.add('active-reel');
 
   } else if (gameState === 1) {
-    stopReelSmooth(1, finalResult[0], () => {
+    stopReelSmooth(1, finalResult[0], 1000, () => {
       gameState = 2;
       document.getElementById('reelCol1').classList.remove('active-reel');
       document.getElementById('slotStatusText').innerText = "✨ ĐÃ CHỐT VÒNG 1. HÃY GẠT CẦN VÒNG 2!";
@@ -351,14 +333,14 @@ function handleLeverAction() {
     });
 
   } else if (gameState === 2) {
-    startReelSmooth(2, 3.0);
+    startReelSmooth(2, 4.0);
     gameState = 3;
     document.getElementById('slotStatusText').innerText = "🕹️ VÒNG 2 ĐANG CHẠY... BẤM DỪNG KỊP THỜI!";
     document.getElementById('slotActionBtn').innerText = "🛑 DỪNG VÒNG 2";
     document.getElementById('reelCol2').classList.add('active-reel');
 
   } else if (gameState === 3) {
-    stopReelSmooth(2, finalResult[1], () => {
+    stopReelSmooth(2, finalResult[1], 1000, () => {
       gameState = 4;
       document.getElementById('reelCol2').classList.remove('active-reel');
       document.getElementById('slotStatusText').innerText = "🔥 VÒNG 3 QUYẾT ĐỊNH! HÃY GẠT CẦN!";
@@ -366,14 +348,14 @@ function handleLeverAction() {
     });
 
   } else if (gameState === 4) {
-    startReelSmooth(3, 3.0);
+    startReelSmooth(3, 4.0);
     gameState = 5;
-    document.getElementById('slotStatusText').innerText = "⚡ VÒNG 3 Đang CHẠY... BẤM ĐỂ CHỐT!";
+    document.getElementById('slotStatusText').innerText = "⚡ VÒNG 3 ĐANG CHẠY... BẤM ĐỂ CHỐT!";
     document.getElementById('slotActionBtn').innerText = "🛑 CHỐT KẾT QUẢ VÒNG 3";
     document.getElementById('reelCol3').classList.add('active-reel');
 
   } else if (gameState === 5) {
-    stopReelSmooth(3, finalResult[2], () => {
+    stopReelSmooth(3, finalResult[2], 1000, () => {
       gameState = 6;
       document.getElementById('reelCol3').classList.remove('active-reel');
       processSlotResult(finalResult);
@@ -406,8 +388,7 @@ function startReelSmooth(reelNum, speed) {
   animFrameIds[reelNum - 1] = requestAnimationFrame(step);
 }
 
-// Cơ chế hãm phanh siêu chậm rãi (2200ms) chân thực hệt máy xèng casino
-function stopReelSmooth(reelNum, targetSymbol, callback) {
+function stopReelSmooth(reelNum, targetSymbol, duration, callback) {
   isSpinningArr[reelNum - 1] = false;
   cancelAnimationFrame(animFrameIds[reelNum - 1]);
   playSound('slideStop');
@@ -419,17 +400,15 @@ function stopReelSmooth(reelNum, targetSymbol, callback) {
   let baseCycle = Math.floor(currentPos / (40 * symbols.length));
   let targetPos = (baseCycle * 40 * symbols.length) + (targetIndex * 40) - 80;
 
-  // Trôi tiến về phía trước qua 1 chu kỳ + thêm 1-2 món để đà hãm phanh cực kỳ chậm rãi
   while (targetPos <= currentPos + 120) {
     targetPos += 40 * symbols.length;
   }
 
   let distance = targetPos - currentPos;
   let startTime = null;
-  let duration = 2200; // Tốc độ trượt hãm phanh siêu chậm (2.2 giây mượt mà)
 
   function easeOutCubic(t) {
-    return (--t)*t*t+1; // Hàm quán tính chậm dần đều cực đỉnh
+    return (--t)*t*t+1; 
   }
 
   function animateStop(currentTime) {
@@ -466,11 +445,11 @@ function processSlotResult(result) {
   let soundType = "lose";
 
   if (r1 === '🎰' && r2 === '🎰' && r3 === '🎰') {
-    delta = 10;
+    delta = 100;
     sessionAddedDiamonds += delta;
-    resultMsg = `🌟 JACKPOT! TRÚNG 3 HÌNH 🎰! Nhận ngay +10 💎 QUÀ ĐẶC BIỆT!`;
+    resultMsg = `🌟 JACKPOT! TRÚNG 3 HÌNH 🎰! Nhận ngay +100 💎 QUÀ ĐẶC BIỆT!`;
     resultColor = "#d97706";
-    soundType = "jackpot";
+    soundType = "win";
   } else if (r1 === r2 && r2 === r3) {
     delta = 5;
     sessionAddedDiamonds += delta;
