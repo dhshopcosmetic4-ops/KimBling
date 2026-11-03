@@ -1,5 +1,5 @@
 /**
- * KIM BLING POS & WALLET — Google Apps Script Hoàn Chỉnh (Cộng/Trừ Kim Cương & Xử lý Đơn Online)
+ * KIM BLING POS & WALLET — Google Apps Script Hoàn Chỉnh (Đã tích hợp TurnsPlayed ở Cột F)
  */
 const POS_CONFIG_SHEET = 'POS_Data';
 const POS_ATTENDANCE_SHEET = 'Attendance';
@@ -74,6 +74,23 @@ function doGet(e) {
       case 'getShiftClosing':
         result = { shiftClosing: readPayloadRows_(POS_CLOSING_SHEET) };
         break;
+
+      // 🔄 KIỂM TRA TRẠNG THÁI RESET TRÒ CHƠI CHO KHÁCH
+      case 'checkGameReset': {
+        var phone = formatPhoneDisplay_(e.parameter.phone);
+        if (!phone) {
+          result = { shouldReset: false };
+          break;
+        }
+        var resetMap = getConfig_('gameResetFlags', {}) || {};
+        var shouldReset = !!resetMap[phone];
+        if (shouldReset) {
+          delete resetMap[phone];
+          setConfig_('gameResetFlags', resetMap);
+        }
+        result = { shouldReset: shouldReset };
+        break;
+      }
       
       // TRA CỨU ĐIỂM ĐỔI LY
       case 'get_info': {
@@ -190,22 +207,23 @@ function doGet(e) {
       }
 
       // ==========================================
-      // API TÚI KIM CƯƠNG (HATKIM) - VÍ ĐIỆN TỬ
+      // API TÚI KIM CƯƠNG & LƯỢT CHƠI (HATKIM)
       // ==========================================
       case 'adminGetCustomerInfo': {
         let phone = formatPhoneDisplay_(e.parameter.phone);
         let ss = getSpreadsheet_();
         let sheet = ss.getSheetByName(WALLET_SHEET);
-        let walletInfo = { hatKim: 0, customerName: '', pin: '' };
+        let walletInfo = { hatKim: 0, customerName: '', pin: '', turnsPlayed: 0 };
         
         if (sheet && phone) {
           let data = sheet.getDataRange().getValues();
           for (let i = 1; i < data.length; i++) {
             let cellPhone = formatPhoneDisplay_(data[i][0]);
             if (cellPhone === phone) {
-              walletInfo.hatKim = parseInt(data[i][2]) || 0;
-              walletInfo.customerName = String(data[i][1] || '');
-              walletInfo.pin = String(data[i][3] || '');
+              walletInfo.hatKim = parseInt(data[i][2]) || 0;           // Cột C
+              walletInfo.customerName = String(data[i][1] || '');       // Cột B
+              walletInfo.pin = String(data[i][3] || '');                // Cột D
+              walletInfo.turnsPlayed = parseInt(data[i][5]) || 0;       // Cột F (index 5)[span_3](start_span)[span_3](end_span)
               break;
             }
           }
@@ -227,7 +245,8 @@ function doGet(e) {
                 name: String(data[i][1] || ''),
                 hatKim: parseInt(data[i][2]) || 0,
                 pin: String(data[i][3] || ''),
-                updatedTime: String(data[i][4] || '')
+                updatedTime: String(data[i][4] || ''),
+                turnsPlayed: parseInt(data[i][5]) || 0  // Cột F[span_4](start_span)[span_4](end_span)
               });
             }
           }
@@ -350,7 +369,7 @@ function doPost(e) {
         let sheet = ss.getSheetByName(WALLET_SHEET);
         if (!sheet) {
           sheet = ss.insertSheet(WALLET_SHEET);
-          sheet.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
+          sheet.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
         }
         
         let data = sheet.getDataRange().getValues();
@@ -370,17 +389,91 @@ function doPost(e) {
           sheet.getRange(foundRow, 3).setValue(updatedHatKim);
           if (customerName) sheet.getRange(foundRow, 2).setValue(customerName);
           
-          // Thêm dấu nháy đơn ' trước PIN để Google Sheets lưu giữ nguyên số 0 ở đầu (ví dụ: '0123)[span_1](start_span)[span_1](end_span)
           if (newPin && newPin.length === 4) {
             sheet.getRange(foundRow, 4).setValue("'" + newPin);
           }
           sheet.getRange(foundRow, 5).setValue(new Date());
         } else {
           let pinSave = (newPin && newPin.length === 4) ? ("'" + newPin) : '';
-          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), pinSave, new Date()]);
+          sheet.appendRow(['\'' + phone, customerName || 'Khách hàng mới', Math.max(0, addAmount), pinSave, new Date(), 0]);
         }
         
         return jsonOutput_({ status: 'success', message: 'Cập nhật Hạt Kim thành công' });
+      }
+
+      // CỘNG TRỰC TIẾP KIM CƯƠNG VÀ ĐỒNG BỘ LƯỢT CHƠI TỪ MINIGAME (LƯU VÀO CỘT F)
+      case 'add_hatkim': {
+        let phone = formatPhoneDisplay_(body.phone);
+        let bonusAmount = parseInt(body.amount) || 0;
+        let turnsPlayed = parseInt(body.turnsPlayed) || 0;
+        
+        if (!phone || phone === '0') {
+          return jsonOutput_({ status: 'error', message: 'Thiếu số điện thoại' });
+        }
+
+        let ss = getSpreadsheet_();
+        let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
+        if (!sheetHatKim) {
+          sheetHatKim = ss.insertSheet(WALLET_SHEET);
+          sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
+        }
+        
+        let dataHK = sheetHatKim.getDataRange().getValues();
+        let customerRow = -1;
+        
+        for (let i = 1; i < dataHK.length; i++) {
+          if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
+            customerRow = i + 1;
+            break;
+          }
+        }
+        
+        if (customerRow > 0) {
+          let currentBal = parseInt(sheetHatKim.getRange(customerRow, 3).getValue()) || 0;
+          let newBal = currentBal + bonusAmount;
+          sheetHatKim.getRange(customerRow, 3).setValue(newBal);           // Cột C: HatKim
+          sheetHatKim.getRange(customerRow, 5).setValue(new Date());        // Cột E: UpdatedTime
+          sheetHatKim.getRange(customerRow, 6).setValue(turnsPlayed);       // Cột F: TurnsPlayed[span_5](start_span)[span_5](end_span)
+        } else {
+          // Thêm mới dòng [Phone, Name, HatKim, Pin, UpdatedTime, TurnsPlayed]
+          sheetHatKim.appendRow(['\'' + phone, 'Khách minigame', bonusAmount, '', new Date(), turnsPlayed]);
+        }
+        
+        return jsonOutput_({ status: 'success', message: 'Đã cập nhật kim cương và lượt chơi thành công' });
+      }
+
+      // 🔄 XỬ LÝ LỆNH RESET HOẶC CẤP LẠI LƯỢT CHƠI (CỘT F - TurnsPlayed) KHI ĐẶT HÀNG THÀNH CÔNG
+      case 'reset_game_turns': {
+        var phoneToReset = formatPhoneDisplay_(body.phone || '');
+        if (!phoneToReset || phoneToReset === '0') {
+          return jsonOutput_({ status: 'error', message: 'Thiếu số điện thoại để reset lượt' });
+        }
+
+        var ss = getSpreadsheet_();
+        var sheetHatKim = ss.getSheetByName(WALLET_SHEET);
+        if (!sheetHatKim) {
+          return jsonOutput_({ status: 'error', message: 'Không tìm thấy sheet HATKIM' });
+        }
+
+        var dataHK = sheetHatKim.getDataRange().getValues();
+        var foundRow = -1;
+        for (var i = 1; i < dataHK.length; i++) {
+          if (formatPhoneDisplay_(dataHK[i][0]) === phoneToReset) {
+            foundRow = i + 1;
+            break;
+          }
+        }
+
+        if (foundRow > 0) {
+          // Cập nhật Cột F (chỉ số 6) thành 5 lượt chơi mới khi đặt hàng thành công[span_6](start_span)[span_6](end_span)
+          sheetHatKim.getRange(foundRow, 6).setValue(5);
+          sheetHatKim.getRange(foundRow, 5).setValue(new Date()); // Cập nhật thời gian
+        } else {
+          // Nếu khách chưa có trong bảng HATKIM, tạo mới với 5 lượt chơi
+          sheetHatKim.appendRow(['\'' + phoneToReset, 'Khách đặt đơn', 0, '', new Date(), 5]);
+        }
+
+        return jsonOutput_({ status: 'success', message: 'Đã cấp lại 5 lượt mở hộp quà thành công trên Sheets' });
       }
 
       // LỊCH SỬ BÁN HÀNG TỪ POS
@@ -436,7 +529,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS VÀ CẬP NHẬT KIM CƯƠNG
+      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS, CẬP NHẬT KIM CƯƠNG VÀ ĐẶT CỜ RESET TRÒ CHƠI CHO KHÁCH
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -473,7 +566,7 @@ function doPost(e) {
           if (isDiamondPay) {
             diamondsValue = -Math.abs(Math.round((orderTotal / 1000) * 20));
           } else {
-            diamondsValue = Math.round(orderTotal / 1000); // Tiền K: Cứ 1.000đ = 1 💎
+            diamondsValue = Math.round(orderTotal / 1000); 
           }
         }
 
@@ -481,7 +574,7 @@ function doPost(e) {
           let sheetHatKim = ss.getSheetByName(WALLET_SHEET);
           if (!sheetHatKim) {
             sheetHatKim = ss.insertSheet(WALLET_SHEET);
-            sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime']);
+            sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
           }
           
           let dataHK = sheetHatKim.getDataRange().getValues();
@@ -499,8 +592,13 @@ function doPost(e) {
             sheetHatKim.getRange(customerRow, 3).setValue(newBal);
             sheetHatKim.getRange(customerRow, 5).setValue(new Date());
           } else if (diamondsValue > 0) {
-            sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsValue, '', new Date()]);
+            sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsValue, '', new Date(), 0]);
           }
+
+          // 🔄 KÍCH HOẠT CỜ YÊU CẦU RESET TRÒ CHƠI CHO SỐ ĐIỆN THOẠI NÀY
+          var resetMap = getConfig_('gameResetFlags', {}) || {};
+          resetMap[customerPhone] = true;
+          setConfig_('gameResetFlags', resetMap);
         }
         // ----------------------------------------------------
 
@@ -564,7 +662,7 @@ function doPost(e) {
         orderSheet.getRange(orderRowNumber, 10).setValue('4');
         return jsonOutput_({
           success: true,
-          message: 'Đã đẩy đơn và cập nhật kim cương thành công.',
+          message: 'Đã đẩy đơn, cập nhật kim cương và gửi lệnh reset trò chơi thành công.',
           orderId: sourceOrderId,
           historyId: numericOnlineId
         });
@@ -665,7 +763,7 @@ function doPost(e) {
         }
       }
 
-      // LƯU ĐƠN HÀNG MỚI (TỰ ĐỘNG TRỪ VÍ TÚI KIM CƯƠNG THEO TIỀN MÓN)
+      // LƯU ĐƠN HÀNG MỚI
       case 'saveOrder': {
         const ss = getSpreadsheet_();
         
@@ -698,7 +796,7 @@ function doPost(e) {
             if (!customerPin || customerPin.length !== 4) {
               return jsonOutput_({ ok: false, success: false, error: 'Vui lòng nhập mã PIN 4 số mới để tạo tài khoản Túi Kim Cương.' });
             }
-            sheetHatKim.appendRow(['\'' + phone, body.name || body.customerName || 'Khách hàng', 0, "'" + customerPin, new Date()]);
+            sheetHatKim.appendRow(['\'' + phone, body.name || body.customerName || 'Khách hàng', 0, "'" + customerPin, new Date(), 0]);
             return jsonOutput_({ ok: false, success: false, error: 'Tài khoản ví mới đã được tạo với PIN bạn vừa nhập. Vui lòng bấm thanh toán lại lần nữa!' });
           }
           
