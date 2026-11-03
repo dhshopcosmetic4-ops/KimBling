@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quản Lý Đơn Hàng — KimBling</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="QLĐ KimBling">
+  <link rel="apple-touch-icon" href="logo.jpg">
+
+  <style>
+    :root { --primary:#c29b38; --bg:#0f172a; --card-bg:#1e293b; --text:#f8fafc; --subtext:#94a3b8; --border:#334155; }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    body { background-color:var(--bg); color:var(--text); padding:12px; font-size:15px; }
+    #adminHeader { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--border); }
+    .header-btns { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .action-btn { background:var(--primary); color:#000; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:13px; }
+    .sound-btn { background:#059669; color:#fff; display:inline-flex; align-items:center; gap:4px; }
+    .sound-btn.active { background:#10b981; }
+    
+    .order-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:14px; padding-top:42px; margin-bottom:14px; box-shadow:0 4px 6px -1px rgba(0,0,0,.3); position:relative; }
+    .order-header { display:flex; justify-content:space-between; border-bottom:1px dashed var(--border); padding-bottom:8px; margin-bottom:10px; align-items:center; gap:8px; }
+    .order-id { font-weight:bold; color:var(--primary); font-size:16px; }
+    .order-time { font-size:13px; color:var(--subtext); }
+    
+    .btn-delete-single { 
+      position: absolute; top: 12px; left: 14px; 
+      background: rgba(239,68,68,.15); color: #f87171; 
+      border: 1px solid #ef4444; padding: 3px 8px; 
+      border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; 
+    }
+    .btn-delete-single:hover { background:#ef4444; color:#fff; }
+
+    .btn-push-pos { background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all .2s; }
+    .btn-push-pos:hover { background:linear-gradient(135deg,#2563eb,#1e40af); transform:scale(1.02); }
+    .btn-push-pos.pushed { background:#10b981!important; cursor:default; }
+    .btn-push-pos:disabled { opacity:.75; cursor:wait; }
+    .customer-info { margin-bottom:8px; line-height:1.6; font-size:14px; overflow-wrap:anywhere; }
+    .customer-info a { color:#38bdf8; text-decoration:none; font-weight:bold; }
+    .note-box { background:#451a03; color:#fdba74; padding:8px 10px; border-radius:6px; font-size:13px; margin-bottom:8px; border:1px dashed #c2410c; }
+    
+    .items-box { background:#0f172a; padding:10px 12px; border-radius:8px; margin:8px 0; font-size:14px; border-left:4px solid var(--primary); }
+    .pos-item-row { margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,.1); padding-bottom:8px; cursor:pointer; }
+    .pos-item-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+    .pos-item-header { display:flex; justify-content:space-between; align-items:center; font-weight:bold; font-size:15px; color:#f8fafc; }
+    .pos-item-price { color:#facc15; font-size:15px; font-weight:bold; }
+    .pos-item-options { font-size:13px; color:#94a3b8; margin-top:2px; line-height:1.4; padding-left:4px; }
+    .pos-item-row.completed-item { opacity:.45; text-decoration:line-through; }
+
+    .order-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0 12px; font-size:14px; }
+    .payment-tag { padding:5px 10px; border-radius:6px; font-size:13px; font-weight:bold; }
+    .pay-cash { background:#334155; color:#cbd5e1; }
+    .pay-transfer { background:#065f46; color:#34d399; border:1px solid #059669; cursor:pointer; transition:all .2s; }
+    .pay-transfer:hover { background:#047857; transform:scale(1.05); }
+    .pay-diamond { background:rgba(0, 188, 212, 0.15); color:#00bcd4; font-weight: bold; }
+    
+    .total-price { font-weight:bold; color:#4ade80; font-size:17px; white-space:nowrap; }
+    .total-price.diamond-price { color:#00bcd4; }
+
+    .status-group { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+    .status-btn { padding:10px 4px; border-radius:8px; border:1px solid var(--border); background:#0f172a; color:var(--subtext); font-size:13px; font-weight:bold; cursor:pointer; text-align:center; transition:background .15s,color .15s,border-color .15s; }
+    .status-btn.active-1 { background:#eab308; color:#000; border-color:#eab308; }
+    .status-btn.active-2 { background:#3b82f6; color:#fff; border-color:#3b82f6; }
+    .status-btn.active-3 { background:#a855f7; color:#fff; border-color:#a855f7; }
+    .status-btn.active-4 { background:#22c55e; color:#fff; border-color:#22c55e; }
+    .empty-state { text-align:center; color:var(--subtext); padding:40px 0; }
+    @keyframes orderBuzz { 0%{transform:translate(0,0) rotate(0)} 20%{transform:translate(-2px,2px) rotate(-.5deg)} 40%{transform:translate(2px,-2px) rotate(.5deg)} 60%{transform:translate(-1px,1px) rotate(0)} 80%{transform:translate(1px,-1px) rotate(0)} 100%{transform:translate(0,0) rotate(0)} }
+    .order-card.new-buzz { animation:orderBuzz .5s ease-in-out infinite; border:2px solid #eab308!important; box-shadow:0 0 15px rgba(234,179,8,.4); }
+    .order-card.status-bg-1 { border-color:#eab308; } .order-card.status-bg-2 { border-color:#3b82f6; } .order-card.status-bg-3 { border-color:#a855f7; } .order-card.status-bg-4 { border-color:#22c55e; opacity:.85; }
+    .btn-map-route { display:inline-flex; align-items:center; gap:4px; background:#0284c7; color:#fff!important; text-decoration:none; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:bold; margin-top:4px; transition:background .2s; }
+    .btn-map-route:hover { background:#0369a1; }
+    .btn-edit-addr { background:#0284c7; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:11px; cursor:pointer; margin-left:6px; font-weight:bold; }
+
+    .qr-popup-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: all 0.3s ease; padding: 12px;
+    }
+    .qr-popup-overlay.active { opacity: 1; visibility: visible; }
+    .qr-popup-container {
+      background: #0f172a; border: 2px solid #c29b38; width: 100%; max-width: 420px;
+      max-height: 90vh; border-radius: 16px; display: flex; flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); overflow: hidden;
+    }
+    .qr-popup-header {
+      padding: 12px 16px; background: #1e293b; border-bottom: 1px solid #334155;
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .qr-popup-title { color: #c29b38; font-size: 15px; font-weight: bold; }
+    .qr-close-btn {
+      background: #334155; color: #f8fafc; border: none; width: 32px; height: 32px;
+      border-radius: 50%; font-size: 16px; font-weight: bold; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qr-popup-body { flex: 1; width: 100%; overflow-y: auto; background: #0f172a; }
+    .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
+
+    #loadingOverlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.85); z-index: 99999;
+      flex-direction: column; align-items: center; justify-content: center; color: #f8fafc;
+    }
+    .spinner {
+      width: 42px; height: 42px; border: 4px solid #334155; border-top: 4px solid #c29b38;
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #loadingText { font-size: 13px; font-weight: bold; color: #ffd700; text-align: center; padding: 0 20px; }
+  </style>
+</head>
+<body>
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Đang kết nối KimBling... Vui lòng chờ xíu nhé!</div>
+  </div>
+
+  <audio id="silentBackgroundAudio" loop preload="auto">
+    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
+  </audio>
+
+  <div id="adminApp">
+    <div id="adminHeader">
+      <div>
+        <h3 style="color:var(--primary);">QUẢN LÝ ĐƠN HÀNG</h3>
+        <span id="orderCount" style="font-size:13px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
+      </div>
+      <div class="header-btns">
+        <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Tạo QR Tích Điểm</button>
+        <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Quản Lý Túi 💎</button>
+        <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Bật Nền & Chuông</button>
+        <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders(true);">🔄 Tải lại</button>
+      </div>
+    </div>
+    <div id="ordersContainer"><div class="empty-state">Đang kết nối KimBling tải dữ liệu đơn hàng...</div></div>
+  </div>
+
+  <div id="qrPopupModal" class="qr-popup-overlay">
+    <div class="qr-popup-container">
+      <div class="qr-popup-header">
+        <span class="qr-popup-title">📱 Tạo Mã QR Tích Điểm Nhanh</span>
+        <button class="qr-close-btn" onclick="toggleQrPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body">
+        <iframe id="qrIframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div id="hatKimPopupModal" class="qr-popup-overlay">
+    <div class="qr-popup-container" style="border-color: #ff9800;">
+      <div class="qr-popup-header" style="background: #2c1810; border-bottom: 1px solid #ff9800;">
+        <span class="qr-popup-title" style="color: #ff9800;">💎 Quản Lý Túi Thần Tài & Mã PIN</span>
+        <button class="qr-close-btn" onclick="toggleHatKimPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body">
+        <iframe id="hatKimIframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const STORE_LAT = 10.74955; 
+    const STORE_LNG = 106.63099;
+    let isFetchingOrders = false;
+    let lastRenderedDataSignature = ""; 
+
+    let audioContext = null;
+    let knownOrderIds = new Set();
+    let isFirstLoad = true;
+    let continuousAlarmTimer = null;
+
+    function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
+      document.getElementById('loadingText').innerText = text;
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function formatMoneyK(amount) {
+      const num = Number(amount || 0);
+      if (num === 0) return '0đ';
+      return Math.round(num / 1000) + 'k';
+    }
+
+    function toggleQrPopup(isOpen) {
+      const popup = document.getElementById('qrPopupModal');
+      const iframe = document.getElementById('qrIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'qrtichdiem.html';
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+      }
+    }
+
+    function toggleHatKimPopup(isOpen) {
+      const popup = document.getElementById('hatKimPopupModal');
+      const iframe = document.getElementById('hatKimIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'tuikimcuong.html';
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+      }
+    }
+
+    function enableAudioAndNotification() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') { audioContext.resume(); }
+
+      const silentAudio = document.getElementById('silentBackgroundAudio');
+      if (silentAudio) {
+        silentAudio.volume = 0.01;
+        silentAudio.play().catch(e => console.log("Silent audio blocked"));
+      }
+
+      if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+          const btn = document.getElementById('btnEnableSound');
+          if (permission === 'granted') {
+            btn.innerHTML = '✅ Đã Bật Nền & Chuông';
+            btn.classList.add('active');
+            playChimeSound();
+          } else {
+            alert("Vui lòng cấp quyền Notification trong Cài đặt iPhone.");
+          }
+        });
+      } else {
+        playChimeSound();
+        document.getElementById('btnEnableSound').innerHTML = '🔊 Đã Bật Nền';
+      }
+    }
+
+    function playChimeSound() {
+      try {
+        if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
+
+        const now = audioContext.currentTime;
+        const osc1 = audioContext.createOscillator();
+        const gain1 = audioContext.createGain();
+        osc1.type = 'sine'; osc1.frequency.setValueAtTime(880, now);
+        gain1.gain.setValueAtTime(0.5, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc1.connect(gain1); gain1.connect(audioContext.destination);
+        osc1.start(now); osc1.stop(now + 0.5);
+
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(1174.66, now + 0.2);
+        gain2.gain.setValueAtTime(0.6, now + 0.2);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+        osc2.connect(gain2); gain2.connect(audioContext.destination);
+        osc2.start(now + 0.2); osc2.stop(now + 0.8);
+
+        if ("vibrate" in navigator) { navigator.vibrate([200, 100, 200, 100, 400]); }
+      } catch (e) { console.log("Lỗi âm thanh:", e); }
+    }
+
+    function startContinuousAlarm() {
+      if (continuousAlarmTimer) return;
+      playChimeSound();
+      continuousAlarmTimer = setInterval(() => { playChimeSound(); }, 3000);
+    }
+
+    function stopContinuousAlarm() {
+      if (continuousAlarmTimer) { clearInterval(continuousAlarmTimer); continuousAlarmTimer = null; }
+    }
+
+    window.onload = function() {
+      fetchOrders(true);
+      setInterval(() => fetchOrders(false), 15000);
+
+      document.body.addEventListener('click', function unlockAudio() {
+        if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
+        const silentAudio = document.getElementById('silentBackgroundAudio');
+        if (silentAudio && silentAudio.paused) {
+          silentAudio.volume = 0.01;
+          silentAudio.play().catch(e => {});
+        }
+      }, { once: true });
+    };
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function calculateShippingFee(distanceKm) {
+      if (distanceKm <= 1.0) return 0;
+      else if (distanceKm <= 2.0) return 10000;
+      else if (distanceKm <= 3.0) return 15000;
+      else {
+        let extraKm = Math.ceil(distanceKm - 3.0);
+        return 15000 + (extraKm * 5000);
+      }
+    }
+
+    function calculateHaversineKm(lat1, lon1, lat2, lon2) {
+      function toRad(x) { return x * Math.PI / 180; }
+      let R = 6371;
+      let dLat = toRad(lat2 - lat1);
+      let dLon = toRad(lon2 - lon1);
+      let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function fetchOrders(showLoader = false) {
+      if (isFetchingOrders) return;
+      isFetchingOrders = true;
+      if (showLoader) showLoading("Đang kết nối KimBling tải danh sách đơn hàng...");
+
+      fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'})
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('ordersContainer');
+          if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
+            container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
+            document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
+            stopContinuousAlarm();
+            lastRenderedDataSignature = "EMPTY";
+            return;
+          }
+
+          const currentDataSignature = data.orders.map(o => `${o.orderId}_${o.status}`).join('|');
+          let hasStatus1Order = false;
+
+          data.orders.forEach(order => {
+            const orderId = String(order.orderId || '');
+            const currentStatus = String(order.status || '1');
+
+            if (currentStatus === '1') { hasStatus1Order = true; }
+
+            if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
+              if (!isFirstLoad) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                  new Notification(`🚨 ĐƠN MỚI #${orderId} - KimBling`, {
+                    body: `Khách: ${order.name || 'Khách lẻ'} | Tổng: ${formatMoneyK(order.total)}`,
+                    icon: 'logo.jpg', tag: orderId, renotify: true
+                  });
+                }
+              }
+            }
+            knownOrderIds.add(orderId);
+          });
+
+          if (hasStatus1Order && !isFirstLoad) { startContinuousAlarm(); } else { stopContinuousAlarm(); }
+          isFirstLoad = false;
+
+          if (currentDataSignature === lastRenderedDataSignature) { return; }
+          lastRenderedDataSignature = currentDataSignature;
+
+          let html = '';
+          data.orders.forEach(order => {
+            const orderId = String(order.orderId || '');
+            const currentStatus = String(order.status || '1');
+            const cleanPhone = String(order.phone || '').replace(/'/g, '').trim();
+            const cardStatusClass = `status-bg-${currentStatus}`;
+            const buzzClass = currentStatus === '1' ? 'new-buzz' : '';
+            const noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${escapeHtml(order.note)}</div>` : '';
+            const formattedItems = parseAdminItemsToList(order.items);
+            
+            const paymentText = String(order.payment || 'Tiền mặt');
+            const isDiamondPayment = paymentText.toLowerCase().includes('túi') || paymentText.toLowerCase().includes('trừ túi');
+            const isTransfer = paymentText.toLowerCase().includes('chuyển');
+
+            let paymentTagHtml = '';
+            let priceDisplayHtml = '';
+
+            if (isDiamondPayment) {
+              paymentTagHtml = `<span class="payment-tag pay-diamond">💎 Túi Kim Cương (Đã trả trước)</span>`;
+              const totalAmountNum = Number(order.total || 0);
+              const diamondsVal = Math.round((totalAmountNum / 1000) * 20);
+              priceDisplayHtml = `<span class="total-price diamond-price">${diamondsVal.toLocaleString('vi-VN')} 💎</span>`;
+            } else if (isTransfer) {
+              const totalAmount = Number(order.total || 0);
+              const syntax = cleanPhone ? `THANHTOAN_${cleanPhone}` : `THANHTOAN_${orderId}`;
+              const qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
+              paymentTagHtml = `<span class="payment-tag pay-transfer" onclick="window.open('${qrUrl}', '_blank')">💳 ${escapeHtml(paymentText)} (🔍 Xem QR)</span>`;
+              priceDisplayHtml = `<span class="total-price">${formatMoneyK(order.total)}</span>`;
+            } else {
+              paymentTagHtml = `<span class="payment-tag pay-cash">💵 Tiền mặt</span>`;
+              priceDisplayHtml = `<span class="total-price">${formatMoneyK(order.total)}</span>`;
+            }
+            
+            let rawAddress = String(order.address || '🏠 Tại quán');
+            if (rawAddress.includes('Khách đến quán lấy') || rawAddress.includes('Tại quán')) {
+              rawAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+            }
+
+            // Logic tự động tick nếu là khách đến quán lấy hoặc tại quán
+            const isPickup = (!rawAddress.includes('Giao tận nơi') || rawAddress.includes('Khách đến quán lấy') || rawAddress.includes('Tại quán'));
+
+            let mapButtonHtml = '';
+            if (!rawAddress.includes('Tại quán') && !rawAddress.includes('Khách đến quán lấy')) {
+              const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+              const fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
+              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
+              mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" rel="noopener" class="btn-map-route">🗺️ Bấm mở bản đồ đường đi (Shipper)</a>`;
+            }
+            const zaloDeepLink = `https://zalo.me/${encodeURIComponent(cleanPhone)}`;
+            const isPushed = localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true';
+            const pushBtnText = isPushed ? '✅ Đã đẩy đơn' : '🚀 Đẩy qua POS';
+            const pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
+            const pushDisabled = isPushed ? 'disabled' : '';
+            const orderJson = escapeHtml(JSON.stringify(order));
+            const pureAddressForEdit = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
+
+            html += `
+              <div class="order-card ${cardStatusClass} ${buzzClass}">
+                <button class="btn-delete-single" onclick="requestDeleteSingleOrder('${escapeHtml(orderId)}')">🗑️ Xóa đơn</button>
+
+                <div class="order-header">
+                  <div><span class="order-id">#${escapeHtml(orderId || 'Đơn')}</span><span class="order-time" style="margin-left:6px;">${escapeHtml(order.time || '')}</span></div>
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+                    <button class="${pushBtnClass}" ${pushDisabled} data-order="${orderJson}" onclick="pushOrderButton(this)">${pushBtnText}</button>
+                  </div>
+                </div>
+
+                <div style="margin: 4px 0 10px 0; padding: 6px 10px; background: rgba(52, 199, 89, 0.1); border: 1px dashed #34c759; border-radius: 6px; display: flex; align-items: center; justify-content: space-between;">
+                  <label style="font-size: 12px; color: #34c759; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: bold;">
+                    <input type="checkbox" id="tichdiem_check_${escapeHtml(orderId)}" ${isPickup ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #34c759;"> 
+                    🎁 Tích điểm món vào hệ thống (1 món = 1 điểm)
+                  </label>
+                </div>
+
+                <div class="customer-info">
+                  👤 <b>Khách:</b> ${escapeHtml(order.name || 'Khách lẻ')}<br>
+                  📞 <b>SĐT:</b> <a href="tel:${escapeHtml(cleanPhone)}">${escapeHtml(cleanPhone)}</a> (<a href="${zaloDeepLink}" target="_blank" rel="noopener" style="color:#60a5fa;">💬 Mở app Zalo</a>)<br>
+                  📍 <b>Đ/c:</b> <span id="addr_text_${escapeHtml(orderId)}">${escapeHtml(rawAddress)}</span> <button class="btn-edit-addr" onclick="requestUpdateAddressAndCalculateFee('${escapeHtml(orderId)}', '${escapeHtml(pureAddressForEdit)}')">✏️ Sửa Đ/c</button> ${mapButtonHtml}
+                </div>
+                ${noteHtml}
+                <div class="items-box">${formattedItems}</div>
+
+                <div class="order-footer">${paymentTagHtml}${priceDisplayHtml}</div>
+                <div class="status-group">
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus(this, '${escapeHtml(cleanPhone)}', '${escapeHtml(orderId)}', '4')">4. Hoàn thành</button>
+                </div>
+              </div>`;
+          });
+          container.innerHTML = html;
+          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
+        })
+        .catch(err => console.error(err))
+        .finally(() => { 
+          isFetchingOrders = false;
+          if (showLoader) hideLoading();
+        });
+    }
+
+    async function requestUpdateAddressAndCalculateFee(orderId, oldAddress) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để sửa địa chỉ giao hàng cho đơn [#${orderId}]:`);
+      if (!pin) return;
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
+        alert('❌ Mã PIN chủ quán không chính xác!');
+        return;
+      }
+
+      const newAddrInput = prompt("Nhập địa chỉ giao hàng mới cho khách:", oldAddress);
+      if (!newAddrInput || newAddrInput.trim() === '') return;
+
+      let fullAddress = newAddrInput.trim();
+      if (!fullAddress.toLowerCase().includes("hồ chí minh") && !fullAddress.toLowerCase().includes("tp.hcm")) {
+        fullAddress += ", Hồ Chí Minh";
+      }
+
+      showLoading("Đang kết nối KimBling quét tọa độ và tính phí ship tự động...");
+
+      let distanceKm = 0;
+      try {
+        let res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullAddress)}&limit=1`);
+        let data = await res.json();
+        if (data && data.features && data.features.length > 0) {
+          let coords = data.features[0].geometry.coordinates;
+          let destLng = coords[0], destLat = coords[1];
+
+          let osrmRes = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${destLng},${destLat}?overview=false`);
+          let osrmData = await osrmRes.json();
+          if (osrmData.code === "Ok" && osrmData.routes && osrmData.routes[0]) {
+            distanceKm = osrmData.routes[0].distance / 1000;
+          } else {
+            distanceKm = calculateHaversineKm(STORE_LAT, STORE_LNG, destLat, destLng);
+          }
+        } else { distanceKm = 1.0; }
+      } catch (e) { distanceKm = 1.0; }
+
+      let newShippingFee = calculateShippingFee(distanceKm);
+      let formattedNewAddress = '🛵 Giao tận nơi: ' + newAddrInput.trim();
+
+      isFetchingOrders = true;
+      fetch(KIMBLING_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'updateOrderAddressAndFee',
+          orderId: orderId,
+          newAddress: formattedNewAddress,
+          shippingFee: newShippingFee,
+          pin: pin
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message || 'Đã cập nhật thành công.');
+        if (res.success) {
+          lastRenderedDataSignature = ""; 
+          fetchOrders(true);
+        }
+      })
+      .catch(err => alert('⚠️ Lỗi kết nối KimBling!'))
+      .finally(() => { 
+        hideLoading();
+        setTimeout(() => { isFetchingOrders = false; }, 3000); 
+      });
+    }
+
+    function parseOrderItemsForPOS(orderObj, orderId) {
+      const rawItems = orderObj.items;
+      if (Array.isArray(rawItems) && rawItems.length > 0) {
+        return rawItems.map((item, idx) => ({
+          cartId: Number(item.cartId || (Date.now() + idx)),
+          id: Number(item.id || (idx + 1)),
+          name: String(item.name || item.title || 'Món nước').replace(/\([^)]*\)/g, '').trim(),
+          basePrice: Number(item.basePrice ?? item.price ?? 26000),
+          optionsText: String(item.optionsText || item.options || 'Size: Bình thường'),
+          quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
+          rawToppings: Array.isArray(item.rawToppings) ? item.rawToppings : []
+        }));
+      }
+
+      const rawItemsStr = String(rawItems || '').trim();
+      if (!rawItemsStr) {
+        return [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
+      }
+
+      const itemBlocks = rawItemsStr.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
+      let parsedItems = [];
+
+      itemBlocks.forEach((block, idx) => {
+        let itemPrice = 26000;
+        const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+        if (priceMatch) {
+          let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
+          if (pVal > 0) {
+            if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+            itemPrice = pVal;
+          }
+        }
+
+        let cleanBlock = block;
+        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
+
+        let optionContent = "";
+        const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
+        if (parenMatch) {
+          optionContent = parenMatch[1].trim();
+          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+        }
+
+        let qty = 1;
+        const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
+        if (qtyMatch) {
+          qty = parseInt(qtyMatch[1], 10) || 1;
+          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+        }
+
+        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
+        if (!dishName) dishName = 'Món nước';
+
+        let finalOptionsText = optionContent ? `Size: ${optionContent}` : "Size: Bình thường";
+        let toppingsArr = [];
+        if (optionContent.includes('+')) {
+          const parts = optionContent.split('+');
+          if (parts[1]) toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean);
+        }
+
+        parsedItems.push({
+          cartId: Date.now() + idx + Math.random(),
+          id: idx + 1,
+          name: dishName,
+          basePrice: itemPrice,
+          optionsText: finalOptionsText,
+          quantity: qty,
+          rawToppings: toppingsArr
+        });
+      });
+
+      return parsedItems.length ? parsedItems : [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
+    }
+
+    function parseAdminItemsToList(rawItemsStr) {
+      const itemsArr = parseOrderItemsForPOS({ items: rawItemsStr }, 'preview');
+      if (!itemsArr || itemsArr.length === 0) return '<div class="pos-item-row">☕ Không có thông tin món</div>';
+
+      return itemsArr.map((item, idx) => {
+        const uniqueId = `item_row_${idx}_${Math.random().toString(36).substring(2, 6)}`;
+        const formattedPrice = formatMoneyK(item.basePrice);
+
+        return `
+          <div class="pos-item-row" id="${uniqueId}" onclick="toggleItemRow('${uniqueId}')">
+            <div class="pos-item-header">
+              <span><b>${escapeHtml(item.name)}</b> <span style="font-size:13px;color:#38bdf8;">(x${item.quantity})</span></span>
+              <span class="pos-item-price">${escapeHtml(formattedPrice)}</span>
+            </div>
+            <div class="pos-item-options">- ${escapeHtml(item.optionsText)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleItemRow(rowId) {
+      const rowEl = document.getElementById(rowId);
+      if (rowEl) rowEl.classList.toggle('completed-item');
+    }
+
+    async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const response = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
+          const data = await response.json();
+          if (data && data.success && data.saved) return true;
+        } catch (err) {}
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+      return false;
+    }
+
+    function pushOrderButton(button) {
+      let orderObj;
+      try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); }
+      catch (e) { alert('Không đọc được dữ liệu đơn hàng.'); return; }
+      pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
+    }
+
+    async function pushOrderToPOS(orderId, orderObj, button) {
+      if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
+      if (button && button.disabled) return;
+
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
+      if (!pin) return;
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
+
+      showLoading(`Đang kiểm tra và xử lý đơn #${orderId}...`);
+      if (button) { button.disabled = true; button.textContent = '⏳ Đang kiểm tra...'; }
+
+      isFetchingOrders = true; 
+      try {
+        const checkRes = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
+        const checkData = await checkRes.json();
+        
+        if (checkData && checkData.success && checkData.saved) {
+          localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+          alert(`⚠️ Đơn #${orderId} đã được xử lý trên hệ thống POS trước đó rồi!`);
+          if (button) {
+            button.classList.add('pushed');
+            button.disabled = true;
+            button.textContent = '✅ Đã đẩy đơn';
+          }
+          hideLoading();
+          isFetchingOrders = false;
+          return;
+        }
+
+        const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
+        const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
+
+        const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
+        
+        let totalItemsCount = 0;
+        parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
+
+        const totalAmount = Number(orderObj.total || 0);
+        const paymentType = String(orderObj.payment || '').toLowerCase();
+        
+        let diamondsValue = 0;
+        const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
+
+        if (isDiamondPayment) {
+            diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+        } else {
+            diamondsValue = Math.round(totalAmount / 1000); 
+        }
+
+        const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
+
+        const payloadPOS = {
+          type: 'pushOnlineOrder', action: 'pushOnlineOrder',
+          sourceOrderId: String(orderId), orderId: String(orderId),
+          total: totalAmount, diamonds: diamondsValue, 
+          items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
+          phone: customerPhone, address: String(orderObj.address || ''),
+          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
+        };
+
+        await fetch(KIMBLING_API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payloadPOS)
+        });
+
+        const saved = await waitForSalesOrder(String(orderId), 18, 1000);
+        if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
+
+        if (isTichDiemChecked && customerPhone.length >= 9) {
+          await fetch(KIMBLING_API_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'add_points', sdt: customerPhone,
+              ly: totalItemsCount, txid: `ONLINE_${orderId}`
+            })
+          });
+        }
+
+        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+
+        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`;
+        if (isTichDiemChecked) {
+          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách.`;
+        }
+
+        alert(successMsg);
+        lastRenderedDataSignature = ""; 
+        fetchOrders(true);
+      } catch (err) {
+        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối KimBling.'}`);
+      } finally {
+        hideLoading();
+        if (button) {
+          button.classList.add('pushed');
+          button.disabled = true;
+          button.textContent = '✅ Đã đẩy đơn';
+        }
+        setTimeout(() => { isFetchingOrders = false; }, 3000);
+      }
+    }
+
+    function updateStatus(btnElement, phone, orderId, status) {
+      const card = btnElement.closest('.order-card');
+      if (card) {
+        card.className = card.className.replace(/status-bg-\d/, `status-bg-${status}`).replace('new-buzz', '').trim();
+        card.querySelectorAll('.status-btn').forEach((btn, idx) => { btn.className = `status-btn ${(idx + 1) == status ? 'active-' + status : ''}`; });
+      }
+
+      stopContinuousAlarm();
+      isFetchingOrders = true; 
+
+      fetch(KIMBLING_API_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
+      })
+      .then(() => { lastRenderedDataSignature = ""; })
+      .catch(err => console.error(err))
+      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
+    }
+
+    function requestDeleteSingleOrder(orderId) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa đơn [#${orderId}]:`);
+      if (!pin) return;
+
+      showLoading(`Đang kết nối KimBling xóa đơn #${orderId}...`);
+      isFetchingOrders = true; 
+      fetch(KIMBLING_API_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({type:'deleteSingleOrder',orderId:orderId,pin:pin})})
+        .then(res => res.json())
+        .then(res => { 
+          alert(res.message); 
+          if (res.success) {
+            stopContinuousAlarm();
+            lastRenderedDataSignature = ""; 
+            fetchOrders(true);
+          } 
+        })
+        .catch(err => alert('⚠️ Lỗi kết nối KimBling!'))
+        .finally(() => {
+          hideLoading();
+          setTimeout(() => { isFetchingOrders = false; }, 3000);
+        });
+    }
+  </script>
+</body>
+</html>
