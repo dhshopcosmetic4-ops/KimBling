@@ -3409,13 +3409,29 @@ function resetPinInput() {
     let syntax = phone ? `THANHTOAN_${phone}` : `THANHTOAN_KIMBLING`;
     let qrImageUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
-    // 1. GỬI NGẦM LÊN GOOGLE SHEETS
+        // 1. GỬI NGẦM LÊN GOOGLE SHEETS LƯU ĐƠN HÀNG (như hiện tại của bạn)
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
         body: JSON.stringify(sheetPayload)
     }).catch(err => console.log("Lỗi gửi ngầm sheets:", err));
+
+    // --- BỔ SUNG ĐOẠN NÀY ĐỂ KÍCH HOẠT RESET LƯỢT CHƠI TRÊN SHEETS ---
+    if (phone) {
+        const resetTurnsPayload = {
+            type: 'reset_game_turns',
+            action: 'reset_game_turns',
+            phone: phone
+        };
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify(resetTurnsPayload)
+        }).catch(err => console.log("Lỗi reset lượt chơi:", err));
+    }
 
     // 2. GỬI THÔNG BÁO TELEGRAM
     sendTelegramMessage(msg, phone);
