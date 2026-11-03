@@ -27,6 +27,7 @@
     .action-btn { background:var(--primary); color:#000; border:none; padding:10px 14px; border-radius:10px; font-weight:bold; cursor:pointer; font-size:15px; }
     .sound-btn { background:#059669; color:#fff; display:inline-flex; align-items:center; gap:6px; }
     .sound-btn.active { background:#10b981; }
+    .refresh-toggle-btn { background:#475569; color:#fff; transition: background 0.2s ease; }
     
     .order-card { background:var(--card-bg); border:2px solid var(--border); border-radius:14px; padding:16px; padding-top:48px; margin-bottom:16px; box-shadow:0 6px 12px rgba(0,0,0,.4); position:relative; }
     .order-header { display:flex; justify-content:space-between; border-bottom:1px dashed var(--border); padding-bottom:10px; margin-bottom:12px; align-items:center; gap:10px; }
@@ -52,7 +53,6 @@
     
     .items-box { background:#0f172a; padding:12px 14px; border-radius:10px; margin:12px 0; font-size:16px; border-left:5px solid var(--primary); }
     
-    /* Món ăn & Nút Xóa món */
     .pos-item-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px dashed rgba(255,255,255,.15); padding-bottom:10px; gap:8px; }
     .pos-item-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
     .pos-item-content { flex: 1; cursor: pointer; }
@@ -149,6 +149,7 @@
         <span id="orderCount" style="font-size:14px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
       <div class="header-btns">
+        <button class="action-btn refresh-toggle-btn" id="btnAutoRefresh" onclick="toggleAutoRefresh()">⏱️ Tự làm mới: TẮT</button>
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Mã Tích Điểm</button>
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Túi Thần Tài 💎</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
@@ -193,6 +194,37 @@
     let knownOrderIds = new Set();
     let isFirstLoad = true;
     let continuousAlarmTimer = null;
+    
+    let autoRefreshTimer = null;
+    let isAutoRefreshOn = false;
+
+    function toggleAutoRefresh() {
+      const btn = document.getElementById('btnAutoRefresh');
+      isAutoRefreshOn = !isAutoRefreshOn;
+
+      if (isAutoRefreshOn) {
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+        btn.innerHTML = '⏱️ Tự làm mới: BẬT (30s)';
+        
+        autoRefreshTimer = setInterval(() => {
+          fetchOrders(false);
+        }, 30000);
+        
+        alert("✅ Đã BẬT chế độ tự động làm mới đơn hàng mỗi 30 giây.");
+      } else {
+        btn.style.background = '#475569';
+        btn.style.color = '#fff';
+        btn.innerHTML = '⏱️ Tự làm mới: TẮT';
+        
+        if (autoRefreshTimer) {
+          clearInterval(autoRefreshTimer);
+          autoRefreshTimer = null;
+        }
+        
+        alert("⏸️ Đã TẮT tự động làm mới. Bạn chỉ cần bấm nút '🔄 Tải lại' khi có thông báo đơn mới từ Telegram.");
+      }
+    }
 
     function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
       document.getElementById('loadingText').innerText = text;
@@ -302,7 +334,6 @@
 
     window.onload = function() {
       fetchOrders(true);
-      setInterval(() => fetchOrders(false), 15000);
 
       document.body.addEventListener('click', function unlockAudio() {
         if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -585,7 +616,6 @@
       if (rowEl) rowEl.classList.toggle('completed-item');
     }
 
-    // XÓA MÓN TRÊN ĐƠN HÀNG KÈM MÃ PIN CHỦ QUÁN
     async function requestDeleteItemFromOrder(orderId, itemIndex) {
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để XÓA MÓN khỏi đơn [#${orderId}]:`);
       if (!pin) return;
@@ -610,11 +640,9 @@
         let parsedItems = parseOrderItemsForPOS(targetOrder, orderId);
         if (itemIndex < 0 || itemIndex >= parsedItems.length) throw new Error("Vị trí món không hợp lệ.");
 
-        // Xóa món khỏi danh sách
         parsedItems.splice(itemIndex, 1);
 
         if (parsedItems.length === 0) {
-          // Nếu xóa hết món -> Thực hiện xóa toàn bộ đơn
           if (confirm("Món bị xóa là món cuối cùng. Hệ thống sẽ hủy toàn bộ đơn hàng này?")) {
             await fetch(KIMBLING_API_URL, {
               method: 'POST',
@@ -624,7 +652,6 @@
             alert(`✅ Đã xóa đơn hàng #${orderId}`);
           }
         } else {
-          // Tính lại tổng tiền mới
           let newTotal = 0;
           let newItemsTextArr = [];
 
@@ -636,7 +663,6 @@
 
           const newItemsString = newItemsTextArr.join(" | ");
 
-          // Cập nhật lại đơn trên Google Sheets
           const updateRes = await fetch(KIMBLING_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
