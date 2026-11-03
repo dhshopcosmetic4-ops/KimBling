@@ -185,8 +185,11 @@
 
   <script>
     const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    
+    // Đã cập nhật tọa độ quán mới theo yêu cầu của anh/chị
     const STORE_LAT = 10.749122; 
-const STORE_LNG = 106.631035;
+    const STORE_LNG = 106.631035;
+
     let isFetchingOrders = false;
     let lastRenderedDataSignature = ""; 
 
@@ -332,7 +335,6 @@ const STORE_LNG = 106.631035;
       if (continuousAlarmTimer) { clearInterval(continuousAlarmTimer); continuousAlarmTimer = null; }
     }
 
-    // ĐÃ KHÔI PHỤC LẠI HÀM GỌI TẢI DỮ LIỆU KHI VỪA MỞ WEB
     window.onload = function() {
       fetchOrders(true);
 
@@ -458,8 +460,10 @@ const STORE_LNG = 106.631035;
             let mapButtonHtml = '';
             if (!rawAddress.includes('Tại quán') && !rawAddress.includes('Khách đến quán lấy')) {
               const cleanDestAddress = rawAddress.replace(/^🛵\s*Giao tận nơi:\s*/i, '').trim();
-              const fullQueryAddr = cleanDestAddress.toLowerCase().includes('hồ chí minh') ? cleanDestAddress : (cleanDestAddress + ', Hồ Chí Minh');
-              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullQueryAddr)}&travelmode=driving`;
+              
+              // Giữ nguyên câu chữ nguyên văn của khách, không cho Google Maps tự đổi tên và ép chế độ ĐI BỘ (walking)
+              const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(cleanDestAddress)}&travelmode=walking`;
+              
               mapButtonHtml = `<br><a href="${googleMapsUrl}" target="_blank" rel="noopener" class="btn-map-route">🗺️ Bấm mở bản đồ Shipper</a>`;
             }
             const zaloDeepLink = `https://zalo.me/${encodeURIComponent(cleanPhone)}`;
