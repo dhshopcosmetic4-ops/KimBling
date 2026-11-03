@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
 .game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-.close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
+
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
 p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 
@@ -36,51 +36,75 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 .choice-btn.selected { border-color: #d32f2f; background: #ffebee; transform: scale(1.03); box-shadow: 0 3px 8px rgba(211,47,47,0.3); }
 .choice-btn.selected div.label { color: #d32f2f; }
 
-/* LAYOUT TRÊN - DƯỚI ĐỘC ĐÁO */
+/* ĐẤU TRƯỜNG SO KÈ NGANG (CHỦ QUÁN GÓC TRÁI - KHÁCH HÀNG SIÊU TO Ở PHẢI) */
 .battle-arena { display: none; background: #1e293b; border-radius: 14px; padding: 12px; color: #fff; margin-bottom: 8px; text-align: center; }
-.battle-vertical-container { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 8px 0; }
 
-/* Ô hiển thị Máy NẰM TRÊN & SIÊU TO */
-.fighter-box-machine { 
+.battle-horizontal-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+/* Ô CHỦ QUÁN (GÓC TRÁI) */
+.fighter-box-owner { 
+  background: #0f172a; 
+  border: 2px solid #334155; 
+  border-radius: 12px; 
+  width: 95px; 
+  height: 100px; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  flex-shrink: 0;
+}
+.fighter-box-owner .fighter-icon { font-size: 42px; }
+.fighter-box-owner .fighter-name { font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: bold; }
+
+.vs-badge { 
+  font-size: 13px; 
+  font-weight: 900; 
+  color: #fff; 
+  background: #d32f2f; 
+  padding: 4px 8px; 
+  border-radius: 8px; 
+  font-style: italic; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+/* Ô KHÁCH HÀNG (PHÓNG TO CỰC ĐẠI, HOÀNH TRÁNG Ở PHẢI) */
+.fighter-box-customer { 
   background: linear-gradient(135deg, #0f172a, #1e1b4b); 
   border: 3px solid #ff9800; 
   border-radius: 16px; 
-  width: 130px; 
-  height: 120px; 
+  flex: 1;
+  height: 125px; 
   display: flex; 
   flex-direction: column; 
   align-items: center; 
   justify-content: center;
   box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+  transform: translateZ(0);
+  will-change: transform;
 }
-.fighter-box-machine .fighter-icon { font-size: 60px; } /* Icon máy cực to */
-.fighter-box-machine .fighter-name { font-size: 11px; font-weight: bold; color: #ff9800; margin-top: 2px; }
-
-.vs-badge { 
-  font-size: 14px; 
-  font-weight: 900; 
-  color: #fff; 
-  background: #d32f2f; 
-  padding: 2px 10px; 
-  border-radius: 10px; 
-  font-style: italic; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+.fighter-box-customer .fighter-icon { 
+  font-size: 68px; 
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
-
-/* Ô hiển thị Bạn NẰM DƯỚI */
-.fighter-box-user { 
-  background: #0f172a; 
-  border: 2px solid #334155; 
-  border-radius: 12px; 
-  width: 85px; 
-  height: 75px; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
+.fighter-box-customer .fighter-name { 
+  font-size: 11px; 
+  font-weight: bold; 
+  color: #ff9800; 
+  margin-top: 2px; 
+  max-width: 120px; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
 }
-.fighter-box-user .fighter-icon { font-size: 32px; }
-.fighter-box-user .fighter-name { font-size: 10px; color: #94a3b8; margin-top: 2px; }
 
 .action-main-btn {
   background: linear-gradient(135deg, #d32f2f, #b71c1c); color: #fff; border: none; width: 100%; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(211,47,47,0.4); text-transform: uppercase;
@@ -92,34 +116,33 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 </head>
 <body>
 <div class="game-card">
-<button class="close-btn" onclick="closeGame()">✕</button>
 <h2>✊ OẢN TÙ TÌ THỬ THÁCH</h2>
 <p class="subtitle">Vé tham gia: 1 💎 | Thắng nhận ngay 3 💎 !</p>
 
 <div class="user-diamond-bar">
     <div style="display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 6px;">
         <span style="font-size: 12px; font-weight: bold; color: #ff9800; white-space: nowrap;">💎 Túi 💎:</span>
-        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT..." maxlength="11" onchange="fetchGameDiamondBalance(this.value)" onkeyup="if(event.key==='Enter') fetchGameDiamondBalance(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
+        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT..." maxlength="11" onchange="fetchGameCustomerInfo(this.value)" onkeyup="if(event.key==='Enter') fetchGameCustomerInfo(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
     </div>
     <div id="headerTotalDiamonds" onclick="reloadGameDiamonds()" style="font-size: 15px; font-weight: bold; color: #ff4d4f; background: #0f172a; padding: 4px 8px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 60px; text-align: center; cursor: pointer;" title="Bấm làm mới số dư">
         0 💎
     </div>
 </div>
 
-<!-- KHUNG CHỌN QUÂN -->
+<!-- KHUNG CHỌN QUÂN CHO CHỦ QUÁN -->
 <div id="setupSection">
   <div class="section-box">
-    <div class="section-title">CHỌN QUÂN BẠN MUỐN ĐÁNH (Phí: 1 💎)</div>
+    <div class="section-title">CHỌN QUÂN CHỦ QUÁN RA (Phí: 1 💎)</div>
     <div class="choice-grid">
-      <div class="choice-btn" id="choiceBua" onclick="selectUserChoice('bua')">
+      <div class="choice-btn" id="choiceBua" onclick="selectOwnerChoice('bua')">
         <div class="icon">✊</div>
         <div class="label">BÚA</div>
       </div>
-      <div class="choice-btn" id="choiceKeo" onclick="selectUserChoice('keo')">
+      <div class="choice-btn" id="choiceKeo" onclick="selectOwnerChoice('keo')">
         <div class="icon">✌️</div>
         <div class="label">KÉO</div>
       </div>
-      <div class="choice-btn" id="choiceBao" onclick="selectUserChoice('bao')">
+      <div class="choice-btn" id="choiceBao" onclick="selectOwnerChoice('bao')">
         <div class="icon">🖐️</div>
         <div class="label">BAO</div>
       </div>
@@ -129,23 +152,23 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
   <button class="action-main-btn" onclick="startBattle()">⚔️ BẮT ĐẦU THỬ THÁCH (-1 💎)</button>
 </div>
 
-<!-- KHUNG ĐẤU TRƯỜNG TRÊN - DƯỚI -->
+<!-- KHUNG ĐẤU TRƯỜNG -->
 <div class="battle-arena" id="battleArena">
-  <div style="font-size: 12px; color: #cbd5e1; font-weight: bold;">MÁY ĐANG RA QUÂN... BẤM DỪNG KỊP THỜI!</div>
+  <div style="font-size: 12px; color: #cbd5e1; font-weight: bold;" id="battleStatusText">HỆ THỐNG ĐANG QUAY SỐ... BẤM DỪNG KỊP THỜI!</div>
   
-  <div class="battle-vertical-container">
-    <!-- MÁY Ở TRÊN (TO NỔI BẬT) -->
-    <div class="fighter-box-machine">
-      <div class="fighter-icon" id="machineFighterDisplay">🖐️</div>
-      <div class="fighter-name">🤖 MÁY KIM BLING</div>
+  <div class="battle-horizontal-flex">
+    <!-- CHỦ QUÁN Ở GÓC TRÁI -->
+    <div class="fighter-box-owner">
+      <div class="fighter-icon" id="ownerFighterDisplay">✊</div>
+      <div class="fighter-name">👨‍🍳 CHỦ QUÁN</div>
     </div>
     
     <div class="vs-badge">VS</div>
     
-    <!-- BẠN Ở DƯỚI -->
-    <div class="fighter-box-user">
-      <div class="fighter-icon" id="userFighterDisplay">✊</div>
-      <div class="fighter-name">🧑 BẠN</div>
+    <!-- KHÁCH HÀNG Ở PHẢI -->
+    <div class="fighter-box-customer">
+      <div class="fighter-icon" id="customerFighterDisplay">🖐️</div>
+      <div class="fighter-name" id="customerDisplayName">👤 KHÁCH HÀNG</div>
     </div>
   </div>
 
@@ -158,12 +181,55 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 <script>
 const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
 
-let selectedUserChoice = 'bua'; 
+let selectedOwnerChoice = 'bua'; 
 let sessionAddedDiamonds = 0; 
 let rollingInterval = null;
 let isRolling = false;
 const symbols = ['bua', 'keo', 'bao'];
 const symbolIcons = { 'bua': '✊', 'keo': '✌️', 'bao': '🖐️' };
+let currentCustomerIdentifier = "Khách Hàng";
+let currentShuffledSequence = []; 
+let sequenceIndex = 0;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  let now = audioCtx.currentTime;
+  if (type === 'tick') {
+    osc.frequency.setValueAtTime(400, now);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } else if (type === 'win') {
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.setValueAtTime(659.25, now + 0.1);
+    osc.frequency.setValueAtTime(783.99, now + 0.2);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  } else if (type === 'lose') {
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.setValueAtTime(200, now + 0.15);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (type === 'draw') {
+    osc.frequency.setValueAtTime(440, now);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+}
 
 function getUserRealDiamonds() {
   return parseInt(localStorage.getItem('kim_bling_user_diamonds') || '0');
@@ -179,28 +245,41 @@ function initGame() {
   let savedPhone = localStorage.getItem('kimbling_cust_phone') || localStorage.getItem('kb_customer_phone') || '';
   if (phoneInput && savedPhone) {
     phoneInput.value = savedPhone;
-    fetchGameDiamondBalance(savedPhone);
+    fetchGameCustomerInfo(savedPhone);
   } else {
     updateHeaderDiamondDisplay();
   }
-  selectUserChoice('bua');
+  selectOwnerChoice('bua');
 }
 
-async function fetchGameDiamondBalance(phone) {
+async function fetchGameCustomerInfo(phone) {
     const cleanPhone = String(phone || '').trim();
     const displayEl = document.getElementById('headerTotalDiamonds');
+    const custNameEl = document.getElementById('customerDisplayName');
+    
     if (!cleanPhone || cleanPhone.length < 9) {
         if (displayEl) displayEl.innerText = "0 💎";
+        currentCustomerIdentifier = "Khách Hàng";
+        if (custNameEl) custNameEl.innerText = "👤 Khách Hàng";
         return;
     }
+    
     localStorage.setItem('kb_customer_phone', cleanPhone);
     localStorage.setItem('kimbling_cust_phone', cleanPhone);
+    currentCustomerIdentifier = cleanPhone;
+    if (custNameEl) custNameEl.innerText = `👤 ${cleanPhone}`;
     if (displayEl) displayEl.innerText = "⏳...";
 
     try {
         let res = await fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(cleanPhone)}`);
         let data = await res.json();
         let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
+        
+        if (data && data.customerName) {
+            currentCustomerIdentifier = data.customerName;
+            if (custNameEl) custNameEl.innerText = `👤 ${data.customerName}`;
+        }
+
         localStorage.setItem('kim_bling_user_diamonds', balance);
         if (displayEl) displayEl.innerText = balance.toLocaleString('vi-VN') + " 💎";
         if (window.parent) {
@@ -214,19 +293,28 @@ async function fetchGameDiamondBalance(phone) {
 function reloadGameDiamonds() {
     const phoneInput = document.getElementById('gameCustomerPhone');
     if (phoneInput && phoneInput.value.trim()) {
-        fetchGameDiamondBalance(phoneInput.value.trim());
+        fetchGameCustomerInfo(phoneInput.value.trim());
     } else {
         alert("Vui lòng nhập số điện thoại trước khi làm mới!");
         if (phoneInput) phoneInput.focus();
     }
 }
 
-function selectUserChoice(choice) {
-  selectedUserChoice = choice;
+function selectOwnerChoice(choice) {
+  selectedOwnerChoice = choice;
   document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
   if (choice === 'bua') document.getElementById('choiceBua').classList.add('selected');
   if (choice === 'keo') document.getElementById('choiceKeo').classList.add('selected');
   if (choice === 'bao') document.getElementById('choiceBao').classList.add('selected');
+}
+
+function shuffleArray(array) {
+  let arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function startBattle() {
@@ -245,7 +333,6 @@ function startBattle() {
     return;
   }
 
-  // Trừ 1 💎 vé tham gia
   currentDiamonds -= ticketCost;
   sessionAddedDiamonds -= ticketCost;
   localStorage.setItem('kim_bling_user_diamonds', currentDiamonds);
@@ -256,34 +343,40 @@ function startBattle() {
   document.getElementById('resultNotifyBox').style.display = 'none';
   document.getElementById('battleActionBtn').innerText = "🛑 DỪNG LẠI (SO KẾT QUẢ)";
   document.getElementById('battleActionBtn').style.background = "linear-gradient(135deg, #d32f2f, #b71c1c)";
-  document.getElementById('userFighterDisplay').innerText = symbolIcons[selectedUserChoice];
+  
+  document.getElementById('customerDisplayName').innerText = `👤 ${currentCustomerIdentifier}`;
+  document.getElementById('ownerFighterDisplay').innerText = symbolIcons[selectedOwnerChoice];
+
+  // CHỈ XÁO TRỘN 1 LẦN DUY NHẤT KHI BẤM BẮT ĐẦU VÁN MỚI (KHÔNG XÁO TRỘN GIỮA CHỪNG NỮA ĐỂ TUYỆT ĐỐI KHÔNG BỊ ĐƠ)
+  currentShuffledSequence = shuffleArray(symbols);
+  sequenceIndex = 0;
 
   isRolling = true;
   
-  // Tốc độ nhảy hình 350ms nhịp nhàng
-  let symbolIndex = 0;
   rollingInterval = setInterval(() => {
-    symbolIndex = (symbolIndex + 1) % symbols.length;
-    let currentDisplaySymbol = symbols[symbolIndex];
-    document.getElementById('machineFighterDisplay').innerText = symbolIcons[currentDisplaySymbol];
-  }, 600);
+    let currentSymbol = currentShuffledSequence[sequenceIndex];
+    document.getElementById('customerFighterDisplay').innerText = symbolIcons[currentSymbol];
+    playSound('tick');
+    
+    // Xoay vòng qua 3 phần tử đã xáo trộn của ván này
+    sequenceIndex = (sequenceIndex + 1) % currentShuffledSequence.length;
+  }, 550);
 }
 
-let finalMachineChoice = '';
+let finalCustomerChoice = '';
 
-// Thuật toán: 30% Thắng - 25% Hòa - 45% Thua
-function determineMachineChoice(userChoice) {
+function determineCustomerChoice(ownerChoice) {
   const rand = Math.random() * 100;
   if (rand < 30) {
-    if (userChoice === 'bua') return 'keo';
-    if (userChoice === 'keo') return 'bao';
-    if (userChoice === 'bao') return 'bua';
+    if (ownerChoice === 'bua') return 'keo';
+    if (ownerChoice === 'keo') return 'bao';
+    if (ownerChoice === 'bao') return 'bua';
   } else if (rand < 55) {
-    return userChoice;
+    return ownerChoice;
   } else {
-    if (userChoice === 'bua') return 'bao';
-    if (userChoice === 'keo') return 'bua';
-    if (userChoice === 'bao') return 'keo';
+    if (ownerChoice === 'bua') return 'bao';
+    if (ownerChoice === 'keo') return 'bua';
+    if (ownerChoice === 'bao') return 'keo';
   }
 }
 
@@ -292,31 +385,34 @@ function stopOrResetBattle() {
     clearInterval(rollingInterval);
     isRolling = false;
 
-    finalMachineChoice = determineMachineChoice(selectedUserChoice);
-    document.getElementById('machineFighterDisplay').innerText = symbolIcons[finalMachineChoice];
+    finalCustomerChoice = determineCustomerChoice(selectedOwnerChoice);
+    document.getElementById('customerFighterDisplay').innerText = symbolIcons[finalCustomerChoice];
 
     let currentDiamonds = getUserRealDiamonds();
     let delta = 0;
     let resultMsg = "";
     let resultColor = "";
 
-    if (selectedUserChoice === finalMachineChoice) {
+    if (selectedOwnerChoice === finalCustomerChoice) {
       delta = 1;
       sessionAddedDiamonds += delta;
-      resultMsg = `🤝 HÒA CƯỢC! Được hoàn lại 1 💎 tiền vé.`;
+      resultMsg = `🤝 HÒA CƯỢC! Bạn được hoàn lại 1 💎 tiền vé.`;
       resultColor = "#ff9800";
+      playSound('draw');
     } else if (
-      (selectedUserChoice === 'bua' && finalMachineChoice === 'keo') ||
-      (selectedUserChoice === 'keo' && finalMachineChoice === 'bao') ||
-      (selectedUserChoice === 'bao' && finalMachineChoice === 'bua')
+      (selectedOwnerChoice === 'keo' && finalCustomerChoice === 'bua') ||
+      (selectedOwnerChoice === 'bao' && finalCustomerChoice === 'keo') ||
+      (selectedOwnerChoice === 'bua' && finalCustomerChoice === 'bao')
     ) {
       delta = 3;
       sessionAddedDiamonds += delta;
-      resultMsg = `🎉 BẠN THẮNG! Nhận ngay phần thưởng +3 💎`;
+      resultMsg = `🎉 CHÚC MỪNG BẠN ĐÃ THẮNG CHỦ QUÁN! Nhận ngay +3 💎`;
       resultColor = "#28a745";
+      playSound('win');
     } else {
-      resultMsg = `😢 BẠN THUA! Đã mất 1 💎 vé tham gia. Chúc bạn may mắn lần sau!`;
+      resultMsg = `😢 BẠN ĐÃ THUA CHỦ QUÁN! Đã mất 1 💎 vé tham gia. Thử lại nhé!`;
       resultColor = "#ef4444";
+      playSound('lose');
     }
 
     let newTotal = currentDiamonds + delta;
@@ -366,25 +462,12 @@ async function syncAndClose() {
   }
 }
 
-function closeGame() {
-  if (sessionAddedDiamonds !== 0) {
-    let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
-    if (customerPhone) {
-      navigator.sendBeacon ? navigator.sendBeacon(KIMBLING_API_URL, JSON.stringify({ action: 'add_hatkim', type: 'add_hatkim', phone: customerPhone, amount: sessionAddedDiamonds })) : null;
-    }
-    sessionAddedDiamonds = 0;
-  }
-  if (window.parent) {
-    window.parent.postMessage('CLOSE_GAME_POPUP', '*');
-  }
-}
-
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'SYNC_CUSTOMER_PHONE' && event.data.phone) {
         const phoneInput = document.getElementById('gameCustomerPhone');
         if (phoneInput) {
             phoneInput.value = event.data.phone;
-            fetchGameDiamondBalance(event.data.phone);
+            fetchGameCustomerInfo(event.data.phone);
         }
     }
 });
