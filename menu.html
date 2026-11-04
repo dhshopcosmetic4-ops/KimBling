@@ -2771,27 +2771,31 @@ const STORE_LNG = 106.631035;
     }
     // ----------------------------------------
 
-    // --- PHÍ SHIP: HIỂN THỊ SONG SONG K VÀ KIM CƯƠNG ---
+        // --- PHÍ SHIP: CHỈ HIỂN THỊ KIM CƯƠNG KHI THANH TOÁN BẰNG TÚI KIM CƯƠNG ---
     const shipDiamondVal = Math.round((shipFee / 1000) * 20);
     if (shipFee === 0) {
-        document.getElementById('shippingFeeText').innerHTML = "0đ (0 💎) <span style='color: #2e7d32;'>Freeship/Tại quán</span>";
+        document.getElementById('shippingFeeText').innerHTML = isDiamond 
+            ? "0đ (0 💎) <span style='color: #2e7d32;'>Freeship/Tại quán</span>" 
+            : "0đ <span style='color: #2e7d32;'>Freeship/Tại quán</span>";
     } else {
-        document.getElementById('shippingFeeText').innerHTML = `${formatPrice(shipFee)} <span style="color: #00bcd4; font-weight: bold;">(${shipDiamondVal.toLocaleString('vi-VN')} 💎)</span>`;
+        document.getElementById('shippingFeeText').innerHTML = isDiamond
+            ? `${formatPrice(shipFee)} <span style="color: #00bcd4; font-weight: bold;">(${shipDiamondVal.toLocaleString('vi-VN')} 💎)</span>`
+            : `${formatPrice(shipFee)}`;
     }
-    // ---------------------------------------------------
+    // -----------------------------------------------------------------------
 
     const totalEl = document.getElementById('checkoutTotalAmount');
     if (isDiamond) {
         let shipDiamonds = Math.round((shipFee / 1000) * 20);
         let totalDiamondsSum = foodDiamonds + shipDiamonds;
 
-        // Chỉ hiển thị đúng tổng số kim cương, ẩn hoàn toàn dòng chú thích bên dưới
         totalEl.innerHTML = `<span style="color:#00bcd4;">${totalDiamondsSum.toLocaleString('vi-VN')} 💎</span>`;
     } else {
         let grandTotal = foodTotalAfterDiscount + shipFee;
-        let grandTotalDiamonds = Math.round((grandTotal / 1000) * 20);
-        totalEl.innerHTML = `${formatPrice(grandTotal)} <span style="color:#00bcd4; font-size:12px; font-weight:normal;">(${grandTotalDiamonds.toLocaleString('vi-VN')} 💎)</span>`;
+        // Ẩn phần quy đổi kim cương ở Tổng cộng khi thanh toán tiền mặt / chuyển khoản
+        totalEl.innerHTML = `${formatPrice(grandTotal)}`;
     }
+
 
 
     const listEl = document.getElementById('checkoutList');
