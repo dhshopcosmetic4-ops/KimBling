@@ -36,7 +36,7 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 .choice-btn.selected { border-color: #d32f2f; background: #ffebee; transform: scale(1.03); box-shadow: 0 3px 8px rgba(211,47,47,0.3); }
 .choice-btn.selected div.label { color: #d32f2f; }
 
-/* ĐẤU TRƯỜNG SO KÈ NGANG (CHỦ QUÁN GÓC TRÁI - KHÁCH HÀNG SIÊU TO Ở PHẢI) */
+/* ĐẤU TRƯỜNG SO KÈ NGANG */
 .battle-arena { display: none; background: #1e293b; border-radius: 14px; padding: 12px; color: #fff; margin-bottom: 8px; text-align: center; }
 
 .battle-horizontal-flex {
@@ -122,7 +122,7 @@ p.subtitle { font-size: 11px; color: #666; margin-bottom: 8px; }
 <div class="user-diamond-bar">
     <div style="display: flex; align-items: center; gap: 6px; flex: 1; padding-right: 6px;">
         <span style="font-size: 12px; font-weight: bold; color: #ff9800; white-space: nowrap;">💎 Túi 💎:</span>
-        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT..." maxlength="11" onchange="fetchGameCustomerInfo(this.value)" onkeyup="if(event.key==='Enter') fetchGameCustomerInfo(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
+        <input type="tel" id="gameCustomerPhone" placeholder="Nhập SĐT..." maxlength="11" oninput="if(this.value.length >= 9) fetchGameCustomerInfo(this.value)" onchange="fetchGameCustomerInfo(this.value)" style="background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px 6px; border-radius: 6px; font-size: 13px !important; width: 100%; outline: none;">
     </div>
     <div id="headerTotalDiamonds" onclick="reloadGameDiamonds()" style="font-size: 15px; font-weight: bold; color: #ff4d4f; background: #0f172a; padding: 4px 8px; border-radius: 8px; border: 1px solid #ff9800; flex-shrink: 0; min-width: 60px; text-align: center; cursor: pointer;" title="Bấm làm mới số dư">
         0 💎
@@ -338,6 +338,9 @@ function startBattle() {
   localStorage.setItem('kim_bling_user_diamonds', currentDiamonds);
   updateHeaderDiamondDisplay();
 
+  // ĐỒNG BỘ TRỪ 1 VÉ TRỰC TIẾP LÊN GOOGLE SHEETS
+  syncAndClose();
+
   document.getElementById('setupSection').style.display = 'none';
   document.getElementById('battleArena').style.display = 'block';
   document.getElementById('resultNotifyBox').style.display = 'none';
@@ -347,7 +350,6 @@ function startBattle() {
   document.getElementById('customerDisplayName').innerText = `👤 ${currentCustomerIdentifier}`;
   document.getElementById('ownerFighterDisplay').innerText = symbolIcons[selectedOwnerChoice];
 
-  // CHỈ XÁO TRỘN 1 LẦN DUY NHẤT KHI BẤM BẮT ĐẦU VÁN MỚI (KHÔNG XÁO TRỘN GIỮA CHỪNG NỮA ĐỂ TUYỆT ĐỐI KHÔNG BỊ ĐƠ)
   currentShuffledSequence = shuffleArray(symbols);
   sequenceIndex = 0;
 
@@ -357,10 +359,8 @@ function startBattle() {
     let currentSymbol = currentShuffledSequence[sequenceIndex];
     document.getElementById('customerFighterDisplay').innerText = symbolIcons[currentSymbol];
     playSound('tick');
-    
-    // Xoay vòng qua 3 phần tử đã xáo trộn của ván này
     sequenceIndex = (sequenceIndex + 1) % currentShuffledSequence.length;
-  }, 400);
+  }, 300);
 }
 
 let finalCustomerChoice = '';
@@ -394,7 +394,7 @@ function stopOrResetBattle() {
     let resultColor = "";
 
     if (selectedOwnerChoice === finalCustomerChoice) {
-      delta = 1;
+      delta = 1; // Hoàn lại vé 1 💎
       sessionAddedDiamonds += delta;
       resultMsg = `🤝 HÒA CƯỢC! Bạn được hoàn lại 1 💎 tiền vé.`;
       resultColor = "#ff9800";
@@ -404,12 +404,13 @@ function stopOrResetBattle() {
       (selectedOwnerChoice === 'bao' && finalCustomerChoice === 'keo') ||
       (selectedOwnerChoice === 'bua' && finalCustomerChoice === 'bao')
     ) {
-      delta = 3;
+      delta = 3; // Thắng nhận +3 💎
       sessionAddedDiamonds += delta;
       resultMsg = `🎉 CHÚC MỪNG BẠN ĐÃ THẮNG CHỦ QUÁN! Nhận ngay +3 💎`;
       resultColor = "#28a745";
       playSound('win');
     } else {
+      delta = 0; // Thua mất vé (-1 đã trừ ở lúc bắt đầu)
       resultMsg = `😢 BẠN ĐÃ THUA CHỦ QUÁN! Đã mất 1 💎 vé tham gia. Thử lại nhé!`;
       resultColor = "#ef4444";
       playSound('lose');
@@ -420,8 +421,11 @@ function stopOrResetBattle() {
     localStorage.setItem('kim_bling_user_diamonds', newTotal);
     updateHeaderDiamondDisplay();
 
+    // ĐỒNG BỘ KẾT QUẢ THẮNG/HÒA TRỰC TIẾP LÊN GOOGLE SHEETS NGAY LẬP TỨC
+    syncAndClose();
+
     if (window.parent) {
-      window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotal, added: delta - 1 }, '*');
+      window.parent.postMessage({ type: 'ADD_USER_DIAMONDS_SUCCESS', totalDiamonds: newTotal, added: delta }, '*');
     }
 
     let notifyBox = document.getElementById('resultNotifyBox');
@@ -443,7 +447,10 @@ function stopOrResetBattle() {
 async function syncAndClose() {
   if (sessionAddedDiamonds !== 0) {
     let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
-    if (customerPhone) {
+    let currentDelta = sessionAddedDiamonds;
+    sessionAddedDiamonds = 0; // Reset bộ đệm tránh gửi lặp
+
+    if (customerPhone && customerPhone.length >= 9) {
       try {
         await fetch(KIMBLING_API_URL, {
           method: 'POST',
@@ -453,12 +460,13 @@ async function syncAndClose() {
             action: 'add_hatkim',
             type: 'add_hatkim',
             phone: customerPhone,
-            amount: sessionAddedDiamonds
+            amount: currentDelta
           })
         });
-      } catch(e) {}
+      } catch(e) {
+        console.log("Lỗi đồng bộ kim cương về Sheets:", e);
+      }
     }
-    sessionAddedDiamonds = 0;
   }
 }
 
