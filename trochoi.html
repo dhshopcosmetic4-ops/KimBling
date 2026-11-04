@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hộp Quà May Mắn - Kim Bling Coffee & Tea</title>
+<!-- Thư viện Canvas Confetti để làm hiệu ứng pháo hoa / hoa giấy tung tóe -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
-.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; }
 .close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
 p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
@@ -153,23 +155,23 @@ margin-top: 2px;
     <div id="wonPrizesDisplay" style="font-size: 11px; color: #00838f; font-weight: bold; margin-bottom: 6px;">👉 Hãy chọn 1 hộp quà bên dưới!</div>
 
     <div class="grid-boxes" id="gridBoxes">
-    <div class="box-item" onclick="openBox(0)">🎁</div>
-    <div class="box-item" onclick="openBox(1)">🎁</div>
-    <div class="box-item" onclick="openBox(2)">🎁</div>
-    <div class="box-item" onclick="openBox(3)">🎁</div>
-    <div class="box-item" onclick="openBox(4)">🎁</div>
-    <div class="box-item" onclick="openBox(5)">🎁</div>
-    <div class="box-item" onclick="openBox(6)">🎁</div>
-    <div class="box-item" onclick="openBox(7)">🎁</div>
-    <div class="box-item" onclick="openBox(8)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(0)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(1)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(2)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(3)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(4)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(5)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(6)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(7)">🎁</div>
+    <div class="box-item" onclick="playSoundClick(); openBox(8)">🎁</div>
     </div>
 
     <div class="result-box" id="resultBox">
     <div id="resultText" style="font-size: 12px; line-height: 1.3;"></div>
     <div class="action-choice-row" id="choiceRow" style="display: none;">
-    <button class="btn-choice-next" onclick="startNextGame()">🎮 Mở lượt tiếp theo</button>
+    <button class="btn-choice-next" onclick="playSoundClick(); startNextGame()">🎮 Mở lượt tiếp theo</button>
     </div>
-    <button class="btn-close-game" id="btnCloseGameAction" onclick="finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY ĐỂ NHẬN THÊM LƯỢT</button>
+    <button class="btn-close-game" id="btnCloseGameAction" onclick="playSoundClick(); finishFiveTurnsAndCheckout()" style="display: none;">🛵 ĐẶT MÓN NGAY ĐỂ NHẬN THÊM LƯỢT</button>
     </div>
 </div>
 </div>
@@ -179,8 +181,108 @@ const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx
 const MAX_TURNS_ALLOWED = 5;
 
 let userPhone = "";
-let turnsPlayed = 0; // Số lượt ĐÃ CHƠI
+let turnsPlayed = 0; 
 let currentDiamondsBalance = 0;
+
+// ================= HỆ THỐNG ÂM THANH BẰNG WEB AUDIO API =================
+let audioCtx = null;
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+// 1. Âm thanh khi bấm vào chọn ô (Tiếng "Ting" ngắn thanh nhã)
+function playSoundClick() {
+    try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+    } catch(e) {}
+}
+
+// 2. Âm thanh chúc mừng chiến thắng (Giai điệu vui tươi nốt cao)
+function playSoundVictory() {
+    try {
+        const ctx = getAudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // Đồ, Mi, Sol, Đồ cao
+        notes.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            const startTime = ctx.currentTime + (index * 0.12);
+            gain.gain.setValueAtTime(0.2, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + 0.3);
+        });
+    } catch(e) {}
+}
+
+// 3. Âm thanh buồn khi trúng ô "Ngon miệng" (Giai điệu trầm đi xuống)
+function playSoundSad() {
+    try {
+        const ctx = getAudioContext();
+        const notes = [300, 250, 200]; 
+        notes.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            const startTime = ctx.currentTime + (index * 0.15);
+            gain.gain.setValueAtTime(0.15, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + 0.25);
+        });
+    } catch(e) {}
+}
+
+// ================= HIỆU ỨNG PHÁO HOA TUNG TÓE =================
+function triggerFireworks() {
+    try {
+        // Pháo hoa bung từ hai bên và chính giữa
+        confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+        }, 250);
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 400);
+    } catch(e) {}
+}
 
 function shuffleArray(array) {
 let arr = [...array];
@@ -236,7 +338,6 @@ function getGameState() {
 
 let gameState = null;
 
-// Hàm thực thi xác thực SĐT từ Cloud trước khi cho vào chơi
 async function executePhoneAuthentication() {
     const phoneInput = document.getElementById('gameCustomerPhone');
     const statusMsg = document.getElementById('authStatusMessage');
@@ -264,7 +365,6 @@ async function executePhoneAuthentication() {
         localStorage.setItem('kimbling_cust_phone', userPhone);
         localStorage.setItem('kim_bling_user_diamonds', currentDiamondsBalance);
 
-        // Đăng nhập thành công -> Ẩn khung ĐN, Hiện giao diện game
         document.getElementById('authBoxContainer').style.display = 'none';
         document.getElementById('gameMainWrapper').style.display = 'block';
         document.getElementById('displayAuthenticatedPhone').innerText = userPhone;
@@ -342,7 +442,6 @@ document.getElementById('resultBox').style.display = 'none';
 }
 }
 
-// 🎁 MỞ HỘP QUÀ & ĐỒNG BỘ CẢ KIM CƯƠNG NÓI TRÊN VÀ TURNSPLAYED LÊN CLOUD
 async function openBox(index) {
 if (!userPhone) {
     alert("⚠️ Vui lòng nhập số điện thoại và xác thực trước!");
@@ -357,7 +456,6 @@ if (remainingTurns <= 0) {
 
 if (gameState.isCurrentGameFinished) return;
 
-// Tăng số lượt ĐÃ CHƠI
 turnsPlayed++;
 gameState.isCurrentGameFinished = true;
 gameState.selectedBoxIndex = index;
@@ -372,13 +470,18 @@ if (item.type === 'DIAMOND') {
         gameState.wonDiamondsTotal += item.value;
         currentDiamondsBalance += exactWonThisTurn;
         
+        // 🎇 PHÁT ÂM THANH & HIỆU ỨNG PHÁO HOA KHI TRÚNG QUÀ
+        playSoundVictory();
+        triggerFireworks();
+
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     }
 } else {
     item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
+    // 🔊 PHÁT ÂM THANH BUỒN KHI TRÚNG Ô "NGON MIỆNG"
+    playSoundSad();
 }
 
-// 🚀 GỬI CẢ KIM CƯƠNG CỘNG THÊM VÀ SỐ LƯỢT ĐÃ CHƠI (TURNSPLAYED) LÊN CỘT F GOOGLE SHEETS
 try {
     fetch(KIMBLING_API_URL, {
         method: 'POST',
@@ -457,7 +560,6 @@ if (window.parent) {
 }
 }
 
-// Lắng nghe SĐT và Lệnh Reset từ trang chủ menu truyền sang
 window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'SYNC_CUSTOMER_PHONE' && event.data.phone) {
         const phoneInput = document.getElementById('gameCustomerPhone');
