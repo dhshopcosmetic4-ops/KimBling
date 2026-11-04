@@ -2758,22 +2758,41 @@ const STORE_LNG = 106.631035;
 
     let foodTotalAfterDiscount = Math.max(0, foodTotal - discountAmount);
 
-    document.getElementById('foodSubtotal').innerHTML = `${formatDynamicPrice(foodTotalAfterDiscount)}`;
-    document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
-    
     const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
     const payMethod = payMethodRadio ? payMethodRadio.value : '';
     const isDiamond = (currentPriceMode === 'DIAMOND' || payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương');
 
+    // --- TIỀN MÓN: ẨN K NẾU LÀ KIM CƯƠNG ---
+    let foodDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20);
+    if (isDiamond) {
+        document.getElementById('foodSubtotal').innerHTML = `<span style="color:#00bcd4; font-weight:bold;">${foodDiamonds.toLocaleString('vi-VN')} 💎</span>`;
+    } else {
+        document.getElementById('foodSubtotal').innerHTML = `${formatDynamicPrice(foodTotalAfterDiscount)}`;
+    }
+    // ----------------------------------------
+
+    // --- PHÍ SHIP: HIỂN THỊ SONG SONG K VÀ KIM CƯƠNG ---
+    const shipDiamondVal = Math.round((shipFee / 1000) * 20);
+    if (shipFee === 0) {
+        document.getElementById('shippingFeeText').innerHTML = "0đ (0 💎) <span style='color: #2e7d32;'>Freeship/Tại quán</span>";
+    } else {
+        document.getElementById('shippingFeeText').innerHTML = `${formatPrice(shipFee)} <span style="color: #00bcd4; font-weight: bold;">(${shipDiamondVal.toLocaleString('vi-VN')} 💎)</span>`;
+    }
+    // ---------------------------------------------------
+
     const totalEl = document.getElementById('checkoutTotalAmount');
     if (isDiamond) {
-        let foodDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20);
-        let shipStr = shipFee > 0 ? ` + ${formatPrice(shipFee)} ship` : '';
-        totalEl.innerHTML = `<span style="color:#00bcd4;">${foodDiamonds.toLocaleString('vi-VN')} 💎</span><span style="font-size:13px; color:#d32f2f;">${shipStr}</span>`;
+        let shipDiamonds = Math.round((shipFee / 1000) * 20);
+        let totalDiamondsSum = foodDiamonds + shipDiamonds;
+
+        // Chỉ hiển thị đúng tổng số kim cương, ẩn hoàn toàn dòng chú thích bên dưới
+        totalEl.innerHTML = `<span style="color:#00bcd4;">${totalDiamondsSum.toLocaleString('vi-VN')} 💎</span>`;
     } else {
         let grandTotal = foodTotalAfterDiscount + shipFee;
-        totalEl.innerHTML = formatPrice(grandTotal);
+        let grandTotalDiamonds = Math.round((grandTotal / 1000) * 20);
+        totalEl.innerHTML = `${formatPrice(grandTotal)} <span style="color:#00bcd4; font-size:12px; font-weight:normal;">(${grandTotalDiamonds.toLocaleString('vi-VN')} 💎)</span>`;
     }
+
 
     const listEl = document.getElementById('checkoutList');
     listEl.innerHTML = '';
@@ -2801,6 +2820,8 @@ const STORE_LNG = 106.631035;
     }
     updatePaymentUI();
 }
+
+
 
 
 
