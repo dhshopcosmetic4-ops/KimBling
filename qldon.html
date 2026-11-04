@@ -139,7 +139,7 @@
   </div>
 
   <audio id="silentBackgroundAudio" loop preload="auto">
-    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
+    <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABhQCFgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA/////////////////////////////////////////////////////////////////w==" type="audio/mpeg">
   </audio>
 
   <div id="adminApp">
@@ -152,6 +152,8 @@
         <button class="action-btn refresh-toggle-btn" id="btnAutoRefresh" onclick="toggleAutoRefresh()">⏱️ Tự làm mới: TẮT</button>
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Mã Tích Điểm</button>
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Túi Thần Tài 💎</button>
+        <button class="action-btn" style="background:#e11d48; color:#fff;" onclick="toggleEventPopup(true)">🎉 Event Lễ</button>
+        <button class="action-btn" id="btnEventStatusIndicator" style="background:#475569; color:#fff;" onclick="checkEventStatusAlert()">⚪ Trạng thái Event</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
         <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders(true);">🔄 Tải lại</button>
       </div>
@@ -179,6 +181,19 @@
       </div>
       <div class="qr-popup-body">
         <iframe id="hatKimIframe" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP QUẢN LÝ EVENT LỄ LỘC -->
+  <div id="eventPopupModal" class="qr-popup-overlay">
+    <div class="qr-popup-container" style="border-color: #e11d48;">
+      <div class="qr-popup-header" style="background: #270515; border-bottom: 1px solid #e11d48;">
+        <span class="qr-popup-title" style="color: #fb7185;">🎉 Quản Lý Event Lễ Lộc</span>
+        <button class="qr-close-btn" onclick="toggleEventPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body">
+        <iframe id="eventIframe" src=""></iframe>
       </div>
     </div>
   </div>
@@ -269,6 +284,100 @@
         popup.classList.remove('active');
       }
     }
+
+    function toggleEventPopup(isOpen) {
+      const popup = document.getElementById('eventPopupModal');
+      const iframe = document.getElementById('eventIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'event.html';
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+        updateEventStatusIndicator();
+      }
+    }
+
+    // Hàm kiểm tra trạng thái Event trực tiếp từ Google Sheets (cột G, H, I)
+    async function checkActiveEventFromSheets() {
+      try {
+        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&t=${Date.now()}`);
+        const data = await res.json();
+        if (data.success && data.config) {
+          const config = data.config;
+          
+          if (config.emergencyStop) {
+            return { active: false, reason: "Đã tắt khẩn cấp trên Google Sheets" };
+          }
+
+          if (config.useSchedule) {
+            if (!config.timeStart || !config.timeEnd) return { active: false, reason: "Chưa cài đặt đủ thời gian hẹn giờ" };
+            const now = new Date().getTime();
+            const startTime = new Date(config.timeStart).getTime();
+            const endTime = new Date(config.timeEnd).getTime();
+
+            if (now >= startTime && now <= endTime) {
+              return { active: true, config: config };
+            } else {
+              return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
+            }
+          }
+          return { active: true, config: config }; // Bật thủ công
+        }
+      } catch (e) {
+        console.log("Lỗi kết nối kiểm tra Event:", e);
+      }
+      return { active: false, reason: "Không kết nối được Google Sheets" };
+    }
+
+    // Hàm cập nhật màu sắc và chữ trên nút kiểm tra trạng thái từ Google Sheets
+    async function updateEventStatusIndicator() {
+      const btn = document.getElementById('btnEventStatusIndicator');
+      if (!btn) return;
+
+      btn.innerHTML = `⏳ Đang quét Event...`;
+      const status = await checkActiveEventFromSheets();
+      
+      if (status.active) {
+        btn.style.background = '#22c55e'; // Xanh lá
+        btn.style.color = '#fff';
+        let extraText = [];
+        if (status.config.doubleDiamond) extraText.push("x2 💎");
+        if (status.config.bonusTurns) extraText.push(`+${status.config.bonusTurnsValue || 5} lượt`);
+        btn.innerHTML = `🟢 Event: Đang Chạy (${extraText.join(', ') || 'Bật'})`;
+      } else {
+        btn.style.background = '#64748b'; // Xám
+        btn.style.color = '#f8fafc';
+        btn.innerHTML = `⚪ Event: Đang Tắt`;
+      }
+    }
+
+    // Nút bấm kiểm tra chi tiết khi chủ quán click vào nút trạng thái
+    async function checkEventStatusAlert() {
+      showLoading("Đang kiểm tra trạng thái Event từ Google Sheets...");
+      const status = await checkActiveEventFromSheets();
+      hideLoading();
+
+      if (status.active) {
+        let msg = "🟢 EVENT LỄ LỘC ĐANG HOẠT ĐỘNG (Đồng bộ Sheets):\n";
+        if (status.config.doubleDiamond) msg += "💎 Đang áp dụng Nhân đôi Kim Cương.\n";
+        if (status.config.bonusTurns) msg += `🎁 Đang tặng thêm ${status.config.bonusTurnsValue || 5} lượt mở hộp khi đặt hàng.\n`;
+        alert(msg);
+      } else {
+        alert(`🔴 EVENT ĐANG TẮT HOẶC CHƯA DIỄN RA.\nLý do: ${status.reason}`);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateEventStatusIndicator();
+    });
+
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'EVENT_CONFIG_UPDATED') {
+        updateEventStatusIndicator();
+      }
+    });
 
     function enableAudioAndNotification() {
       if (!audioContext) {
@@ -372,7 +481,6 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    // NÚT MỞ BẢN ĐỒ THÔNG MINH: Quét tọa độ trước khi ghim lên Google Maps
     async function openSmartMap(cleanDestAddress) {
       showLoading("Đang định vị tọa độ địa chỉ khách...");
       let fullAddress = cleanDestAddress;
@@ -382,17 +490,14 @@
 
       let googleMapsUrl = "";
       try {
-        // Quét tọa độ thực tế của khách qua Photon Komoot
         let res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(fullAddress)}&limit=1`);
         let data = await res.json();
         
         if (data && data.features && data.features.length > 0) {
           let coords = data.features[0].geometry.coordinates;
           let destLng = coords[0], destLat = coords[1];
-          // Nếu quét ra Tọa độ -> Ép Google Maps ghim thẳng bằng TỌA ĐỘ chuẩn xác 100%
           googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${destLat},${destLng}&travelmode=walking`;
         } else {
-          // Nếu không tìm thấy tọa độ -> Truyền chuỗi chữ có địa danh mặc định
           googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${encodeURIComponent(fullAddress)}&travelmode=walking`;
         }
       } catch (e) {
@@ -855,6 +960,36 @@
         } else {
             diamondsValue = Math.round(totalAmount / 1000); 
         }
+
+        // --- KIỂM TRA VÀ ÁP DỤNG CẤU HÌNH EVENT TỪ GOOGLE SHEETS ---
+        try {
+          const eventCheck = await checkActiveEventFromSheets();
+          if (eventCheck.active) {
+            const eventConfig = eventCheck.config;
+
+            // 1. Nhân đôi Kim Cương nếu event bật nhân đôi
+            if (eventConfig.doubleDiamond) {
+              diamondsValue = diamondsValue * 2;
+            }
+
+            // 2. Tặng thêm lượt mở hộp (lượt âm) nếu event bật tặng lượt và khách có SĐT
+            const customerPhoneCheck = String(orderObj.phone || '').replace(/'/g, '').trim();
+            if (eventConfig.bonusTurns && customerPhoneCheck.length >= 9) {
+              const bonusAmount = eventConfig.bonusTurnsValue || 5;
+              fetch(KIMBLING_API_URL, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                  action: 'add_hatkim', type: 'add_hatkim',
+                  phone: customerPhoneCheck, amount: 0, turnsPlayed: -bonusAmount
+                })
+              }).catch(e => {});
+            }
+          }
+        } catch (e) {
+          console.log("Lỗi áp dụng Event:", e);
+        }
+        // -----------------------------------------------------------
 
         const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
 
