@@ -119,6 +119,59 @@
     .qr-popup-body { flex: 1; width: 100%; overflow-y: auto; background: #0f172a; }
     .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
 
+    /* GIAO DIỆN POPUP TRÀN MÀN HÌNH KIỂU TIKTOK CHO SỔ TAY */
+    .qr-popup-overlay.tiktok-popup-overlay {
+      padding: 0 !important;
+      background: #0f172a !important;
+      backdrop-filter: none !important;
+    }
+    
+    .tiktok-popup-container {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      border: none !important;
+      border-radius: 0 !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tiktok-popup-header {
+      background: #0f172a !important;
+      border-bottom: 1px solid #334155 !important;
+      padding: 16px 20px !important;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tiktok-popup-header .qr-popup-title {
+      font-size: 19px !important;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .tiktok-close-btn {
+      background: #334155 !important;
+      color: #fff !important;
+      border: none !important;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      font-size: 22px !important;
+      font-weight: bold !important;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    
+    .tiktok-close-btn:hover {
+      background: #ef4444 !important;
+    }
+
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(15, 23, 42, 0.88); z-index: 99999;
@@ -150,6 +203,7 @@
       </div>
       <div class="header-btns">
         <button class="action-btn refresh-toggle-btn" id="btnAutoRefresh" onclick="toggleAutoRefresh()">⏱️ Tự làm mới: TẮT</button>
+        <button class="action-btn" style="background:#0284c7; color:#fff;" onclick="toggleGhiChuPopup(true)">📖 Sổ Tay & Kho</button>
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Mã Tích Điểm</button>
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Túi Thần Tài 💎</button>
         <button class="action-btn" style="background:#e11d48; color:#fff;" onclick="toggleEventPopup(true)">🎉 Event Lễ</button>
@@ -198,10 +252,22 @@
     </div>
   </div>
 
+  <!-- POPUP SỔ TAY ĐIỀU HÀNH & KHO (TRÀN MÀN HÌNH KIỂU TIKTOK) -->
+  <div id="ghiChuPopupModal" class="qr-popup-overlay tiktok-popup-overlay">
+    <div class="qr-popup-container tiktok-popup-container">
+      <div class="qr-popup-header tiktok-popup-header">
+        <span class="qr-popup-title">📖 Sổ Tay Điều Hành & Kho</span>
+        <button class="tiktok-close-btn" onclick="toggleGhiChuPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body" style="padding: 0; flex: 1;">
+        <iframe id="ghiChuIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+  </div>
+
   <script>
     const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
     
-    // Tọa độ ghim quán KimBling chuẩn
     const STORE_LAT = 10.749122; 
     const STORE_LNG = 106.631035;
 
@@ -299,7 +365,19 @@
       }
     }
 
-    // Hàm kiểm tra trạng thái Event trực tiếp từ Google Sheets (cột G, H, I)
+    function toggleGhiChuPopup(isOpen) {
+      const popup = document.getElementById('ghiChuPopupModal');
+      const iframe = document.getElementById('ghiChuIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'ghichu.html';
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+      }
+    }
+
     async function checkActiveEventFromSheets() {
       try {
         const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&t=${Date.now()}`);
@@ -323,7 +401,7 @@
               return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
             }
           }
-          return { active: true, config: config }; // Bật thủ công
+          return { active: true, config: config };
         }
       } catch (e) {
         console.log("Lỗi kết nối kiểm tra Event:", e);
@@ -331,7 +409,6 @@
       return { active: false, reason: "Không kết nối được Google Sheets" };
     }
 
-    // Hàm cập nhật màu sắc và chữ trên nút kiểm tra trạng thái từ Google Sheets
     async function updateEventStatusIndicator() {
       const btn = document.getElementById('btnEventStatusIndicator');
       if (!btn) return;
@@ -340,20 +417,19 @@
       const status = await checkActiveEventFromSheets();
       
       if (status.active) {
-        btn.style.background = '#22c55e'; // Xanh lá
+        btn.style.background = '#22c55e';
         btn.style.color = '#fff';
         let extraText = [];
         if (status.config.doubleDiamond) extraText.push("x2 💎");
         if (status.config.bonusTurns) extraText.push(`+${status.config.bonusTurnsValue || 5} lượt`);
         btn.innerHTML = `🟢 Event: Đang Chạy (${extraText.join(', ') || 'Bật'})`;
       } else {
-        btn.style.background = '#64748b'; // Xám
+        btn.style.background = '#64748b';
         btn.style.color = '#f8fafc';
         btn.innerHTML = `⚪ Event: Đang Tắt`;
       }
     }
 
-    // Nút bấm kiểm tra chi tiết khi chủ quán click vào nút trạng thái
     async function checkEventStatusAlert() {
       showLoading("Đang kiểm tra trạng thái Event từ Google Sheets...");
       const status = await checkActiveEventFromSheets();
@@ -899,7 +975,6 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
-    // 🚀 HÀM ĐẨY ĐƠN CHẠY NGẦM HOÀN TOÀN (FIRE-AND-FORGET) - KHÔNG QUAY HỘP LOADING
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
@@ -909,7 +984,6 @@
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      // 1. Cập nhật nút ngay lập tức trên giao diện
       if (button) {
         button.classList.add('pushed');
         button.disabled = true;
@@ -917,7 +991,6 @@
       }
       localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-      // 2. Chuẩn bị dữ liệu POS
       const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
       const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
 
@@ -949,7 +1022,6 @@
         payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
       };
 
-      // 3. BẮN NGẦM LỆNH ĐẨY POS TỚI GOOGLE SHEETS
       const dataString = JSON.stringify(payloadPOS);
       if (navigator.sendBeacon) {
         navigator.sendBeacon(KIMBLING_API_URL, new Blob([dataString], {type: 'text/plain;charset=utf-8'}));
@@ -961,7 +1033,6 @@
         }).catch(e => {});
       }
 
-      // 4. BẮN NGẦM LỆNH TÍCH ĐIỂM (NẾU CÓ CHỌN)
       if (isTichDiemChecked && customerPhone.length >= 9) {
         const pointPayload = JSON.stringify({
           action: 'add_points', sdt: customerPhone,
@@ -978,7 +1049,6 @@
         }
       }
 
-      // 5. BẮN NGẦM XỬ LÝ EVENT LỄ (NẾU ĐANG BẬT)
       checkActiveEventFromSheets().then(eventCheck => {
         if (eventCheck.active && eventCheck.config) {
           const eventConfig = eventCheck.config;
@@ -1011,7 +1081,6 @@
 
       stopContinuousAlarm();
       
-      // Bắn ngầm cập nhật trạng thái đơn mà không kẹt luồng tải lại đơn
       const statusPayload = JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status});
       if (navigator.sendBeacon) {
         navigator.sendBeacon(KIMBLING_API_URL, new Blob([statusPayload], {type: 'text/plain;charset=utf-8'}));
