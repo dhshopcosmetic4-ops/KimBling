@@ -892,18 +892,6 @@
       });
     }
 
-    async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
-      for (let i = 0; i < attempts; i++) {
-        try {
-          const response = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
-          const data = await response.json();
-          if (data && data.success && data.saved) return true;
-        } catch (err) {}
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
-      return false;
-    }
-
     function pushOrderButton(button) {
       let orderObj;
       try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); }
@@ -911,6 +899,7 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
+    // 🚀 HÀM ĐẨY ĐƠN CHẠY NGẦM HOÀN TOÀN (FIRE-AND-FORGET) - KHÔNG QUAY HỘP LOADING
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
@@ -920,129 +909,97 @@
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      showLoading(`Đang kiểm tra và xử lý đơn #${orderId}...`);
-      if (button) { button.disabled = true; button.textContent = '⏳ Đang kiểm tra...'; }
+      // 1. Cập nhật nút ngay lập tức trên giao diện
+      if (button) {
+        button.classList.add('pushed');
+        button.disabled = true;
+        button.textContent = '✅ Đã đẩy POS';
+      }
+      localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-      isFetchingOrders = true; 
-      try {
-        const checkRes = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
-        const checkData = await checkRes.json();
-        
-        if (checkData && checkData.success && checkData.saved) {
-          localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-          alert(`⚠️ Đơn #${orderId} đã được xử lý trên hệ thống POS trước đó rồi!`);
-          if (button) {
-            button.classList.add('pushed');
-            button.disabled = true;
-            button.textContent = '✅ Đã đẩy POS';
-          }
-          hideLoading();
-          isFetchingOrders = false;
-          return;
-        }
+      // 2. Chuẩn bị dữ liệu POS
+      const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
+      const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
 
-        const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
-        const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
+      const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
+      
+      let totalItemsCount = 0;
+      parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
 
-        const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
-        
-        let totalItemsCount = 0;
-        parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
+      const totalAmount = Number(orderObj.total || 0);
+      const paymentType = String(orderObj.payment || '').toLowerCase();
+      
+      let diamondsValue = 0;
+      const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
 
-        const totalAmount = Number(orderObj.total || 0);
-        const paymentType = String(orderObj.payment || '').toLowerCase();
-        
-        let diamondsValue = 0;
-        const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
+      if (isDiamondPayment) {
+          diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+      } else {
+          diamondsValue = Math.round(totalAmount / 1000); 
+      }
 
-        if (isDiamondPayment) {
-            diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+      const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
+
+      const payloadPOS = {
+        type: 'pushOnlineOrder', action: 'pushOnlineOrder',
+        sourceOrderId: String(orderId), orderId: String(orderId),
+        total: totalAmount, diamonds: diamondsValue, 
+        items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
+        phone: customerPhone, address: String(orderObj.address || ''),
+        payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
+      };
+
+      // 3. BẮN NGẦM LỆNH ĐẨY POS TỚI GOOGLE SHEETS
+      const dataString = JSON.stringify(payloadPOS);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(KIMBLING_API_URL, new Blob([dataString], {type: 'text/plain;charset=utf-8'}));
+      } else {
+        fetch(KIMBLING_API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: dataString
+        }).catch(e => {});
+      }
+
+      // 4. BẮN NGẦM LỆNH TÍCH ĐIỂM (NẾU CÓ CHỌN)
+      if (isTichDiemChecked && customerPhone.length >= 9) {
+        const pointPayload = JSON.stringify({
+          action: 'add_points', sdt: customerPhone,
+          ly: totalItemsCount, txid: `ONLINE_${orderId}`
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
         } else {
-            diamondsValue = Math.round(totalAmount / 1000); 
+          fetch(KIMBLING_API_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: pointPayload
+          }).catch(e => {});
         }
+      }
 
-        // --- KIỂM TRA VÀ ÁP DỤNG CẤU HÌNH EVENT TỪ GOOGLE SHEETS ---
-        try {
-          const eventCheck = await checkActiveEventFromSheets();
-          if (eventCheck.active) {
-            const eventConfig = eventCheck.config;
-
-            // 1. Nhân đôi Kim Cương nếu event bật nhân đôi
-            if (eventConfig.doubleDiamond) {
-              diamondsValue = diamondsValue * 2;
-            }
-
-            // 2. Tặng thêm lượt mở hộp (lượt âm) nếu event bật tặng lượt và khách có SĐT
-            const customerPhoneCheck = String(orderObj.phone || '').replace(/'/g, '').trim();
-            if (eventConfig.bonusTurns && customerPhoneCheck.length >= 9) {
-              const bonusAmount = eventConfig.bonusTurnsValue || 5;
+      // 5. BẮN NGẦM XỬ LÝ EVENT LỄ (NẾU ĐANG BẬT)
+      checkActiveEventFromSheets().then(eventCheck => {
+        if (eventCheck.active && eventCheck.config) {
+          const eventConfig = eventCheck.config;
+          if (eventConfig.bonusTurns && customerPhone.length >= 9) {
+            const bonusAmount = eventConfig.bonusTurnsValue || 5;
+            const eventPayload = JSON.stringify({
+              action: 'add_hatkim', type: 'add_hatkim',
+              phone: customerPhone, amount: 0, turnsPlayed: -bonusAmount
+            });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(KIMBLING_API_URL, new Blob([eventPayload], {type: 'text/plain;charset=utf-8'}));
+            } else {
               fetch(KIMBLING_API_URL, {
                 method: 'POST', mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                  action: 'add_hatkim', type: 'add_hatkim',
-                  phone: customerPhoneCheck, amount: 0, turnsPlayed: -bonusAmount
-                })
+                body: eventPayload
               }).catch(e => {});
             }
           }
-        } catch (e) {
-          console.log("Lỗi áp dụng Event:", e);
         }
-        // -----------------------------------------------------------
-
-        const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
-
-        const payloadPOS = {
-          type: 'pushOnlineOrder', action: 'pushOnlineOrder',
-          sourceOrderId: String(orderId), orderId: String(orderId),
-          total: totalAmount, diamonds: diamondsValue, 
-          items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
-          phone: customerPhone, address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
-        };
-
-        await fetch(KIMBLING_API_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payloadPOS)
-        });
-
-        const saved = await waitForSalesOrder(String(orderId), 18, 1000);
-        if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
-
-        if (isTichDiemChecked && customerPhone.length >= 9) {
-          await fetch(KIMBLING_API_URL, {
-            method: 'POST', mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'add_points', sdt: customerPhone,
-              ly: totalItemsCount, txid: `ONLINE_${orderId}`
-            })
-          });
-        }
-
-        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`;
-        if (isTichDiemChecked) {
-          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách.`;
-        }
-
-        alert(successMsg);
-        lastRenderedDataSignature = ""; 
-        fetchOrders(true);
-      } catch (err) {
-        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối KimBling.'}`);
-      } finally {
-        hideLoading();
-        if (button) {
-          button.classList.add('pushed');
-          button.disabled = true;
-          button.textContent = '✅ Đã đẩy POS';
-        }
-        setTimeout(() => { isFetchingOrders = false; }, 3000);
-      }
+      }).catch(e => {});
     }
 
     function updateStatus(btnElement, phone, orderId, status) {
@@ -1053,15 +1010,18 @@
       }
 
       stopContinuousAlarm();
-      isFetchingOrders = true; 
-
-      fetch(KIMBLING_API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
-      })
-      .then(() => { lastRenderedDataSignature = ""; })
-      .catch(err => console.error(err))
-      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
+      
+      // Bắn ngầm cập nhật trạng thái đơn mà không kẹt luồng tải lại đơn
+      const statusPayload = JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status});
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(KIMBLING_API_URL, new Blob([statusPayload], {type: 'text/plain;charset=utf-8'}));
+      } else {
+        fetch(KIMBLING_API_URL, {
+          method:'POST', mode:'no-cors',
+          headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body: statusPayload
+        }).catch(err => console.error(err));
+      }
     }
 
     function requestDeleteSingleOrder(orderId) {
