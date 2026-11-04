@@ -355,6 +355,7 @@ function startBattle() {
 
   isRolling = true;
   
+  // Tốc độ quay số 300ms
   rollingInterval = setInterval(() => {
     let currentSymbol = currentShuffledSequence[sequenceIndex];
     document.getElementById('customerFighterDisplay').innerText = symbolIcons[currentSymbol];
@@ -365,15 +366,20 @@ function startBattle() {
 
 let finalCustomerChoice = '';
 
+// Tỷ lệ: 70% Thua, 10% Hòa, 20% Thắng
 function determineCustomerChoice(ownerChoice) {
   const rand = Math.random() * 100;
-  if (rand < 30) {
+  
+  if (rand < 70) {
+    // 70% Tỷ lệ khách thua
     if (ownerChoice === 'bua') return 'keo';
     if (ownerChoice === 'keo') return 'bao';
     if (ownerChoice === 'bao') return 'bua';
-  } else if (rand < 55) {
+  } else if (rand < 80) {
+    // 10% Tỷ lệ hòa
     return ownerChoice;
   } else {
+    // 20% Tỷ lệ khách thắng
     if (ownerChoice === 'bua') return 'bao';
     if (ownerChoice === 'keo') return 'bua';
     if (ownerChoice === 'bao') return 'keo';
@@ -410,7 +416,7 @@ function stopOrResetBattle() {
       resultColor = "#28a745";
       playSound('win');
     } else {
-      delta = 0; // Thua mất vé (-1 đã trừ ở lúc bắt đầu)
+      delta = 0; // Thua mất vé
       resultMsg = `😢 BẠN ĐÃ THUA CHỦ QUÁN! Đã mất 1 💎 vé tham gia. Thử lại nhé!`;
       resultColor = "#ef4444";
       playSound('lose');
@@ -421,7 +427,7 @@ function stopOrResetBattle() {
     localStorage.setItem('kim_bling_user_diamonds', newTotal);
     updateHeaderDiamondDisplay();
 
-    // ĐỒNG BỘ KẾT QUẢ THẮNG/HÒA TRỰC TIẾP LÊN GOOGLE SHEETS NGAY LẬP TỨC
+    // ĐỒNG BỘ KẾT QUẢ LÊN GOOGLE SHEETS NGAY LẬP TỨC
     syncAndClose();
 
     if (window.parent) {
@@ -448,7 +454,7 @@ async function syncAndClose() {
   if (sessionAddedDiamonds !== 0) {
     let customerPhone = document.getElementById('gameCustomerPhone').value.trim();
     let currentDelta = sessionAddedDiamonds;
-    sessionAddedDiamonds = 0; // Reset bộ đệm tránh gửi lặp
+    sessionAddedDiamonds = 0; 
 
     if (customerPhone && customerPhone.length >= 9) {
       try {
