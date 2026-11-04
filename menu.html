@@ -1206,11 +1206,20 @@
         <label style="cursor: pointer;"><input type="radio" name="payMethod" value="Chuyển khoản" onchange="updatePaymentUI()"> 💳 Chuyển khoản</label>
         <label style="cursor: pointer; color: #d32f2f; font-weight: bold;"><input type="radio" name="payMethod" value="Túi Kim Cương" onchange="updatePaymentUI()"> 💎 Trừ Túi 💎</label>
     </div>
-    <!-- Ô nhập mã PIN bảo mật khi khách chọn thanh toán bằng Túi 💎 -->
-    <div id="diamondPinBox" style="display: none; margin-top: 8px; background: #fff8e1; padding: 8px; border-radius: 6px; border: 1px dashed #ffb300;">
-        <label style="font-size: 11px; font-weight: bold; color: #b78103; display: block; margin-bottom: 3px;">Nhập mã PIN 4 số của Túi 💎:</label>
-        <input type="password" id="customerDiamondPin" placeholder="Nhập PIN 4 số..." maxlength="4" style="width: 100%; padding: 6px; font-size: 14px; text-align: center; border: 1px solid #ffb300; border-radius: 4px; letter-spacing: 3px;">
+  <!-- Ô nhập mã PIN bảo mật khi khách chọn thanh toán bằng Túi 💎 -->
+<div id="diamondPinBox" style="display: none; margin-top: 8px; background: #fff8e1; padding: 10px; border-radius: 8px; border: 1.5px dashed #ffb300;">
+    <label id="diamondPinLabel" style="font-size: 11px; font-weight: bold; color: #b78103; display: block; margin-bottom: 4px;">Nhập mã PIN 4 số của Túi 💎:</label>
+    <input type="password" id="customerDiamondPin" placeholder="Nhập PIN 4 số..." maxlength="4" style="width: 100%; padding: 6px; font-size: 14px; text-align: center; border: 1px solid #ffb300; border-radius: 4px; letter-spacing: 3px;">
+    
+    <!-- Dòng thông báo dành cho khách cũ (đã có PIN) -->
+    <div id="oldCustomerPinNotice" style="display: none; font-size: 11px; color: #d32f2f; font-weight: bold; margin-top: 6px; text-align: center;">
+        💡 Muốn đổi mã PIN, vui lòng liên hệ chủ quán
     </div>
+
+    <!-- Khung chứa nút cam dành cho khách mới (chưa có PIN) -->
+    <div id="newCustomerPinBox" style="display: none; margin-top: 6px;"></div>
+</div>
+
 </div>
 
 
@@ -2824,7 +2833,8 @@ const STORE_LNG = 106.631035;
 
         // Hàm cập nhật trạng thái hiển thị ô PIN và nút Đặt hàng theo hình thức thanh toán
 
-function updatePaymentUI() {
+// Hàm cập nhật trạng thái hiển thị ô PIN và nút Đặt hàng theo hình thức thanh toán
+async function updatePaymentUI() {
     updateSubmitButtonText();
     const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
     const payMethod = payMethodRadio ? payMethodRadio.value : 'Tiền mặt';
@@ -2836,30 +2846,22 @@ function updatePaymentUI() {
 
     if (pinBox) {
         pinBox.style.display = isDiamond ? 'block' : 'none';
-        
-        // TỰ ĐỘNG CHÈN NÚT TẠO MÃ PIN VÀO KHUNG NẾU CHƯA CÓ
-        let existingCreateBtn = document.getElementById('btnCreateNewPin');
-        if (isDiamond && !existingCreateBtn) {
-            let createBtn = document.createElement('button');
-            createBtn.id = 'btnCreateNewPin';
-            createBtn.type = 'button';
-            createBtn.style.cssText = 'width: 100%; background: #ff9800; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer; font-size: 13px;';
-            createBtn.innerText = '🔑 Tạo / Đổi mã PIN 4 số cho Túi 💎';
-            createBtn.onclick = () => triggerCreatePinFromUI();
-            pinBox.appendChild(createBtn);
-        } else if (!isDiamond && existingCreateBtn) {
-            existingCreateBtn.remove();
-        }
     }
 
     if (isDiamond) {
-        if (!isDiamondPinVerified && btnSubmit) {
-            btnSubmit.style.display = 'none'; // Ẩn nút đặt hàng cho đến khi nhập đúng PIN
+        // Ẩn nút đặt hàng lúc đầu khi chưa xác thực PIN
+        if (btnSubmit) btnSubmit.style.display = 'none';
+
+        // Tự động quét ngầm ngay khi mở form thanh toán nếu đã có sẵn SĐT
+        const phone = document.getElementById('customerPhone').value.trim();
+        if (phone && phone.length >= 9) {
+            checkCustomerPinStatusOnServer(phone);
         }
     } else {
         if (pinInput) {
             pinInput.value = '';
             pinInput.disabled = false;
+            pinInput.removeAttribute('data-verified');
         }
         isDiamondPinVerified = false;
         let noticeBox = document.getElementById('pinSuccessNotice');
@@ -2874,20 +2876,44 @@ function updatePaymentUI() {
     document.getElementById('transferBox').style.display = 'none';
 }
 
-// Hàm hỗ trợ bấm nút tạo hoặc đổi mã PIN trực tiếp từ giao diện thanh toán
-async function triggerCreatePinFromUI() {
-    const phone = document.getElementById('customerPhone').value.trim();
+// 1 & 2. Quét ngầm phân biệt khách cũ (có PIN) và khách mới (chưa có PIN)
+async function checkCustomerPinStatusOnServer(phone) {
+    const oldNotice = document.getElementById('oldCustomerPinNotice');
+    const newPinBox = document.getElementById('newCustomerPinBox');
+
+    try {
+        let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
+        let data = await res.json();
+        let serverPin = String(data.pin || '').trim();
+
+        if (serverPin) {
+            // Khách hàng cũ: Hiện thông báo liên hệ chủ quán, KHÔNG CÓ NÚT BẤM ĐỔI
+            if (oldNotice) oldNotice.style.display = 'block';
+            if (newPinBox) newPinBox.style.display = 'none';
+        } else {
+            // Khách hàng mới: Hiện khung/nút cam tự tạo PIN lần đầu
+            if (oldNotice) oldNotice.style.display = 'none';
+            if (newPinBox) {
+                newPinBox.style.display = 'block';
+                newPinBox.innerHTML = `
+                    <button type="button" onclick="createNewCustomerPinAction('${phone}')" style="width: 100%; background: #ff9800; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 5px rgba(255,152,0,0.3);">
+                        🔑 Tạo mã PIN mới cho lần đầu
+                    </button>
+                `;
+            }
+        }
+    } catch (e) {
+        console.log("Lỗi quét ngầm PIN:", e);
+    }
+}
+
+// Xử lý khi khách mới bấm tạo PIN cam
+async function createNewCustomerPinAction(phone) {
     const pinInput = document.getElementById('customerDiamondPin');
     const pinVal = pinInput ? pinInput.value.trim() : '';
 
-    if (!phone || phone.length < 9) {
-        alert("⚠️ Vui lòng nhập số điện thoại khách hàng ở bên trên trước!");
-        document.getElementById('customerPhone').focus();
-        return;
-    }
-
     if (!pinVal || pinVal.length !== 4) {
-        alert("⚠️ Vui lòng nhập đúng 4 chữ số vào ô 'Nhập PIN 4 số' bên trên để làm mã PIN mới!");
+        alert("⚠️ Vui lòng nhập đúng 4 chữ số vào ô 'Nhập PIN 4 số' bên trên trước khi bấm tạo!");
         if (pinInput) pinInput.focus();
         return;
     }
@@ -2900,43 +2926,16 @@ async function triggerCreatePinFromUI() {
             body: JSON.stringify({ type: 'updateHatKim', phone: phone, pin: pinVal, amount: 0 })
         });
         
-        alert(`✅ Đã tạo/cập nhật mã PIN thành công cho SĐT ${phone}!\nBây giờ bạn hãy nhập lại 4 số PIN vừa tạo vào ô bên trên để xác thực thanh toán.`);
-        pinInput.value = '';
-        pinInput.focus();
+        alert(`✅ Đã tạo mã PIN thành công cho SĐT ${phone}!\nHệ thống sẽ tự động xác thực ngay bây giờ.`);
+        
+        document.getElementById('newCustomerPinBox').style.display = 'none';
+        verifyCustomerPinLive(pinVal);
     } catch (e) {
         alert("Lỗi kết nối khi tạo mã PIN. Vui lòng thử lại.");
     }
 }
 
-
-
-// Lắng nghe sự kiện gõ mã PIN
-document.addEventListener('input', function(e) {
-    if (e.target && e.target.id === 'customerDiamondPin') {
-        const pinVal = e.target.value.trim();
-        const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
-        const payMethod = payMethodRadio ? payMethodRadio.value : '';
-        const isDiamond = (payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương');
-
-        if (!isDiamond) return;
-
-        // Nếu khách đang sửa lại mã (chưa đủ 4 số) thì ẩn nút đặt hàng và gỡ trạng thái đã duyệt
-        if (pinVal.length < 4) {
-            e.target.removeAttribute('data-verified');
-            const btnSubmit = document.getElementById('btnSubmitOrder');
-            if (btnSubmit) btnSubmit.style.display = 'none';
-            let noticeBox = document.getElementById('pinSuccessNotice');
-            if (noticeBox) noticeBox.remove();
-            return;
-        }
-
-        // Khi gõ đủ 4 số -> tiến hành kiểm tra
-        if (pinVal.length === 4) {
-            verifyCustomerPinLive(pinVal);
-        }
-    }
-});
-
+// 3. Luồng thao tác chuẩn khi nhập đủ 4 số
 async function verifyCustomerPinLive(pin) {
     const phone = document.getElementById('customerPhone').value.trim();
     const pinInput = document.getElementById('customerDiamondPin');
@@ -2953,26 +2952,31 @@ async function verifyCustomerPinLive(pin) {
         let res = await fetch(`${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`);
         let data = await res.json();
         
-        let serverPin = String(data.pin || '1234'); 
-        let balance = (data && data.hatKim) ? parseInt(data.hatKim) : 0;
+        let serverPin = String(data.pin || '').trim(); 
+        let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
 
         let foodTotal = calculateFoodSubtotal();
-        let shipFee = getShippingFee();
         let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
-        let total = Math.max(0, foodTotal + shipFee - (discountValK * 1000));
-        let requiredDiamonds = Math.round((total / 1000) * 20);
+        let foodTotalAfterDiscount = Math.max(0, foodTotal - (discountValK * 1000));
+        let requiredDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20);
+
+        if (!serverPin) {
+            alert("⚠️ Tài khoản của bạn chưa có mã PIN. Vui lòng nhập 4 số và bấm nút 'Tạo mã PIN mới cho lần đầu' bên dưới!");
+            if (pinInput) pinInput.value = '';
+            return;
+        }
 
         if (pin === serverPin) {
             if (balance < requiredDiamonds) {
-                alert(`❌ Số dư Túi 💎 không đủ!\nCần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 nhưng bạn chỉ có ${balance.toLocaleString('vi-VN')} 💎.`);
+                alert(`❌ Số dư Túi 💎 không đủ!\nCần ${requiredDiamonds.toLocaleString('vi-VN')} 💎 cho tiền món nhưng bạn chỉ có ${balance.toLocaleString('vi-VN')} 💎.`);
                 if (pinInput) pinInput.value = '';
                 return;
             }
 
-            // ĐÚNG PIN: Khóa ô nhập PIN lại để không cho sửa, hiển thị thông báo thành công và HIỆN NÚT ĐẶT HÀNG[span_3](start_span)[span_3](end_span)
+            // Khóa cứng ô input lại, hiện thông báo thành công và BẬT NGAY NÚT ĐẶT HÀNG
+            isDiamondPinVerified = true;
             if (pinInput) {
-                pinInput.disabled = true; // Khóa ô input
-                pinInput.setAttribute('data-verified', 'true');
+                pinInput.disabled = true; 
             }
 
             let noticeBox = document.getElementById('pinSuccessNotice');
@@ -2982,23 +2986,25 @@ async function verifyCustomerPinLive(pin) {
                 noticeBox.style.cssText = 'background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 6px; text-align: center;';
                 document.getElementById('diamondPinBox').appendChild(noticeBox);
             }
-            noticeBox.innerHTML = `✅ Nhập mã PIN thành công! Bạn hãy tiến hành đặt hàng bằng <b>${balance.toLocaleString('vi-VN')} 💎</b> hiện có trong túi. <br><a href="javascript:void(0)" onclick="resetPinInput()" style="color:#d32f2f; text-decoration:underline; font-size:11px;">(Nhập lại PIN khác)</a>`;
+            
+            noticeBox.innerHTML = `✅ Xác thực PIN thành công!<br>💎 Ví có: <b>${balance.toLocaleString('vi-VN')} 💎</b><br>🛒 Thanh toán tiền món: <b>${requiredDiamonds.toLocaleString('vi-VN')} 💎</b>`;
             
             if(btnSubmit) {
-                btnSubmit.style.display = 'block'; // Hiển thị nút đặt hàng
+                btnSubmit.style.display = 'block';
                 btnSubmit.disabled = false;
                 btnSubmit.classList.add('pulse-attention');
                 btnSubmit.innerHTML = `🚀 ĐẶT HÀNG NGAY BẰNG TÚI 💎<br><span style="font-size: 11px; font-weight: normal;">(Trừ trực tiếp vào ví kim cương)</span>`;
             }
         } else {
-            alert("❌ Mã PIN Túi 💎 không chính xác! Vui lòng kiểm tra lại.");
+            alert("❌ Mã PIN 4 số không chính xác! Vui lòng nhập lại.");
             if (pinInput) pinInput.value = '';
-            if (btnSubmit) btnSubmit.style.display = 'none'; // Giữ nút đặt hàng ở trạng thái ẩn nếu sai PIN[span_4](start_span)[span_4](end_span)
+            if (btnSubmit) btnSubmit.style.display = 'none';
         }
     } catch (err) {
         console.error("Lỗi xác thực PIN:", err);
     }
 }
+
 
 // Hàm hỗ trợ cho phép khách bấm vào "Nhập lại PIN khác" nếu lỡ gõ nhầm
 function resetPinInput() {
