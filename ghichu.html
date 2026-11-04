@@ -20,19 +20,20 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg); color: var(--text); padding: 8px; height: 100vh; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+    body { background-color: var(--bg); color: var(--text); padding: 8px; height: 100vh; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 
-    /* MÀN HÌNH CHÍNH TÍCH HỢP Ô NHẬP LIỆU TO & TỰ TÍNH TỔNG */
+    /* MÀN HÌNH CHÍNH TEXTBOX */
     .monitor-screen {
-      flex: 1.3;
+      flex: 1.5;
       background: var(--panel-bg);
       border: 2px solid var(--border);
       border-radius: 12px;
-      padding: 10px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+      gap: 4px;
     }
 
     .monitor-header {
@@ -40,30 +41,60 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
-      margin-bottom: 6px;
+      padding-bottom: 4px;
     }
 
-    .monitor-title { font-size: 0.85rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 6px; }
+    .monitor-title { font-size: 0.8rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 4px; }
     
-    /* HIỂN THỊ TỔNG SỐ TỰ ĐỘNG BÊN GÓC PHẢI TIÊU ĐỀ */
-    .total-badge { background: #0369a1; color: #bae6fd; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
+    /* PHẦN TỔNG GIÁ TIỀN TO RÕ HƠN */
+    .total-badge { 
+      background: #0369a1; 
+      color: #e0f2fe; 
+      padding: 4px 10px; 
+      border-radius: 6px; 
+      font-size: 0.95rem; 
+      font-weight: 800; 
+      letter-spacing: 0.5px;
+      display: none; 
+      border: 1px solid #38bdf8;
+    }
 
-    /* KHUNG SOẠN THẢO - BẮT BUỘC FONT 16PX TRÁNH ZOOM IPHONE */
+    .btn-clear-text { background: #475569; color: #f1f5f9; border: none; padding: 3px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
+    .btn-clear-text:hover { background: #64748b; }
+
+    /* TEXTBOX LỚN - CHỮ TO RÕ HƠN */
     textarea.monitor-display-box {
-      flex: 1;
+      flex: 1.4;
       width: 100%;
       background: #090d16;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px;
-      font-size: 16px !important;
+      padding: 8px;
+      font-size: 18px !important; /* Tăng kích thước chữ to hơn */
+      font-weight: 600;
       line-height: 1.5;
-      color: #e2e8f0;
+      color: #f8fafc;
       outline: none;
       resize: none;
     }
     textarea.monitor-display-box:focus { border-color: #38bdf8; }
+
+    /* TEXTBOX NHỎ THU NGẮN CHIỀU CAO - CHỈ HIỂN THỊ 1 DÒNG GẦN NHẤT */
+    textarea.log-time-box {
+      flex: 0.3;
+      min-height: 26px;
+      max-height: 32px;
+      width: 100%;
+      background: #05080e;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px !important;
+      color: #38bdf8;
+      outline: none;
+      resize: none;
+      overflow: hidden;
+    }
 
     /* KHU VỰC ĐIỀU KHIỂN THAO TÁC Ở DƯỚI */
     .control-panel {
@@ -71,7 +102,7 @@
       background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 10px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -82,13 +113,17 @@
     .tab-btn { flex: 1; padding: 6px; background: #334155; border: none; font-weight: 600; cursor: pointer; color: var(--text-sub); border-radius: 6px; font-size: 0.8rem; text-align: center; }
     .tab-btn.active { background: var(--primary); color: white; }
 
-    .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .sub-tabs { display: flex; gap: 4px; margin-bottom: 2px; }
+    .sub-tab-btn { flex: 1; padding: 4px; background: #1e293b; border: 1px solid var(--border); font-weight: 600; cursor: pointer; color: var(--text-sub); border-radius: 4px; font-size: 0.75rem; text-align: center; }
+    .sub-tab-btn.active { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    .action-row { display: grid; grid-template-columns: 1fr; gap: 4px; }
     .form-group { display: flex; flex-direction: column; gap: 2px; }
     label { font-size: 0.7rem; font-weight: 600; color: var(--text-sub); }
 
     input, select {
       width: 100%;
-      padding: 8px 10px;
+      padding: 6px 8px;
       background: #090d16;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -98,7 +133,10 @@
     }
     input:focus, select:focus { border-color: var(--primary); }
 
-    .btn { background: var(--primary); color: white; border: none; padding: 8px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; text-align: center; }
+    .search-container { position: relative; display: flex; align-items: center; }
+    .search-clear-btn { position: absolute; right: 8px; background: none; border: none; color: #94a3b8; font-size: 14px; cursor: pointer; display: none; }
+
+    .btn { background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; text-align: center; }
     .btn:hover { background: var(--primary-hover); }
     .btn-success { background: var(--success); }
     .btn-success:hover { background: var(--success-hover); }
@@ -106,120 +144,170 @@
     .btn-danger:hover { background: var(--danger-hover); }
 
     .quick-list-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-    .quick-item { background: #334155; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; color: #f1f5f9; border: 1px solid transparent; }
+    .quick-item { 
+      background: #334155; 
+      padding: 5px 8px; 
+      border-radius: 6px; 
+      font-size: 0.75rem; 
+      cursor: pointer; 
+      white-space: nowrap; 
+      color: #f1f5f9; 
+      border: 1px solid transparent; 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+    }
     .quick-item:hover { border-color: var(--primary); background: #475569; }
     .quick-item.active-item { border-color: #38bdf8; background: #0284c7; }
     
+    .delete-item-inline {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: none;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .delete-item-inline:hover { background: var(--danger); color: white; }
+
     .sync-status { font-size: 0.7rem; color: var(--text-sub); }
   </style>
 </head>
 <body>
 
-  <!-- MÀN HÌNH CHÍNH VỪA NHẬP VỪA TỰ TÍNH TỔNG SỐ -->
+  <!-- MÀN HÌNH CHÍNH TEXTBOX & LOG TIME BOX -->
   <div class="monitor-screen">
     <div class="monitor-header">
-      <div class="monitor-title" id="monitorTitle">📝 Soạn Thảo & Kho</div>
+      <div class="monitor-title" id="monitorTitle">📝 Zalo Chat Nhập Liệu</div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <span class="total-badge" id="autoSumBadge">Tổng: 0</span>
+        <button class="btn-clear-text" onclick="clearMonitorText()">❌ Xóa Nhanh</button>
+        <span class="total-badge" id="autoSumBadge">Tổng: 0đ</span>
         <div class="sync-status" id="syncStatus">Sẵn sàng</div>
       </div>
     </div>
-    <!-- KHUNG TEXTAREA KÈM SỰ KIỆN TỰ TÍNH TỔNG KHI GÕ -->
-    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Nhập theo dòng: Tên [Số lượng]&#10;VD:&#10;Tra den 60&#10;Tac 20" oninput="calculateAutoSum()"></textarea>
+    <!-- TEXTBOX LỚN (CHỮ TO) -->
+    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="calculateAutoSum()"></textarea>
+    
+    <!-- TEXTBOX NHỎ (THU NGẮN - CHỈ HIỆN 1 DÒNG GẦN NHẤT) -->
+    <textarea class="log-time-box" id="logTimeDisplay" readonly placeholder="Lần lưu gần nhất..."></textarea>
   </div>
 
   <!-- BẢNG ĐIỀU KHIỂN THAO TÁC Ở DƯỚI -->
   <div class="control-panel">
+    <!-- TABS CHÍNH -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('Nguyên liệu gần hết')">⚠️ Nguyên Liệu Gần Hết</button>
-      <button class="tab-btn" onclick="switchTab('Công thức làm nguyên liệu')">📖 Công Thức Pha Chế</button>
+      <button class="tab-btn active" id="tabNguyenLieuBtn" onclick="switchMainTab('Nguyên liệu')">📦 Nguyên Liệu</button>
+      <button class="tab-btn" id="tabCongThucBtn" onclick="switchMainTab('Công thức')">📖 Công Thức</button>
     </div>
 
-    <div class="action-row">
-      <div class="form-group">
-        <label for="newTen">Tên nguyên liệu / món chung</label>
-        <input type="text" id="newTen" placeholder="Tên tiêu đề mục...">
-      </div>
-      <div class="form-group">
-        <label for="newLoai">Loại mục</label>
-        <select id="newLoai" onchange="toggleNewCategory()">
-          <option value="Nguyên liệu gần hết">Gần hết</option>
-          <option value="Công thức làm nguyên liệu">Công thức</option>
-        </select>
-      </div>
+    <!-- SUB TABS NGUYÊN LIỆU -->
+    <div class="sub-tabs" id="subTabsNguyenLieu">
+      <button class="sub-tab-btn active" id="subCanMuaBtn" onclick="switchSubTab('Cần mua')">🛒 Cần Mua</button>
+      <button class="sub-tab-btn" id="subChiTieuBtn" onclick="switchSubTab('Chi tiêu trong ngày')">💸 Chi Tiêu Trong Ngày</button>
     </div>
 
-    <div class="action-row" id="recipeExtraRow" style="display: none;">
+    <!-- SUB TABS CÔNG THỨC -->
+    <div class="sub-tabs" id="subTabsCongThuc" style="display: none;">
+      <button class="sub-tab-btn active" id="subLamNLBtn" onclick="switchSubTab('Làm nguyên liệu')">🧪 Làm Nguyên Liệu</button>
+      <button class="sub-tab-btn" id="subPhaMonBtn" onclick="switchSubTab('Công thức pha món')">☕ Công Thức Pha Món</button>
+    </div>
+
+    <!-- HÀNG TÊN MỤC (CHỈ HIỆN Ở TAB CÔNG THỨC) -->
+    <div class="action-row" id="titleInputRow" style="display: none;">
       <div class="form-group">
-        <label for="newDanhMuc">Danh mục</label>
-        <input type="text" id="newDanhMuc" placeholder="Nhập danh mục...">
-      </div>
-      <div class="form-group">
-        <label for="searchCategory">Lọc theo danh mục</label>
-        <select id="searchCategory" onchange="filterQuickList()">
-          <option value="">-- Tất cả --</option>
-        </select>
+        <label for="newTen">Tên món / công thức</label>
+        <input type="text" id="newTen" placeholder="Nhập tên tiêu đề mục...">
       </div>
     </div>
 
-    <div class="action-row">
+    <!-- TÌM KIẾM SIÊU THÔNG MINH (CHỈ HIỆN Ở TAB CÔNG THỨC) -->
+    <div class="action-row" id="searchRow" style="display: none;">
       <div class="form-group">
-        <label for="searchQuery">🔍 Tìm nhanh</label>
-        <input type="text" id="searchQuery" placeholder="Nhập tên cần tìm..." oninput="filterQuickList()">
-      </div>
-      <div class="form-group">
-        <label for="filterDate">Lọc ngày</label>
-        <input type="date" id="filterDate" onchange="filterQuickList()">
+        <label for="searchQuery">⚡ Tìm kiếm công thức siêu thông minh</label>
+        <div class="search-container">
+          <input type="text" id="searchQuery" placeholder="Gõ tên món/nguyên liệu (không dấu)..." oninput="handleSearchInput()">
+          <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearchInput()">✖</button>
+        </div>
       </div>
     </div>
 
+    <!-- DANH SÁCH MỤC CHỌN KÈM NÚT XÓA RIÊNG -->
     <div class="quick-list-bar" id="quickListBar">
       <div style="color: var(--text-sub); font-size: 0.8rem;">Đang tải dữ liệu...</div>
     </div>
 
-    <div style="display: flex; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 6px;">
-      <button class="btn btn-success" onclick="saveData()" style="flex: 1.5;">💾 Lưu Mục Này</button>
-      <button class="btn btn-danger" onclick="deleteByDate()" style="flex: 1;">🗑️ Xóa Ngày</button>
-      <input type="date" id="deleteDate" style="flex: 1;">
+    <!-- NÚT LƯU VÀ XÓA MỤC PIN -->
+    <div style="display: flex; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 4px;">
+      <button class="btn btn-success" onclick="saveData()" style="flex: 2;">💾 Lưu Mục Này</button>
+      <button class="btn btn-danger" id="deleteItemBtn" onclick="deleteSelectedItemWithPin()" style="flex: 1; display: none;">🗑️ Xóa Mục Này</button>
     </div>
   </div>
 
   <script>
-    // Đã tích hợp sẵn URL Google Apps Script khớp với qldon.html
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
 
     let rawData = [];
-    let currentTab = "Nguyên liệu gần hết";
+    let currentMainTab = "Nguyên liệu";
+    let currentSubTab = "Cần mua";
     let selectedItemId = null;
+    let searchDebounceTimer = null;
 
     window.onload = function() {
-      document.getElementById('deleteDate').valueAsDate = new Date();
       fetchData();
     };
 
-    function toggleNewCategory() {
-      const loai = document.getElementById('newLoai').value;
-      const isRecipe = (loai === "Công thức làm nguyên liệu");
-      document.getElementById('recipeExtraRow').style.display = isRecipe ? "grid" : "none";
+    function clearMonitorText() {
+      document.getElementById('monitorDisplay').value = '';
+      document.getElementById('logTimeDisplay').value = '';
+      calculateAutoSum();
     }
 
-    // HÀM TỰ ĐỘNG QUÉT VÀ CỘNG DỒN SỐ TỪ CÁC DÒNG TEXTAREA
+    function removeAccents(str) {
+      if (!str) return '';
+      return str.normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .toLowerCase();
+    }
+
+    function getCurrentDateTimeStr() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('vi-VN');
+      return `${time} ${date}`;
+    }
+
+    // LOGIC TÍNH TỔNG TIỀN: CHỈ CỘNG CÁC SỐ CÓ KÈM ĐƠN VỊ TIỀN (k, đ, ngàn, nghìn) PHÍA SAU
     function calculateAutoSum() {
+      const autoSumBadge = document.getElementById('autoSumBadge');
+      if (currentMainTab !== "Nguyên liệu") {
+        autoSumBadge.style.display = "none";
+        return;
+      }
+
+      autoSumBadge.style.display = "inline-block";
       const text = document.getElementById('monitorDisplay').value;
       const lines = text.split('\n');
       let total = 0;
 
       lines.forEach(line => {
-        const matches = line.match(/-?\d+(\.\d+)?/g);
-        if (matches) {
-          const lastNum = parseFloat(matches[matches.length - 1]);
-          if (!isNaN(lastNum)) {
-            total += lastNum;
+        const regexPrice = /(\d[\d\.,]*)\s*(k|đ|ngàn|nghin)/gi;
+        let match;
+        while ((match = regexPrice.exec(line)) !== null) {
+          let numStr = match[1].replace(/\./g, '').replace(/,/g, '');
+          let val = parseFloat(numStr);
+          if (!isNaN(val)) {
+            const unit = match[2].toLowerCase();
+            if (unit === 'k') {
+              val = val * 1000;
+            }
+            total += val;
           }
         }
       });
 
-      document.getElementById('autoSumBadge').innerText = `Tổng: ${total}`;
+      autoSumBadge.innerText = `Tổng: ${total.toLocaleString('vi-VN')}đ`;
     }
 
     function fetchData() {
@@ -227,8 +315,7 @@
       fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
-          rawData = data;
-          updateCategoryDropdown();
+          rawData = Array.isArray(data) ? data : [];
           filterQuickList();
           document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
         })
@@ -237,44 +324,81 @@
         });
     }
 
-    function switchTab(tabName) {
-      currentTab = tabName;
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText.includes(tabName === 'Nguyên liệu gần hết' ? 'Gần Hết' : 'Phao Chế'));
-      });
-      document.getElementById('newLoai').value = tabName;
-      toggleNewCategory();
+    function switchMainTab(mainTab) {
+      currentMainTab = mainTab;
+      document.getElementById('tabNguyenLieuBtn').classList.toggle('active', mainTab === 'Nguyên liệu');
+      document.getElementById('tabCongThucBtn').classList.toggle('active', mainTab === 'Công thức');
+
+      const titleInputRow = document.getElementById('titleInputRow');
+      const searchRow = document.getElementById('searchRow');
+      const deleteItemBtn = document.getElementById('deleteItemBtn');
+      const logTimeBox = document.getElementById('logTimeDisplay');
+
+      if (mainTab === 'Nguyên liệu') {
+        document.getElementById('subTabsNguyenLieu').style.display = 'flex';
+        document.getElementById('subTabsCongThuc').style.display = 'none';
+        titleInputRow.style.display = 'none';
+        searchRow.style.display = 'none';
+        deleteItemBtn.style.display = 'none';
+        logTimeBox.style.display = 'block';
+        currentSubTab = 'Cần mua';
+        document.getElementById('subCanMuaBtn').classList.add('active');
+        document.getElementById('subChiTieuBtn').classList.remove('active');
+      } else {
+        document.getElementById('subTabsNguyenLieu').style.display = 'none';
+        document.getElementById('subTabsCongThuc').style.display = 'flex';
+        titleInputRow.style.display = 'grid';
+        searchRow.style.display = 'grid';
+        deleteItemBtn.style.display = 'inline-block';
+        logTimeBox.style.display = 'none';
+        currentSubTab = 'Làm nguyên liệu';
+        document.getElementById('subLamNLBtn').classList.add('active');
+        document.getElementById('subPhaMonBtn').classList.remove('active');
+      }
+
+      calculateAutoSum();
       filterQuickList();
     }
 
-    function updateCategoryDropdown() {
-      const categories = [...new Set(rawData
-        .filter(item => item.loai === "Công thức làm nguyên liệu" && item.danhmuc)
-        .map(item => item.danhmuc))];
+    function switchSubTab(subTab) {
+      currentSubTab = subTab;
+      if (currentMainTab === 'Nguyên liệu') {
+        document.getElementById('subCanMuaBtn').classList.toggle('active', subTab === 'Cần mua');
+        document.getElementById('subChiTieuBtn').classList.toggle('active', subTab === 'Chi tiêu trong ngày');
+      } else {
+        document.getElementById('subLamNLBtn').classList.toggle('active', subTab === 'Làm nguyên liệu');
+        document.getElementById('subPhaMonBtn').classList.toggle('active', subTab === 'Công thức pha món');
+      }
+      filterQuickList();
+    }
 
-      const select = document.getElementById('searchCategory');
-      select.innerHTML = '<option value="">-- Tất cả --</option>';
-      categories.forEach(cat => {
-        select.innerHTML += `<option value="${cat}">${cat}</option>`;
-      });
+    function handleSearchInput() {
+      const val = document.getElementById('searchQuery').value;
+      document.getElementById('searchClearBtn').style.display = val ? 'block' : 'none';
+
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        filterQuickList();
+      }, 300);
+    }
+
+    function clearSearchInput() {
+      document.getElementById('searchQuery').value = '';
+      document.getElementById('searchClearBtn').style.display = 'none';
+      filterQuickList();
     }
 
     function filterQuickList() {
-      const filterDate = document.getElementById('filterDate').value;
-      const searchCategory = document.getElementById('searchCategory').value;
-      const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
+      const searchQuery = removeAccents(document.getElementById('searchQuery').value.trim());
 
-      let filtered = rawData.filter(item => item.loai === currentTab);
+      let filtered = rawData.filter(item => item.loai === currentSubTab);
 
-      if (filterDate) filtered = filtered.filter(item => item.ngay === filterDate);
-      if (currentTab === "Công thức làm nguyên liệu" && searchCategory) {
-        filtered = filtered.filter(item => item.danhmuc === searchCategory);
-      }
-      if (searchQuery) {
-        filtered = filtered.filter(item => 
-          (item.ten && item.ten.toLowerCase().includes(searchQuery)) ||
-          (item.noidung && item.noidung.toLowerCase().includes(searchQuery))
-        );
+      if (currentMainTab === "Công thức" && searchQuery) {
+        filtered = filtered.filter(item => {
+          const nameClean = removeAccents(item.ten);
+          const contentClean = removeAccents(item.noidung);
+          return nameClean.includes(searchQuery) || contentClean.includes(searchQuery);
+        });
       }
 
       renderQuickBar(filtered);
@@ -284,15 +408,26 @@
       const bar = document.getElementById('quickListBar');
       if (list.length === 0) {
         bar.innerHTML = `<div style="color: var(--text-sub); font-size: 0.8rem; padding: 4px;">Chưa có dữ liệu. Hãy nhập ở dưới để tạo mới!</div>`;
-        document.getElementById('newTen').value = '';
+        if (currentMainTab === 'Công thức') {
+          document.getElementById('newTen').value = '';
+        }
         document.getElementById('monitorDisplay').value = '';
+        document.getElementById('logTimeDisplay').value = '';
+        selectedItemId = null;
         calculateAutoSum();
         return;
       }
 
       let html = '';
       list.forEach((item) => {
-        html += `<div class="quick-item" id="item-${item.id}" onclick='displayOnMonitor(${JSON.stringify(item)})'>📌 ${item.ten}</div>`;
+        // Chỉ hiển thị tên gọn gàng (ví dụ: Cần mua hoặc Chi tiêu trong ngày) bỏ ngày tháng thừa
+        let displayName = item.ten ? item.ten.split(' - ')[0] : item.loai;
+        html += `
+          <div class="quick-item" id="item-${item.id}">
+            <span onclick='displayOnMonitor(${JSON.stringify(item)})' style="flex:1; cursor:pointer;">📌 ${displayName}</span>
+            <button class="delete-item-inline" onclick="deleteSpecificItem('${item.id}', '${displayName}')" title="Xóa mục này">🗑️</button>
+          </div>
+        `;
       });
       bar.innerHTML = html;
       
@@ -305,26 +440,78 @@
       const activeEl = document.getElementById(`item-${item.id}`);
       if (activeEl) activeEl.classList.add('active-item');
 
-      document.getElementById('monitorTitle').innerHTML = `📝 Đang xem: <span style="color:#fff;">${item.ten}</span> (${item.ngay})`;
-      document.getElementById('newTen').value = item.ten || '';
-      document.getElementById('newDanhMuc').value = item.danhmuc || '';
-      document.getElementById('monitorDisplay').value = item.noidung || '';
+      let displayName = item.ten ? item.ten.split(' - ')[0] : item.loai;
+      document.getElementById('monitorTitle').innerHTML = `📝 Đang xem: <span style="color:#fff;">${displayName}</span>`;
       
+      if (currentMainTab === 'Công thức') {
+        document.getElementById('newTen').value = item.ten || '';
+      }
+      
+      if (currentMainTab === 'Nguyên liệu') {
+        const fullText = item.noidung || '';
+        const splitParts = fullText.split('---LỊCH SỬ LƯU---');
+        document.getElementById('monitorDisplay').value = (splitParts[0] || '').trim();
+        // Chỉ lấy đúng dòng lịch sử lưu gần nhất hiển thị vào ô textbox nhỏ
+        const logs = (splitParts[1] || '').trim().split('\n');
+        document.getElementById('logTimeDisplay').value = logs.length > 0 ? logs[logs.length - 1] : '';
+      } else {
+        document.getElementById('monitorDisplay').value = item.noidung || '';
+      }
+
       calculateAutoSum();
     }
 
+    function deleteSpecificItem(itemId, itemName) {
+      const pin = prompt(`🔐 Nhập mã PIN chủ quán để xóa mục "${itemName}":`);
+      if (!pin) return;
+
+      document.getElementById('syncStatus').innerText = "Đang xóa...";
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "DELETE_SINGLE_NOTE", id: itemId, pin: pin })
+      })
+      .then(res => res.json())
+      .then(res => {
+        alert(res.message);
+        if (res.status === "success") fetchData();
+        else document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+      });
+    }
+
+    function deleteSelectedItemWithPin() {
+      if (!selectedItemId) return alert("Vui lòng chọn mục cần xóa!");
+      deleteSpecificItem(selectedItemId, currentSubTab);
+    }
+
     function saveData() {
-      const ten = document.getElementById('newTen').value.trim();
-      const noidung = document.getElementById('monitorDisplay').value.trim();
-      
-      if (!ten) return alert("Vui lòng nhập Tên mục ở bảng điều khiển bên dưới!");
+      let ten = "";
+      let currentText = document.getElementById('monitorDisplay').value.trim();
+      const timeStr = getCurrentDateTimeStr();
+
+      if (currentMainTab === 'Nguyên liệu') {
+        // Chỉ lưu tên gọn gàng, bỏ ngày tháng thừa ở tiêu đề
+        ten = currentSubTab;
+        
+        // Cập nhật đúng duy nhất dòng thời gian lần lưu gần nhất vào ô textbox nhỏ
+        const latestLog = `Đã lưu lúc: ${timeStr}`;
+        document.getElementById('logTimeDisplay').value = latestLog;
+      } else {
+        ten = document.getElementById('newTen').value.trim();
+        if (!ten) return alert("Vui lòng nhập Tên món / công thức!");
+      }
+
+      // Lưu kết hợp nội dung textbox lớn và cập nhật log lần lưu gần nhất
+      const existingLogs = document.getElementById('logTimeDisplay').value.trim();
+      const combinedNoidung = currentMainTab === 'Nguyên liệu' 
+        ? `${currentText}\n\n---LỊCH SỬ LƯU---\n${existingLogs}` 
+        : currentText;
 
       const payload = {
         action: "ADD",
-        loai: document.getElementById('newLoai').value,
-        danhmuc: document.getElementById('newDanhMuc').value.trim(),
+        loai: currentSubTab,
+        danhmuc: currentMainTab,
         ten: ten,
-        noidung: noidung,
+        noidung: combinedNoidung,
         ngay: new Date().toISOString().split('T')[0]
       };
 
@@ -332,22 +519,6 @@
       fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(res => {
-        fetchData();
-      });
-    }
-
-    function deleteByDate() {
-      const targetDate = document.getElementById('deleteDate').value;
-      if (!targetDate) return alert("Chọn ngày cần xóa!");
-      if (!confirm(`Xóa toàn bộ dữ liệu ngày ${targetDate} trên Google Sheet?`)) return;
-
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "DELETE_BY_DATE", ngay: targetDate })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
         fetchData();
       });
     }
