@@ -22,6 +22,53 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://dhshopcosmetic4-ops.github.io/KimBling/menu.html" />
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+    // Hàm pháo hoa được sinh ra trực tiếp bên trong popup thông báo
+    function triggerOrderFireworksInsidePopup(popupElement) {
+        try {
+            if (typeof confetti === 'function' && popupElement) {
+                // Tạo canvas nằm đè bên trong chính cái popup đó
+                const canvas = document.createElement('canvas');
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = '999999'; // Nổi lên trên cùng của popup
+                popupElement.appendChild(canvas);
+
+                const myConfetti = confetti.create(canvas, { resize: true });
+
+                myConfetti({
+                    particleCount: 120,
+                    spread: 90,
+                    origin: { y: 0.5 }
+                });
+                setTimeout(() => {
+                    myConfetti({
+                        particleCount: 70,
+                        angle: 60,
+                        spread: 70,
+                        origin: { x: 0.2, y: 0.6 }
+                    });
+                }, 250);
+                setTimeout(() => {
+                    myConfetti({
+                        particleCount: 70,
+                        angle: 120,
+                        spread: 70,
+                        origin: { x: 0.8, y: 0.6 }
+                    });
+                }, 400);
+            }
+        } catch(e) {
+            console.log("Lỗi pháo hoa trong popup:", e);
+        }
+    }
+</script>
+
 
     <style>
 
@@ -1291,6 +1338,56 @@
     </div>
 
     <script>
+
+// ================= ÂM THANH & PHÁO HOA ĐẶT HÀNG THÀNH CÔNG =================
+function playOrderSuccessSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // Đồ, Mi, Sol, Đồ cao
+        notes.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            const startTime = ctx.currentTime + (index * 0.12);
+            gain.gain.setValueAtTime(0.2, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + 0.3);
+        });
+    } catch(e) {}
+}
+
+function triggerOrderFireworks() {
+    try {
+        confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+        }, 250);
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 400);
+    } catch(e) {}
+}
+
 
 // Hàm gọi làm mới số dư khi khách bấm vào ô Kim Cương
 function reloadUserDiamonds() {
@@ -3600,9 +3697,17 @@ function resetPinInput() {
             </button>
         </div>
     `;
-    document.body.appendChild(modalOverlay);
+            document.body.appendChild(modalOverlay);
+
+    // Phát âm thanh chúc mừng
+    playOrderSuccessSound();
+    
+    // Gọi pháo hoa bùng nổ trực tiếp TRONG cái popup vừa tạo
+    triggerOrderFireworksInsidePopup(modalOverlay.firstElementChild);
 
     updateSubmitButtonText();
+
+
     btnSubmit.disabled = false;
     btnSubmit.classList.add('pulse-attention');
 
