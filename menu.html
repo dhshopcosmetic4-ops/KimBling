@@ -1442,31 +1442,16 @@ async function verifyCustomerPinLive(pin) {
         let serverPin = String(data.pin || '').trim(); 
         let balance = (data && data.hatKim) ? parseInt(data.hatKim, 10) : 0;
 
-        // Chỉ tính tiền món cho Túi Kim Cương (không bao gồm ship)
+        // CHỈ TÍNH TIỀN MÓN (đã trừ mã giảm giá nếu có), KHÔNG CỘNG PHÍ SHIP VÀO ĐIỂM CẦN TRỪ
         let foodTotal = calculateFoodSubtotal();
         let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
         let foodTotalAfterDiscount = Math.max(0, foodTotal - (discountValK * 1000));
-        let requiredDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20); // Hệ số x20 giá trị tiền món
+        let requiredDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20); 
 
-        // Xử lý trường hợp tài khoản có số dư nhưng CHƯA CÓ MÃ PIN (Cột PIN để trống)
-        let createPinBtn = document.getElementById('btnCreateNewPin');
         if (!serverPin) {
-            if (!createPinBtn) {
-                createPinBtn = document.createElement('button');
-                createPinBtn.id = 'btnCreateNewPin';
-                createPinBtn.type = 'button';
-                createPinBtn.style.cssText = 'width: 100%; background: #ff9800; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer;';
-                createPinBtn.innerText = '🔑 Tạo mã PIN mới cho tài khoản';
-                createPinBtn.onclick = () => createNewCustomerPin(phone, pin);
-                document.getElementById('diamondPinBox').appendChild(createPinBtn);
-            } else {
-                createPinBtn.style.display = 'block';
-            }
-            alert("⚠️ Tài khoản của bạn chưa có mã PIN. Vui lòng bấm nút 'Tạo mã PIN mới' vừa xuất hiện bên dưới ô nhập!");
-            if (btnSubmit) btnSubmit.style.display = 'none';
+            alert("⚠️ Tài khoản của bạn chưa có mã PIN. Vui lòng nhập 4 số và bấm nút 'Tạo mã PIN mới cho lần đầu' bên dưới!");
+            if (pinInput) pinInput.value = '';
             return;
-        } else {
-            if (createPinBtn) createPinBtn.style.display = 'none';
         }
 
         if (pin === serverPin) {
@@ -1476,7 +1461,6 @@ async function verifyCustomerPinLive(pin) {
                 return;
             }
 
-            // ĐÚNG PIN: Khóa cứng ô input lại không cho xóa/sửa, không lưu localStorage
             isDiamondPinVerified = true;
             if (pinInput) {
                 pinInput.disabled = true; 
@@ -1490,15 +1474,15 @@ async function verifyCustomerPinLive(pin) {
                 document.getElementById('diamondPinBox').appendChild(noticeBox);
             }
             
-            // Thông báo số 💎 khách có và số 💎 thanh toán tiền món (không gồm ship)
-            noticeBox.innerHTML = `✅ Xác thực PIN thành công!<br>💎 Ví của bạn có: <b>${balance.toLocaleString('vi-VN')} 💎</b><br>🛒 Thanh toán tiền món: <b>${requiredDiamonds.toLocaleString('vi-VN')} 💎</b> (Chưa gồm ship).`;
+            let shipFee = getShippingFee();
+            let shipNoteText = shipFee > 0 ? ` + <b>${formatPrice(shipFee)}</b> tiền ship mặt` : ` (Freeship)`;
+            noticeBox.innerHTML = `✅ Xác thực PIN thành công!<br>💎 Ví có: <b>${balance.toLocaleString('vi-VN')} 💎</b><br>🛒 Trừ tiền món: <b>${requiredDiamonds.toLocaleString('vi-VN')} 💎</b>${shipNoteText}.`;
             
-            // HIỆN NÚT BẮT ĐẦU THANH TOÁN
             if(btnSubmit) {
                 btnSubmit.style.display = 'block';
                 btnSubmit.disabled = false;
                 btnSubmit.classList.add('pulse-attention');
-                btnSubmit.innerHTML = `🚀 XÁC NHẬN TRỪ ${requiredDiamonds.toLocaleString('vi-VN')} 💎 NGAY`;
+                btnSubmit.innerHTML = `🚀 ĐẶT HÀNG NGAY (${requiredDiamonds.toLocaleString('vi-VN')} 💎)<br><span style="font-size: 11px; font-weight: normal;">(Phí ship thanh toán tiền mặt khi nhận hàng)</span>`;
             }
         } else {
             alert("❌ Mã PIN 4 số không chính xác! Vui lòng nhập lại.");
@@ -1509,6 +1493,7 @@ async function verifyCustomerPinLive(pin) {
         console.error("Lỗi xác thực PIN:", err);
     }
 }
+
 
 // Hàm hỗ trợ tạo mã PIN mới cho tài khoản số mới đã có 💎 nhưng chưa có PIN
 async function createNewCustomerPin(phone, pin) {
@@ -2765,48 +2750,59 @@ const STORE_LNG = 106.631035;
         }
 
                                 function updateCartDisplay() {
-            let foodTotal = calculateFoodSubtotal();
-            let shipFee = getShippingFee();
+    let foodTotal = calculateFoodSubtotal();
+    let shipFee = getShippingFee();
 
-            let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0');
-            let discountAmount = discountValK * 1000;
+    let discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0');
+    let discountAmount = discountValK * 1000;
 
-            let grandTotal = Math.max(0, foodTotal + shipFee - discountAmount);
+    let foodTotalAfterDiscount = Math.max(0, foodTotal - discountAmount);
 
-            // Hiển thị Tiền món tự động theo chế độ (K hoặc 💎)
-            document.getElementById('foodSubtotal').innerHTML = `${formatDynamicPrice(foodTotal)}`;
-            document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
-            
-            // Hiển thị Tổng cộng tự động theo chế độ (K hoặc 💎)
-            document.getElementById('checkoutTotalAmount').innerHTML = `${formatDynamicPrice(grandTotal)}`;
+    document.getElementById('foodSubtotal').innerHTML = `${formatDynamicPrice(foodTotalAfterDiscount)}`;
+    document.getElementById('shippingFeeText').innerText = shipFee === 0 ? "0đ (Freeship/Tại quán)" : formatPrice(shipFee);
+    
+    const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+    const payMethod = payMethodRadio ? payMethodRadio.value : '';
+    const isDiamond = (currentPriceMode === 'DIAMOND' || payMethod === 'Trừ Túi 💎' || payMethod === 'Túi Kim Cương');
 
-            const listEl = document.getElementById('checkoutList');
-            listEl.innerHTML = '';
-            
-            if (cart.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#888; padding:10px;">Giỏ hàng trống</div>';
-            } else {
-                cart.forEach((item, index) => {
-                    let sum = item.price * item.qty;
-                    
-                    listEl.innerHTML += `
-                        <div class="checkout-item-row">
-                            <div style="flex:1; padding-right:6px;">
-                                <div style="font-weight:bold;">${item.name}</div>
-                                <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatDynamicPrice(sum)}</span></div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:4px;">
-                                <button onclick="changeCartItemQty(${index}, -1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
-                                <span style="font-weight:bold; min-width:16px; text-align:center;">${item.qty}</span>
-                                <button onclick="changeCartItemQty(${index}, 1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button>
-                                <button onclick="removeCartItem(${index})" style="padding:2px 6px; background:#ffebee; color:#c62828; border:none; border-radius:4px; font-weight:bold; cursor:pointer; margin-left:4px;">✕</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-            updatePaymentUI();
-        }
+    const totalEl = document.getElementById('checkoutTotalAmount');
+    if (isDiamond) {
+        let foodDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20);
+        let shipStr = shipFee > 0 ? ` + ${formatPrice(shipFee)} ship` : '';
+        totalEl.innerHTML = `<span style="color:#00bcd4;">${foodDiamonds.toLocaleString('vi-VN')} 💎</span><span style="font-size:13px; color:#d32f2f;">${shipStr}</span>`;
+    } else {
+        let grandTotal = foodTotalAfterDiscount + shipFee;
+        totalEl.innerHTML = formatPrice(grandTotal);
+    }
+
+    const listEl = document.getElementById('checkoutList');
+    listEl.innerHTML = '';
+    
+    if (cart.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:#888; padding:10px;">Giỏ hàng trống</div>';
+    } else {
+        cart.forEach((item, index) => {
+            let sum = item.price * item.qty;
+            listEl.innerHTML += `
+                <div class="checkout-item-row">
+                    <div style="flex:1; padding-right:6px;">
+                        <div style="font-weight:bold;">${item.name}</div>
+                        <div style="font-size:11px; color:#666;">${item.options} - <span style="color:#d32f2f; font-weight:bold;">${formatDynamicPrice(sum)}</span></div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <button onclick="changeCartItemQty(${index}, -1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button>
+                        <span style="font-weight:bold; min-width:16px; text-align:center;">${item.qty}</span>
+                        <button onclick="changeCartItemQty(${index}, 1)" style="padding:2px 6px; background:#ddd; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button>
+                        <button onclick="removeCartItem(${index})" style="padding:2px 6px; background:#ffebee; color:#c62828; border:none; border-radius:4px; font-weight:bold; cursor:pointer; margin-left:4px;">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    updatePaymentUI();
+}
+
+
 
 
 
@@ -3339,17 +3335,21 @@ function resetPinInput() {
     }
     // ----------------------------------------
 
-    let foodTotal = calculateFoodSubtotal();
+        let foodTotal = calculateFoodSubtotal();
     let shipFee = getShippingFee();
     const discountValK = parseInt(localStorage.getItem('kimbling_applied_discount_value') || '0', 10) || 0;
     const discountAmount = discountValK * 1000;
+    let foodTotalAfterDiscount = Math.max(0, foodTotal - discountAmount);
+    
+    // Tổng tiền mặt thực tế thanh toán (chính là phí ship nếu trả bằng Túi Kim Cương)
     let total = Math.max(0, foodTotal + shipFee - discountAmount);
 
     let requiredDiamonds = 0;
     let customerPin = '';
     
     if (payMethod === 'Túi Kim Cương') {
-        requiredDiamonds = Math.round((total / 1000) * 20);
+        // CHỈ QUY ĐỔI TIỀN MÓN RA KIM CƯƠNG, PHÍ SHIP ĐỂ RIÊNG BẰNG TIỀN MẶT
+        requiredDiamonds = Math.round((foodTotalAfterDiscount / 1000) * 20);
 
         const pinInput = document.getElementById('customerDiamondPin');
         customerPin = pinInput ? pinInput.value.trim() : '';
@@ -3367,6 +3367,7 @@ function resetPinInput() {
             return;
         }
     }
+
 
     const btnSubmit = document.getElementById('btnSubmitOrder');
     if (btnSubmit) {
