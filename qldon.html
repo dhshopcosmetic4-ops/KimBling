@@ -845,16 +845,31 @@
             alert(`✅ Đã xóa đơn hàng #${orderId}`);
           }
         } else {
-          let newTotal = 0;
+          let foodTotal = 0;
           let newItemsTextArr = [];
 
           parsedItems.forEach(item => {
             const itemPriceTotal = item.basePrice * item.quantity;
-            newTotal += itemPriceTotal;
+            foodTotal += itemPriceTotal;
             newItemsTextArr.push(`${item.name} (${item.optionsText}) x${item.quantity} = ${formatMoneyK(item.basePrice)}`);
           });
 
           const newItemsString = newItemsTextArr.join(" | ");
+
+          let oldNote = String(targetOrder.note || '');
+          let shippingFee = 0;
+          const shipMatch = oldNote.match(/Phí ship:\s*([\d\.]+)\s*đ?/i);
+          if (shipMatch) {
+            shippingFee = parseInt(shipMatch[1].replace(/[^\d]/g, ''), 10) || 0;
+          }
+
+          let newFinalTotal = foodTotal + shippingFee;
+
+          let userCustomNote = oldNote.replace(/\|\s*Tiền món:.*?(?=\||$)/gi, '').replace(/\|\s*Phí ship:.*?(?=\||$)/gi, '').trim();
+          let updatedNote = `Tiền món: ${formatMoneyK(foodTotal)} | Phí ship: ${formatMoneyK(shippingFee)}`;
+          if (userCustomNote) {
+            updatedNote = `${userCustomNote} | ${updatedNote}`;
+          }
 
           const updateRes = await fetch(KIMBLING_API_URL, {
             method: 'POST',
@@ -863,12 +878,13 @@
               type: 'updateOrderItemsAndTotal',
               orderId: orderId,
               items: newItemsString,
-              total: newTotal,
+              total: newFinalTotal,
+              note: updatedNote,
               pin: pin
             })
           });
           const updateData = await updateRes.json();
-          alert(updateData.message || '✅ Đã xóa món và tính lại tổng tiền thành công!');
+          alert(updateData.message || '✅ Đã xóa món, tính lại tiền món, phí ship và tổng tiền thành công!');
         }
 
         lastRenderedDataSignature = ""; 
