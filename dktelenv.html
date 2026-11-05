@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Đăng Ký Telegram Nhân Viên — KimBling</title>
+  <style>
+    :root { --primary: #0088cc; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --subtext: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; font-size: 16px; display: flex; justify-content: center; }
+    
+    .container { width: 100%; max-width: 500px; }
+    .header { text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+    .header h2 { color: #38bdf8; font-size: 22px; margin-bottom: 4px; }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .card-title { font-size: 18px; font-weight: bold; color: #f59e0b; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 14px; font-weight: bold; color: var(--subtext); margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 8px; font-size: 16px; outline: none; }
+    .form-control:focus { border-color: #38bdf8; }
+    
+    .checkbox-label { display: flex; align-items: center; gap: 10px; color: #4ade80; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 6px; }
+    .checkbox-label input { width: 20px; height: 20px; accent-color: #22c55e; }
+    
+    .btn-submit { width: 100%; background: #22c55e; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-submit:active { transform: scale(0.98); }
+    
+    .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0f172a; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
+    .staff-info { font-size: 15px; line-height: 1.4; }
+    .badge-on { color: #22c55e; font-weight: bold; font-size: 13px; }
+    .badge-off { color: #ef4444; font-weight: bold; font-size: 13px; }
+    .btn-edit { background: #0284c7; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    
+    .guide-box { background: #1e1b4b; border: 1px solid #4338ca; padding: 12px; border-radius: 10px; font-size: 13px; color: #c7d2fe; margin-bottom: 16px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h2>📲 QUẢN LÝ TELEGRAM NHÂN VIÊN</h2>
+      <span style="color: var(--subtext); font-size: 14px;">Đăng ký người nhận thông báo đơn hàng mới</span>
+    </div>
+
+    <!-- FORM ĐĂNG KÝ / CẬP NHẬT -->
+    <div class="card">
+      <div class="card-title">➕ Thêm / Sửa Nhân Viên Nhận Đơn</div>
+      
+      <div class="form-group">
+        <label>Tên Nhân Viên:</label>
+        <input type="text" id="nv_name" class="form-control" placeholder="VD: Nam Bếp 1, Linh Thu Ngân...">
+      </div>
+      
+      <div class="form-group">
+        <label>Số Điện Thoại:</label>
+        <input type="tel" id="nv_phone" class="form-control" placeholder="VD: 0901234567">
+      </div>
+      
+      <div class="form-group">
+        <label>Chat ID Telegram:</label>
+        <input type="text" id="nv_chatid" class="form-control" placeholder="Nhập dãy số Chat ID Telegram">
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="nv_active" checked> Bật nhận thông báo đơn hàng mới
+        </label>
+      </div>
+
+      <button class="btn-submit" onclick="saveStaffToSheets()">💾 Lưu Lên Google Sheets</button>
+    </div>
+
+    <!-- DANH SÁCH ĐÃ ĐĂNG KÝ -->
+    <div class="card">
+      <div class="card-title" style="color: #cbd5e1;">📋 Danh Sách Nhân Viên Nhận Đơn</div>
+      <div id="staffListContainer"><div style="text-align:center; color:#94a3b8; padding:15px;">Đang tải danh sách...</div></div>
+    </div>
+
+    <!-- KHUNG HƯỚNG DẪN CHI TIẾT CÁCH ĐĂNG KÝ NHẬN ĐƠN TELEGRAM -->
+    <div class="card" style="margin-top: 20px; border-color: #0284c7; background: #0b1329;">
+      <div class="card-title" style="color: #38bdf8; font-size: 16px;">📖 Hướng Dẫn Chi Tiết Cài Đặt Nhận Đơn Telegram Cho Nhân Viên</div>
+      
+      <div style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+        <p style="margin-bottom: 10px; color: #facc15; font-weight: bold;">Bước 1: Tạo Bot Telegram (Chỉ làm 1 lần duy nhất bởi chủ quán)</p>
+        <ul style="padding-left: 20px; margin-bottom: 12px;">
+          <li>Mở ứng dụng Telegram, tìm kiếm tài khoản: <b>@BotFather</b></li>
+          <li>Gửi lệnh: <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #38bdf8;">/newbot</code> và làm theo hướng dẫn để đặt tên cho Bot của quán.</li>
+          <li>BotFather sẽ cấp cho bạn một dãy mã kết nối gọi là <b>HTTP API Token</b> (Ví dụ: <code style="background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #f43f5e;">123456789:ABCdefGhIJK...</code>). Hãy dán đoạn Token này vào đoạn code Google Apps Script của bạn.</li>
+        </ul>
+
+        <p style="margin-bottom: 10px; color: #facc15; font-weight: bold;">Bước 2: Lấy Chat ID cá nhân của Nhân Viên</p>
+        <ul style="padding-left: 20px; margin-bottom: 12px;">
+          <li>Nhân viên mở Telegram cá nhân của họ lên.</li>
+          <li>Tìm kiếm và bấm vào bot lấy ID tự động: <b>@userinfobot</b> (hoặc tìm Bot thông báo của quán).</li>
+          <li>Bấm nút <b>START</b> hoặc gửi một tin nhắn bất kỳ.</li>
+          <li>Bot sẽ phản hồi lại thông tin tài khoản, trong đó có dòng <b>Id: <code>123456789</code></b>. Đây chính là <b>Chat ID</b> cần tìm.</li>
+        </ul>
+
+        <p style="margin-bottom: 10px; color: #facc15; font-weight: bold;">Bước 3: Thêm nhân viên lên Google Sheets</p>
+        <ul style="padding-left: 20px; margin-bottom: 6px;">
+          <li>Quay lại trang quản lý này (`dktelenv.html`).</li>
+          <li>Nhập đầy đủ <b>Tên nhân viên</b>, <b>Số điện thoại</b> và dãy số <b>Chat ID</b> vừa lấy ở Bước 2.</li>
+          <li>Tích chọn <i>"Bật nhận thông báo đơn hàng mới"</i> và bấm nút <b>💾 Lưu Lên Google Sheets</b> là hoàn tất! Từ nay khi có đơn mới, Telegram của nhân viên sẽ tự động nổ chuông báo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+    window.onload = loadStaffList;
+
+    async function saveStaffToSheets() {
+      const name = document.getElementById('nv_name').value.trim();
+      const phone = document.getElementById('nv_phone').value.trim();
+      const chatId = document.getElementById('nv_chatid').value.trim();
+      const active = document.getElementById('nv_active').checked;
+
+      if (!name || !phone || !chatId) {
+        alert("⚠️ Vui lòng điền đầy đủ Tên, Số điện thoại và Chat ID Telegram!");
+        return;
+      }
+
+      try {
+        const res = await fetch(KIMBLING_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            type: 'saveStaffTelegram',
+            name: name,
+            phone: phone,
+            chatId: chatId,
+            active: active
+          })
+        });
+        const data = await res.json();
+        alert(data.message || "✅ Đã lưu nhân viên thành công!");
+        
+        // Reset Form
+        document.getElementById('nv_name').value = '';
+        document.getElementById('nv_phone').value = '';
+        document.getElementById('nv_chatid').value = '';
+        loadStaffList();
+      } catch (e) {
+        alert("⚠️ Lỗi lưu dữ liệu nhân viên!");
+      }
+    }
+
+    async function loadStaffList() {
+      const container = document.getElementById('staffListContainer');
+      try {
+        const res = await fetch(`${KIMBLING_API_URL}?type=getStaffTelegramList&rand=${Math.random()}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.staff) && data.staff.length > 0) {
+          let html = '';
+          data.staff.forEach(s => {
+            const statusBadge = s.active ? `<span class="badge-on">🟢 Đang BẬT</span>` : `<span class="badge-off">🔴 Đang TẮT</span>`;
+            html += `
+              <div class="staff-item">
+                <div class="staff-info">
+                  <div style="font-weight:bold; color:#f8fafc;">${escapeHtml(s.name)} (${escapeHtml(s.phone)})</div>
+                  <div style="font-size:13px; color:#94a3b8;">Chat ID: ${escapeHtml(s.chatId)} | ${statusBadge}</div>
+                </div>
+                <button class="btn-edit" onclick="fillStaffEdit('${escapeHtml(s.name)}', '${escapeHtml(s.phone)}', '${escapeHtml(s.chatId)}', ${s.active})">✏️ Sửa</button>
+              </div>`;
+          });
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:15px;">Chưa có nhân viên nào trên Google Sheets.</div>';
+        }
+      } catch (e) {
+        container.innerHTML = '<div style="text-align:center; color:#ef4444; padding:15px;">Lỗi tải danh sách nhân viên.</div>';
+      }
+    }
+
+    function fillStaffEdit(name, phone, chatId, active) {
+      document.getElementById('nv_name').value = name;
+      document.getElementById('nv_phone').value = phone;
+      document.getElementById('nv_chatid').value = chatId;
+      document.getElementById('nv_active').checked = active;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+  </script>
+</body>
+</html>
