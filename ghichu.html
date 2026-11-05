@@ -59,8 +59,8 @@
       border: 1px solid #38bdf8;
     }
 
-    .btn-clear-text { background: #475569; color: #f1f5f9; border: none; padding: 3px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
-    .btn-clear-text:hover { background: #64748b; }
+    .btn-action-text { background: #475569; color: #f1f5f9; border: none; padding: 3px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
+    .btn-action-text:hover { background: #64748b; }
 
     /* TEXTBOX LỚN */
     textarea.monitor-display-box {
@@ -179,9 +179,12 @@
   <!-- MÀN HÌNH CHÍNH TEXTBOX & LOG TIME BOX -->
   <div class="monitor-screen">
     <div class="monitor-header">
-      <div class="monitor-title" id="monitorTitle">📝 Sổ Tay Điều Hành</div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <button class="btn-action-text" onclick="copyMonitorText()" title="Copy toàn bộ nội dung textbox">📋 Copy Tất Cả</button>
+        <div class="monitor-title" id="monitorTitle">📝 Sổ Tay Điều Hành</div>
+      </div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn-clear-text" onclick="clearMonitorText()">❌ Xóa Nhanh</button>
+        <button class="btn-action-text" onclick="clearMonitorText()">❌ Xóa Nhanh</button>
         <span class="total-badge" id="autoSumBadge">Tổng: 0đ</span>
         <div class="sync-status" id="syncStatus">Sẵn sàng</div>
       </div>
@@ -297,6 +300,24 @@
         document.getElementById('newTen').value = '';
       }
       calculateAutoSum();
+    }
+
+    function copyMonitorText() {
+      const monitorBox = document.getElementById('monitorDisplay');
+      monitorBox.select();
+      monitorBox.setSelectionRange(0, 99999); // Dành cho thiết bị di động
+      
+      try {
+        navigator.clipboard.writeText(monitorBox.value).then(() => {
+          document.getElementById('syncStatus').innerText = "Đã copy nội dung!";
+          setTimeout(() => { document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓"; }, 2000);
+        }).catch(err => {
+          document.execCommand('copy');
+          document.getElementById('syncStatus').innerText = "Đã copy nội dung!";
+        });
+      } catch (e) {
+        document.getElementById('syncStatus').innerText = "Lỗi copy!";
+      }
     }
 
     function removeAccents(str) {
@@ -506,7 +527,7 @@
     }
 
     function deleteSelectedItemWithPin() {
-      if (!selectedItemId) return alert("Vول lòng chọn mục cần xóa!");
+      if (!selectedItemId) return alert("Vui lòng chọn mục cần xóa!");
       deleteSpecificItem(selectedItemId, document.getElementById('newTen').value || currentSubTab);
     }
 
@@ -516,7 +537,7 @@
       const timeStr = getCurrentDateTimeStr();
 
       if (currentMainTab === 'Nguyên liệu') {
-        ten = currentSubTab; // Cố định tên theo tab để ghi đè vào 1 mục duy nhất
+        ten = currentSubTab;
         const latestLog = `Đã lưu lúc: ${timeStr}`;
         document.getElementById('logTimeDisplay').value = latestLog;
       } else {
@@ -538,10 +559,8 @@
         ngay: new Date().toISOString().split('T')[0]
       };
 
-      // Hiển thị thông báo yêu cầu người dùng chờ khi lưu
       document.getElementById('syncStatus').innerText = "Đang tính toán lưu. Vui lòng đợi, đừng tắt ngang App...";
 
-      // Kiểm tra xem đã có mục nào trùng loại (đối với Nguyên liệu) hoặc trùng tên (đối với Công thức) chưa để Overwrite
       let existingIndex = -1;
       if (currentMainTab === 'Nguyên liệu') {
         existingIndex = rawData.findIndex(item => item.loai === currentSubTab);
@@ -550,7 +569,6 @@
       }
 
       if (existingIndex !== -1) {
-        // Giữ lại ID cũ để ghi đè đúng dòng trên Google Sheet nếu Apps Script hỗ trợ, hoặc cập nhật trực tiếp tại local
         payload.id = rawData[existingIndex].id;
         rawData[existingIndex] = { ...rawData[existingIndex], ...payload };
       } else {
@@ -561,7 +579,6 @@
       saveToLocalStorage();
       filterQuickList();
 
-      // Đồng bộ ngược lên Google Sheet
       fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(res => {
