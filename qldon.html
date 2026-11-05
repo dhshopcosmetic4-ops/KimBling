@@ -180,7 +180,7 @@
         <button class="action-btn" style="background:#e11d48; color:#fff;" onclick="toggleEventPopup(true)">🎉 Event Lễ</button>
         <button class="action-btn" id="btnEventStatusIndicator" style="background:#475569; color:#fff;" onclick="checkEventStatusAlert()">⚪ Trạng thái Event</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
-        <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders(true);">🔄 Tải lại</button>
+        <button class="action-btn" onclick="fetchOrders(true);">🔄 Tải lại</button>
       </div>
     </div>
     <div id="ordersContainer"><div class="empty-state">Đang kết nối KimBling tải dữ liệu đơn hàng...</div></div>
@@ -241,7 +241,7 @@
     const STORE_LNG = 106.631035;
 
     let isFetchingOrders = false;
-    let lastRenderedDataSignature = ""; 
+    let cachedOrdersMap = new Map(); // Lưu cache trạng thái đơn để so sánh ngầm
 
     let audioContext = null;
     let knownOrderIds = new Set();
@@ -544,6 +544,7 @@
       }
     }
 
+    // 🚀 HÀM TẢI VÀ SO SÁNH NGẦM (DELTA UPDATE) ĐỂ TRÁNH DELAY PHẢN HỒI
     function fetchOrders(showLoader = false) {
       if (isFetchingOrders) return;
       isFetchingOrders = true;
@@ -557,34 +558,29 @@
           const container = document.getElementById('ordersContainer');
           
           if (!data || (!data.success && !Array.isArray(data.orders))) {
-            container.innerHTML = '<div class="empty-state">⚠️ Lỗi dữ liệu từ máy chủ. Bấm Tải lại để thử lại.</div>';
-            document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · Lỗi kết nối';
+            if (showLoader) container.innerHTML = '<div class="empty-state">⚠️ Lỗi dữ liệu từ máy chủ. Bấm Tải lại để thử lại.</div>';
             return;
           }
 
-          let ordersList = [];
-          if (Array.isArray(data.orders)) {
-            ordersList = data.orders;
-          } else if (Array.isArray(data)) {
-            ordersList = data;
-          }
-
-          if (ordersList.length === 0) {
+          let ordersList = data.orders || data;
+          if (!Array.isArray(ordersList) || ordersList.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
             document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
             stopContinuousAlarm();
-            lastRenderedDataSignature = "EMPTY";
+            cachedOrdersMap.clear();
             return;
           }
 
-          const currentDataSignature = ordersList.map(o => `${o.orderId || ''}_${o.status || ''}_${JSON.stringify(o.items || '')}_${o.total || ''}`).join('|');
           let hasStatus1Order = false;
+          let newOrdersMap = new Map();
 
           ordersList.forEach(order => {
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
-
             if (currentStatus === '1') { hasStatus1Order = true; }
+
+            const orderSignature = `${orderId}_${currentStatus}_${order.total || ''}_${order.address || ''}_${order.items || ''}`;
+            newOrdersMap.set(orderId, { order, signature: orderSignature });
 
             if (currentStatus === '1' && !knownOrderIds.has(orderId)) {
               if (!isFirstLoad) {
@@ -602,8 +598,23 @@
           if (hasStatus1Order && !isFirstLoad) { startContinuousAlarm(); } else { stopContinuousAlarm(); }
           isFirstLoad = false;
 
-          if (currentDataSignature === lastRenderedDataSignature) { return; }
-          lastRenderedDataSignature = currentDataSignature;
+          // So sánh ngầm xem dữ liệu có thay đổi so với cache cũ không
+          let isStructureChanged = cachedOrdersMap.size !== newOrdersMap.size;
+          if (!isStructureChanged) {
+            for (let [id, val] of newOrdersMap) {
+              if (!cachedOrdersMap.has(id) || cachedOrdersMap.get(id).signature !== val.signature) {
+                isStructureChanged = true;
+                break;
+              }
+            }
+          }
+
+          // Nếu không thay đổi gì, giữ nguyên giao diện để phản hồi tức thì, không render lại
+          if (!isStructureChanged && container.children.length > 0) {
+            return; 
+          }
+
+          cachedOrdersMap = newOrdersMap;
 
           let html = '';
           ordersList.forEach(order => {
@@ -698,7 +709,6 @@
         })
         .catch(err => {
           console.error("Lỗi tải đơn hàng:", err);
-          document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">⚠️ Mất kết nối tới máy chủ Google Apps Script.</div>';
         })
         .finally(() => { 
           isFetchingOrders = false;
@@ -887,7 +897,7 @@
           alert(updateData.message || '✅ Đã xóa món, tính lại tiền món, phí ship và tổng tiền thành công!');
         }
 
-        lastRenderedDataSignature = ""; 
+        cachedOrdersMap.clear(); 
         fetchOrders(true);
       } catch (err) {
         alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối KimBling!'}`);
@@ -953,7 +963,7 @@
       .then(res => {
         alert(res.message || 'Đã cập nhật thành công.');
         if (res.success) {
-          lastRenderedDataSignature = ""; 
+          cachedOrdersMap.clear(); 
           fetchOrders(true);
         }
       })
@@ -1101,7 +1111,7 @@
           alert(res.message); 
           if (res.success) {
             stopContinuousAlarm();
-            lastRenderedDataSignature = ""; 
+            cachedOrdersMap.clear(); 
             fetchOrders(true);
           } 
         })
