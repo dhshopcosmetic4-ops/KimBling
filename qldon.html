@@ -119,58 +119,29 @@
     .qr-popup-body { flex: 1; width: 100%; overflow-y: auto; background: #0f172a; }
     .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
 
-    /* GIAO DIỆN POPUP TRÀN MÀN HÌNH KIỂU TIKTOK CHO SỔ TAY */
     .qr-popup-overlay.tiktok-popup-overlay {
       padding: 0 !important;
       background: #0f172a !important;
       backdrop-filter: none !important;
     }
-    
     .tiktok-popup-container {
-      width: 100% !important;
-      height: 100% !important;
-      max-width: 100% !important;
-      max-height: 100% !important;
-      border: none !important;
-      border-radius: 0 !important;
-      display: flex;
-      flex-direction: column;
+      width: 100% !important; height: 100% !important;
+      max-width: 100% !important; max-height: 100% !important;
+      border: none !important; border-radius: 0 !important;
+      display: flex; flex-direction: column;
     }
-
     .tiktok-popup-header {
-      background: #0f172a !important;
-      border-bottom: 1px solid #334155 !important;
-      padding: 16px 20px !important;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      background: #0f172a !important; border-bottom: 1px solid #334155 !important;
+      padding: 16px 20px !important; display: flex; justify-content: space-between; align-items: center;
     }
-
-    .tiktok-popup-header .qr-popup-title {
-      font-size: 19px !important;
-      font-weight: bold;
-      color: #38bdf8;
-    }
-
+    .tiktok-popup-header .qr-popup-title { font-size: 19px !important; font-weight: bold; color: #38bdf8; }
     .tiktok-close-btn {
-      background: #334155 !important;
-      color: #fff !important;
-      border: none !important;
-      width: 44px !important;
-      height: 44px !important;
-      border-radius: 50% !important;
-      font-size: 22px !important;
-      font-weight: bold !important;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
+      background: #334155 !important; color: #fff !important; border: none !important;
+      width: 44px !important; height: 44px !important; border-radius: 50% !important;
+      font-size: 22px !important; font-weight: bold !important; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background 0.2s;
     }
-    
-    .tiktok-close-btn:hover {
-      background: #ef4444 !important;
-    }
+    .tiktok-close-btn:hover { background: #ef4444 !important; }
 
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -239,7 +210,6 @@
     </div>
   </div>
 
-  <!-- POPUP QUẢN LÝ EVENT LỄ LỘC -->
   <div id="eventPopupModal" class="qr-popup-overlay">
     <div class="qr-popup-container" style="border-color: #e11d48;">
       <div class="qr-popup-header" style="background: #270515; border-bottom: 1px solid #e11d48;">
@@ -252,7 +222,6 @@
     </div>
   </div>
 
-  <!-- POPUP SỔ TAY ĐIỀU HÀNH & KHO (TRÀN MÀN HÌNH KIỂU TIKTOK) -->
   <div id="ghiChuPopupModal" class="qr-popup-overlay tiktok-popup-overlay">
     <div class="qr-popup-container tiktok-popup-container">
       <div class="qr-popup-header tiktok-popup-header">
@@ -306,7 +275,7 @@
           autoRefreshTimer = null;
         }
         
-        alert("⏸️ Đã TẮT tự động làm mới. Bạn chỉ cần bấm nút '🔄 Tải lại' khi có thông báo đơn mới từ Telegram.");
+        alert("⏸️ Đã TẮT tự động làm mới.");
       }
     }
 
@@ -330,7 +299,7 @@
       const iframe = document.getElementById('qrIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'qrtichdiem.html';
+          iframe.src = 'qrtichdiem.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -343,7 +312,7 @@
       const iframe = document.getElementById('hatKimIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'tuikimcuong.html';
+          iframe.src = 'tuikimcuong.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -356,7 +325,7 @@
       const iframe = document.getElementById('eventIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'event.html';
+          iframe.src = 'event.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -370,7 +339,7 @@
       const iframe = document.getElementById('ghiChuIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'ghichu.html';
+          iframe.src = 'ghichu.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -380,14 +349,11 @@
 
     async function checkActiveEventFromSheets() {
       try {
-        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&t=${Date.now()}`);
+        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&rand=${Math.random()}&t=${Date.now()}`);
         const data = await res.json();
         if (data.success && data.config) {
           const config = data.config;
-          
-          if (config.emergencyStop) {
-            return { active: false, reason: "Đã tắt khẩn cấp trên Google Sheets" };
-          }
+          if (config.emergencyStop) return { active: false, reason: "Đã tắt khẩn cấp trên Google Sheets" };
 
           if (config.useSchedule) {
             if (!config.timeStart || !config.timeEnd) return { active: false, reason: "Chưa cài đặt đủ thời gian hẹn giờ" };
@@ -395,24 +361,18 @@
             const startTime = new Date(config.timeStart).getTime();
             const endTime = new Date(config.timeEnd).getTime();
 
-            if (now >= startTime && now <= endTime) {
-              return { active: true, config: config };
-            } else {
-              return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
-            }
+            if (now >= startTime && now <= endTime) return { active: true, config: config };
+            return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
           }
           return { active: true, config: config };
         }
-      } catch (e) {
-        console.log("Lỗi kết nối kiểm tra Event:", e);
-      }
+      } catch (e) { console.log("Lỗi kết nối kiểm tra Event:", e); }
       return { active: false, reason: "Không kết nối được Google Sheets" };
     }
 
     async function updateEventStatusIndicator() {
       const btn = document.getElementById('btnEventStatusIndicator');
       if (!btn) return;
-
       btn.innerHTML = `⏳ Đang quét Event...`;
       const status = await checkActiveEventFromSheets();
       
@@ -589,11 +549,27 @@
       isFetchingOrders = true;
       if (showLoader) showLoading("Đang kết nối KimBling tải danh sách đơn hàng...");
 
-      fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'})
+      const antiCacheUrl = `${KIMBLING_API_URL}?type=checkStatus&phone=ALL&rand=${Math.random()}&t=${Date.now()}`;
+
+      fetch(antiCacheUrl, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('ordersContainer');
-          if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
+          
+          if (!data || (!data.success && !Array.isArray(data.orders))) {
+            container.innerHTML = '<div class="empty-state">⚠️ Lỗi dữ liệu từ máy chủ. Bấm Tải lại để thử lại.</div>';
+            document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · Lỗi kết nối';
+            return;
+          }
+
+          let ordersList = [];
+          if (Array.isArray(data.orders)) {
+            ordersList = data.orders;
+          } else if (Array.isArray(data)) {
+            ordersList = data;
+          }
+
+          if (ordersList.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
             document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
             stopContinuousAlarm();
@@ -601,10 +577,10 @@
             return;
           }
 
-          const currentDataSignature = data.orders.map(o => `${o.orderId}_${o.status}_${JSON.stringify(o.items)}_${o.total}`).join('|');
+          const currentDataSignature = ordersList.map(o => `${o.orderId || ''}_${o.status || ''}_${JSON.stringify(o.items || '')}_${o.total || ''}`).join('|');
           let hasStatus1Order = false;
 
-          data.orders.forEach(order => {
+          ordersList.forEach(order => {
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
 
@@ -630,7 +606,7 @@
           lastRenderedDataSignature = currentDataSignature;
 
           let html = '';
-          data.orders.forEach(order => {
+          ordersList.forEach(order => {
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
             const cleanPhone = String(order.phone || '').replace(/'/g, '').trim();
@@ -718,9 +694,12 @@
               </div>`;
           });
           container.innerHTML = html;
-          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
+          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${ordersList.length} đơn`;
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.error("Lỗi tải đơn hàng:", err);
+          document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">⚠️ Mất kết nối tới máy chủ Google Apps Script.</div>';
+        })
         .finally(() => { 
           isFetchingOrders = false;
           if (showLoader) hideLoading();
@@ -843,11 +822,12 @@
       isFetchingOrders = true;
 
       try {
-        const response = await fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'});
+        const response = await fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&rand=${Math.random()}&t=${Date.now()}`, {cache:'no-store'});
         const data = await response.json();
-        if (!data.success || !Array.isArray(data.orders)) throw new Error("Không lấy được dữ liệu đơn.");
+        const ordersArr = data.orders || data;
+        if (!data.success && !Array.isArray(ordersArr)) throw new Error("Không lấy được dữ liệu đơn.");
 
-        const targetOrder = data.orders.find(o => String(o.orderId) === String(orderId));
+        const targetOrder = ordersArr.find(o => String(o.orderId) === String(orderId));
         if (!targetOrder) throw new Error("Không tìm thấy đơn hàng.");
 
         let parsedItems = parseOrderItemsForPOS(targetOrder, orderId);
