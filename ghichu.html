@@ -62,7 +62,7 @@
     .btn-clear-text { background: #475569; color: #f1f5f9; border: none; padding: 3px 6px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
     .btn-clear-text:hover { background: #64748b; }
 
-    /* TEXTBOX LỚN - CHỮ TO RÕ HƠN */
+    /* TEXTBOX LỚN */
     textarea.monitor-display-box {
       flex: 1.4;
       width: 100%;
@@ -70,7 +70,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px;
-      font-size: 18px !important; /* Tăng kích thước chữ to hơn */
+      font-size: 18px !important;
       font-weight: 600;
       line-height: 1.5;
       color: #f8fafc;
@@ -79,7 +79,7 @@
     }
     textarea.monitor-display-box:focus { border-color: #38bdf8; }
 
-    /* TEXTBOX NHỎ THU NGẮN CHIỀU CAO - CHỈ HIỂN THỊ 1 DÒNG GẦN NHẤT */
+    /* TEXTBOX NHỎ */
     textarea.log-time-box {
       flex: 0.3;
       min-height: 26px;
@@ -179,17 +179,17 @@
   <!-- MÀN HÌNH CHÍNH TEXTBOX & LOG TIME BOX -->
   <div class="monitor-screen">
     <div class="monitor-header">
-      <div class="monitor-title" id="monitorTitle">📝 Zalo Chat Nhập Liệu</div>
+      <div class="monitor-title" id="monitorTitle">📝 Sổ Tay Điều Hành</div>
       <div style="display: flex; gap: 6px; align-items: center;">
         <button class="btn-clear-text" onclick="clearMonitorText()">❌ Xóa Nhanh</button>
         <span class="total-badge" id="autoSumBadge">Tổng: 0đ</span>
         <div class="sync-status" id="syncStatus">Sẵn sàng</div>
       </div>
     </div>
-    <!-- TEXTBOX LỚN (CHỮ TO) -->
+    <!-- TEXTBOX LỚN -->
     <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="calculateAutoSum()"></textarea>
     
-    <!-- TEXTBOX NHỎ (THU NGẮN - CHỈ HIỆN 1 DÒNG GẦN NHẤT) -->
+    <!-- TEXTBOX NHỎ -->
     <textarea class="log-time-box" id="logTimeDisplay" readonly placeholder="Lần lưu gần nhất..."></textarea>
   </div>
 
@@ -239,13 +239,14 @@
 
     <!-- NÚT LƯU VÀ XÓA MỤC PIN -->
     <div style="display: flex; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 4px;">
-      <button class="btn btn-success" onclick="saveData()" style="flex: 2;">💾 Lưu Mục Này</button>
+      <button class="btn btn-success" onclick="saveData()" style="flex: 2;">💾 Lưu & Đồng Bộ Google Sheet</button>
       <button class="btn btn-danger" id="deleteItemBtn" onclick="deleteSelectedItemWithPin()" style="flex: 1; display: none;">🗑️ Xóa Mục Này</button>
     </div>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+    const LOCAL_STORAGE_KEY = "KIMBLING_STORE_DATA";
 
     let rawData = [];
     let currentMainTab = "Nguyên liệu";
@@ -254,12 +255,47 @@
     let searchDebounceTimer = null;
 
     window.onload = function() {
-      fetchData();
+      fetchDataOnceFromGoogleSheet();
     };
+
+    function saveToLocalStorage() {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(rawData));
+    }
+
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        try {
+          rawData = JSON.parse(stored);
+        } catch(e) {
+          rawData = [];
+        }
+      }
+    }
+
+    function fetchDataOnceFromGoogleSheet() {
+      document.getElementById('syncStatus').innerText = "Tải dữ liệu lần đầu...";
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+          rawData = Array.isArray(data) ? data : [];
+          saveToLocalStorage();
+          filterQuickList();
+          document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+        })
+        .catch(err => {
+          document.getElementById('syncStatus').innerText = "Dùng dữ liệu máy!";
+          loadFromLocalStorage();
+          filterQuickList();
+        });
+    }
 
     function clearMonitorText() {
       document.getElementById('monitorDisplay').value = '';
       document.getElementById('logTimeDisplay').value = '';
+      if (currentMainTab === 'Công thức') {
+        document.getElementById('newTen').value = '';
+      }
       calculateAutoSum();
     }
 
@@ -278,7 +314,6 @@
       return `${time} ${date}`;
     }
 
-    // LOGIC TÍNH TỔNG TIỀN: CHỈ CỘNG CÁC SỐ CÓ KÈM ĐƠN VỊ TIỀN (k, đ, ngàn, nghìn) PHÍA SAU
     function calculateAutoSum() {
       const autoSumBadge = document.getElementById('autoSumBadge');
       if (currentMainTab !== "Nguyên liệu") {
@@ -308,20 +343,6 @@
       });
 
       autoSumBadge.innerText = `Tổng: ${total.toLocaleString('vi-VN')}đ`;
-    }
-
-    function fetchData() {
-      document.getElementById('syncStatus').innerText = "Đang đồng bộ...";
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-          rawData = Array.isArray(data) ? data : [];
-          filterQuickList();
-          document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
-        })
-        .catch(err => {
-          document.getElementById('syncStatus').innerText = "Lỗi kết nối!";
-        });
     }
 
     function switchMainTab(mainTab) {
@@ -419,9 +440,8 @@
       }
 
       let html = '';
-      list.forEach((item) => {
-        // Chỉ hiển thị tên gọn gàng (ví dụ: Cần mua hoặc Chi tiêu trong ngày) bỏ ngày tháng thừa
-        let displayName = item.ten ? item.ten.split(' - ')[0] : item.loai;
+      list.forEach((item, index) => {
+        let displayName = item.ten ? item.ten : `${item.loai}`;
         html += `
           <div class="quick-item" id="item-${item.id}">
             <span onclick='displayOnMonitor(${JSON.stringify(item)})' style="flex:1; cursor:pointer;">📌 ${displayName}</span>
@@ -431,7 +451,12 @@
       });
       bar.innerHTML = html;
       
-      displayOnMonitor(list[0]);
+      if (!selectedItemId || !list.some(i => i.id === selectedItemId)) {
+        displayOnMonitor(list[0]);
+      } else {
+        const activeEl = document.getElementById(`item-${selectedItemId}`);
+        if (activeEl) activeEl.classList.add('active-item');
+      }
     }
 
     function displayOnMonitor(item) {
@@ -440,22 +465,18 @@
       const activeEl = document.getElementById(`item-${item.id}`);
       if (activeEl) activeEl.classList.add('active-item');
 
-      let displayName = item.ten ? item.ten.split(' - ')[0] : item.loai;
+      let displayName = item.ten ? item.ten : item.loai;
       document.getElementById('monitorTitle').innerHTML = `📝 Đang xem: <span style="color:#fff;">${displayName}</span>`;
       
       if (currentMainTab === 'Công thức') {
         document.getElementById('newTen').value = item.ten || '';
-      }
-      
-      if (currentMainTab === 'Nguyên liệu') {
+        document.getElementById('monitorDisplay').value = item.noidung || '';
+      } else {
         const fullText = item.noidung || '';
         const splitParts = fullText.split('---LỊCH SỬ LƯU---');
         document.getElementById('monitorDisplay').value = (splitParts[0] || '').trim();
-        // Chỉ lấy đúng dòng lịch sử lưu gần nhất hiển thị vào ô textbox nhỏ
         const logs = (splitParts[1] || '').trim().split('\n');
-        document.getElementById('logTimeDisplay').value = logs.length > 0 ? logs[logs.length - 1] : '';
-      } else {
-        document.getElementById('monitorDisplay').value = item.noidung || '';
+        document.getElementById('logTimeDisplay').value = logs.length > 0 && logs[0] !== "" ? logs[logs.length - 1] : (item.ngay ? `Ngày tạo: ${item.ngay}` : '');
       }
 
       calculateAutoSum();
@@ -466,6 +487,10 @@
       if (!pin) return;
 
       document.getElementById('syncStatus').innerText = "Đang xóa...";
+      rawData = rawData.filter(item => item.id !== itemId);
+      saveToLocalStorage();
+      filterQuickList();
+
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ action: "DELETE_SINGLE_NOTE", id: itemId, pin: pin })
@@ -473,14 +498,16 @@
       .then(res => res.json())
       .then(res => {
         alert(res.message);
-        if (res.status === "success") fetchData();
-        else document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+        document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+      })
+      .catch(err => {
+        document.getElementById('syncStatus').innerText = "Lỗi kết nối khi xóa trên Sheet!";
       });
     }
 
     function deleteSelectedItemWithPin() {
-      if (!selectedItemId) return alert("Vui lòng chọn mục cần xóa!");
-      deleteSpecificItem(selectedItemId, currentSubTab);
+      if (!selectedItemId) return alert("Vول lòng chọn mục cần xóa!");
+      deleteSpecificItem(selectedItemId, document.getElementById('newTen').value || currentSubTab);
     }
 
     function saveData() {
@@ -489,10 +516,7 @@
       const timeStr = getCurrentDateTimeStr();
 
       if (currentMainTab === 'Nguyên liệu') {
-        // Chỉ lưu tên gọn gàng, bỏ ngày tháng thừa ở tiêu đề
-        ten = currentSubTab;
-        
-        // Cập nhật đúng duy nhất dòng thời gian lần lưu gần nhất vào ô textbox nhỏ
+        ten = currentSubTab; // Cố định tên theo tab để ghi đè vào 1 mục duy nhất
         const latestLog = `Đã lưu lúc: ${timeStr}`;
         document.getElementById('logTimeDisplay').value = latestLog;
       } else {
@@ -500,7 +524,6 @@
         if (!ten) return alert("Vui lòng nhập Tên món / công thức!");
       }
 
-      // Lưu kết hợp nội dung textbox lớn và cập nhật log lần lưu gần nhất
       const existingLogs = document.getElementById('logTimeDisplay').value.trim();
       const combinedNoidung = currentMainTab === 'Nguyên liệu' 
         ? `${currentText}\n\n---LỊCH SỬ LƯU---\n${existingLogs}` 
@@ -515,11 +538,37 @@
         ngay: new Date().toISOString().split('T')[0]
       };
 
-      document.getElementById('syncStatus').innerText = "Đang lưu...";
+      // Hiển thị thông báo yêu cầu người dùng chờ khi lưu
+      document.getElementById('syncStatus').innerText = "Đang tính toán lưu. Vui lòng đợi, đừng tắt ngang App...";
+
+      // Kiểm tra xem đã có mục nào trùng loại (đối với Nguyên liệu) hoặc trùng tên (đối với Công thức) chưa để Overwrite
+      let existingIndex = -1;
+      if (currentMainTab === 'Nguyên liệu') {
+        existingIndex = rawData.findIndex(item => item.loai === currentSubTab);
+      } else {
+        existingIndex = rawData.findIndex(item => item.loai === currentSubTab && removeAccents(item.ten) === removeAccents(ten));
+      }
+
+      if (existingIndex !== -1) {
+        // Giữ lại ID cũ để ghi đè đúng dòng trên Google Sheet nếu Apps Script hỗ trợ, hoặc cập nhật trực tiếp tại local
+        payload.id = rawData[existingIndex].id;
+        rawData[existingIndex] = { ...rawData[existingIndex], ...payload };
+      } else {
+        payload.id = 'LOCAL_' + Date.now();
+        rawData.unshift(payload);
+      }
+
+      saveToLocalStorage();
+      filterQuickList();
+
+      // Đồng bộ ngược lên Google Sheet
       fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(res => {
-        fetchData();
+        document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+      })
+      .catch(err => {
+        document.getElementById('syncStatus').innerText = "Lưu máy OK (Sheet lỗi kết nối)!";
       });
     }
   </script>
