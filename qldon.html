@@ -119,6 +119,30 @@
     .qr-popup-body { flex: 1; width: 100%; overflow-y: auto; background: #0f172a; }
     .qr-popup-body iframe { width: 100%; height: 500px; border: none; }
 
+    .qr-popup-overlay.tiktok-popup-overlay {
+      padding: 0 !important;
+      background: #0f172a !important;
+      backdrop-filter: none !important;
+    }
+    .tiktok-popup-container {
+      width: 100% !important; height: 100% !important;
+      max-width: 100% !important; max-height: 100% !important;
+      border: none !important; border-radius: 0 !important;
+      display: flex; flex-direction: column;
+    }
+    .tiktok-popup-header {
+      background: #0f172a !important; border-bottom: 1px solid #334155 !important;
+      padding: 16px 20px !important; display: flex; justify-content: space-between; align-items: center;
+    }
+    .tiktok-popup-header .qr-popup-title { font-size: 19px !important; font-weight: bold; color: #38bdf8; }
+    .tiktok-close-btn {
+      background: #334155 !important; color: #fff !important; border: none !important;
+      width: 44px !important; height: 44px !important; border-radius: 50% !important;
+      font-size: 22px !important; font-weight: bold !important; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+    }
+    .tiktok-close-btn:hover { background: #ef4444 !important; }
+
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(15, 23, 42, 0.88); z-index: 99999;
@@ -150,6 +174,7 @@
       </div>
       <div class="header-btns">
         <button class="action-btn refresh-toggle-btn" id="btnAutoRefresh" onclick="toggleAutoRefresh()">⏱️ Tự làm mới: TẮT</button>
+        <button class="action-btn" style="background:#0284c7; color:#fff;" onclick="toggleGhiChuPopup(true)">📖 Sổ Tay & Kho</button>
         <button class="action-btn" style="background:#eab308; color:#000;" onclick="toggleQrPopup(true)">📱 Mã Tích Điểm</button>
         <button class="action-btn" style="background:#ff9800; color:#000;" onclick="toggleHatKimPopup(true)">💎 Túi Thần Tài 💎</button>
         <button class="action-btn" style="background:#e11d48; color:#fff;" onclick="toggleEventPopup(true)">🎉 Event Lễ</button>
@@ -185,7 +210,6 @@
     </div>
   </div>
 
-  <!-- POPUP QUẢN LÝ EVENT LỄ LỘC -->
   <div id="eventPopupModal" class="qr-popup-overlay">
     <div class="qr-popup-container" style="border-color: #e11d48;">
       <div class="qr-popup-header" style="background: #270515; border-bottom: 1px solid #e11d48;">
@@ -198,10 +222,21 @@
     </div>
   </div>
 
+  <div id="ghiChuPopupModal" class="qr-popup-overlay tiktok-popup-overlay">
+    <div class="qr-popup-container tiktok-popup-container">
+      <div class="qr-popup-header tiktok-popup-header">
+        <span class="qr-popup-title">📖 Sổ Tay Điều Hành & Kho</span>
+        <button class="tiktok-close-btn" onclick="toggleGhiChuPopup(false)">✕</button>
+      </div>
+      <div class="qr-popup-body" style="padding: 0; flex: 1;">
+        <iframe id="ghiChuIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+  </div>
+
   <script>
     const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
     
-    // Tọa độ ghim quán KimBling chuẩn
     const STORE_LAT = 10.749122; 
     const STORE_LNG = 106.631035;
 
@@ -240,7 +275,7 @@
           autoRefreshTimer = null;
         }
         
-        alert("⏸️ Đã TẮT tự động làm mới. Bạn chỉ cần bấm nút '🔄 Tải lại' khi có thông báo đơn mới từ Telegram.");
+        alert("⏸️ Đã TẮT tự động làm mới.");
       }
     }
 
@@ -264,7 +299,7 @@
       const iframe = document.getElementById('qrIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'qrtichdiem.html';
+          iframe.src = 'qrtichdiem.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -277,7 +312,7 @@
       const iframe = document.getElementById('hatKimIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'tuikimcuong.html';
+          iframe.src = 'tuikimcuong.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -290,7 +325,7 @@
       const iframe = document.getElementById('eventIframe');
       if (isOpen) {
         if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
-          iframe.src = 'event.html';
+          iframe.src = 'event.html?v=' + Date.now();
         }
         popup.classList.add('active');
       } else {
@@ -299,17 +334,26 @@
       }
     }
 
-    // Hàm kiểm tra trạng thái Event trực tiếp từ Google Sheets (cột G, H, I)
+    function toggleGhiChuPopup(isOpen) {
+      const popup = document.getElementById('ghiChuPopupModal');
+      const iframe = document.getElementById('ghiChuIframe');
+      if (isOpen) {
+        if (!iframe.src || iframe.src === window.location.href || iframe.src === "") {
+          iframe.src = 'ghichu.html?v=' + Date.now();
+        }
+        popup.classList.add('active');
+      } else {
+        popup.classList.remove('active');
+      }
+    }
+
     async function checkActiveEventFromSheets() {
       try {
-        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&t=${Date.now()}`);
+        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&rand=${Math.random()}&t=${Date.now()}`);
         const data = await res.json();
         if (data.success && data.config) {
           const config = data.config;
-          
-          if (config.emergencyStop) {
-            return { active: false, reason: "Đã tắt khẩn cấp trên Google Sheets" };
-          }
+          if (config.emergencyStop) return { active: false, reason: "Đã tắt khẩn cấp trên Google Sheets" };
 
           if (config.useSchedule) {
             if (!config.timeStart || !config.timeEnd) return { active: false, reason: "Chưa cài đặt đủ thời gian hẹn giờ" };
@@ -317,43 +361,35 @@
             const startTime = new Date(config.timeStart).getTime();
             const endTime = new Date(config.timeEnd).getTime();
 
-            if (now >= startTime && now <= endTime) {
-              return { active: true, config: config };
-            } else {
-              return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
-            }
+            if (now >= startTime && now <= endTime) return { active: true, config: config };
+            return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
           }
-          return { active: true, config: config }; // Bật thủ công
+          return { active: true, config: config };
         }
-      } catch (e) {
-        console.log("Lỗi kết nối kiểm tra Event:", e);
-      }
+      } catch (e) { console.log("Lỗi kết nối kiểm tra Event:", e); }
       return { active: false, reason: "Không kết nối được Google Sheets" };
     }
 
-    // Hàm cập nhật màu sắc và chữ trên nút kiểm tra trạng thái từ Google Sheets
     async function updateEventStatusIndicator() {
       const btn = document.getElementById('btnEventStatusIndicator');
       if (!btn) return;
-
       btn.innerHTML = `⏳ Đang quét Event...`;
       const status = await checkActiveEventFromSheets();
       
       if (status.active) {
-        btn.style.background = '#22c55e'; // Xanh lá
+        btn.style.background = '#22c55e';
         btn.style.color = '#fff';
         let extraText = [];
         if (status.config.doubleDiamond) extraText.push("x2 💎");
         if (status.config.bonusTurns) extraText.push(`+${status.config.bonusTurnsValue || 5} lượt`);
         btn.innerHTML = `🟢 Event: Đang Chạy (${extraText.join(', ') || 'Bật'})`;
       } else {
-        btn.style.background = '#64748b'; // Xám
+        btn.style.background = '#64748b';
         btn.style.color = '#f8fafc';
         btn.innerHTML = `⚪ Event: Đang Tắt`;
       }
     }
 
-    // Nút bấm kiểm tra chi tiết khi chủ quán click vào nút trạng thái
     async function checkEventStatusAlert() {
       showLoading("Đang kiểm tra trạng thái Event từ Google Sheets...");
       const status = await checkActiveEventFromSheets();
@@ -513,11 +549,27 @@
       isFetchingOrders = true;
       if (showLoader) showLoading("Đang kết nối KimBling tải danh sách đơn hàng...");
 
-      fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'})
+      const antiCacheUrl = `${KIMBLING_API_URL}?type=checkStatus&phone=ALL&rand=${Math.random()}&t=${Date.now()}`;
+
+      fetch(antiCacheUrl, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           const container = document.getElementById('ordersContainer');
-          if (!data.success || !Array.isArray(data.orders) || data.orders.length === 0) {
+          
+          if (!data || (!data.success && !Array.isArray(data.orders))) {
+            container.innerHTML = '<div class="empty-state">⚠️ Lỗi dữ liệu từ máy chủ. Bấm Tải lại để thử lại.</div>';
+            document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · Lỗi kết nối';
+            return;
+          }
+
+          let ordersList = [];
+          if (Array.isArray(data.orders)) {
+            ordersList = data.orders;
+          } else if (Array.isArray(data)) {
+            ordersList = data;
+          }
+
+          if (ordersList.length === 0) {
             container.innerHTML = '<div class="empty-state">Chưa có đơn hàng nào trong ngày.</div>';
             document.getElementById('orderCount').textContent = 'Chỉ hiển thị đơn trong ngày · 0 đơn';
             stopContinuousAlarm();
@@ -525,10 +577,10 @@
             return;
           }
 
-          const currentDataSignature = data.orders.map(o => `${o.orderId}_${o.status}_${JSON.stringify(o.items)}_${o.total}`).join('|');
+          const currentDataSignature = ordersList.map(o => `${o.orderId || ''}_${o.status || ''}_${JSON.stringify(o.items || '')}_${o.total || ''}`).join('|');
           let hasStatus1Order = false;
 
-          data.orders.forEach(order => {
+          ordersList.forEach(order => {
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
 
@@ -554,7 +606,7 @@
           lastRenderedDataSignature = currentDataSignature;
 
           let html = '';
-          data.orders.forEach(order => {
+          ordersList.forEach(order => {
             const orderId = String(order.orderId || '');
             const currentStatus = String(order.status || '1');
             const cleanPhone = String(order.phone || '').replace(/'/g, '').trim();
@@ -642,9 +694,12 @@
               </div>`;
           });
           container.innerHTML = html;
-          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${data.orders.length} đơn`;
+          document.getElementById('orderCount').textContent = `Chỉ hiển thị đơn trong ngày · ${ordersList.length} đơn`;
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.error("Lỗi tải đơn hàng:", err);
+          document.getElementById('ordersContainer').innerHTML = '<div class="empty-state">⚠️ Mất kết nối tới máy chủ Google Apps Script.</div>';
+        })
         .finally(() => { 
           isFetchingOrders = false;
           if (showLoader) hideLoading();
@@ -767,11 +822,12 @@
       isFetchingOrders = true;
 
       try {
-        const response = await fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&t=${Date.now()}`, {cache:'no-store'});
+        const response = await fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&rand=${Math.random()}&t=${Date.now()}`, {cache:'no-store'});
         const data = await response.json();
-        if (!data.success || !Array.isArray(data.orders)) throw new Error("Không lấy được dữ liệu đơn.");
+        const ordersArr = data.orders || data;
+        if (!data.success && !Array.isArray(ordersArr)) throw new Error("Không lấy được dữ liệu đơn.");
 
-        const targetOrder = data.orders.find(o => String(o.orderId) === String(orderId));
+        const targetOrder = ordersArr.find(o => String(o.orderId) === String(orderId));
         if (!targetOrder) throw new Error("Không tìm thấy đơn hàng.");
 
         let parsedItems = parseOrderItemsForPOS(targetOrder, orderId);
@@ -789,16 +845,31 @@
             alert(`✅ Đã xóa đơn hàng #${orderId}`);
           }
         } else {
-          let newTotal = 0;
+          let foodTotal = 0;
           let newItemsTextArr = [];
 
           parsedItems.forEach(item => {
             const itemPriceTotal = item.basePrice * item.quantity;
-            newTotal += itemPriceTotal;
+            foodTotal += itemPriceTotal;
             newItemsTextArr.push(`${item.name} (${item.optionsText}) x${item.quantity} = ${formatMoneyK(item.basePrice)}`);
           });
 
           const newItemsString = newItemsTextArr.join(" | ");
+
+          let oldNote = String(targetOrder.note || '');
+          let shippingFee = 0;
+          const shipMatch = oldNote.match(/Phí ship:\s*([\d\.]+)\s*đ?/i);
+          if (shipMatch) {
+            shippingFee = parseInt(shipMatch[1].replace(/[^\d]/g, ''), 10) || 0;
+          }
+
+          let newFinalTotal = foodTotal + shippingFee;
+
+          let userCustomNote = oldNote.replace(/\|\s*Tiền món:.*?(?=\||$)/gi, '').replace(/\|\s*Phí ship:.*?(?=\||$)/gi, '').trim();
+          let updatedNote = `Tiền món: ${formatMoneyK(foodTotal)} | Phí ship: ${formatMoneyK(shippingFee)}`;
+          if (userCustomNote) {
+            updatedNote = `${userCustomNote} | ${updatedNote}`;
+          }
 
           const updateRes = await fetch(KIMBLING_API_URL, {
             method: 'POST',
@@ -807,12 +878,13 @@
               type: 'updateOrderItemsAndTotal',
               orderId: orderId,
               items: newItemsString,
-              total: newTotal,
+              total: newFinalTotal,
+              note: updatedNote,
               pin: pin
             })
           });
           const updateData = await updateRes.json();
-          alert(updateData.message || '✅ Đã xóa món và tính lại tổng tiền thành công!');
+          alert(updateData.message || '✅ Đã xóa món, tính lại tiền món, phí ship và tổng tiền thành công!');
         }
 
         lastRenderedDataSignature = ""; 
@@ -892,18 +964,6 @@
       });
     }
 
-    async function waitForSalesOrder(orderId, attempts = 18, delayMs = 1000) {
-      for (let i = 0; i < attempts; i++) {
-        try {
-          const response = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
-          const data = await response.json();
-          if (data && data.success && data.saved) return true;
-        } catch (err) {}
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
-      return false;
-    }
-
     function pushOrderButton(button) {
       let orderObj;
       try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); }
@@ -920,129 +980,92 @@
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
       if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
 
-      showLoading(`Đang kiểm tra và xử lý đơn #${orderId}...`);
-      if (button) { button.disabled = true; button.textContent = '⏳ Đang kiểm tra...'; }
+      if (button) {
+        button.classList.add('pushed');
+        button.disabled = true;
+        button.textContent = '✅ Đã đẩy POS';
+      }
+      localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
-      isFetchingOrders = true; 
-      try {
-        const checkRes = await fetch(`${KIMBLING_API_URL}?type=checkSalesOrder&orderId=${encodeURIComponent(orderId)}&t=${Date.now()}`, {cache:'no-store'});
-        const checkData = await checkRes.json();
-        
-        if (checkData && checkData.success && checkData.saved) {
-          localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-          alert(`⚠️ Đơn #${orderId} đã được xử lý trên hệ thống POS trước đó rồi!`);
-          if (button) {
-            button.classList.add('pushed');
-            button.disabled = true;
-            button.textContent = '✅ Đã đẩy POS';
-          }
-          hideLoading();
-          isFetchingOrders = false;
-          return;
-        }
+      const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
+      const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
 
-        const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
-        const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
+      const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
+      
+      let totalItemsCount = 0;
+      parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
 
-        const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
-        
-        let totalItemsCount = 0;
-        parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
+      const totalAmount = Number(orderObj.total || 0);
+      const paymentType = String(orderObj.payment || '').toLowerCase();
+      
+      let diamondsValue = 0;
+      const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
 
-        const totalAmount = Number(orderObj.total || 0);
-        const paymentType = String(orderObj.payment || '').toLowerCase();
-        
-        let diamondsValue = 0;
-        const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
+      if (isDiamondPayment) {
+          diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+      } else {
+          diamondsValue = Math.round(totalAmount / 1000); 
+      }
 
-        if (isDiamondPayment) {
-            diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+      const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
+
+      const payloadPOS = {
+        type: 'pushOnlineOrder', action: 'pushOnlineOrder',
+        sourceOrderId: String(orderId), orderId: String(orderId),
+        total: totalAmount, diamonds: diamondsValue, 
+        items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
+        phone: customerPhone, address: String(orderObj.address || ''),
+        payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
+      };
+
+      const dataString = JSON.stringify(payloadPOS);
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(KIMBLING_API_URL, new Blob([dataString], {type: 'text/plain;charset=utf-8'}));
+      } else {
+        fetch(KIMBLING_API_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: dataString
+        }).catch(e => {});
+      }
+
+      if (isTichDiemChecked && customerPhone.length >= 9) {
+        const pointPayload = JSON.stringify({
+          action: 'add_points', sdt: customerPhone,
+          ly: totalItemsCount, txid: `ONLINE_${orderId}`
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
         } else {
-            diamondsValue = Math.round(totalAmount / 1000); 
+          fetch(KIMBLING_API_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: pointPayload
+          }).catch(e => {});
         }
+      }
 
-        // --- KIỂM TRA VÀ ÁP DỤNG CẤU HÌNH EVENT TỪ GOOGLE SHEETS ---
-        try {
-          const eventCheck = await checkActiveEventFromSheets();
-          if (eventCheck.active) {
-            const eventConfig = eventCheck.config;
-
-            // 1. Nhân đôi Kim Cương nếu event bật nhân đôi
-            if (eventConfig.doubleDiamond) {
-              diamondsValue = diamondsValue * 2;
-            }
-
-            // 2. Tặng thêm lượt mở hộp (lượt âm) nếu event bật tặng lượt và khách có SĐT
-            const customerPhoneCheck = String(orderObj.phone || '').replace(/'/g, '').trim();
-            if (eventConfig.bonusTurns && customerPhoneCheck.length >= 9) {
-              const bonusAmount = eventConfig.bonusTurnsValue || 5;
+      checkActiveEventFromSheets().then(eventCheck => {
+        if (eventCheck.active && eventCheck.config) {
+          const eventConfig = eventCheck.config;
+          if (eventConfig.bonusTurns && customerPhone.length >= 9) {
+            const bonusAmount = eventConfig.bonusTurnsValue || 5;
+            const eventPayload = JSON.stringify({
+              action: 'add_hatkim', type: 'add_hatkim',
+              phone: customerPhone, amount: 0, turnsPlayed: -bonusAmount
+            });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(KIMBLING_API_URL, new Blob([eventPayload], {type: 'text/plain;charset=utf-8'}));
+            } else {
               fetch(KIMBLING_API_URL, {
                 method: 'POST', mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                  action: 'add_hatkim', type: 'add_hatkim',
-                  phone: customerPhoneCheck, amount: 0, turnsPlayed: -bonusAmount
-                })
+                body: eventPayload
               }).catch(e => {});
             }
           }
-        } catch (e) {
-          console.log("Lỗi áp dụng Event:", e);
         }
-        // -----------------------------------------------------------
-
-        const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
-
-        const payloadPOS = {
-          type: 'pushOnlineOrder', action: 'pushOnlineOrder',
-          sourceOrderId: String(orderId), orderId: String(orderId),
-          total: totalAmount, diamonds: diamondsValue, 
-          items: parsedCartItems, name: String(orderObj.name || 'Khách lẻ'),
-          phone: customerPhone, address: String(orderObj.address || ''),
-          payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
-        };
-
-        await fetch(KIMBLING_API_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payloadPOS)
-        });
-
-        const saved = await waitForSalesOrder(String(orderId), 18, 1000);
-        if (!saved) throw new Error('Chưa xác nhận được hóa đơn trong Sales.');
-
-        if (isTichDiemChecked && customerPhone.length >= 9) {
-          await fetch(KIMBLING_API_URL, {
-            method: 'POST', mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              action: 'add_points', sdt: customerPhone,
-              ly: totalItemsCount, txid: `ONLINE_${orderId}`
-            })
-          });
-        }
-
-        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
-
-        let successMsg = `✅ Đã lưu hóa đơn online #${orderId} vào Sales thành công!`;
-        if (isTichDiemChecked) {
-          successMsg += ` Đã cộng thêm +${totalItemsCount} điểm món cho khách.`;
-        }
-
-        alert(successMsg);
-        lastRenderedDataSignature = ""; 
-        fetchOrders(true);
-      } catch (err) {
-        alert(`⚠️ Lỗi: ${err.message || 'Lỗi kết nối KimBling.'}`);
-      } finally {
-        hideLoading();
-        if (button) {
-          button.classList.add('pushed');
-          button.disabled = true;
-          button.textContent = '✅ Đã đẩy POS';
-        }
-        setTimeout(() => { isFetchingOrders = false; }, 3000);
-      }
+      }).catch(e => {});
     }
 
     function updateStatus(btnElement, phone, orderId, status) {
@@ -1053,15 +1076,17 @@
       }
 
       stopContinuousAlarm();
-      isFetchingOrders = true; 
-
-      fetch(KIMBLING_API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status})
-      })
-      .then(() => { lastRenderedDataSignature = ""; })
-      .catch(err => console.error(err))
-      .finally(() => { setTimeout(() => { isFetchingOrders = false; }, 3000); });
+      
+      const statusPayload = JSON.stringify({action:'updateStatus',type:'updateStatus',phone:phone,orderId:orderId,status:status});
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(KIMBLING_API_URL, new Blob([statusPayload], {type: 'text/plain;charset=utf-8'}));
+      } else {
+        fetch(KIMBLING_API_URL, {
+          method:'POST', mode:'no-cors',
+          headers:{'Content-Type':'text/plain;charset=utf-8'},
+          body: statusPayload
+        }).catch(err => console.error(err));
+      }
     }
 
     function requestDeleteSingleOrder(orderId) {
