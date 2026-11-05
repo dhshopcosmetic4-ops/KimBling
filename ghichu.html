@@ -22,7 +22,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: var(--bg); color: var(--text); padding: 8px; height: 100vh; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 
-    /* THÔNG BÁO CẬP NHẬT MỚI TỪ NHÂN VIÊN */
+    /* NỔI THÔNG BÁO CẬP NHẬT TỪ NHÂN VIÊN KHÁC */
     .update-alert-bar {
       background: linear-gradient(135deg, #0284c7, #0369a1);
       color: #ffffff;
@@ -187,8 +187,14 @@
 
     .btn { background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: 0.2s; text-align: center; }
     .btn:hover { background: var(--primary-hover); }
-    .btn-success { background: var(--success); }
-    .btn-success:hover { background: var(--success-hover); }
+    
+    /* TRẠNG THÁI NÚT LƯU */
+    .btn-saved { background: var(--danger) !important; } /* Đã lưu: Màu đỏ */
+    .btn-saved:hover { background: var(--danger-hover) !important; }
+
+    .btn-unsaved { background: var(--success) !important; } /* Chưa lưu: Màu xanh lá */
+    .btn-unsaved:hover { background: var(--success-hover) !important; }
+
     .btn-danger { background: var(--danger); }
     .btn-danger:hover { background: var(--danger-hover); }
 
@@ -246,7 +252,7 @@
     </div>
     
     <!-- TEXTBOX LỚN -->
-    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="handleTextChange()"></textarea>
+    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="handleTextChange(); markAsUnsaved();"></textarea>
     
     <!-- KHU VỰC NÚT UNDO / REDO VÀ LOG THỜI GIAN -->
     <div class="monitor-footer-area">
@@ -282,7 +288,7 @@
     <div class="action-row" id="titleInputRow" style="display: none;">
       <div class="form-group">
         <label for="newTen">Tên món / công thức</label>
-        <input type="text" id="newTen" placeholder="Nhập tên tiêu đề mục...">
+        <input type="text" id="newTen" placeholder="Nhập tên tiêu đề mục..." oninput="markAsUnsaved()">
       </div>
     </div>
 
@@ -304,7 +310,7 @@
 
     <!-- NÚT LƯU VÀ XÓA MỤC PIN -->
     <div style="display: flex; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 4px;">
-      <button class="btn btn-success" onclick="saveData(true)" style="flex: 2;">💾 Lưu & Đồng Bộ Google Sheet</button>
+      <button class="btn btn-saved" id="saveBtn" onclick="saveData(true)" style="flex: 2;">🔴 Đã lưu</button>
       <button class="btn btn-danger" id="deleteItemBtn" onclick="deleteSelectedItemWithPin()" style="flex: 1; display: none;">🗑️ Xóa Mục Này</button>
     </div>
   </div>
@@ -319,15 +325,13 @@
     let selectedItemId = null;
     let searchDebounceTimer = null;
 
-    // Lưu trữ lịch sử Undo/Redo độc lập cho từng mục (Persist Undo across tab switches)
-    let itemHistories = {}; // { itemId: { history: [], index: 0 } }
+    let itemHistories = {};
     let isInternalChange = false;
 
     window.onload = function() {
       fetchDataOnceFromGoogleSheet();
     };
 
-    // Tự động lưu khi ẩn/tắt app
     document.addEventListener("visibilitychange", function() {
       if (document.visibilityState === 'hidden') {
         autoSaveSilent();
@@ -353,32 +357,44 @@
       }
     }
 
+    function markAsUnsaved() {
+      const btn = document.getElementById('saveBtn');
+      btn.className = "btn btn-unsaved";
+      btn.innerText = "🟢 Chưa lưu";
+    }
+
+    function markAsSaved() {
+      const btn = document.getElementById('saveBtn');
+      btn.className = "btn btn-saved";
+      btn.innerText = "🔴 Đã lưu";
+    }
+
     function fetchDataOnceFromGoogleSheet() {
       document.getElementById('syncStatus').innerText = "Tải dữ liệu...";
       fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
           const newData = Array.isArray(data) ? data : [];
-          checkEmployeeUpdates(newData); // Kiểm tra xem nhân viên có vừa sửa món nào không
+          checkEmployeeUpdates(newData);
           rawData = newData;
           saveToLocalStorage();
           filterQuickList();
           document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+          markAsSaved();
         })
         .catch(err => {
           document.getElementById('syncStatus').innerText = "Dùng dữ liệu máy!";
           loadFromLocalStorage();
           filterQuickList();
+          markAsSaved();
         });
     }
 
-    // KIỂM TRA & HIỂN THỊ THÔNG BÁO NẾU CÓ CẬP NHẬT TỪ NHÂN VIÊN
     function checkEmployeeUpdates(serverData) {
       const lastKnownLog = localStorage.getItem("LAST_STORE_LOG_TIME");
       let latestItem = null;
       let latestTimeStr = "";
 
-      // Tìm mục có thông tin thời gian lưu mới nhất từ Google Sheet
       serverData.forEach(item => {
         if (item.noidung && item.noidung.includes("---LỊCH SỬ LƯU---")) {
           const parts = item.noidung.split("---LỊCH SỬ LƯU---");
@@ -413,7 +429,6 @@
       }
     }
 
-    // Nút bấm di chuyển nhanh đến mục mới cập nhật
     function jumpToUpdatedItem(item) {
       if (item.danhmuc && item.danhmuc !== currentMainTab) {
         switchMainTab(item.danhmuc);
@@ -424,7 +439,6 @@
       displayOnMonitor(item);
     }
 
-    // QUẢN LÝ LỊCH SỬ NHẬP LIỆU (UNDO / REDO BỀN VỮNG KHI CHUYỂN TAB)
     function getItemKey() {
       return selectedItemId || currentSubTab;
     }
@@ -472,6 +486,7 @@
         updateUndoRedoButtons();
         calculateAutoSum();
         scrollToBottom();
+        markAsUnsaved();
       }
     }
 
@@ -486,6 +501,7 @@
         updateUndoRedoButtons();
         calculateAutoSum();
         scrollToBottom();
+        markAsUnsaved();
       }
     }
 
@@ -501,7 +517,6 @@
       }
     }
 
-    // TỰ ĐỘNG CUỘN ĐẾN DÒNG MỚI NHẤT DƯỚI CÙNG DÀNH CHO TIN NHẮN DÀI
     function scrollToBottom() {
       setTimeout(() => {
         const monitorBox = document.getElementById('monitorDisplay');
@@ -518,6 +533,7 @@
       }
       handleTextChange();
       calculateAutoSum();
+      markAsUnsaved();
     }
 
     function copyMonitorText() {
@@ -727,7 +743,8 @@
       document.getElementById('monitorDisplay').value = textVal;
       initItemHistory(getItemKey(), textVal);
       calculateAutoSum();
-      scrollToBottom(); // Cuộn đến dòng mới nhất ở dưới cùng
+      scrollToBottom();
+      markAsSaved(); // Hiển thị trạng thái đã lưu khi chọn xem mục
     }
 
     function deleteSpecificItem(itemId, itemName) {
@@ -823,14 +840,17 @@
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
         navigator.sendBeacon(SCRIPT_URL, blob);
         document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+        markAsSaved();
       } else {
         fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(res => {
           document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+          markAsSaved(); // Chuyển về nút màu đỏ (Đã lưu) sau khi đồng bộ thành công
         })
         .catch(err => {
           document.getElementById('syncStatus').innerText = "Lưu máy OK!";
+          markAsSaved();
         });
       }
     }

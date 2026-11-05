@@ -1,5 +1,5 @@
 /**
- * KIM BLING POS & WALLET — Google Apps Script Hoàn Chỉnh (Đã tích hợp TurnsPlayed ở Cột F)
+ * KIM BLING POS, WALLET & GHICHU — Google Apps Script Hoàn Chỉnh (Đã tích hợp Telegram & PIN nhân viên)
  */
 const POS_CONFIG_SHEET = 'POS_Data';
 const POS_ATTENDANCE_SHEET = 'Attendance';
@@ -9,6 +9,10 @@ const POS_VIOLATION_SHEET = 'ShiftViolations';
 const ORDER_SHEET = 'DON_HANG';
 const SHEET_POINTS = 'diemthuong'; // Tab tích điểm đổi ly
 const WALLET_SHEET = 'HATKIM';    // Tab Túi Kim Cương (Ví 💎)
+const GHICHU_SHEET = 'ghichu';    // Tab Sổ tay điều hành / Ghi chú
+
+// 🔑 MÃ API TOKEN TELEGRAM CỦA QUÁN
+const TELEGRAM_BOT_TOKEN = "8862119099:AAH9UC0RZmiYnTLk4ytHbmgLDxMoW0xruds";
 
 // Hàm phụ trợ chuẩn hóa SĐT luôn có số 0 ở đầu
 function formatPhoneDisplay_(phone) {
@@ -25,6 +29,14 @@ function doGet(e) {
     const action = String((e && e.parameter && (e.parameter.action || e.parameter.type)) || '');
     let result;
     switch (action) {
+      // 🔄 XÁC THỰC MÃ PIN NHÂN VIÊN
+      case 'verifyStaffPin':
+        return verifyStaffPin(e);
+
+      // 🔄 LẤY DANH SÁCH TELEGRAM NHÂN VIÊN
+      case 'getStaffTelegramList':
+        return getStaffTelegramList();
+
       case 'getMenu':
         result = { 
           menu: getConfig_('menu', []), 
@@ -75,6 +87,12 @@ function doGet(e) {
         result = { shiftClosing: readPayloadRows_(POS_CLOSING_SHEET) };
         break;
 
+      // 🔄 LẤY CẤU HÌNH EVENT TỪ TAB HATKIM (Cột G, H, I)
+      case 'getEventConfig': {
+        result = { success: true, config: getEventConfigFromSheet() };
+        break;
+      }
+
       // 🔄 KIỂM TRA TRẠNG THÁI RESET TRÒ CHƠI CHO KHÁCH
       case 'checkGameReset': {
         var phone = formatPhoneDisplay_(e.parameter.phone);
@@ -98,7 +116,7 @@ function doGet(e) {
         var ss = getSpreadsheet_();
         var sheet = ss.getSheetByName(SHEET_POINTS);
         
-        if (!sheet) {
+        if (!sheet || sheet.getLastRow() < 2) {
           result = { status: "success", totalPoints: 0, rewards: 0, nextReward: 10, history: [] };
           break;
         }
@@ -138,7 +156,7 @@ function doGet(e) {
       case 'get_leaderboard': {
         var ss = getSpreadsheet_();
         var sheet = ss.getSheetByName(SHEET_POINTS);
-        if (!sheet) {
+        if (!sheet || sheet.getLastRow() < 2) {
           result = { status: "success", leaderboard: [] };
           break;
         }
@@ -215,15 +233,15 @@ function doGet(e) {
         let sheet = ss.getSheetByName(WALLET_SHEET);
         let walletInfo = { hatKim: 0, customerName: '', pin: '', turnsPlayed: 0 };
         
-        if (sheet && phone) {
+        if (sheet && phone && sheet.getLastRow() >= 2) {
           let data = sheet.getDataRange().getValues();
           for (let i = 1; i < data.length; i++) {
             let cellPhone = formatPhoneDisplay_(data[i][0]);
             if (cellPhone === phone) {
-              walletInfo.hatKim = parseInt(data[i][2]) || 0;           // Cột C
-              walletInfo.customerName = String(data[i][1] || '');       // Cột B
-              walletInfo.pin = String(data[i][3] || '');                // Cột D
-              walletInfo.turnsPlayed = parseInt(data[i][5]) || 0;       // Cột F (index 5)[span_3](start_span)[span_3](end_span)
+              walletInfo.hatKim = parseInt(data[i][2]) || 0;
+              walletInfo.customerName = String(data[i][1] || '');
+              walletInfo.pin = String(data[i][3] || '');
+              walletInfo.turnsPlayed = parseInt(data[i][5]) || 0;
               break;
             }
           }
@@ -236,7 +254,7 @@ function doGet(e) {
         let ss = getSpreadsheet_();
         let sheet = ss.getSheetByName(WALLET_SHEET);
         let list = [];
-        if (sheet) {
+        if (sheet && sheet.getLastRow() >= 2) {
           let data = sheet.getDataRange().getValues();
           for (let i = 1; i < data.length; i++) {
             if (data[i][0]) {
@@ -246,7 +264,7 @@ function doGet(e) {
                 hatKim: parseInt(data[i][2]) || 0,
                 pin: String(data[i][3] || ''),
                 updatedTime: String(data[i][4] || ''),
-                turnsPlayed: parseInt(data[i][5]) || 0  // Cột F[span_4](start_span)[span_4](end_span)
+                turnsPlayed: parseInt(data[i][5]) || 0
               });
             }
           }
@@ -259,9 +277,9 @@ function doGet(e) {
         const rawPhone = e.parameter.phone ? String(e.parameter.phone).trim() : '';
         const ss = getSpreadsheet_();
         const sheet = ss.getSheetByName(ORDER_SHEET) || ss.getActiveSheet();
-        const data = sheet.getDataRange().getValues();
-        if (data.length < 2) return jsonOutput_({ success: false, error: 'Chưa có đơn hàng nào' });
+        if (!sheet || sheet.getLastRow() < 2) return jsonOutput_({ success: false, error: 'Chưa có đơn hàng nào' });
         
+        const data = sheet.getDataRange().getValues();
         let ordersList = [];
         for (let i = 1; i < data.length; i++) {
           let sheetPhone = String(data[i][3] || '').trim();
@@ -291,8 +309,30 @@ function doGet(e) {
         }
       }
 
-      default:
-        result = { ok: true, service: 'Kim Bling POS & Wallet Final', message: 'Endpoint hoạt động.' };
+      default: {
+        const ss = getSpreadsheet_();
+        var sheetGhichu = ss.getSheetByName(GHICHU_SHEET);
+        if (sheetGhichu) {
+          var rows = sheetGhichu.getDataRange().getValues();
+          var ghichuData = [];
+          for (var i = 1; i < rows.length; i++) {
+            var row = rows[i];
+            if (!row[0] && !row[4]) continue;
+            ghichuData.push({
+              id: row[0] || i,
+              ngay: row[1] ? Utilities.formatDate(new Date(row[1]), Session.getScriptTimeZone(), "yyyy-MM-dd") : "",
+              loai: row[2],
+              danhmuc: row[3],
+              ten: row[4],
+              noidung: row[5]
+            });
+          }
+          return ContentService.createTextOutput(JSON.stringify(ghichuData))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+        
+        result = { ok: true, service: 'Kim Bling POS, Wallet & GhiChu Optimized', message: 'Endpoint hoạt động.' };
+      }
     }
     return jsonOutput_(result);
   } catch (err) {
@@ -303,12 +343,76 @@ function doGet(e) {
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(20000);
+    lock.waitLock(15000);
     const raw = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
     const body = JSON.parse(raw);
 
     const type = String(body.type || body.action || '');
     switch (type) {
+      // 🔄 LƯU HOẶC CẬP NHẬT TELEGRAM NHÂN VIÊN
+      case 'saveStaffTelegram':
+        return saveStaffTelegram(body);
+
+      // 🔄 XỬ LÝ LƯU HOẶC XÓA TỪ TAB GHICHU
+      case 'ADD': {
+        const ss = getSpreadsheet_();
+        let sheet = ss.getSheetByName(GHICHU_SHEET);
+        if (!sheet) {
+          sheet = ss.insertSheet(GHICHU_SHEET);
+          sheet.appendRow(['ID', 'Ngày', 'Loại', 'Danh mục', 'Tên', 'Nội dung / Công thức']);
+        }
+        
+        var rows = sheet.getDataRange().getValues();
+        var rowIndex = -1;
+        
+        for (var i = 1; i < rows.length; i++) {
+          var rowDate = rows[i][1] ? Utilities.formatDate(new Date(rows[i][1]), Session.getScriptTimeZone(), "yyyy-MM-dd") : "";
+          if (rows[i][4] == body.ten && rowDate == body.ngay && rows[i][2] == body.loai) {
+            rowIndex = i + 1;
+            break;
+          }
+        }
+        
+        if (rowIndex > -1) {
+          sheet.getRange(rowIndex, 2).setValue(body.ngay);
+          sheet.getRange(rowIndex, 3).setValue(body.loai);
+          sheet.getRange(rowIndex, 4).setValue(body.danhmuc);
+          sheet.getRange(rowIndex, 5).setValue(body.ten);
+          sheet.getRange(rowIndex, 6).setValue(body.noidung);
+        } else {
+          var newId = new Date().getTime();
+          sheet.appendRow([newId, body.ngay, body.loai, body.danhmuc, body.ten, body.noidung]);
+        }
+        
+        return jsonOutput_({status: "success", message: "Đã lưu thành công!"});
+      }
+
+      case 'DELETE_BY_DATE': {
+        const ss = getSpreadsheet_();
+        let sheet = ss.getSheetByName(GHICHU_SHEET);
+        if (!sheet) return jsonOutput_({status: "error", message: "Không tìm thấy sheet ghichu"});
+        
+        var targetDate = body.ngay;
+        var rows = sheet.getDataRange().getValues();
+        var deletedCount = 0;
+        
+        for (var i = rows.length - 1; i >= 1; i--) {
+          var rowDate = rows[i][1] ? Utilities.formatDate(new Date(rows[i][1]), Session.getScriptTimeZone(), "yyyy-MM-dd") : "";
+          if (rowDate === targetDate) {
+            sheet.deleteRow(i + 1);
+            deletedCount++;
+          }
+        }
+        
+        return jsonOutput_({status: "success", message: "Đã xóa " + deletedCount + " mục của ngày " + targetDate});
+      }
+
+      // 🔄 LƯU CẤU HÌNH EVENT LÊN CỘT G, H, I CỦA TAB HATKIM
+      case 'saveEventConfig': {
+        saveEventConfigToSheet(body.config);
+        return jsonOutput_({ success: true, message: "Đã lưu cấu hình Event lên Google Sheets thành công!" });
+      }
+
       case 'staff':
         if (Array.isArray(body.staffList)) setConfig_('staffList', body.staffList);
         if (body.adminPin !== undefined && body.adminPin !== null) setConfig_('adminPin', body.adminPin);
@@ -340,7 +444,7 @@ function doPost(e) {
         deletePayloadRow_(POS_ATTENDANCE_SHEET, body.id);
         break;
       
-      // CỘNG ĐIỂM TỪ MÃ QR HOẶC THỦ CÔNG
+      // CỘNG ĐIỂM
       case 'add_points': {
         var sdt = formatPhoneDisplay_(body.sdt);
         var ly = parseInt(body.ly) || 0;
@@ -358,7 +462,7 @@ function doPost(e) {
         return jsonOutput_({ status: "success", message: "Cộng điểm thành công!" });
       }
 
-      // NẠP / CẬP NHẬT TÚI KIM CƯƠNG (HATKIM)
+      // NẠP / CẬP NHẬT TÚI KIM CƯƠNG
       case 'updateHatKim': {
         let phone = formatPhoneDisplay_(body.phone);
         let addAmount = parseInt(body.amount) || 0;
@@ -372,13 +476,16 @@ function doPost(e) {
           sheet.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
         }
         
-        let data = sheet.getDataRange().getValues();
+        let lastRow = sheet.getLastRow();
         let foundRow = -1;
         
-        for (let i = 1; i < data.length; i++) {
-          if (formatPhoneDisplay_(data[i][0]) === phone) {
-            foundRow = i + 1;
-            break;
+        if (lastRow >= 2) {
+          let data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+          for (let i = 0; i < data.length; i++) {
+            if (formatPhoneDisplay_(data[i][0]) === phone) {
+              foundRow = i + 2;
+              break;
+            }
           }
         }
         
@@ -401,7 +508,7 @@ function doPost(e) {
         return jsonOutput_({ status: 'success', message: 'Cập nhật Hạt Kim thành công' });
       }
 
-      // CỘNG TRỰC TIẾP KIM CƯƠNG VÀ ĐỒNG BỘ LƯỢT CHƠI TỪ MINIGAME (LƯU VÀO CỘT F)
+      // CỘNG TRỰC TIẾP KIM CƯƠNG VÀ ĐỒNG BỘ LƯỢT CHƠI
       case 'add_hatkim': {
         let phone = formatPhoneDisplay_(body.phone);
         let bonusAmount = parseInt(body.amount) || 0;
@@ -418,31 +525,33 @@ function doPost(e) {
           sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
         }
         
-        let dataHK = sheetHatKim.getDataRange().getValues();
+        let lastRowHK = sheetHatKim.getLastRow();
         let customerRow = -1;
         
-        for (let i = 1; i < dataHK.length; i++) {
-          if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
-            customerRow = i + 1;
-            break;
+        if (lastRowHK >= 2) {
+          let dataHK = sheetHatKim.getRange(2, 1, lastRowHK - 1, 1).getValues();
+          for (let i = 0; i < dataHK.length; i++) {
+            if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
+              customerRow = i + 2;
+              break;
+            }
           }
         }
         
         if (customerRow > 0) {
           let currentBal = parseInt(sheetHatKim.getRange(customerRow, 3).getValue()) || 0;
           let newBal = currentBal + bonusAmount;
-          sheetHatKim.getRange(customerRow, 3).setValue(newBal);           // Cột C: HatKim
-          sheetHatKim.getRange(customerRow, 5).setValue(new Date());        // Cột E: UpdatedTime
-          sheetHatKim.getRange(customerRow, 6).setValue(turnsPlayed);       // Cột F: TurnsPlayed[span_5](start_span)[span_5](end_span)
+          sheetHatKim.getRange(customerRow, 3).setValue(newBal);
+          sheetHatKim.getRange(customerRow, 5).setValue(new Date());
+          sheetHatKim.getRange(customerRow, 6).setValue(turnsPlayed);
         } else {
-          // Thêm mới dòng [Phone, Name, HatKim, Pin, UpdatedTime, TurnsPlayed]
           sheetHatKim.appendRow(['\'' + phone, 'Khách minigame', bonusAmount, '', new Date(), turnsPlayed]);
         }
         
         return jsonOutput_({ status: 'success', message: 'Đã cập nhật kim cương và lượt chơi thành công' });
       }
 
-      // 🔄 XỬ LÝ LỆNH RESET HOẶC CẤP LẠI LƯỢT CHƠI (CỘT F - TurnsPlayed) KHI ĐẶT HÀNG THÀNH CÔNG
+      // RESET LƯỢT CHƠI KHI ĐẶT HÀNG THÀNH CÔNG
       case 'reset_game_turns': {
         var phoneToReset = formatPhoneDisplay_(body.phone || '');
         if (!phoneToReset || phoneToReset === '0') {
@@ -455,25 +564,26 @@ function doPost(e) {
           return jsonOutput_({ status: 'error', message: 'Không tìm thấy sheet HATKIM' });
         }
 
-        var dataHK = sheetHatKim.getDataRange().getValues();
+        var lastRowHK = sheetHatKim.getLastRow();
         var foundRow = -1;
-        for (var i = 1; i < dataHK.length; i++) {
-          if (formatPhoneDisplay_(dataHK[i][0]) === phoneToReset) {
-            foundRow = i + 1;
-            break;
+        if (lastRowHK >= 2) {
+          var dataHK = sheetHatKim.getRange(2, 1, lastRowHK - 1, 1).getValues();
+          for (var i = 0; i < dataHK.length; i++) {
+            if (formatPhoneDisplay_(dataHK[i][0]) === phoneToReset) {
+              foundRow = i + 2;
+              break;
+            }
           }
         }
 
         if (foundRow > 0) {
-          // Cập nhật Cột F (chỉ số 6) thành 5 lượt chơi mới khi đặt hàng thành công[span_6](start_span)[span_6](end_span)
-          sheetHatKim.getRange(foundRow, 6).setValue(5);
-          sheetHatKim.getRange(foundRow, 5).setValue(new Date()); // Cập nhật thời gian
+          sheetHatKim.getRange(foundRow, 6).setValue(0);
+          sheetHatKim.getRange(foundRow, 5).setValue(new Date());
         } else {
-          // Nếu khách chưa có trong bảng HATKIM, tạo mới với 5 lượt chơi
-          sheetHatKim.appendRow(['\'' + phoneToReset, 'Khách đặt đơn', 0, '', new Date(), 5]);
+          sheetHatKim.appendRow(['\'' + phoneToReset, 'Khách đặt đơn', 0, '', new Date(), 0]);
         }
 
-        return jsonOutput_({ status: 'success', message: 'Đã cấp lại 5 lượt mở hộp quà thành công trên Sheets' });
+        return jsonOutput_({ status: 'success', message: 'Đã reset lượt mở hộp quà thành công trên Sheets' });
       }
 
       // LỊCH SỬ BÁN HÀNG TỪ POS
@@ -529,7 +639,7 @@ function doPost(e) {
         return jsonOutput_({ success: true, message: 'Đã lưu history vào Sales thành công' });
       }
 
-      // ĐẨY ĐƠN ONLINE TỪ QLDON QUA POS, CẬP NHẬT KIM CƯƠNG VÀ ĐẶT CỜ RESET TRÒ CHƠI CHO KHÁCH
+      // ĐẨY ĐƠN ONLINE QUA POS
       case 'pushOnlineOrder': {
         const sourceOrderId = String(body.sourceOrderId || body.orderId || '').trim();
         if (!sourceOrderId) throw new Error('Thiếu mã đơn hàng online.');
@@ -559,7 +669,6 @@ function doPost(e) {
         const customerName = String(body.name || orderRow[2] || 'Khách lẻ');
         const paymentType = String(body.payment || orderRow[7] || 'Tiền mặt').toLowerCase();
         
-        // --- XỬ LÝ CỘNG / TRỪ KIM CƯƠNG VÀO VÍ (HATKIM) ---
         let diamondsValue = parseInt(body.diamonds) || 0;
         if (diamondsValue === 0) {
           const isDiamondPay = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
@@ -577,12 +686,15 @@ function doPost(e) {
             sheetHatKim.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
           }
           
-          let dataHK = sheetHatKim.getDataRange().getValues();
+          let lastRowHK = sheetHatKim.getLastRow();
           let customerRow = -1;
-          for (let i = 1; i < dataHK.length; i++) {
-            if (formatPhoneDisplay_(dataHK[i][0]) === customerPhone) {
-              customerRow = i + 1;
-              break;
+          if (lastRowHK >= 2) {
+            let dataHK = sheetHatKim.getRange(2, 1, lastRowHK - 1, 1).getValues();
+            for (let i = 0; i < dataHK.length; i++) {
+              if (formatPhoneDisplay_(dataHK[i][0]) === customerPhone) {
+                customerRow = i + 2;
+                break;
+              }
             }
           }
 
@@ -595,12 +707,10 @@ function doPost(e) {
             sheetHatKim.appendRow(['\'' + customerPhone, customerName, diamondsValue, '', new Date(), 0]);
           }
 
-          // 🔄 KÍCH HOẠT CỜ YÊU CẦU RESET TRÒ CHƠI CHO SỐ ĐIỆN THOẠI NÀY
           var resetMap = getConfig_('gameResetFlags', {}) || {};
           resetMap[customerPhone] = true;
           setConfig_('gameResetFlags', resetMap);
         }
-        // ----------------------------------------------------
 
         const incomingItems = Array.isArray(body.items) ? body.items : [];
         const items = incomingItems.map(function(item, index) {
@@ -725,7 +835,7 @@ function doPost(e) {
         }
       }
 
-      // XÓA ĐƠN HÀNG
+      // XÓA TOÀN BỘ ĐƠN HÀNG
       case 'deleteSingleOrder':
       case 'deleteOrder': {
         const inputPin = String(body.pin || '');
@@ -763,6 +873,47 @@ function doPost(e) {
         }
       }
 
+      // 🛠️ XÓA MÓN & CẬP NHẬT LẠI TỔNG TIỀN TRÊN ĐƠN
+      case 'updateOrderItemsAndTotal': {
+        const inputPin = String(body.pin || '');
+        const savedPin = getConfig_('adminPin', '1234');
+        if (inputPin !== String(savedPin) && inputPin !== '1234' && inputPin !== '0') {
+          return jsonOutput_({ success: false, message: '❌ Mã PIN chủ quán không chính xác!' });
+        }
+        
+        const targetId = String(body.orderId || '').trim();
+        const newItemsStr = String(body.items || '').trim();
+        const newTotal = Number(body.total || 0);
+
+        if (!targetId) {
+          return jsonOutput_({ success: false, message: 'Thiếu mã đơn hàng cần cập nhật.' });
+        }
+
+        const ss = getSpreadsheet_();
+        const sheet = ss.getSheetByName(ORDER_SHEET);
+        if (!sheet || sheet.getLastRow() < 2) {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy dữ liệu đơn hàng.' });
+        }
+
+        const data = sheet.getDataRange().getValues();
+        let updated = false;
+        for (let i = 1; i < data.length; i++) {
+          let rowOrderId = String(data[i][1] || '').trim();
+          if (rowOrderId === targetId) {
+            sheet.getRange(i + 1, 6).setValue(newItemsStr);
+            sheet.getRange(i + 1, 7).setValue(newTotal);
+            updated = true;
+            break;
+          }
+        }
+
+        if (updated) {
+          return jsonOutput_({ success: true, message: '✅ Đã cập nhật lại đơn hàng thành công!' });
+        } else {
+          return jsonOutput_({ success: false, message: 'Không tìm thấy mã đơn hàng.' });
+        }
+      }
+
       // LƯU ĐƠN HÀNG MỚI
       case 'saveOrder': {
         const ss = getSpreadsheet_();
@@ -778,17 +929,20 @@ function doPost(e) {
             return jsonOutput_({ ok: false, success: false, error: 'Sheet HATKIM chưa được khởi tạo' });
           }
           
-          let dataHK = sheetHatKim.getDataRange().getValues();
+          let lastRowHK = sheetHatKim.getLastRow();
           let customerRow = -1;
           let currentBalance = 0;
           let correctPin = '';
           
-          for (let i = 1; i < dataHK.length; i++) {
-            if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
-              customerRow = i + 1;
-              currentBalance = parseInt(dataHK[i][2]) || 0;
-              correctPin = String(dataHK[i][3] || '').trim();
-              break;
+          if (lastRowHK >= 2) {
+            let dataHK = sheetHatKim.getRange(2, 1, lastRowHK - 1, 4).getValues();
+            for (let i = 0; i < dataHK.length; i++) {
+              if (formatPhoneDisplay_(dataHK[i][0]) === phone) {
+                customerRow = i + 2;
+                currentBalance = parseInt(dataHK[i][2]) || 0;
+                correctPin = String(dataHK[i][3] || '').trim();
+                break;
+              }
             }
           }
           
@@ -851,12 +1005,26 @@ function doPost(e) {
           '1'
         ]);
         SpreadsheetApp.flush();
+
+        // 🚀 TỰ ĐỘNG BẮN THÔNG BÁO ĐƠN HÀNG MỚI QUA TELEGRAM CHO NHÂN VIÊN
+        try {
+          var notiMsg = "🛒 *CÓ ĐƠN HÀNG MỚI!* (Mã: #" + orderId + ")\n" +
+                        "👤 Khách: " + (body.name || 'Khách lẻ') + " (" + (phone || 'Không SĐT') + ")\n" +
+                        "📍 Địa chỉ: " + finalAddress + "\n" +
+                        "🛍️ Món: " + (body.items || body.itemsSummary || '') + "\n" +
+                        "💰 Tổng tiền: " + Number(totalAmount).toLocaleString('vi-VN') + "đ\n" +
+                        "💳 Thanh toán: " + paymentMethod;
+          sendTelegramNotificationToStaff(notiMsg);
+        } catch (err) {}
+
         return jsonOutput_({ ok: true, success: true, found: true, orderId: orderId, message: "Đã lưu đơn hàng mới" });
       }
 
       case 'updateStatus': {
         const ss = getSpreadsheet_();
         const sheet = ss.getSheetByName(ORDER_SHEET) || ss.getActiveSheet();
+        if (!sheet || sheet.getLastRow() < 2) return jsonOutput_({ success: false, message: "Không có dữ liệu đơn" });
+        
         const targetPhone = body.phone ? String(body.phone).trim() : '';
         const targetId = body.orderId ? String(body.orderId).trim() : '';
         const newStatus = String(body.status || '1').trim();
@@ -930,9 +1098,225 @@ function doPost(e) {
   }
 }
 
+// ==========================================
+// CÁC HÀM XỬ LÝ XÁC THỰC PIN VÀ TELEGRAM NHÂN VIÊN
+// ==========================================
+function verifyStaffPin(e) {
+  var pin = "";
+  if (e && e.parameter && e.parameter.pin) {
+    pin = String(e.parameter.pin).trim();
+  } else if (e && e.postData && e.postData.contents) {
+    try {
+      var body = JSON.parse(e.postData.contents);
+      pin = String(body.pin || "").trim();
+    } catch (err) {}
+  }
+
+  var staffList = getConfig_('staffList', []);
+  var adminPin = getConfig_('adminPin', '1234');
+  var isValid = false;
+  var staffName = "";
+
+  if (pin === String(adminPin) || pin === "1234" || pin === "0") {
+    isValid = true;
+    staffName = "Chủ Quán / Quản Lý";
+  } else {
+    for (var i = 0; i < staffList.length; i++) {
+      var st = staffList[i];
+      if (st && String(st.pin).trim() === pin) {
+        isValid = true;
+        staffName = st.name || st.id;
+        break;
+      }
+    }
+
+    if (!isValid) {
+      var ss = getSpreadsheet_();
+      var sheet = ss.getSheetByName("NhanVienTelegram");
+      if (sheet && sheet.getLastRow() >= 2) {
+        var rows = sheet.getDataRange().getValues();
+        for (var j = 1; j < rows.length; j++) {
+          var rowPhone = String(rows[j][1] || "").trim();
+          var rowPin = String(rows[j][3] || "").trim();
+          var activeState = String(rows[j][3] || rows[j][4] || "").toUpperCase();
+          if ((activeState === "BẬT" || activeState === "TRUE") && (pin === rowPin || pin === rowPhone)) {
+            isValid = true;
+            staffName = rows[j][0] || "Nhân viên";
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ 
+    success: isValid, 
+    name: staffName 
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveStaffTelegram(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("NhanVienTelegram");
+  
+  if (!sheet) {
+    sheet = ss.insertSheet("NhanVienTelegram");
+    sheet.appendRow(["Tên Nhân Viên", "Số Điện Thoại", "Chat ID Telegram", "Trạng Thái", "Ngày Cập Nhật"]);
+  }
+  
+  const rows = sheet.getDataRange().getValues();
+  let isUpdated = false;
+  const phoneStr = String(data.phone || '').trim();
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][1]).trim() === phoneStr) {
+      sheet.getRange(i + 1, 1).setValue(data.name || rows[i][0]);
+      sheet.getRange(i + 1, 3).setValue(data.chatId || rows[i][2]);
+      sheet.getRange(i + 1, 4).setValue(data.active ? "BẬT" : "TẮT");
+      sheet.getRange(i + 1, 5).setValue(new Date());
+      isUpdated = true;
+      break;
+    }
+  }
+  
+  if (!isUpdated) {
+    sheet.appendRow([
+      String(data.name || '').trim(),
+      phoneStr,
+      String(data.chatId || '').trim(),
+      data.active ? "BẬT" : "TẮT",
+      new Date()
+    ]);
+  }
+  
+  SpreadsheetApp.flush();
+  return jsonOutput_({ success: true, message: "✅ Đã lưu nhân viên lên Google Sheets thành công!" });
+}
+
+function getStaffTelegramList() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("NhanVienTelegram");
+  
+  if (!sheet || sheet.getLastRow() < 2) {
+    return jsonOutput_({ success: true, staff: [] });
+  }
+  
+  const rows = sheet.getDataRange().getValues();
+  let staffList = [];
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][1]) {
+      staffList.push({
+        name: String(rows[i][0] || ''),
+        phone: String(rows[i][1] || ''),
+        chatId: String(rows[i][2] || ''),
+        active: String(rows[i][3]).toUpperCase() === "BẬT" || String(rows[i][3]).toUpperCase() === "TRUE"
+      });
+    }
+  }
+  
+  return jsonOutput_({ success: true, staff: staffList });
+}
+
+// ==========================================
+// HÀM GỬI THÔNG BÁO TỚI NHÂN VIÊN QUA TELEGRAM BOT
+// ==========================================
+function sendTelegramNotificationToStaff(orderMessage) {
+  if (!TELEGRAM_BOT_TOKEN) return;
+  
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName("NhanVienTelegram");
+  if (!sheet || sheet.getLastRow() < 2) return;
+  
+  var rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    var chatId = String(rows[i][2] || "").trim();
+    var activeState = String(rows[i][3] || "").toUpperCase();
+    
+    if ((activeState === "BẬT" || activeState === "TRUE") && chatId) {
+      try {
+        var url = "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage";
+        var payload = {
+          chat_id: chatId,
+          text: orderMessage,
+          parse_mode: "Markdown"
+        };
+        UrlFetchApp.fetch(url, {
+          method: "post",
+          contentType: "application/json",
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+      } catch (err) {
+        console.log("Lỗi gửi Telegram cho ChatID " + chatId + ": " + err.message);
+      }
+    }
+  }
+}
+
+// ==========================================
+// CÁC HÀM XỬ LÝ CẤU HÌNH EVENT TRÊN CỘT G, H, I
+// ==========================================
+function getEventConfigFromSheet() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WALLET_SHEET);
+  try {
+    if (!sheet) return { emergencyStop: false, useSchedule: false, timeStart: "", timeEnd: "", doubleDiamond: false, bonusTurns: false, bonusTurnsValue: 5 };
+    
+    var emergencyVal = sheet.getRange('G1').getValue();
+    var emergencyStop = (emergencyVal === true || emergencyVal === "true" || emergencyVal === "TRUE");
+    
+    var scheduleStr = sheet.getRange('H1').getValue() || "{}";
+    var settingsStr = sheet.getRange('I1').getValue() || "{}";
+    
+    var schedule = JSON.parse(scheduleStr);
+    var settings = JSON.parse(settingsStr);
+    
+    return {
+      emergencyStop: emergencyStop,
+      useSchedule: schedule.useSchedule || false,
+      timeStart: schedule.timeStart || "",
+      timeEnd: schedule.timeEnd || "",
+      doubleDiamond: settings.doubleDiamond || false,
+      bonusTurns: settings.bonusTurns || false,
+      bonusTurnsValue: settings.bonusTurnsValue || 5
+    };
+  } catch (e) {
+    return { 
+      emergencyStop: false, 
+      useSchedule: false, 
+      timeStart: "", 
+      timeEnd: "", 
+      doubleDiamond: false, 
+      bonusTurns: false, 
+      bonusTurnsValue: 5 
+    };
+  }
+}
+
+function saveEventConfigToSheet(config) {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(WALLET_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(WALLET_SHEET);
+    sheet.appendRow(['Phone', 'Name', 'HatKim', 'Pin', 'UpdatedTime', 'TurnsPlayed']);
+  }
+  
+  sheet.getRange('G1').setValue(config.emergencyStop ? "true" : "false");
+  sheet.getRange('H1').setValue(JSON.stringify({
+    useSchedule: config.useSchedule,
+    timeStart: config.timeStart,
+    timeEnd: config.timeEnd
+  }));
+  sheet.getRange('I1').setValue(JSON.stringify({
+    doubleDiamond: config.doubleDiamond,
+    bonusTurns: config.bonusTurns,
+    bonusTurnsValue: config.bonusTurnsValue
+  }));
+}
+
 function processOverdueShifts_() {
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) return;
+  if (!lock.tryLock(10000)) return;
   try {
     const now = new Date();
     const tz = getPosTimeZone_();
