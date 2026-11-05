@@ -103,10 +103,6 @@
     .items-box {
       background: #0f172a; padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 13px; line-height: 1.5; border-left: 3px solid var(--primary);
     }
-    .item-row-detail {
-      padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
-    }
-    .item-row-detail:last-child { border-bottom: none; }
 
     .note-box {
       background: #451a03; color: #fdba74; padding: 6px 8px; border-radius: 6px; font-size: 12px; margin-top: 6px; border: 1px dashed #c2410c;
@@ -316,40 +312,23 @@
       }
 
       let hatKimBalance = (walletData && walletData.hatKim !== undefined) ? parseInt(walletData.hatKim) : 0;
+      let updateTimeStr = (walletData && (walletData.updatedTime || walletData.time || walletData.date)) ? (walletData.updatedTime || walletData.time || walletData.date) : "";
       
-      let logs = (walletData && Array.isArray(walletData.logs)) ? walletData.logs : [];
       let latestLogHtml = '';
-      
-      if (logs.length > 0) {
-        let lastItem = logs[logs.length - 1]; 
-        let amt = parseInt(lastItem.amount || lastItem.value || 0);
-        let timeStr = lastItem.time || lastItem.date || lastItem.timestamp || 'Gần đây';
-        let colorStyle = amt >= 0 ? 'color: #34c759;' : 'color: #ef4444;';
-        let prefixSymbol = amt >= 0 ? '+' : '';
-        
+      if (updateTimeStr) {
         latestLogHtml = `
           <div class="diamond-latest-log">
-            <span>🕒 Cập nhật (${timeStr}):</span>
-            <b style="${colorStyle}">${prefixSymbol}${amt.toLocaleString('vi-VN')} 💎</b>
+            <span>🕒 Cập nhật lần cuối (Cột E):</span>
+            <b style="color: #34c759;">${updateTimeStr}</b>
           </div>
         `;
       } else {
-        let updateTime = walletData.updatedTime || walletData.time || walletData.date || "";
-        if (updateTime) {
-          latestLogHtml = `
-            <div class="diamond-latest-log">
-              <span>🕒 Cập nhật lần cuối:</span>
-              <b style="color: #34c759;">${updateTime}</b>
-            </div>
-          `;
-        } else {
-          latestLogHtml = `
-            <div class="diamond-latest-log">
-              <span>🕒 Cập nhật gần nhất:</span>
-              <span style="color: var(--subtext);">Chưa có ghi nhận giao dịch</span>
-            </div>
-          `;
-        }
+        latestLogHtml = `
+          <div class="diamond-latest-log">
+            <span>🕒 Cập nhật lần cuối (Cột E):</span>
+            <span style="color: var(--subtext);">Chưa có ghi nhận thời gian</span>
+          </div>
+        `;
       }
 
       // 1. Thẻ thành viên tích điểm
@@ -377,10 +356,10 @@
         </div>
       `;
 
-      // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY
+      // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY (Kèm thông báo hoàn 100% 💎)
       html += `
         <div class="diamond-box">
-          <div class="diamond-header" style="margin-bottom: ${logs.length > 0 || walletData.updatedTime ? '8px' : '0'};">
+          <div class="diamond-header" style="margin-bottom: 8px;">
             <div class="diamond-title">
               <span>💎 TÚI 💎 TÍCH LŨY:</span>
             </div>
@@ -389,6 +368,9 @@
             </div>
           </div>
           ${latestLogHtml}
+          <div style="font-size: 11px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 6px 8px; border-radius: 6px; margin-top: 8px; text-align: center; border: 1px dashed rgba(56, 189, 248, 0.3);">
+            ✨ Hoàn 100% 💎 giá trị đơn về túi cho <b>${phone}</b> khi đặt hàng thành công. KimBling Coffee cảm ơn bạn! ❤️
+          </div>
         </div>
       `;
 
@@ -419,33 +401,52 @@
       let rawItems = String(rawItemsStr || '').trim();
       if (!rawItems) return '<div class="item-row-detail">Không có thông tin món</div>';
 
-      rawItems = rawItems.replace(/[\r\n]+/g, ' ');
-
-      let regex = /([\s\S]*?(\d{1,3}(\.\d{3})*|\d+)\s*đ)/gi;
-      let matches = [];
-      let match;
-      while ((match = regex.exec(rawItems)) !== null) {
-        matches.push(match[1].trim());
+      let itemBlocks = rawItems.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
+      if (itemBlocks.length === 0) {
+        itemBlocks = rawItems.split(';').map(i => i.trim()).filter(Boolean);
       }
+      if (itemBlocks.length === 0) return `<div class="item-row-detail">${rawItems}</div>`;
 
-      if (matches.length === 0) {
-        matches = rawItems.split(';').map(i => i.trim()).filter(i => i !== '');
-      }
-      if (matches.length === 0) return `<div class="item-row-detail">${rawItems}</div>`;
+      return itemBlocks.map((block, idx) => {
+        let itemPrice = 0;
+        let priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+        if (priceMatch) {
+          let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
+          if (pVal > 0) {
+            if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+            itemPrice = pVal;
+          }
+        }
 
-      return matches.map((item, idx) => {
-        let cleanText = item.replace(/^\|\s*/, '').trim();
-        let priceMatch = cleanText.match(/(\d{1,3}(\.\d{3})*|\d+)\s*đ/i);
-        let priceStr = priceMatch ? priceMatch[0] : '';
-        let dishName = priceStr ? cleanText.replace(priceStr, '').replace(/\|\s*$/, '').trim() : cleanText;
-        dishName = dishName.replace(/=\s*$/, '').trim();
+        let cleanBlock = block;
+        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
+
+        let optionContent = "";
+        let parenMatch = cleanBlock.match(/\(([^)]+)\)/);
+        if (parenMatch) {
+          optionContent = parenMatch[1].trim();
+          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+        }
+
+        let qty = 1;
+        let qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
+        if (qtyMatch) {
+          qty = parseInt(qtyMatch[1], 10) || 1;
+          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+        }
+
+        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
+        if (!dishName) dishName = 'Món nước';
+
+        let formattedPrice = itemPrice > 0 ? itemPrice.toLocaleString('vi-VN') + 'đ' : '';
 
         return `
-          <div class="item-row-detail">
+          <div class="item-row-detail" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.15);">
             <div>
-              <b style="color: var(--primary);">${idx + 1}.</b> <span>${dishName}</span>
+              <b style="color: var(--primary);">${idx + 1}.</b> <span style="color: #fff; font-weight: bold;">${dishName}</span> ${qty > 1 ? `<span style="color:#38bdf8;">(x${qty})</span>` : ''}
+              ${optionContent ? `<div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">- ${optionContent}</div>` : ''}
             </div>
-            ${priceStr ? `<div style="font-weight: bold; color: #4ade80; flex-shrink: 0; margin-left: 6px;">${priceStr}</div>` : ''}
+            ${formattedPrice ? `<div style="font-weight: bold; color: #4ade80; flex-shrink: 0; margin-left: 8px;">${formattedPrice}</div>` : ''}
           </div>
         `;
       }).join('');
@@ -460,16 +461,31 @@
       let currentGifInfo = STEP_GIFS[status] || STEP_GIFS['1'];
       let formattedItems = parseItemsToList(order.items);
       let noteHtml = order.note ? `<div class="note-box"><b>📝 Ghi chú:</b> ${order.note}</div>` : '';
-      let paymentText = order.payment || 'Tiền mặt';
+      
+      let paymentText = String(order.payment || 'Tiền mặt');
+      let isDiamondPayment = paymentText.toLowerCase().includes('túi') || paymentText.toLowerCase().includes('kim cương') || paymentText.toLowerCase().includes('trừ túi');
       let isTransfer = paymentText.toLowerCase().includes('chuyển');
-      let paymentClass = isTransfer ? 'pay-transfer' : 'pay-cash';
 
-      let qrButtonHtml = '';
-      if (isTransfer) {
+      let paymentTagHtml = '';
+      let priceDisplayHtml = '';
+
+      if (isDiamondPayment) {
+        paymentTagHtml = `<span class="payment-tag" style="background: rgba(0, 188, 212, 0.15); color: #00bcd4; font-weight: bold; padding: 3px 6px; border-radius: 6px; font-size: 11px;">💎 Túi Kim Cương (Trả trước)</span>`;
+        let totalAmountNum = Number(order.total || 0);
+        let diamondsVal = Math.round((totalAmountNum / 1000) * 20);
+        priceDisplayHtml = `<span style="font-weight: bold; color: #00bcd4; font-size: 17px;">${diamondsVal.toLocaleString('vi-VN')} 💎</span>`;
+      } else if (isTransfer) {
+        let paymentClass = 'pay-transfer';
         let totalAmount = Number(order.total || 0);
         let syntax = order.phone ? `THANHTOAN_${String(order.phone).replace(/'/g, '')}` : `THANHTOAN_${order.orderId}`;
         let qrUrl = `https://img.vietqr.io/image/TCB-19076231479012-compact2.png?amount=${totalAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent('LE MINH DUNG')}`;
-        qrButtonHtml = `<a href="${qrUrl}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold; margin-left: 6px;">[🔍 Xem QR CK]</a>`;
+        let qrButtonHtml = `<a href="${qrUrl}" target="_blank" style="color: #34d399; text-decoration: none; font-weight: bold; margin-left: 6px;">[🔍 Xem QR CK]</a>`;
+        
+        paymentTagHtml = `<span class="payment-tag ${paymentClass}">💳 ${paymentText} ${qrButtonHtml}</span>`;
+        priceDisplayHtml = `<span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>`;
+      } else {
+        paymentTagHtml = `<span class="payment-tag pay-cash">💳 ${paymentText}</span>`;
+        priceDisplayHtml = `<span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>`;
       }
 
       let rawAddress = String(order.address || 'Tại quán');
@@ -522,8 +538,8 @@
           ${noteHtml}
 
           <div class="order-footer-total">
-            <span class="payment-tag ${paymentClass}">💳 ${paymentText} ${qrButtonHtml}</span>
-            <span class="total-price">${Number(order.total || 0).toLocaleString('vi-VN')}đ</span>
+            ${paymentTagHtml}
+            ${priceDisplayHtml}
           </div>
 
           ${hurryBtnHtml}
