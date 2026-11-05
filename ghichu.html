@@ -22,6 +22,32 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: var(--bg); color: var(--text); padding: 8px; height: 100vh; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 
+    /* THÔNG BÁO CẬP NHẬT MỚI TỪ NHÂN VIÊN */
+    .update-alert-bar {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #38bdf8;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .btn-goto-update {
+      background: #f59e0b;
+      color: #000;
+      border: none;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .btn-goto-update:hover { background: #d97706; color: #fff; }
+
     /* MÀN HÌNH CHÍNH TEXTBOX */
     .monitor-screen {
       flex: 1.5;
@@ -46,7 +72,6 @@
 
     .monitor-title { font-size: 0.8rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 4px; }
     
-    /* PHẦN TỔNG GIÁ TIỀN TO RÕ HƠN */
     .total-badge { 
       background: #0369a1; 
       color: #e0f2fe; 
@@ -79,12 +104,36 @@
     }
     textarea.monitor-display-box:focus { border-color: #38bdf8; }
 
+    /* NÚT UNDO / REDO VÀ TEXTBOX NHỎ */
+    .monitor-footer-area {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .undo-redo-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-history {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-history:hover:not(:disabled) { background: #475569; border-color: #38bdf8; }
+    .btn-history:disabled { opacity: 0.3; cursor: not-allowed; }
+
     /* TEXTBOX NHỎ */
     textarea.log-time-box {
-      flex: 0.3;
-      min-height: 26px;
+      flex: 1;
+      min-height: 28px;
       max-height: 32px;
-      width: 100%;
       background: #05080e;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -176,6 +225,12 @@
 </head>
 <body>
 
+  <!-- NỔI THÔNG BÁO CẬP NHẬT TỪ NHÂN VIÊN KHÁC -->
+  <div class="update-alert-bar" id="updateAlertBar">
+    <span id="updateAlertText">📢 Có thay đổi mới từ máy khác...</span>
+    <button class="btn-goto-update" id="btnGotoUpdate">🚀 Đến xem ngay</button>
+  </div>
+
   <!-- MÀN HÌNH CHÍNH TEXTBOX & LOG TIME BOX -->
   <div class="monitor-screen">
     <div class="monitor-header">
@@ -189,11 +244,18 @@
         <div class="sync-status" id="syncStatus">Sẵn sàng</div>
       </div>
     </div>
-    <!-- TEXTBOX LỚN -->
-    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="calculateAutoSum()"></textarea>
     
-    <!-- TEXTBOX NHỎ -->
-    <textarea class="log-time-box" id="logTimeDisplay" readonly placeholder="Lần lưu gần nhất..."></textarea>
+    <!-- TEXTBOX LỚN -->
+    <textarea class="monitor-display-box" id="monitorDisplay" placeholder="Gõ sản phẩm và giá tiền... VD: Sọt thái 18k" oninput="handleTextChange()"></textarea>
+    
+    <!-- KHU VỰC NÚT UNDO / REDO VÀ LOG THỜI GIAN -->
+    <div class="monitor-footer-area">
+      <div class="undo-redo-group">
+        <button class="btn-history" id="undoBtn" onclick="undoText()" title="Lùi lại nội dung trước" disabled>↩️ Hoàn tác</button>
+        <button class="btn-history" id="redoBtn" onclick="redoText()" title="Tiến lên nội dung sau" disabled>↪️ Làm lại</button>
+      </div>
+      <textarea class="log-time-box" id="logTimeDisplay" readonly placeholder="Lần lưu gần nhất..."></textarea>
+    </div>
   </div>
 
   <!-- BẢNG ĐIỀU KHIỂN THAO TÁC Ở DƯỚI -->
@@ -242,7 +304,7 @@
 
     <!-- NÚT LƯU VÀ XÓA MỤC PIN -->
     <div style="display: flex; gap: 6px; margin-top: auto; border-top: 1px solid var(--border); padding-top: 4px;">
-      <button class="btn btn-success" onclick="saveData()" style="flex: 2;">💾 Lưu & Đồng Bộ Google Sheet</button>
+      <button class="btn btn-success" onclick="saveData(true)" style="flex: 2;">💾 Lưu & Đồng Bộ Google Sheet</button>
       <button class="btn btn-danger" id="deleteItemBtn" onclick="deleteSelectedItemWithPin()" style="flex: 1; display: none;">🗑️ Xóa Mục Này</button>
     </div>
   </div>
@@ -257,9 +319,24 @@
     let selectedItemId = null;
     let searchDebounceTimer = null;
 
+    // Lưu trữ lịch sử Undo/Redo độc lập cho từng mục (Persist Undo across tab switches)
+    let itemHistories = {}; // { itemId: { history: [], index: 0 } }
+    let isInternalChange = false;
+
     window.onload = function() {
       fetchDataOnceFromGoogleSheet();
     };
+
+    // Tự động lưu khi ẩn/tắt app
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'hidden') {
+        autoSaveSilent();
+      }
+    });
+
+    window.addEventListener("pagehide", function() {
+      autoSaveSilent();
+    });
 
     function saveToLocalStorage() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(rawData));
@@ -277,11 +354,13 @@
     }
 
     function fetchDataOnceFromGoogleSheet() {
-      document.getElementById('syncStatus').innerText = "Tải dữ liệu lần đầu...";
+      document.getElementById('syncStatus').innerText = "Tải dữ liệu...";
       fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
-          rawData = Array.isArray(data) ? data : [];
+          const newData = Array.isArray(data) ? data : [];
+          checkEmployeeUpdates(newData); // Kiểm tra xem nhân viên có vừa sửa món nào không
+          rawData = newData;
           saveToLocalStorage();
           filterQuickList();
           document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
@@ -293,27 +372,166 @@
         });
     }
 
+    // KIỂM TRA & HIỂN THỊ THÔNG BÁO NẾU CÓ CẬP NHẬT TỪ NHÂN VIÊN
+    function checkEmployeeUpdates(serverData) {
+      const lastKnownLog = localStorage.getItem("LAST_STORE_LOG_TIME");
+      let latestItem = null;
+      let latestTimeStr = "";
+
+      // Tìm mục có thông tin thời gian lưu mới nhất từ Google Sheet
+      serverData.forEach(item => {
+        if (item.noidung && item.noidung.includes("---LỊCH SỬ LƯU---")) {
+          const parts = item.noidung.split("---LỊCH SỬ LƯU---");
+          const logs = (parts[1] || "").trim().split('\n');
+          if (logs.length > 0) {
+            const lastLog = logs[logs.length - 1];
+            if (lastLog > latestTimeStr) {
+              latestTimeStr = lastLog;
+              latestItem = item;
+            }
+          }
+        }
+      });
+
+      if (latestTimeStr && lastKnownLog && latestTimeStr !== lastKnownLog && latestItem) {
+        const alertBar = document.getElementById("updateAlertBar");
+        const alertText = document.getElementById("updateAlertText");
+        const btnGoto = document.getElementById("btnGotoUpdate");
+
+        const targetName = latestItem.ten || latestItem.loai;
+        alertText.innerText = `📢 ${latestTimeStr.replace('Đã lưu lúc: ', '')} có thay đổi ở mục [${targetName}]!`;
+        alertBar.style.display = "flex";
+
+        btnGoto.onclick = function() {
+          alertBar.style.display = "none";
+          jumpToUpdatedItem(latestItem);
+        };
+      }
+
+      if (latestTimeStr) {
+        localStorage.setItem("LAST_STORE_LOG_TIME", latestTimeStr);
+      }
+    }
+
+    // Nút bấm di chuyển nhanh đến mục mới cập nhật
+    function jumpToUpdatedItem(item) {
+      if (item.danhmuc && item.danhmuc !== currentMainTab) {
+        switchMainTab(item.danhmuc);
+      }
+      if (item.loai && item.loai !== currentSubTab) {
+        switchSubTab(item.loai);
+      }
+      displayOnMonitor(item);
+    }
+
+    // QUẢN LÝ LỊCH SỬ NHẬP LIỆU (UNDO / REDO BỀN VỮNG KHI CHUYỂN TAB)
+    function getItemKey() {
+      return selectedItemId || currentSubTab;
+    }
+
+    function initItemHistory(key, initialVal) {
+      if (!itemHistories[key]) {
+        itemHistories[key] = { history: [initialVal], index: 0 };
+      }
+      updateUndoRedoButtons();
+    }
+
+    function handleTextChange() {
+      if (isInternalChange) return;
+      const currentVal = document.getElementById('monitorDisplay').value;
+      const key = getItemKey();
+
+      if (!itemHistories[key]) {
+        itemHistories[key] = { history: [currentVal], index: 0 };
+        updateUndoRedoButtons();
+        calculateAutoSum();
+        return;
+      }
+
+      const hObj = itemHistories[key];
+      if (hObj.history[hObj.index] === currentVal) return;
+
+      hObj.history = hObj.history.slice(0, hObj.index + 1);
+      hObj.history.push(currentVal);
+      
+      if (hObj.history.length > 50) hObj.history.shift();
+      else hObj.index++;
+
+      updateUndoRedoButtons();
+      calculateAutoSum();
+    }
+
+    function undoText() {
+      const key = getItemKey();
+      const hObj = itemHistories[key];
+      if (hObj && hObj.index > 0) {
+        hObj.index--;
+        isInternalChange = true;
+        document.getElementById('monitorDisplay').value = hObj.history[hObj.index];
+        isInternalChange = false;
+        updateUndoRedoButtons();
+        calculateAutoSum();
+        scrollToBottom();
+      }
+    }
+
+    function redoText() {
+      const key = getItemKey();
+      const hObj = itemHistories[key];
+      if (hObj && hObj.index < hObj.history.length - 1) {
+        hObj.index++;
+        isInternalChange = true;
+        document.getElementById('monitorDisplay').value = hObj.history[hObj.index];
+        isInternalChange = false;
+        updateUndoRedoButtons();
+        calculateAutoSum();
+        scrollToBottom();
+      }
+    }
+
+    function updateUndoRedoButtons() {
+      const key = getItemKey();
+      const hObj = itemHistories[key];
+      if (hObj) {
+        document.getElementById('undoBtn').disabled = hObj.index <= 0;
+        document.getElementById('redoBtn').disabled = hObj.index >= hObj.history.length - 1;
+      } else {
+        document.getElementById('undoBtn').disabled = true;
+        document.getElementById('redoBtn').disabled = true;
+      }
+    }
+
+    // TỰ ĐỘNG CUỘN ĐẾN DÒNG MỚI NHẤT DƯỚI CÙNG DÀNH CHO TIN NHẮN DÀI
+    function scrollToBottom() {
+      setTimeout(() => {
+        const monitorBox = document.getElementById('monitorDisplay');
+        monitorBox.scrollTop = monitorBox.scrollHeight;
+      }, 50);
+    }
+
     function clearMonitorText() {
-      document.getElementById('monitorDisplay').value = '';
+      const monitorBox = document.getElementById('monitorDisplay');
+      monitorBox.value = '';
       document.getElementById('logTimeDisplay').value = '';
       if (currentMainTab === 'Công thức') {
         document.getElementById('newTen').value = '';
       }
+      handleTextChange();
       calculateAutoSum();
     }
 
     function copyMonitorText() {
       const monitorBox = document.getElementById('monitorDisplay');
       monitorBox.select();
-      monitorBox.setSelectionRange(0, 99999); // Dành cho thiết bị di động
+      monitorBox.setSelectionRange(0, 99999);
       
       try {
         navigator.clipboard.writeText(monitorBox.value).then(() => {
-          document.getElementById('syncStatus').innerText = "Đã copy nội dung!";
+          document.getElementById('syncStatus').innerText = "Đã copy!";
           setTimeout(() => { document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓"; }, 2000);
-        }).catch(err => {
+        }).catch(() => {
           document.execCommand('copy');
-          document.getElementById('syncStatus').innerText = "Đã copy nội dung!";
+          document.getElementById('syncStatus').innerText = "Đã copy!";
         });
       } catch (e) {
         document.getElementById('syncStatus').innerText = "Lỗi copy!";
@@ -367,6 +585,8 @@
     }
 
     function switchMainTab(mainTab) {
+      autoSaveSilent();
+
       currentMainTab = mainTab;
       document.getElementById('tabNguyenLieuBtn').classList.toggle('active', mainTab === 'Nguyên liệu');
       document.getElementById('tabCongThucBtn').classList.toggle('active', mainTab === 'Công thức');
@@ -403,6 +623,8 @@
     }
 
     function switchSubTab(subTab) {
+      autoSaveSilent();
+
       currentSubTab = subTab;
       if (currentMainTab === 'Nguyên liệu') {
         document.getElementById('subCanMuaBtn').classList.toggle('active', subTab === 'Cần mua');
@@ -456,12 +678,13 @@
         document.getElementById('monitorDisplay').value = '';
         document.getElementById('logTimeDisplay').value = '';
         selectedItemId = null;
+        updateUndoRedoButtons();
         calculateAutoSum();
         return;
       }
 
       let html = '';
-      list.forEach((item, index) => {
+      list.forEach((item) => {
         let displayName = item.ten ? item.ten : `${item.loai}`;
         html += `
           <div class="quick-item" id="item-${item.id}">
@@ -489,18 +712,22 @@
       let displayName = item.ten ? item.ten : item.loai;
       document.getElementById('monitorTitle').innerHTML = `📝 Đang xem: <span style="color:#fff;">${displayName}</span>`;
       
+      let textVal = "";
       if (currentMainTab === 'Công thức') {
         document.getElementById('newTen').value = item.ten || '';
-        document.getElementById('monitorDisplay').value = item.noidung || '';
+        textVal = item.noidung || '';
       } else {
         const fullText = item.noidung || '';
         const splitParts = fullText.split('---LỊCH SỬ LƯU---');
-        document.getElementById('monitorDisplay').value = (splitParts[0] || '').trim();
+        textVal = (splitParts[0] || '').trim();
         const logs = (splitParts[1] || '').trim().split('\n');
         document.getElementById('logTimeDisplay').value = logs.length > 0 && logs[0] !== "" ? logs[logs.length - 1] : (item.ngay ? `Ngày tạo: ${item.ngay}` : '');
       }
 
+      document.getElementById('monitorDisplay').value = textVal;
+      initItemHistory(getItemKey(), textVal);
       calculateAutoSum();
+      scrollToBottom(); // Cuộn đến dòng mới nhất ở dưới cùng
     }
 
     function deleteSpecificItem(itemId, itemName) {
@@ -522,7 +749,7 @@
         document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
       })
       .catch(err => {
-        document.getElementById('syncStatus').innerText = "Lỗi kết nối khi xóa trên Sheet!";
+        document.getElementById('syncStatus').innerText = "Lỗi kết nối khi xóa!";
       });
     }
 
@@ -531,7 +758,13 @@
       deleteSpecificItem(selectedItemId, document.getElementById('newTen').value || currentSubTab);
     }
 
-    function saveData() {
+    function autoSaveSilent() {
+      let currentText = document.getElementById('monitorDisplay').value.trim();
+      if (!currentText && currentMainTab === 'Công thức') return;
+      saveData(false);
+    }
+
+    function saveData(isManualClick = true) {
       let ten = "";
       let currentText = document.getElementById('monitorDisplay').value.trim();
       const timeStr = getCurrentDateTimeStr();
@@ -542,7 +775,10 @@
         document.getElementById('logTimeDisplay').value = latestLog;
       } else {
         ten = document.getElementById('newTen').value.trim();
-        if (!ten) return alert("Vui lòng nhập Tên món / công thức!");
+        if (!ten) {
+          if (isManualClick) alert("Vui lòng nhập Tên món / công thức!");
+          return;
+        }
       }
 
       const existingLogs = document.getElementById('logTimeDisplay').value.trim();
@@ -559,7 +795,11 @@
         ngay: new Date().toISOString().split('T')[0]
       };
 
-      document.getElementById('syncStatus').innerText = "Đang tính toán lưu. Vui lòng đợi, đừng tắt ngang App...";
+      if (isManualClick) {
+        document.getElementById('syncStatus').innerText = "Đang tính toán lưu. Vui lòng đợi, đừng tắt ngang App...";
+      } else {
+        document.getElementById('syncStatus').innerText = "Đang tự động lưu...";
+      }
 
       let existingIndex = -1;
       if (currentMainTab === 'Nguyên liệu') {
@@ -577,16 +817,22 @@
       }
 
       saveToLocalStorage();
-      filterQuickList();
+      if (isManualClick) filterQuickList();
 
-      fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
-      .then(res => res.json())
-      .then(res => {
+      if (!isManualClick && navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        navigator.sendBeacon(SCRIPT_URL, blob);
         document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
-      })
-      .catch(err => {
-        document.getElementById('syncStatus').innerText = "Lưu máy OK (Sheet lỗi kết nối)!";
-      });
+      } else {
+        fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('syncStatus').innerText = "Đã đồng bộ ✓";
+        })
+        .catch(err => {
+          document.getElementById('syncStatus').innerText = "Lưu máy OK!";
+        });
+      }
     }
   </script>
 </body>
