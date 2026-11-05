@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bếp & Xử Lý Đơn — KimBling</title>
+  <style>
+    :root { --primary: #f59e0b; --bg: #121824; --card-bg: #1e293b; --text: #f8fafc; --subtext: #cbd5e1; --border: #334155; }
+    * { box-sizing:border-box; margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+    body { background-color:var(--bg); color:var(--text); padding:12px; font-size:17px; }
+    
+    /* Màn hình khóa PIN bảo mật đồng bộ từ Sheet */
+    #pinLockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121824; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .pin-box { background: #1e293b; border: 2px solid var(--border); padding: 24px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .pin-input { width: 100%; padding: 12px; font-size: 20px; text-align: center; background: #0f172a; border: 2px solid #475569; color: #fff; border-radius: 10px; margin-bottom: 14px; letter-spacing: 4px; }
+    .pin-btn { width: 100%; background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+
+    /* Giao diện chính */
+    #appContent { display: none; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px solid var(--border); }
+    
+    .order-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 6px 12px rgba(0,0,0,.4); }
+    .order-header { display: flex; justify-content:space-between; border-bottom: 1px dashed var(--border); padding-bottom: 10px; margin-bottom: 12px; align-items:center; }
+    .order-id { font-weight: bold; color: var(--primary); font-size: 20px; }
+    
+    .btn-push-pos { background: linear-gradient(135deg,#3b82f6,#1d4ed8); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-push-pos.pushed { background: #10b981 !important; cursor: default; }
+    
+    .customer-info { margin-bottom: 12px; line-height: 1.7; font-size: 16px; overflow-wrap: anywhere; }
+    .customer-info a { color: #38bdf8; text-decoration: none; font-weight: bold; }
+    
+    /* Box hiển thị món giống qldon */
+    .items-box { background: #0f172a; padding: 12px 14px; border-radius: 10px; margin: 12px 0; font-size: 16px; border-left: 5px solid var(--primary); }
+    .pos-item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,.15); padding-bottom: 8px; gap: 8px; }
+    .pos-item-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .pos-item-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 17px; color: #f8fafc; }
+    .pos-item-price { color: #facc15; font-size: 17px; font-weight: bold; }
+    .pos-item-options { font-size: 14px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+
+    .order-footer { display: flex; justify-content: space-between; align-items: center; margin: 14px 0; font-size: 16px; }
+    .total-price { font-weight: bold; color: #4ade80; font-size: 20px; }
+
+    .status-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .status-btn { padding: 12px 6px; border-radius: 10px; border: 1px solid var(--border); background: #0f172a; color: var(--subtext); font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; }
+    .status-btn.active-1 { background: #eab308; color: #000; border-color: #eab308; }
+    .status-btn.active-2 { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .status-btn.active-3 { background: #a855f7; color: #fff; border-color: #a855f7; }
+    .status-btn.active-4 { background: #22c55e; color: #fff; border-color: #22c55e; }
+  </style>
+</head>
+<body>
+
+  <!-- MÀN HÌNH NHẬP MÃ PIN BẢO MẬT NHÂN VIÊN ĐỒNG BỘ TỪ GOOGLE SHEET -->
+  <div id="pinLockScreen">
+    <div class="pin-box">
+      <h3 style="color:var(--primary); margin-bottom: 8px;">🔐 XÁC THỰC NHÂN VIÊN</h3>
+      <p style="font-size:14px; color:#cbd5e1; margin-bottom: 16px;">Nhập mã PIN nhân viên hoặc SĐT của bạn</p>
+      <input type="password" id="staffPinInput" class="pin-input" placeholder="••••" maxlength="6">
+      <button class="pin-btn" onclick="verifyStaffPin()">Đăng Nhập</button>
+    </div>
+  </div>
+
+  <!-- NỘI DUNG TRANG NHÂN VIÊN -->
+  <div id="appContent">
+    <div class="header">
+      <div>
+        <h2 style="color:var(--primary); font-size: 20px;">ĐƠN HÀNG — NHÂN VIÊN</h2>
+        <span id="staffWelcome" style="font-size:13px; color:#38bdf8;">Xin chào!</span>
+      </div>
+      <button onclick="lockScreen()" style="background:#475569; color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">🔒 Khóa Lại</button>
+    </div>
+
+    <div id="ordersContainer"><div style="text-align:center; padding:40px; color:#cbd5e1;">Đang tải danh sách đơn hàng...</div></div>
+  </div>
+
+  <script>
+    const KIMBLING_API_URL = "https://script.google.com/macros/s/AKfycbxPxsg3oxHjUsx8KHyOSIYmjXZw9rY9GFQYf0cHNK3JmBsfdYMJ21PQdhg43HP787GIDQ/exec";
+
+    window.onload = function() {
+      const savedPin = sessionStorage.getItem('kimbling_staff_pin');
+      if (savedPin) {
+        document.getElementById('staffPinInput').value = savedPin;
+        verifyStaffPin(true);
+      }
+    };
+
+    // Xác thực mã PIN trực tiếp với dữ liệu trên Google Sheets (Tab NhanVienTelegram / Quản lý nhân viên)
+    async function verifyStaffPin(isAuto = false) {
+      const pin = document.getElementById('staffPinInput').value.trim();
+      if (!pin) {
+        if (!isAuto) alert("Vui lòng nhập mã PIN!");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${KIMBLING_API_URL}?type=verifyStaffPin&pin=${encodeURIComponent(pin)}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          sessionStorage.setItem('kimbling_staff_pin', pin);
+          document.getElementById('pinLockScreen').style.display = 'none';
+          document.getElementById('appContent').style.display = 'block';
+          document.getElementById('staffWelcome').textContent = `Nhân viên: ${data.name || 'Hợp lệ'}`;
+          fetchStaffOrders();
+          setInterval(fetchStaffOrders, 20000); // Tự động làm mới mỗi 20 giây
+        } else {
+          if (!isAuto) alert("❌ Mã PIN không chính xác hoặc tài khoản đã bị khóa/nghỉ việc trên hệ thống!");
+          sessionStorage.removeItem('kimbling_staff_pin');
+        }
+      } catch (e) {
+        if (!isAuto) alert("⚠️ Lỗi kết nối xác thực mã PIN với Google Sheets!");
+      }
+    }
+
+    function lockScreen() {
+      sessionStorage.removeItem('kimbling_staff_pin');
+      document.getElementById('pinLockScreen').style.display = 'flex';
+      document.getElementById('appContent').style.display = 'none';
+      document.getElementById('staffPinInput').value = '';
+    }
+
+    function formatMoneyK(amount) {
+      const num = Number(amount || 0);
+      if (num === 0) return '0đ';
+      return Math.round(num / 1000) + 'k';
+    }
+
+    // Hàm phân tích hiển thị món giống hệt trang qldon.html
+    function parseOrderItemsForDisplay(rawItemsStr, orderId) {
+      if (!rawItemsStr) return `<div class="pos-item-row">☕ Đơn hàng #${orderId}</div>`;
+      
+      const itemBlocks = String(rawItemsStr).split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
+      if (itemBlocks.length === 0) return `<div class="pos-item-row">${escapeHtml(rawItemsStr)}</div>`;
+
+      return itemBlocks.map(block => {
+        let itemPrice = 0;
+        const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+        if (priceMatch) {
+          let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
+          if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+          itemPrice = pVal;
+        }
+
+        let cleanBlock = block;
+        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
+
+        let optionContent = "";
+        const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
+        if (parenMatch) {
+          optionContent = parenMatch[1].trim();
+          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+        }
+
+        let qty = 1;
+        const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
+        if (qtyMatch) {
+          qty = parseInt(qtyMatch[1], 10) || 1;
+          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+        }
+
+        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim() || 'Món nước';
+        let formattedPrice = formatMoneyK(itemPrice);
+
+        return `
+          <div class="pos-item-row">
+            <div style="flex:1;">
+              <div class="pos-item-header">
+                <span><b>${escapeHtml(dishName)}</b> <span style="font-size:15px;color:#38bdf8;">(x${qty})</span></span>
+                <span class="pos-item-price">${escapeHtml(formattedPrice)}</span>
+              </div>
+              ${optionContent ? `<div class="pos-item-options">- Size: ${escapeHtml(optionContent)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function fetchStaffOrders() {
+      fetch(`${KIMBLING_API_URL}?type=checkStatus&phone=ALL&rand=${Math.random()}`, { cache: 'no-store' })
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('ordersContainer');
+          const orders = data.orders || data;
+          if (!orders || orders.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#cbd5e1; padding:40px;">Chưa có đơn hàng nào trong ngày.</div>';
+            return;
+          }
+
+          let html = '';
+          orders.forEach(order => {
+            const orderId = String(order.orderId || '');
+            const currentStatus = String(order.status || '1');
+            const formattedItems = parseOrderItemsForDisplay(order.items, orderId);
+            const isPushed = localStorage.getItem(`kimbling_pushed_pos_${orderId}`) === 'true';
+            const pushBtnText = isPushed ? '✅ Đã đẩy POS' : '🚀 Đẩy qua POS';
+            const pushBtnClass = isPushed ? 'btn-push-pos pushed' : 'btn-push-pos';
+            const orderJson = escapeHtml(JSON.stringify(order));
+
+            html += `
+              <div class="order-card status-bg-${currentStatus}">
+                <div class="order-header">
+                  <div><span class="order-id">#${escapeHtml(orderId)}</span> <span style="color:var(--subtext);font-size:14px;margin-left:6px;">${escapeHtml(order.time || '')}</span></div>
+                  <button class="${pushBtnClass}" ${isPushed ? 'disabled' : ''} data-order="${orderJson}" onclick="pushOrderButton(this)">${pushBtnText}</button>
+                </div>
+
+                <div class="customer-info">
+                  👤 <b>Khách:</b> ${escapeHtml(order.name || 'Khách lẻ')}<br>
+                  📞 <b>SĐT:</b> <a href="tel:${escapeHtml(order.phone)}">${escapeHtml(order.phone)}</a><br>
+                  📍 <b>Đ/c:</b> ${escapeHtml(order.address || 'Tại quán')}
+                </div>
+                
+                ${order.note ? `<div style="background:#451a03; color:#fdba74; padding:8px 12px; border-radius:8px; font-size:14px; margin-bottom:10px;"><b>📝 Ghi chú:</b> ${escapeHtml(order.note)}</div>` : ''}
+
+                <div class="items-box">${formattedItems}</div>
+
+                <div class="order-footer">
+                  <span style="font-size:15px; background:#334155; padding:4px 10px; border-radius:6px; font-weight:bold;">💳 ${escapeHtml(order.payment || 'Tiền mặt')}</span>
+                  <span class="total-price">${formatMoneyK(order.total)}</span>
+                </div>
+
+                <div class="status-group">
+                  <button class="status-btn ${currentStatus === '1' ? 'active-1' : ''}" onclick="updateStatus('${escapeHtml(order.phone)}', '${escapeHtml(orderId)}', '1')">1. Đang làm</button>
+                  <button class="status-btn ${currentStatus === '2' ? 'active-2' : ''}" onclick="updateStatus('${escapeHtml(order.phone)}', '${escapeHtml(orderId)}', '2')">2. Chờ Shipper</button>
+                  <button class="status-btn ${currentStatus === '3' ? 'active-3' : ''}" onclick="updateStatus('${escapeHtml(order.phone)}', '${escapeHtml(orderId)}', '3')">3. Đang giao</button>
+                  <button class="status-btn ${currentStatus === '4' ? 'active-4' : ''}" onclick="updateStatus('${escapeHtml(order.phone)}', '${escapeHtml(orderId)}', '4')">4. Hoàn thành</button>
+                </div>
+              </div>`;
+          });
+          container.innerHTML = html;
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Nút đẩy đơn qua POS trực tiếp cho nhân viên
+    function pushOrderButton(button) {
+      let orderObj;
+      try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); } catch (e) { return; }
+      
+      button.classList.add('pushed');
+      button.disabled = true;
+      button.textContent = '✅ Đã đẩy POS';
+      localStorage.setItem(`kimbling_pushed_pos_${orderObj.orderId}`, 'true');
+
+      const payloadPOS = {
+        type: 'pushOnlineOrder', action: 'pushOnlineOrder',
+        orderId: String(orderObj.orderId), total: Number(orderObj.total || 0),
+        name: String(orderObj.name || 'Khách lẻ'), phone: String(orderObj.phone || ''),
+        address: String(orderObj.address || ''), payment: String(orderObj.payment || 'Tiền mặt')
+      };
+      navigator.sendBeacon(KIMBLING_API_URL, new Blob([JSON.stringify(payloadPOS)], {type: 'text/plain;charset=utf-8'}));
+      alert(`🚀 Đã đẩy đơn #${orderObj.orderId} lên hệ thống POS thành công!`);
+    }
+
+    function updateStatus(phone, orderId, status) {
+      const statusPayload = JSON.stringify({ action: 'updateStatus', type: 'updateStatus', phone: phone, orderId: orderId, status: status });
+      navigator.sendBeacon(KIMBLING_API_URL, new Blob([statusPayload], { type: 'text/plain;charset=utf-8' }));
+      setTimeout(fetchStaffOrders, 600);
+    }
+  </script>
+</body>
+</html>
