@@ -172,6 +172,7 @@
         <h2 style="color:var(--primary); font-size: 22px;">QUẢN LÝ ĐƠN HÀNG</h2>
         <span id="orderCount" style="font-size:14px;color:var(--subtext);">Chỉ hiển thị đơn trong ngày</span>
       </div>
+
       <div class="header-btns">
         <button class="action-btn refresh-toggle-btn" id="btnAutoRefresh" onclick="toggleAutoRefresh()">⏱️ Tự làm mới: TẮT</button>
         <button class="action-btn" style="background:#0284c7; color:#fff;" onclick="toggleGhiChuPopup(true)">📖 Sổ Tay & Kho</button>
@@ -180,8 +181,12 @@
         <button class="action-btn" style="background:#e11d48; color:#fff;" onclick="toggleEventPopup(true)">🎉 Event Lễ</button>
         <button class="action-btn" id="btnEventStatusIndicator" style="background:#475569; color:#fff;" onclick="checkEventStatusAlert()">⚪ Trạng thái Event</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
-        <button class="action-btn" onclick="lastRenderedDataSignature = ''; fetchOrders(true);">🔄 Tải lại</button>
+        <button class="action-btn" onclick="fetchOrders(true);">🔄 Tải lại</button>
+        
+        <!-- 🧹 NÚT XÓA SẠCH ĐƠN HÀNG MỚI THÊM -->
+        <button class="action-btn" style="background:#dc2626; color:#fff;" onclick="requestClearAllOrders()">🧹 Xóa Sạch Đơn</button>
       </div>
+
     </div>
     <div id="ordersContainer"><div class="empty-state">Đang kết nối KimBling tải dữ liệu đơn hàng...</div></div>
   </div>
@@ -1111,6 +1116,57 @@
           setTimeout(() => { isFetchingOrders = false; }, 3000);
         });
     }
+
+    async function requestClearAllOrders() {
+      const pin = prompt("🔐 Nhập mã PIN chủ quán để XÓA SẠCH toàn bộ đơn hàng trong Sheet:");
+      if (!pin) return;
+
+      const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
+      if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
+        alert("❌ Mã PIN chủ quán không chính xác!");
+        return;
+      }
+
+      if (!confirm("⚠️ BẠN CÓ CHẮC CHẮN MỐN XÓA TẤT CẢ ĐƠN HÀNG TRONG NGÀY?\n\nHành động này sẽ dọn sạch hoàn toàn dữ liệu trên Google Sheets.")) {
+        return;
+      }
+
+      showLoading("Đang dọn dẹp sạch sẽ dữ liệu đơn hàng...");
+      isFetchingOrders = true;
+
+      try {
+        const response = await fetch(KIMBLING_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ type: 'clearAllOrders', pin: pin })
+        });
+        
+        const res = await response.json();
+        alert(res.message || "✅ Đã dọn sạch đơn hàng!");
+
+        if (res.success) {
+          stopContinuousAlarm();
+          cachedOrdersMap.clear();
+          knownOrderIds.clear();
+          
+          // Xóa luôn trạng thái đã đẩy POS trong LocalStorage
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('kimbling_pushed_pos_')) {
+              localStorage.removeItem(key);
+            }
+          });
+
+          fetchOrders(true);
+        }
+      } catch (err) {
+        alert("⚠️ Lỗi kết nối KimBling khi xóa dữ liệu!");
+      } finally {
+        hideLoading();
+        setTimeout(() => { isFetchingOrders = false; }, 2000);
+      }
+    }
+
+
   </script>
 </body>
 </html>
