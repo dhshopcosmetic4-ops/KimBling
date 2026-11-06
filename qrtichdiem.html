@@ -6,7 +6,7 @@
   <title>Tạo Mã Tích Điểm & Quản Lý - Kim Bling</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #1c1c1e; color: #fff; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
     .container { width: 100%; max-width: 420px; background: #2c2c2e; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
     h2 { text-align: center; margin-top: 0; color: #0a84ff; font-size: 20px; }
@@ -57,17 +57,15 @@
     <div id="qrcode"></div>
   </div>
 
-  <!-- MODAL XEM DANH SÁCH, TÌM KIẾM & DUYỆT ĐỔI QUÀ -->
+  <!-- MODAL XEM DANH SÁCH & ĐỔI QUÀ -->
   <div class="modal-overlay" id="leaderboardModal">
     <div class="modal-card">
       <h3 style="margin:0; color:#ff9f0a; text-align:center;">📊 QUẢN LÝ TÍCH ĐIỂM KHÁCH HÀNG</h3>
       
-      <!-- Ô tìm kiếm SĐT nhanh -->
       <div class="search-customer-box">
         <input type="tel" id="searchCustomerInput" placeholder="🔍 Tìm nhanh theo số điện thoại..." inputmode="numeric" pattern="[0-9]*" oninput="renderLeaderboard()" style="font-size: 14px; padding: 10px;">
       </div>
 
-      <!-- Bộ lọc -->
       <div class="filter-bar">
         <button class="filter-btn active" id="btn-filter-all" onclick="setFilter('all')">Tất Cả Khách</button>
         <button class="filter-btn" id="btn-filter-reward" onclick="setFilter('reward')">🎁 Đủ Đổi Quà (≥10đ)</button>
@@ -81,7 +79,7 @@
     </div>
   </div>
 
-  <!-- MODAL XEM LỊCH SỬ CHI TIẾT & SỬA ĐIỂM CỦA 1 SĐT -->
+  <!-- MODAL XEM LỊCH SỬ -->
   <div class="modal-overlay" id="historyModal" style="z-index: 1000;">
     <div class="modal-card">
       <h3 style="margin:0; color:#0a84ff; text-align:center;" id="history-title">📜 LỊCH SỬ TÍCH ĐIỂM</h3>
@@ -105,12 +103,11 @@
     let currentFilter = 'all';
     let selectedCustomerSDT = "";
 
-    // Hàm chuẩn hóa SĐT: Giữ chắc chắn số 0 ở đầu, chống bị Google Sheets hoặc trình duyệt cắt mất
     function normalizePhoneInput() {
       let inputEl = document.getElementById('sdt');
-      let cleaned = inputEl.value.replace(/\D/g, ""); // Chỉ giữ lại ký tự số
+      let cleaned = inputEl.value.replace(/\D/g, "");
       if (cleaned.length > 0 && !cleaned.startsWith("0")) {
-        cleaned = "0" + cleaned; // Tự động thêm số 0 ở đầu nếu người dùng quên gõ
+        cleaned = "0" + cleaned;
       }
       inputEl.value = cleaned;
     }
@@ -123,6 +120,7 @@
 
       if (!ly) return alert("Vui lòng nhập số lượng món!");
 
+      // Tạo txid ngẫu nhiên dựa trên timestamp để đảm bảo tính duy nhất của từng mã QR được in/tạo ra
       const txid = "TX" + Date.now();
       const currentHost = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
       let targetUrl = `${currentHost}/tichdiem.html?txid=${txid}&ly=${ly}`;
@@ -272,17 +270,26 @@
       if (!adjust || isNaN(adjust) || parseInt(adjust) === 0) return;
 
       let val = parseInt(adjust);
-      fetch(`${SCRIPT_URL}?action=add_points&sdt=${encodeURIComponent(selectedCustomerSDT)}&ly=${val}&txid=MANUAL_${Date.now()}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success') {
-            alert(`✅ Đã điều chỉnh ${val > 0 ? '+' : ''}${val} điểm thành công!`);
-            closeHistory();
-            fetchLeaderboardData();
-          } else {
-            alert(data.message);
-          }
-        });
+      fetch(`${SCRIPT_URL}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'add_points',
+          sdt: selectedCustomerSDT,
+          ly: val,
+          txid: 'MANUAL_' + Date.now()
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert(`✅ Đã điều chỉnh ${val > 0 ? '+' : ''}${val} điểm thành công!`);
+          closeHistory();
+          fetchLeaderboardData();
+        } else {
+          alert(data.message);
+        }
+      });
     }
   </script>
 </body>
