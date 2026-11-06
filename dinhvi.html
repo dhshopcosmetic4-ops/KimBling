@@ -106,23 +106,6 @@
             line-height: 1.6;
         }
 
-        /* Khung hiển thị bản đồ nhỏ trực tiếp */
-        .map-container {
-            display: none;
-            width: 100%;
-            height: 220px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #cbd5e1;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        .map-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
         .btn-google-map {
             display: none;
             width: 100%;
@@ -171,11 +154,6 @@
         <!-- KẾT QUẢ PHÍ SHIP -->
         <div class="result-box" id="distanceResultBox"></div>
 
-        <!-- KHUNG BẢN ĐỒ NHỎ HIỂN THỊ TRỰC TIẾP (CHẾ ĐỘ ĐI BỘ) -->
-        <div class="map-container" id="mapPreviewContainer">
-            <iframe id="mapIframe" src="" allowfullscreen="" loading="lazy"></iframe>
-        </div>
-
         <!-- NÚT MỞ GOOGLE MAPS LỚN -->
         <a id="btnGoogleMap" href="#" target="_blank" class="btn-google-map">
             🗺️ Mở chỉ đường chi tiết trên Google Maps (App)
@@ -187,8 +165,8 @@
                 📋 Bảng Giá Phí Giao Hàng (Ship) Quán Kim Bling:
             </div>
             <ul style="margin-left: 18px; line-height: 1.6;">
-                <li>🎉 <b>Bán kính dưới 1km:</b> <span style="color: #28a745; font-weight: bold;">FREESHIP (0đ)</span></li>
-                <li>🛵 <b>Từ 1km - 2km:</b> <span style="color: #d32f2f; font-weight: bold;">10.000đ</span></li>
+                <li>🎉 <b>Bán kính dưới 1.5km:</b> <span style="color: #28a745; font-weight: bold;">FREESHIP (0đ)</span></li>
+                <li>🛵 <b>Từ 1.5km - 2km:</b> <span style="color: #d32f2f; font-weight: bold;">10.000đ</span></li>
                 <li>🛵 <b>Từ 2km - 3km:</b> <span style="color: #d32f2f; font-weight: bold;">15.000đ</span></li>
                 <li>🛵 <b>Trên 3km:</b> Cộng thêm <span style="color: #d32f2f; font-weight: bold;">5.000đ / km</span> tiếp theo</li>
             </ul>
@@ -201,8 +179,8 @@
         const STORE_LNG = 106.631035;
 
         function calculateShippingFee(distanceKm) {
-            if (distanceKm <= 1.0) {
-                return 0; 
+            if (distanceKm <= 1.5) {
+                return 0; // Freeship cho khoảng cách dưới hoặc bằng 1.5km
             } else if (distanceKm <= 2.0) {
                 return 10000;
             } else if (distanceKm <= 3.0) {
@@ -313,8 +291,6 @@
             const statusText = document.getElementById('statusText');
             const resultBox = document.getElementById('distanceResultBox');
             const googleBtn = document.getElementById('btnGoogleMap');
-            const mapContainer = document.getElementById('mapPreviewContainer');
-            const mapIframe = document.getElementById('mapIframe');
 
             try {
                 let res = await fetch(`https://router.project-osrm.org/route/v1/foot/${STORE_LNG},${STORE_LAT};${lng},${lat}?overview=false`);
@@ -329,7 +305,7 @@
 
                 let shipFee = calculateShippingFee(distanceKm);
                 let shipFeeText = shipFee === 0 
-                    ? "0đ (🎉 Miễn phí ship bán kính < 1km)" 
+                    ? "0đ (🎉 Miễn phí ship bán kính <= 1.5km)" 
                     : shipFee.toLocaleString('vi-VN') + "đ";
 
                 let distanceText = distanceKm < 1.0 
@@ -344,12 +320,6 @@
                     💰 Phí giao hàng (Ship): <span style="color:#d32f2f; font-size:15px;">${shipFeeText}</span>
                 `;
 
-                // Nhúng bản đồ iframe trực tiếp (Thả ghim theo cặp TỌA ĐỘ chuẩn xác & ép chế độ đi bộ dirflg=w)
-                const embedMapUrl = `https://maps.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w&output=embed`;
-                mapIframe.src = embedMapUrl;
-                mapContainer.style.display = 'block';
-
-                // Nút mở Google Maps app ngoài (Thả ghim theo TỌA ĐỘ chuẩn xác & ép chế độ đi bộ travelmode=walking)
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
 
@@ -380,7 +350,7 @@
             } catch(e) {
                 let fallbackKm = calculateHaversineKm(STORE_LAT, STORE_LNG, lat, lng);
                 let shipFee = calculateShippingFee(fallbackKm);
-                let shipFeeText = shipFee === 0 ? "0đ (Freeship < 1km)" : shipFee.toLocaleString('vi-VN') + "đ";
+                let shipFeeText = shipFee === 0 ? "0đ (Freeship <= 1.5km)" : shipFee.toLocaleString('vi-VN') + "đ";
 
                 statusText.innerText = "✅ Đã tính khoảng cách ước tính!";
                 resultBox.style.display = 'block';
@@ -388,10 +358,6 @@
                     📐 Khoảng cách ước tính: ~${fallbackKm.toFixed(1)} km<br>
                     💰 Phí ship: ${shipFeeText}
                 `;
-
-                const embedMapUrl = `https://maps.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${lat},${lng}&dirflg=w&output=embed`;
-                mapIframe.src = embedMapUrl;
-                mapContainer.style.display = 'block';
 
                 googleBtn.href = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${lat},${lng}&travelmode=walking`;
                 googleBtn.style.display = 'block';
