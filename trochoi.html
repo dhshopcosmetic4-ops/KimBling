@@ -8,8 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; }
-.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; }
+body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; position: relative; }
+.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; z-index: 2; }
 .close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
 p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
@@ -126,6 +126,10 @@ margin-top: 2px;
 </style>
 </head>
 <body>
+
+<!-- Nhúng file toast thông báo trúng thưởng vào trochoi.html -->
+<iframe src="toast-notification.html" style="position: fixed; top: 0; left: 0; width: 420px; height: 160px; border: none; z-index: 9999; pointer-events: none;" allowtransparency="true"></iframe>
+
 <div class="game-card">
 <button class="close-btn" onclick="closeGame()">✕</button>
 <h2>🎁 HỘP QUÀ MAY MẮN</h2>
@@ -196,7 +200,6 @@ function getAudioContext() {
     return audioCtx;
 }
 
-// 1. Âm thanh khi bấm vào chọn ô (Tiếng "Ting" ngắn thanh nhã)
 function playSoundClick() {
     try {
         const ctx = getAudioContext();
@@ -214,11 +217,10 @@ function playSoundClick() {
     } catch(e) {}
 }
 
-// 2. Âm thanh chúc mừng chiến thắng (Giai điệu vui tươi nốt cao)
 function playSoundVictory() {
     try {
         const ctx = getAudioContext();
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // Đồ, Mi, Sol, Đồ cao
+        const notes = [523.25, 659.25, 783.99, 1046.50]; 
         notes.forEach((freq, index) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -235,7 +237,6 @@ function playSoundVictory() {
     } catch(e) {}
 }
 
-// 3. Âm thanh buồn khi trúng ô "Ngon miệng" (Giai điệu trầm đi xuống)
 function playSoundSad() {
     try {
         const ctx = getAudioContext();
@@ -256,31 +257,11 @@ function playSoundSad() {
     } catch(e) {}
 }
 
-// ================= HIỆU ỨNG PHÁO HOA TUNG TÓE =================
 function triggerFireworks() {
     try {
-        // Pháo hoa bung từ hai bên và chính giữa
-        confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-        setTimeout(() => {
-            confetti({
-                particleCount: 50,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0 }
-            });
-        }, 250);
-        setTimeout(() => {
-            confetti({
-                particleCount: 50,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1 }
-            });
-        }, 400);
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        setTimeout(() => { confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } }); }, 250);
+        setTimeout(() => { confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } }); }, 400);
     } catch(e) {}
 }
 
@@ -470,7 +451,6 @@ if (item.type === 'DIAMOND') {
         gameState.wonDiamondsTotal += item.value;
         currentDiamondsBalance += exactWonThisTurn;
         
-        // 🎇 PHÁT ÂM THANH & HIỆU ỨNG PHÁO HOA KHI TRÚNG QUÀ
         playSoundVictory();
         triggerFireworks();
 
@@ -478,7 +458,6 @@ if (item.type === 'DIAMOND') {
     }
 } else {
     item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-    // 🔊 PHÁT ÂM THANH BUỒN KHI TRÚNG Ô "NGON MIỆNG"
     playSoundSad();
 }
 
