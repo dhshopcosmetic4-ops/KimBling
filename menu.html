@@ -1788,24 +1788,36 @@ function formatDiamondPrice(vndPrice) {
         };
 
         function getItemDescription(name) {
-            if (!name) return "Thức uống thơm ngon đậm đà từ Kim Bling Coffee & Tea.";
-            const nameNorm = typeof removeDiacritics === 'function' ? removeDiacritics(name) : name.toLowerCase();
-            
-            for (let key in descriptionsMap) {
-                if (nameNorm.includes(key)) return descriptionsMap[key];
-            }
-            
-            if (nameNorm.includes('tac')) return "Vị trà đậm đà kết hợp tắc tươi chua ngọt thanh mát, giải nhiệt cực đã.";
-            if (nameNorm.includes('matcha')) return "Trà xanh Uji thơm thanh quyện cùng sữa béo dịu mát từng ngụm.";
-            if (nameNorm.includes('ca phe') || nameNorm.includes('cafe')) return "Đậm đà hương vị cà phê nguyên chất, thơm nức lòng chuẩn gu.";
-            if (nameNorm.includes('tra sua')) return "Trà sữa béo thơm đậm vị trà, ngọt thanh dễ chịu kèm topping hấp dẫn.";
-            if (nameNorm.includes('sua chua')) return "Sữa chua lên men tự nhiên chua ngọt sánh mịn mát lịm tim.";
-            if (nameNorm.includes('soda')) return "Soda nổ bọt mát lạnh sảng khoái kết hợp hương trái cây thơm ngọt.";
-            if (nameNorm.includes('hong tra')) return "Hồng trà thơm đậm vị kết hợp trái cây tươi chua ngọt đập tan cơn khát.";
-            if (nameNorm.includes('nuong') || nameNorm.includes('chien') || nameNorm.includes('an vat')) return "Món ăn vặt thơm ngon nóng hổi, giòn rụm đậm đà chuẩn vị Kim Bling.";
-            
-            return "Thức uống thơm ngon đậm đà, mang lại cảm giác sảng khoái tức thì.";
+    if (!name) return "Thức uống thơm ngon đậm đà từ Kim Bling Coffee & Tea.";
+    const nameClean = name.trim();
+    const nameNorm = typeof removeDiacritics === 'function' ? removeDiacritics(nameClean) : nameClean.toLowerCase();
+    
+    // BƯỚC 1: Quét khớp tuyệt đối từ khóa dài / chính xác từ file descriptions.js trước
+    const activeMap = (typeof externalDescriptionsData !== 'undefined' && externalDescriptionsData) ? externalDescriptionsData : (typeof descriptionsMap !== 'undefined' ? descriptionsMap : {});
+    
+    // Sắp xếp các key theo chiều dài giảm dần để ưu tiên quét tên món dài trước (ví dụ: "mì sườn cánh gà bbq" trước "gà")
+    const sortedKeys = Object.keys(activeMap).sort((a, b) => b.length - a.length);
+    for (let key of sortedKeys) {
+        if (nameNorm === key || nameNorm.includes(key)) {
+            return activeMap[key];
         }
+    }
+    
+    // BƯỚC 2: Các từ khóa phụ dự phòng nếu không có trong danh sách
+    if (nameNorm.includes('mi ') || nameNorm.includes('mi tron') || nameNorm.includes('ga') || nameNorm.includes('tokbokki') || nameNorm.includes('banh trang') || nameNorm.includes('com') || nameNorm.includes('an vat') || nameNorm.includes('chien') || nameNorm.includes('nuong')) {
+        return "Món ăn vặt thơm ngon nóng hổi, giòn rụm đậm đà chuẩn vị Kim Bling.";
+    }
+    if (nameNorm.includes('tac')) return "Vị trà đậm đà kết hợp tắc tươi chua ngọt thanh mát, giải nhiệt cực đã.";
+    if (nameNorm.includes('matcha')) return "Trà xanh Uji thơm thanh quyện cùng sữa béo dịu mát từng ngụm.";
+    if (nameNorm.includes('ca phe') || nameNorm.includes('cafe')) return "Đậm đà hương vị cà phê nguyên chất, thơm nức lòng chuẩn gu.";
+    if (nameNorm.includes('tra sua')) return "Trà sữa béo thơm đậm vị trà, ngọt thanh dễ chịu kèm topping hấp dẫn.";
+    if (nameNorm.includes('sua chua')) return "Sữa chua lên men tự nhiên chua ngọt sánh mịn mát lịm tim.";
+    if (nameNorm.includes('soda')) return "Soda nổ bọt mát lạnh sảng khoái kết hợp hương trái cây thơm ngọt.";
+    
+    return "Thức uống thơm ngon đậm đà, mang lại cảm giác sảng khoái tức thì.";
+}
+
+
 
         function isHotFoodItem(itemName) {
             const nameNorm = removeDiacritics(itemName || '');
@@ -1866,6 +1878,31 @@ function formatDiamondPrice(vndPrice) {
                 General: ["Quán freeship nhanh lắm, shipper thân thiện ghê."]
             }
         };
+
+
+let externalDescriptionsData = null;
+
+async function loadExternalDescriptionsFile() {
+    try {
+        const res = await fetch('descriptions.js');
+        if (res.ok) {
+            let text = await res.text();
+            // Dùng biểu thức chính quy quét đối tượng descriptionsMap từ file descriptions.js
+            let mapMatch = text.match(/const descriptionsMap\s*=\s*(\{[\s\S]*?\});/);
+            if (mapMatch) {
+                // Đọc dữ liệu map động
+                externalDescriptionsData = eval('(' + mapMatch[1] + ')');
+            }
+        }
+    } catch (e) {
+        console.log("Dùng dữ liệu mô tả dự phòng tích hợp sẵn");
+    }
+}
+
+// Gọi hàm tải ngay khi khởi động trang
+loadExternalDescriptionsFile();
+
+
 
         function getCommentsListForItem(itemName, category) {
             const data = externalCommentsData || fallbackComments;
