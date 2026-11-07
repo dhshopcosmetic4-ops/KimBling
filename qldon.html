@@ -713,8 +713,10 @@
 
     function parseOrderItemsForPOS(orderObj, orderId) {
       const rawItems = orderObj.items;
+      let initialParsed = [];
+
       if (Array.isArray(rawItems) && rawItems.length > 0) {
-        return rawItems.map((item, idx) => ({
+        initialParsed = rawItems.map((item, idx) => ({
           cartId: Number(item.cartId || (Date.now() + idx)),
           id: Number(item.id || (idx + 1)),
           name: String(item.name || item.title || 'Món nước').replace(/\([^)]*\)/g, '').trim(),
@@ -723,66 +725,87 @@
           quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
           rawToppings: Array.isArray(item.rawToppings) ? item.rawToppings : []
         }));
+      } else {
+        const rawItemsStr = String(rawItems || '').trim();
+        if (!rawItemsStr) {
+          initialParsed = [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
+        } else {
+          const itemBlocks = rawItemsStr.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
+
+          itemBlocks.forEach((block, idx) => {
+            let itemPrice = 26000;
+            const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+            if (priceMatch) {
+              let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
+              if (pVal > 0) {
+                if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+                itemPrice = pVal;
+              }
+            }
+
+            let cleanBlock = block;
+            if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
+
+            let optionContent = "";
+            const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
+            if (parenMatch) {
+              optionContent = parenMatch[1].trim();
+              cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+            }
+
+            let qty = 1;
+            const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
+            if (qtyMatch) {
+              qty = parseInt(qtyMatch[1], 10) || 1;
+              cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+            }
+
+            let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
+            if (!dishName) dishName = 'Món nước';
+
+            let finalOptionsText = optionContent ? `Size: ${optionContent}` : "Size: Bình thường";
+            let toppingsArr = [];
+            if (optionContent.includes('+')) {
+              const parts = optionContent.split('+');
+              if (parts[1]) toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean);
+            }
+
+            initialParsed.push({
+              cartId: Date.now() + idx + Math.random(),
+              id: idx + 1,
+              name: dishName,
+              basePrice: itemPrice,
+              optionsText: finalOptionsText,
+              quantity: qty,
+              rawToppings: toppingsArr
+            });
+          });
+        }
       }
 
-      const rawItemsStr = String(rawItems || '').trim();
-      if (!rawItemsStr) {
-        return [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
-      }
+      // 💡 BƯỚC TỰ ĐỘNG TÁCH (BUNG) CÁC MÓN CÓ SỐ LƯỢNG > 1 THÀNH CÁC DÒNG QUANTIY = 1 ĐỂ POS IN TEM RIÊNG LẺ
+      let expandedItems = [];
+      initialParsed.forEach((item, idx) => {
+        let qty = item.quantity || 1;
+        let totalOrUnitPrice = item.basePrice;
+        
+        // Nếu tổng tiền cả cụm lớn hơn số lượng, tính ra đơn giá 1 ly
+        let unitPrice = (qty > 1 && totalOrUnitPrice >= qty * 1000) ? Math.round(totalOrUnitPrice / qty) : totalOrUnitPrice;
 
-      const itemBlocks = rawItemsStr.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
-      let parsedItems = [];
-
-      itemBlocks.forEach((block, idx) => {
-        let itemPrice = 26000;
-        const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
-        if (priceMatch) {
-          let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
-          if (pVal > 0) {
-            if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
-            itemPrice = pVal;
-          }
+        for (let k = 0; k < qty; k++) {
+          expandedItems.push({
+            cartId: Date.now() + idx + k + Math.random(),
+            id: item.id,
+            name: item.name,
+            basePrice: unitPrice,
+            optionsText: item.optionsText,
+            quantity: 1, // Tách thành từng dòng số lượng 1 độc lập
+            rawToppings: item.rawToppings
+          });
         }
-
-        let cleanBlock = block;
-        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
-
-        let optionContent = "";
-        const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
-        if (parenMatch) {
-          optionContent = parenMatch[1].trim();
-          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
-        }
-
-        let qty = 1;
-        const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
-        if (qtyMatch) {
-          qty = parseInt(qtyMatch[1], 10) || 1;
-          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
-        }
-
-        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
-        if (!dishName) dishName = 'Món nước';
-
-        let finalOptionsText = optionContent ? `Size: ${optionContent}` : "Size: Bình thường";
-        let toppingsArr = [];
-        if (optionContent.includes('+')) {
-          const parts = optionContent.split('+');
-          if (parts[1]) toppingsArr = parts[1].split(',').map(t => t.trim()).filter(Boolean);
-        }
-
-        parsedItems.push({
-          cartId: Date.now() + idx + Math.random(),
-          id: idx + 1,
-          name: dishName,
-          basePrice: itemPrice,
-          optionsText: finalOptionsText,
-          quantity: qty,
-          rawToppings: toppingsArr
-        });
       });
 
-      return parsedItems.length ? parsedItems : [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
+      return expandedItems;
     }
 
     function parseAdminItemsToList(rawItemsStr, orderId) {
@@ -1146,10 +1169,8 @@
 
         if (res.success) {
           stopContinuousAlarm();
-          cachedOrdersMap.clear();
           knownOrderIds.clear();
           
-          // Xóa luôn trạng thái đã đẩy POS trong LocalStorage
           Object.keys(localStorage).forEach(key => {
             if (key.startsWith('kimbling_pushed_pos_')) {
               localStorage.removeItem(key);
@@ -1165,8 +1186,6 @@
         setTimeout(() => { isFetchingOrders = false; }, 2000);
       }
     }
-
-
   </script>
 </body>
 </html>
