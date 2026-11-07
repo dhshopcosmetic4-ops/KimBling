@@ -9,7 +9,7 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { background: transparent; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 5px; position: relative; }
-.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 14px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; z-index: 2; }
+.game-card { background: #fff; width: 100%; max-width: 390px; border-radius: 20px; padding: 12px 12px; text-align: center; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; z-index: 2; }
 .close-btn { position: absolute; top: 8px; right: 8px; background: #eee; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; font-size: 15px; cursor: pointer; color: #555; z-index: 10; }
 h2 { color: #d32f2f; font-size: 18px; margin-bottom: 2px; margin-top: 2px; font-weight: 800; }
 p.subtitle { font-size: 11px; color: #666; margin-bottom: 6px; }
@@ -127,11 +127,12 @@ margin-top: 2px;
 </head>
 <body>
 
-<!-- Nhúng file toast thông báo trúng thưởng vào trochoi.html -->
-<iframe src="toast-notification.html" style="position: fixed; top: 0; left: 0; width: 420px; height: 160px; border: none; z-index: 9999; pointer-events: none;" allowtransparency="true"></iframe>
-
 <div class="game-card">
 <button class="close-btn" onclick="closeGame()">✕</button>
+
+<!-- NHÙNG IFRAME THÔNG BÁO VÀO BÊN TRONG KHUNG GIAO DIỆN -->
+<iframe src="toast-notification.html" style="width: 100%; height: 72px; border: none; display: block; margin-top: 4px; margin-bottom: 2px;" allowtransparency="true"></iframe>
+
 <h2>🎁 HỘP QUÀ MAY MẮN</h2>
 <p class="subtitle">Săn Kim Cương 💎 - Mở hộp tích lũy ngay!</p>
 
@@ -188,7 +189,6 @@ let userPhone = "";
 let turnsPlayed = 0; 
 let currentDiamondsBalance = 0;
 
-// ================= HỆ THỐNG ÂM THANH BẰNG WEB AUDIO API =================
 let audioCtx = null;
 function getAudioContext() {
     if (!audioCtx) {
@@ -274,28 +274,25 @@ const j = Math.floor(Math.random() * (i + 1));
 return arr;
 }
 
-function createNewBoard(currentWonTotal) {
-let board = [
-{ type: 'DIAMOND', value: 3, text: '+3 Kim Cương', icon: '💎' },
-{ type: 'DIAMOND', value: 2, text: '+2 Kim Cương', icon: '💎' },
-{ type: 'DIAMOND', value: 1, text: '+1 Kim Cương', icon: '💎' },
-{ type: 'FAKE', text: '300 Kim Cương', icon: '💎' },
-{ type: 'FAKE', text: '200 Kim Cương', icon: '💎' },
-{ type: 'FAKE', text: '100 Kim Cương', icon: '💎' },
-{ type: 'FAKE', text: 'Voucher 50K', icon: '🎟️' },
-{ type: 'FAKE', text: 'Kính Bluetooth', icon: '🕶️' }
-];
-const isTenDiamondLucky = Math.random() < 0.05;
-if (isTenDiamondLucky && (currentWonTotal + 10 <= 10)) {
-board.push({ type: 'DIAMOND', value: 10, text: '+10 Kim Cương', icon: '💎' });
-} else {
-board.push({ type: 'FAKE', text: 'Ly Free', icon: '🥤' });
-}
-return shuffleArray(board);
+const allowedDiamondValues = [100, 50, 30, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3];
+
+function createNewBoard() {
+    let board = [];
+    let shuffledValues = shuffleArray([...allowedDiamondValues]);
+    for (let i = 0; i < 9; i++) {
+        let val = shuffledValues[i];
+        board.push({
+            type: 'DIAMOND',
+            value: val,
+            text: `+${val} Kim Cương`,
+            icon: '💎'
+        });
+    }
+    return shuffleArray(board);
 }
 
 function getCurrentPhoneKey() {
-    return `kimbling_game_state_v46_${userPhone}`;
+    return `kimbling_game_state_v47_${userPhone}`;
 }
 
 function getGameState() {
@@ -310,7 +307,7 @@ function getGameState() {
     const newState = {
         wonDiamondsTotal: 0, 
         isCurrentGameFinished: false,
-        currentBoard: createNewBoard(0), 
+        currentBoard: createNewBoard(), 
         selectedBoxIndex: null
     };
     localStorage.setItem(storageKey, JSON.stringify(newState));
@@ -401,13 +398,8 @@ if (gameState.isCurrentGameFinished && gameState.selectedBoxIndex !== null) {
 boxElements.forEach((box, idx) => {
 const item = gameState.currentBoard[idx];
 if (idx === gameState.selectedBoxIndex) {
-if (item.type === 'DIAMOND') {
 box.innerHTML = `<span style="font-size:20px;">💎</span><span class="item-title">${item.text}</span>`;
 box.className = 'box-item user-opened winner-box';
-} else {
-box.innerHTML = `<span style="font-size:20px;">😋</span><span class="item-title">Ngon miệng!</span>`;
-box.className = 'box-item user-opened';
-}
 } else {
 box.innerHTML = `<span style="font-size:16px;">${item.icon}</span><span style="font-size:9px; font-weight:normal;">${item.text}</span>`;
 box.className = 'box-item auto-revealed';
@@ -441,25 +433,14 @@ turnsPlayed++;
 gameState.isCurrentGameFinished = true;
 gameState.selectedBoxIndex = index;
 let item = gameState.currentBoard[index];
-let exactWonThisTurn = 0;
+let exactWonThisTurn = item.value;
 
-if (item.type === 'DIAMOND') {
-    if (gameState.wonDiamondsTotal >= 10 || (gameState.wonDiamondsTotal + item.value > 10)) {
-        item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-    } else {
-        exactWonThisTurn = item.value;
-        gameState.wonDiamondsTotal += item.value;
-        currentDiamondsBalance += exactWonThisTurn;
-        
-        playSoundVictory();
-        triggerFireworks();
+currentDiamondsBalance += exactWonThisTurn;
+gameState.wonDiamondsTotal += exactWonThisTurn;
 
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-    }
-} else {
-    item = { type: 'MISS', text: 'Ngon miệng!', icon: '😋' };
-    playSoundSad();
-}
+playSoundVictory();
+triggerFireworks();
+if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
 try {
     fetch(KIMBLING_API_URL, {
@@ -478,7 +459,6 @@ try {
     console.log("Lỗi đồng bộ Cloud:", e);
 }
 
-gameState.currentBoard[index] = item;
 localStorage.setItem(getCurrentPhoneKey(), JSON.stringify(gameState));
 localStorage.setItem('kim_bling_user_diamonds', currentDiamondsBalance);
 
@@ -495,13 +475,7 @@ const resultText = document.getElementById('resultText');
 const choiceRow = document.getElementById('choiceRow');
 const btnCloseGame = document.getElementById('btnCloseGameAction');
 const selectedItem = gameState.currentBoard[gameState.selectedBoxIndex];
-let htmlMsg = "";
-
-if (selectedItem.type === 'DIAMOND') {
-htmlMsg = `🎉 <b>CHÚC MỪNG! BẠN NHẬN ĐƯỢC <span style="color:#d32f2f;">+${selectedItem.value} 💎</span></b><br>`;
-} else {
-htmlMsg = `😋 <b>Chúc bạn ngon miệng!</b> Ô này không có kim cương nhé.<br>`;
-}
+let htmlMsg = `🎉 <b>CHÚC MỪNG! BẠN NHẬN ĐƯỢC <span style="color:#d32f2f;">+${selectedItem.value} 💎</span></b><br>`;
 
 const remainingTurns = Math.max(0, MAX_TURNS_ALLOWED - turnsPlayed);
 if (remainingTurns > 0) {
@@ -524,7 +498,7 @@ if (remainingTurns <= 0) {
 }
 gameState.isCurrentGameFinished = false;
 gameState.selectedBoxIndex = null;
-gameState.currentBoard = createNewBoard(gameState.wonDiamondsTotal);
+gameState.currentBoard = createNewBoard();
 localStorage.setItem(getCurrentPhoneKey(), JSON.stringify(gameState));
 updateUI();
 }
