@@ -1136,12 +1136,13 @@ textarea {
             }
         }
 
-                async function toggleAttendance() {
+                        async function toggleAttendance() {
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
             const now = new Date();
             let currentActiveShift = getActiveShift();
             
+            // Lấy modal thông báo đang đồng bộ
             const loadingModal = document.getElementById('systemLoadingModal');
 
             if (!currentActiveShift) {
@@ -1150,7 +1151,7 @@ textarea {
                 const openingCash = Number(openingInput);
                 if (!Number.isFinite(openingCash) || openingCash < 0) { alert('Số tiền lẻ đầu ca không hợp lệ. Vui lòng thử lại.'); return; }
                 
-                // Bật màn hình chờ
+                // 1. HIỂN THỊ BẢNG CHỜ NGAY KHI BẮT ĐẦU VÀO CA
                 if (loadingModal) loadingModal.style.display = 'flex';
 
                 localStorage.setItem('kimbling_opening_cash_' + currentAccount, String(Math.round(openingCash)));
@@ -1167,12 +1168,13 @@ textarea {
                 saveActiveShift(currentActiveShift);
                 
                 try {
-                    // Đợi đồng bộ trạng thái vào ca lên Google Sheets xong mới tắt màn hình chờ
+                    // 2. CHỜ ĐỒNG BỘ LÊN GOOGLE SHEETS XONG
                     await syncActiveShiftsToCloud();
                     alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
                 } catch (e) {
                     alert('Đã lưu ca làm cục bộ, nhưng đồng bộ mạng thất bại. Vui lòng kiểm tra lại kết nối.');
                 } finally {
+                    // 3. TẮT BẢNG CHỜ KHI HOÀN TẤT
                     if (loadingModal) loadingModal.style.display = 'none';
                 }
 
@@ -1200,7 +1202,7 @@ textarea {
 Thời gian làm: ${hours} giờ.
 Lương dự kiến: ${formatPrice(totalPay)}`)) return;
 
-                    // Bật màn hình chờ
+                    // HIỂN THỊ BẢNG CHỜ KHI TAN CA (ĐỐI VỚI PHỤC VỤ)
                     if (loadingModal) loadingModal.style.display = 'flex';
 
                     attendanceList.push(record);
@@ -1223,6 +1225,7 @@ Lương dự kiến: ${formatPrice(totalPay)}`)) return;
             }
             updateAttendanceUIState();
         }
+
 
 
         // Kiểm tra chế độ khách ngay lập tức
