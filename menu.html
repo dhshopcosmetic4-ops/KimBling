@@ -2522,10 +2522,7 @@ function renderTiktokCard() {
     }
 
     document.getElementById('tiktokTitle').innerText = item.name;
-    
-    // HIỂN THỊ GIÁ SONG SONG VND VÀ 💎 TRONG POPUP TIKTOK
     document.getElementById('tiktokPrice').innerHTML = formatDynamicPrice(item.price);
-
 
     let descEl = document.getElementById('tiktokDesc');
     if (!descEl) {
@@ -2536,6 +2533,24 @@ function renderTiktokCard() {
         titleEl.parentNode.insertBefore(descEl, titleEl.nextSibling);
     }
     descEl.innerText = getItemDescription(item.name);
+
+    // KIỂM TRA TRẠNG THÁI HẾT HÀNG ĐỂ ĐỔI NÚT BẤM TRONG POPUP TIKTOK
+    let tiktokBtnHtml = item.isSoldOut 
+        ? `<button class="btn-tiktok-add" style="background:#e0e0e0 !important; color:#888 !important; box-shadow:none !important; cursor:not-allowed;" disabled>Tạm hết món</button>`
+        : `<button class="btn-tiktok-add pulse-attention" onclick="confirmAddFromTiktok()">🛒 ĐẶT MÓN NÀY NGAY</button>`;
+
+    // Cập nhật lại giao diện chân trang TikTok kèm nút bấm động
+    const footerActionsEl = card.querySelector('.tiktok-footer');
+    if (footerActionsEl) {
+        footerActionsEl.innerHTML = `
+            <div class="tiktok-tag">🔥 Best Seller - Kim Bling</div>
+            <div class="tiktok-title" id="tiktokTitle">${item.name}</div>
+            <div class="tiktok-price" id="tiktokPrice">${formatDynamicPrice(item.price)}</div>
+            <div class="tiktok-actions">
+                ${tiktokBtnHtml}
+            </div>
+        `;
+    }
 
     let oldNotice = document.getElementById('videoPlayNotice');
     if (oldNotice) oldNotice.remove();
@@ -2580,7 +2595,6 @@ function renderTiktokCard() {
         `;
         fingerDiv.innerHTML = `<span class="shake-pointing-finger" style="font-size: 26px; display: inline-block; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.9));">👇</span>`;
         
-        const footerActionsEl = document.querySelector('.tiktok-footer');
         if (footerActionsEl) {
             footerActionsEl.style.position = 'relative';
             footerActionsEl.appendChild(fingerDiv);
@@ -2645,12 +2659,19 @@ function renderTiktokCard() {
         }
 
         function confirmAddFromTiktok() {
-            const item = filteredMenu[currentTiktokIndex];
-            closeTiktokModal();
-            if (item) {
-                openOptionsModal(item.id);
-            }
-        }
+    const item = filteredMenu[currentTiktokIndex];
+    if (!item) return;
+
+    // KIỂM TRA XEM MÓN CÓ ĐANG BỊ HẾT HÀNG HAY KHÔNG
+    if (item.isSoldOut === true) {
+        alert('Món này hiện đang tạm hết hàng!');
+        return; // Dừng lại, không cho mở bảng chọn món nữa
+    }
+
+    closeTiktokModal();
+    openOptionsModal(item.id);
+}
+
 
         let touchStartY = 0;
         let touchEndY = 0;
