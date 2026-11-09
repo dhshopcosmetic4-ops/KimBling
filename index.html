@@ -591,6 +591,26 @@ textarea {
         </div>
     </div>
 
+<!-- MODAL ĐANG CẬP NHẬT HỆ THỐNG -->
+<div class="modal" id="systemLoadingModal" style="display: none; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="modal-content" style="width: 320px; text-align: center; padding: 25px;">
+        <div style="font-size: 32px; margin-bottom: 10px;">⏳</div>
+        <h3 style="color: #2196F3; margin-bottom: 8px;">Đang đồng bộ dữ liệu</h3>
+        <p style="font-size: 14px; color: #555; line-height: 1.4; margin-bottom: 15px;">Vui lòng đợi hệ thống cập nhật, không thoát app...</p>
+        <div style="width: 100%; background: #eee; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div style="width: 100%; height: 100%; background: #2196F3; animation: loadingBar 1.2s infinite linear;"></div>
+        </div>
+    </div>
+</div>
+<style>
+@keyframes loadingBar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>
+
+
+
     <div id="printable-area"></div>
 
     <script>
@@ -911,44 +931,61 @@ textarea {
     }
 }
 
-function editAttendanceRecord(attId) {
-    if (!verifyAdminPin()) return;
-    let att = attendanceList.find(a => String(a.id) === String(attId));
-    if (!att) return;
-    
-    let choice = prompt("Chọn thông tin muốn sửa:\n1. Sửa tổng số giờ (vd: 8.5)\n2. Sửa lại giờ Vào và giờ Ra cụ thể", "1");
-    if (choice === "1") {
-        let newHoursStr = prompt("Nhập số giờ làm mới:", att.hours);
-        if (newHoursStr === null) return;
-        let newHours = parseFloat(newHoursStr);
-        if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-        att.hours = newHours;
-        att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-    } else if (choice === "2") {
-        let newIn = prompt("Nhập giờ vào mới (vd: 08:00):", att.checkInTime);
-        if (newIn === null) return;
-        let newOut = prompt("Nhập giờ ra mới:", att.checkOutTime || '');
-        if (newOut === null) return;
-        let newHoursStr = prompt("Nhập lại tổng số giờ tính lương tương ứng:", att.hours);
-        if (newHoursStr === null) return;
-        let newHours = parseFloat(newHoursStr);
-        if (isNaN(newHours) || newHours <= 0) { alert("Số giờ không hợp lệ!"); return; }
-        att.checkInTime = newIn;
-        att.checkOutTime = newOut;
-        att.hours = newHours;
-        att.totalPay = Math.round(newHours * (att.hourlyRate || 22000));
-    } else {
-        return;
-    }
+        async function editAttendanceRecord(attId) {
+            if (!verifyAdminPin()) return;
+            let att = attendanceList.find(a => String(a.id) === String(attId));
+            if (!att) return;
+            
+            let newIn = prompt("Nhập giờ vào mới (Định dạng HH:mm, vd: 08:00):", att.checkInTime ? att.checkInTime.split(' ').pop() : "08:00");
+            if (newIn === null) return;
+            
+            let newOut = prompt("Nhập giờ ra mới (Định dạng HH:mm, vd: 17:30):", att.checkOutTime ? att.checkOutTime.split(' ').pop() : "17:30");
+            if (newOut === null) return;
+            
+            // Tự động tính số giờ dựa trên giờ vào và giờ ra
+            let [inH, inM] = newIn.split(':').map(Number);
+            let [outH, outM] = newOut.split(':').map(Number);
+            
+            if (isNaN(inH) || isNaN(inM) || isNaN(outH) || isNaN(outM)) {
+                alert("Định dạng giờ không hợp lệ! Vui lòng nhập theo mẫu HH:mm (vd: 08:00).");
+                return;
+            }
+            
+            let inMinutes = inH * 60 + inM;
+            let outMinutes = outH * 60 + outM;
+            if (outMinutes <= inMinutes) {
+                alert("Giờ ra phải lớn hơn giờ vào!");
+                return;
+            }
+            
+            let calculatedHours = parseFloat(((outMinutes - inMinutes) / 60).toFixed(2));
+            let rate = att.hourlyRate || 22000;
+            let calculatedPay = Math.round(calculatedHours * rate);
 
-    localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-    
-    // Cập nhật lại bản ghi đã sửa lên Google Sheets
-    syncAttendanceToCloud(att);
-    
-    calculatePayroll();
-    alert("Đã cập nhật ca làm thành công!");
-}
+            // Bật modal chờ đồng bộ
+            const loadingModal = document.getElementById('systemLoadingModal');
+            if (loadingModal) loadingModal.style.display = 'flex';
+
+            att.checkInTime = newIn;
+            att.checkOutTime = newOut;
+            att.hours = calculatedHours;
+            att.totalPay = calculatedPay;
+
+            localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
+            
+            try {
+                // Đợi đồng bộ lên Google Sheets xong mới tắt bảng chờ
+                await syncAttendanceToCloud(att);
+                calculatePayroll();
+                alert(`Đã cập nhật thành công!\n- Thời gian: ${calculatedHours} giờ\n- Lương ca: ${formatPrice(calculatedPay)}`);
+            } catch (err) {
+                console.log("Sync attendance edit error:", err);
+                alert("Đã lưu thay đổi trên máy, nhưng đồng bộ lên Google Sheets thất bại.");
+            } finally {
+                if (loadingModal) loadingModal.style.display = 'none';
+            }
+        }
+
 
 
         
@@ -1099,17 +1136,23 @@ function editAttendanceRecord(attId) {
             }
         }
 
-        function toggleAttendance() {
+                async function toggleAttendance() {
             const staff = staffList.find(s => s.id === currentAccount);
             if (!staff) return;
             const now = new Date();
             let currentActiveShift = getActiveShift();
+            
+            const loadingModal = document.getElementById('systemLoadingModal');
 
             if (!currentActiveShift) {
                 const openingInput = prompt('Nhập tiền lẻ thối đầu ca trong két (VNĐ). Nhập 0 nếu không có:', localStorage.getItem('kimbling_opening_cash_' + currentAccount) || '0');
                 if (openingInput === null) return;
                 const openingCash = Number(openingInput);
                 if (!Number.isFinite(openingCash) || openingCash < 0) { alert('Số tiền lẻ đầu ca không hợp lệ. Vui lòng thử lại.'); return; }
+                
+                // Bật màn hình chờ
+                if (loadingModal) loadingModal.style.display = 'flex';
+
                 localStorage.setItem('kimbling_opening_cash_' + currentAccount, String(Math.round(openingCash)));
                 currentActiveShift = {
                     id: Date.now(),
@@ -1122,8 +1165,17 @@ function editAttendanceRecord(attId) {
                     date: now.toISOString().split('T')[0]
                 };
                 saveActiveShift(currentActiveShift);
-                syncActiveShiftsToCloud();
-                alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
+                
+                try {
+                    // Đợi đồng bộ trạng thái vào ca lên Google Sheets xong mới tắt màn hình chờ
+                    await syncActiveShiftsToCloud();
+                    alert(`Đã ghi nhận BẮT ĐẦU CA lúc ${now.toLocaleTimeString('vi-VN')} cho ${staff.name}!`);
+                } catch (e) {
+                    alert('Đã lưu ca làm cục bộ, nhưng đồng bộ mạng thất bại. Vui lòng kiểm tra lại kết nối.');
+                } finally {
+                    if (loadingModal) loadingModal.style.display = 'none';
+                }
+
             } else {
                 let checkInDate = new Date(currentActiveShift.checkInIso);
                 let diffMs = now - checkInDate;
@@ -1147,13 +1199,23 @@ function editAttendanceRecord(attId) {
                     if (!confirm(`Xác nhận TAN CA cho phục vụ ${staff.name}?
 Thời gian làm: ${hours} giờ.
 Lương dự kiến: ${formatPrice(totalPay)}`)) return;
+
+                    // Bật màn hình chờ
+                    if (loadingModal) loadingModal.style.display = 'flex';
+
                     attendanceList.push(record);
                     localStorage.setItem('kimbling_attendance', JSON.stringify(attendanceList));
-                    syncAttendanceToCloud(record);
-
-                    saveActiveShift(null);
-                    syncActiveShiftsToCloud();
-                    alert(`Đã TAN CA thành công! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                    
+                    try {
+                        await syncAttendanceToCloud(record);
+                        saveActiveShift(null);
+                        await syncActiveShiftsToCloud();
+                        alert(`Đã TAN CA thành công! Thời gian làm: ${hours} giờ. Lương ca này: ${formatPrice(totalPay)}.`);
+                    } catch (e) {
+                        alert('Lỗi kết nối khi đồng bộ tan ca.');
+                    } finally {
+                        if (loadingModal) loadingModal.style.display = 'none';
+                    }
                 } else {
                     openShiftReport();
                     return;
@@ -1161,6 +1223,7 @@ Lương dự kiến: ${formatPrice(totalPay)}`)) return;
             }
             updateAttendanceUIState();
         }
+
 
         // Kiểm tra chế độ khách ngay lập tức
         const urlParamsInit = new URLSearchParams(window.location.search);
@@ -1287,15 +1350,19 @@ function toggleCustomerMenuMode() {
 }
 
 
-        function syncToGoogleSheets(typeData, payload) {
-            if (!GOOGLE_SCRIPT_URL) return;
+                function syncToGoogleSheets(typeData, payload) {
+            if (!GOOGLE_SCRIPT_URL) return Promise.resolve();
+            // Sử dụng fetch chuẩn để có thể chờ (await) kết quả gửi lên thành công
             return fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                 body: JSON.stringify({ type: typeData, account: currentAccount, ...payload })
-            }).catch(err => { console.log("Sync error:", err); throw err; });
+            }).catch(err => { 
+                console.log("Sync error:", err); 
+                throw err; 
+            });
         }
+
 
                                 async function fetchMenuFromCloud() {
             try {
