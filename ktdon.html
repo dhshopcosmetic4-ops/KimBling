@@ -211,11 +211,11 @@
   <!-- MODAL XEM LỊCH SỬ TÍCH ĐIỂM CỦA KHÁCH -->
   <div id="customerHistoryModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 15px;">
     <div style="background: #1e293b; border: 1px solid #334155; width: 100%; max-width: 420px; border-radius: 14px; padding: 16px; max-height: 85vh; display: flex; flex-direction: column;">
-      <h3 style="margin: 0 0 4px 0; color: #34c759; font-size: 16px; text-align: center;">📜 Lịch Sử Tích Điểm & Đổi Quà</h3>
+      <h3 style="margin: 0 0 4px 0; color: #34c759; font-size: 16px; text-align: center;">📜 Thông Tin Tích Điểm</h3>
       <div style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 12px;" id="modalPhoneSubtitle"></div>
 
-      <div id="customerHistoryList" style="flex: 1; overflow-y: auto; background: #0f172a; padding: 10px; border-radius: 8px; font-size: 13px;">
-        Đang tải lịch sử...
+      <div id="customerHistoryList" style="flex: 1; overflow-y: auto; background: #0f172a; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.5;">
+        Đang tải thông tin...
       </div>
 
       <button onclick="closeCustomerHistory()" style="width: 100%; margin-top: 12px; background: #ef4444; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">ĐÓNG</button>
@@ -234,6 +234,7 @@
 
     let autoRefreshTimer = null;
     let currentSearchedPhone = "";
+    let cachedCustomerData = null;
 
     function showLoading(text = "Đang kết nối KimBling... Vui lòng chờ xíu nhé!") {
       document.getElementById('loadingText').innerText = text;
@@ -272,6 +273,7 @@
         fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`).then(res => res.json()).catch(() => ({ hatKim: 0, logs: [] }))
       ])
       .then(([orderData, pointData, walletData]) => {
+        cachedCustomerData = { pointData, phone };
         renderCombinedResult(orderData, pointData, walletData, phone);
         if (!autoRefreshTimer) {
           autoRefreshTimer = setInterval(() => { silentRefresh(); }, 15000);
@@ -294,6 +296,7 @@
         fetch(`${KIMBLING_API_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(currentSearchedPhone)}`).then(res => res.json()).catch(() => ({ hatKim: 0, logs: [] }))
       ])
       .then(([orderData, pointData, walletData]) => {
+        cachedCustomerData = { pointData, phone: currentSearchedPhone };
         renderCombinedResult(orderData, pointData, walletData, currentSearchedPhone);
       });
     }
@@ -318,14 +321,14 @@
       if (updateTimeStr) {
         latestLogHtml = `
           <div class="diamond-latest-log">
-            <span>🕒 Cập nhật lần cuối (Cột E):</span>
+            <span>🕒 Cập nhật lần cuối:</span>
             <b style="color: #34c759;">${updateTimeStr}</b>
           </div>
         `;
       } else {
         latestLogHtml = `
           <div class="diamond-latest-log">
-            <span>🕒 Cập nhật lần cuối (Cột E):</span>
+            <span>🕒 Cập nhật lần cuối:</span>
             <span style="color: var(--subtext);">Chưa có ghi nhận thời gian</span>
           </div>
         `;
@@ -351,12 +354,12 @@
           ${rewards > 0 ? `<div style="font-size: 12px; color: #34c759; margin-top: 8px; text-align: center; font-weight: bold;">🎉 Bạn đang có ${rewards} phần quà miễn phí! Hãy đưa màn hình cho quán để đổi nhé.</div>` : `<div style="font-size: 11px; color: var(--subtext); margin-top: 8px; text-align: center;">💡 Còn mua thêm <b>${nextLy} món</b> nữa là bạn sẽ nhận được phần quà đổi miễn phí!</div>`}
           
           <button onclick="openCustomerPointHistory('${phone}')" style="width: 100%; margin-top: 10px; background: rgba(52, 199, 89, 0.15); border: 1px solid #34c759; color: #34c759; padding: 6px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">
-            📜 Xem lịch sử tích điểm & đổi quà chi tiết
+            📜 Xem thông tin & Lần giao dịch gần nhất
           </button>
         </div>
       `;
 
-      // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY (Kèm thông báo hoàn 100% 💎)
+      // 2. Ô THÔNG TIN TÚI 💎 TÍCH LŨY
       html += `
         <div class="diamond-box">
           <div class="diamond-header" style="margin-bottom: 8px;">
@@ -609,33 +612,43 @@
       document.getElementById('customerHistoryModal').style.display = 'flex';
       document.getElementById('modalPhoneSubtitle').innerText = `Số điện thoại: ${phone}`;
       const listEl = document.getElementById('customerHistoryList');
-      listEl.innerHTML = "Đang kết nối KimBling tải lịch sử...";
+      listEl.innerHTML = "Đang tải thông tin điểm của bạn...";
 
-      fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.history && data.history.length > 0) {
-            let html = '';
-            data.history.reverse().forEach(h => {
-              let isPlus = h.ly > 0;
-              let color = isPlus ? '#34c759' : '#ef4444';
-              let text = isPlus ? `+${h.ly} món (Tích điểm)` : `${h.ly} món (Đổi quà)`;
-              
-              html += `
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                  <span style="color: #94a3b8; font-size: 12px;">🕒 ${h.time}</span>
-                  <b style="color: ${color};">${text}</b>
-                </div>
-              `;
-            });
-            listEl.innerHTML = html;
-          } else {
-            listEl.innerHTML = "<p style='text-align: center; color: #94a3b8; padding: 20px 0;'>Chưa có lịch sử giao dịch tích điểm nào.</p>";
-          }
-        })
-        .catch(() => {
-          listEl.innerHTML = "<p style='text-align: center; color: #ef4444;'>Không thể kết nối KimBling để tải lịch sử!</p>";
-        });
+      if (cachedCustomerData && cachedCustomerData.pointData && cachedCustomerData.pointData.status === 'success') {
+        renderPointDetailsModal(cachedCustomerData.pointData);
+      } else {
+        fetch(`${KIMBLING_API_URL}?action=get_info&sdt=${encodeURIComponent(phone)}`)
+          .then(res => res.json())
+          .then(data => {
+            renderPointDetailsModal(data);
+          })
+          .catch(() => {
+            listEl.innerHTML = "<p style='text-align: center; color: #ef4444;'>Không thể kết nối KimBling để tải thông tin!</p>";
+          });
+      }
+    }
+
+    function renderPointDetailsModal(data) {
+      const listEl = document.getElementById('customerHistoryList');
+      if (data && data.status === 'success') {
+        let total = data.totalPoints || 0;
+        let rewards = data.rewards || 0;
+        let nextReward = data.nextReward || 10;
+        
+        let html = `
+          <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #334155;">
+            <div style="font-size: 14px; color: #34c759; font-weight: bold; margin-bottom: 4px;">🎯 Tổng điểm tích lũy hiện tại: ${total} điểm</div>
+            <div style="font-size: 13px; color: #cbd5e1;">🎁 Số phần quà có thể đổi: <b>${rewards} phần</b></div>
+            <div style="font-size: 13px; color: #cbd5e1;">💡 Cần mua thêm: <b>${nextReward} món</b> để nhận quà tiếp theo</div>
+          </div>
+          <div style="font-size: 12px; color: #94a3b8; line-height: 1.6;">
+            ✨ Hệ thống tích điểm của KimBling đã được tối ưu siêu gọn: Mỗi lần bạn mua hàng, điểm sẽ tự động cộng dồn vào tổng điểm thẻ thành viên và ghi nhận lại giao dịch gần nhất để quán phục vụ bạn tốt nhất! ❤️
+          </div>
+        `;
+        listEl.innerHTML = html;
+      } else {
+        listEl.innerHTML = "<p style='text-align: center; color: #94a3b8; padding: 15px 0;'>Chưa ghi nhận dữ liệu điểm tích lũy cho số điện thoại này.</p>";
+      }
     }
 
     function closeCustomerHistory() {
