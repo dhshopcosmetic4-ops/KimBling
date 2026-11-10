@@ -32,10 +32,8 @@
     .customer-row { background: #1c1c1e; padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #0a84ff; }
     .customer-row.has-reward { border-left-color: #30d158; background: #1a2e1d; }
     
-    .btn-action-sm { background: #ff9f0a; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-left: 4px; }
-    .btn-history-sm { background: #0a84ff; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
-    
-    .history-item { background: #1c1c1e; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed #3a3a3c; }
+    .btn-action-sm { background: #ff9f0a; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    .btn-adjust-sm { background: #3a3a3c; color: #fff; border: none; padding: 8px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-right: 6px; }
     .close-modal { background: #ff453a; color: #fff; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; margin-top: 12px; cursor: pointer; }
   </style>
 </head>
@@ -51,7 +49,7 @@
     <input type="number" id="ly" value="2" min="1" style="font-size:22px; font-weight:bold; color:#0a84ff;">
 
     <button class="btn-create" onclick="generateQR()">TẠO MÃ QR</button>
-    <button class="btn-manage" onclick="openLeaderboard()">🎁 Quản Lý Điểm & Đổi Quà Khách</button>
+    <button class="btn-manage" onclick="openLeaderboard()">🎁 Quản Lý Điểm Khách Hàng</button>
 
     <div id="note-text" class="note"></div>
     <div id="qrcode"></div>
@@ -72,27 +70,10 @@
       </div>
 
       <div class="list-box" id="leaderboard-list">
-        Đang tải dữ liệu từ Google Sheets...
+        Đang tải dữ liệu...
       </div>
 
       <button class="close-modal" onclick="closeLeaderboard()">ĐÓNG</button>
-    </div>
-  </div>
-
-  <!-- MODAL XEM LỊCH SỬ -->
-  <div class="modal-overlay" id="historyModal" style="z-index: 1000;">
-    <div class="modal-card">
-      <h3 style="margin:0; color:#0a84ff; text-align:center;" id="history-title">📜 LỊCH SỬ TÍCH ĐIỂM</h3>
-      <div style="font-size:12px; text-align:center; color:#8e8e93; margin-bottom:10px;" id="history-subtitle"></div>
-
-      <div class="list-box" id="history-list">
-        Đang tải lịch sử...
-      </div>
-
-      <div style="display:flex; gap:6px; margin-top:10px;">
-        <button style="flex:1; padding:10px; background:#ff9f0a; border:none; color:#fff; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="manualAdjustPoints()">✏️ Chỉnh Sửa Điểm</button>
-        <button style="flex:1; padding:10px; background:#ff453a; border:none; color:#fff; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="closeHistory()">ĐÓNG</button>
-      </div>
     </div>
   </div>
 
@@ -101,7 +82,6 @@
 
     let rawLeaderboardData = [];
     let currentFilter = 'all';
-    let selectedCustomerSDT = "";
 
     function normalizePhoneInput() {
       let inputEl = document.getElementById('sdt');
@@ -120,7 +100,6 @@
 
       if (!ly) return alert("Vui lòng nhập số lượng món!");
 
-      // Tạo txid ngẫu nhiên dựa trên timestamp để đảm bảo tính duy nhất của từng mã QR được in/tạo ra
       const txid = "TX" + Date.now();
       const currentHost = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
       let targetUrl = `${currentHost}/tichdiem.html?txid=${txid}&ly=${ly}`;
@@ -200,10 +179,11 @@
             <div>
               <div style="font-size:15px; font-weight:bold;">📱 ${item.sdt}</div>
               <div style="font-size:12px; color:#aaa; margin-top:2px;">Tổng tích lũy: <b style="color:#0a84ff;">${item.total} điểm</b></div>
-              ${hasReward ? `<div style="font-size:12px; color:#30d158; font-weight:bold; margin-top:2px;">🎁 Có ${item.rewards} phần quà!</div>` : `<div style="font-size:11px; color:#8e8e93; margin-top:2px;">Còn ${item.next} món nữa nhận quà</div>`}
+              <div style="font-size:11px; color:#ffd60a; margin-top:2px;">🕒 Lần gần nhất: ${item.lanGanNhat}</div>
+              ${hasReward ? `<div style="font-size:12px; color:#30d158; font-weight:bold; margin-top:2px;">🎁 Đủ ${item.rewards} phần đổi quà!</div>` : `<div style="font-size:11px; color:#8e8e93; margin-top:2px;">Còn ${item.next} món nữa nhận quà</div>`}
             </div>
             <div style="display:flex; align-items:center;">
-              <button class="btn-history-sm" onclick="viewCustomerHistory('${item.sdt}', ${item.total})">📜 Nhật ký</button>
+              <button class="btn-adjust-sm" onclick="manualAdjustPoints('${item.sdt}')">✏️ Sửa điểm</button>
               ${hasReward ? `<button class="btn-action-sm" onclick="adminRedeem('${item.sdt}')">Duyệt Đổi</button>` : ''}
             </div>
           </div>
@@ -215,11 +195,11 @@
     function adminRedeem(sdt) {
       if (!confirm(`Xác nhận trừ 10 điểm để đổi quà tại quầy cho SĐT ${sdt}?`)) return;
 
-      fetch(`${SCRIPT_URL}?action=redeem&sdt=${encodeURIComponent(sdt)}&item=${encodeURIComponent('Quà trực tiếp tại quầy')}`)
+      fetch(`${SCRIPT_URL}?action=redeem&sdt=${encodeURIComponent(sdt)}`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            alert(`🎉 Đã trừ 10 điểm thành công cho SĐT ${sdt}!`);
+            alert(`🎉 Đã đổi quà thành công! Điểm còn lại: ${data.newTotal}`);
             fetchLeaderboardData();
           } else {
             alert(data.message);
@@ -228,45 +208,8 @@
         .catch(() => alert("Lỗi kết nối!"));
     }
 
-    function viewCustomerHistory(sdt, totalPoints) {
-      selectedCustomerSDT = sdt;
-      document.getElementById('historyModal').style.display = 'flex';
-      document.getElementById('history-title').innerText = `📱 ${sdt}`;
-      document.getElementById('history-subtitle').innerText = `Tổng điểm hiện tại: ${totalPoints} điểm`;
-      
-      const historyList = document.getElementById('history-list');
-      historyList.innerHTML = "Đang tải nhật ký giao dịch...";
-
-      fetch(`${SCRIPT_URL}?action=get_info&sdt=${encodeURIComponent(sdt)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'success' && data.history && data.history.length > 0) {
-            let html = '';
-            data.history.reverse().forEach(h => {
-              let isPlus = h.ly > 0;
-              let color = isPlus ? '#30d158' : '#ff453a';
-              let text = isPlus ? `+${h.ly} món (Tích điểm)` : `${h.ly} món (Đổi quà)`;
-              
-              html += `
-                <div class="history-item">
-                  <span>🕒 ${h.time}</span>
-                  <b style="color:${color};">${text}</b>
-                </div>
-              `;
-            });
-            historyList.innerHTML = html;
-          } else {
-            historyList.innerHTML = "<p style='text-align:center; color:#8e8e93;'>Chưa có nhật ký giao dịch.</p>";
-          }
-        });
-    }
-
-    function closeHistory() {
-      document.getElementById('historyModal').style.display = 'none';
-    }
-
-    function manualAdjustPoints() {
-      let adjust = prompt(`Nhập số điểm cần cộng hoặc trừ cho SĐT ${selectedCustomerSDT}\n(Ví dụ: Nhập 5 để cộng 5 điểm, nhập -10 để trừ 10 điểm):`);
+    function manualAdjustPoints(sdt) {
+      let adjust = prompt(`Nhập số điểm muốn cộng thêm hoặc trừ bớt cho SĐT ${sdt}\n(Ví dụ: Nhập 5 để cộng thêm 5 điểm, nhập -5 để trừ bớt 5 điểm):`);
       if (!adjust || isNaN(adjust) || parseInt(adjust) === 0) return;
 
       let val = parseInt(adjust);
@@ -275,7 +218,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'add_points',
-          sdt: selectedCustomerSDT,
+          sdt: sdt,
           ly: val,
           txid: 'MANUAL_' + Date.now()
         })
@@ -283,8 +226,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.status === 'success') {
-          alert(`✅ Đã điều chỉnh ${val > 0 ? '+' : ''}${val} điểm thành công!`);
-          closeHistory();
+          alert(`✅ Đã cập nhật điểm thành công!`);
           fetchLeaderboardData();
         } else {
           alert(data.message);
