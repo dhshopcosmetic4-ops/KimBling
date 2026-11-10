@@ -2297,7 +2297,7 @@ loadExternalDescriptionsFile();
             return 'MilkTea';
         }
 
-                                function renderMenu() {
+                                                                function renderMenu() {
             const rawKw = document.getElementById('searchInput').value.trim();
             const kw = removeDiacritics(rawKw);
             const grid = document.getElementById('menuGrid');
@@ -2332,19 +2332,25 @@ loadExternalDescriptionsFile();
             if (currentCategory === 'All' && !kw) {
                 filteredMenu = [...menu].sort(() => 0.5 - Math.random());
             } else if (currentCategory === 'Favorite' && !kw) {
-                let explicitFavorites = menu.filter(item => favorites.includes(item.id) || item.isFavorite === true);
+                // ĐƯA CÁC MÓN MỚI / YÊU THÍCH LÊN ĐẦU DANH SÁCH CHUẨN XÁC
+                let explicitFavorites = menu.filter(item => favorites.includes(item.id) || item.isFavorite === true || item.category === 'Favorite');
                 let explicitIds = explicitFavorites.map(x => x.id);
-                let otherItems = menu.filter(x => !explicitIds.includes(x.id)).sort(() => 0.5 - Math.random());
+                
+                // Nếu chưa có món nào gắn cọc yêu thích thủ công, lấy tạm 8 món đầu tiên làm món mới nổi bật
+                if (explicitFavorites.length === 0) {
+                    explicitFavorites = menu.slice(0, 8);
+                    explicitIds = explicitFavorites.map(x => x.id);
+                }
+                let otherItems = menu.filter(x => !explicitIds.includes(x.id));
                 filteredMenu = [...explicitFavorites, ...otherItems];
             } else {
                 filteredMenu = menu.filter(item => {
                     const descNorm = removeDiacritics(getItemDescription(item.name));
-                    
                     const matchKw = !kw || smartMatch(kw, item.name) || smartMatch(kw, descNorm);
                     
                     if (!matchKw) return false;
                     if (currentCategory === 'Favorite') {
-                        return favorites.includes(item.id) || item.isFavorite === true;
+                        return favorites.includes(item.id) || item.isFavorite === true || item.category === 'Favorite';
                     }
                     if (currentCategory !== 'All') {
                         return getCategoryType(item.name, item.category) === currentCategory;
@@ -2372,33 +2378,31 @@ loadExternalDescriptionsFile();
 
                 let clickAction = isSoldOut ? `alert('Món này hiện đang tạm hết hàng!');` : `openOptionsModal(${item.id})`;
                 let tiktokAction = isSoldOut ? `alert('Món này hiện đang tạm hết hàng!');` : `openTiktokModal(${index})`;
-             let btnActionHtml = isSoldOut 
-    ? `<button class="btn-add" style="background:#e0e0e0 !important; color:#888 !important; box-shadow:none !important; cursor:not-allowed;" disabled>Tạm hết món</button>`
-    : `<button class="btn-add" onclick="openOptionsModal(${item.id})">🛒 Thêm vào giỏ hàng</button>`;
-
+                let btnActionHtml = isSoldOut 
+                    ? `<button class="btn-add" style="background:#e0e0e0 !important; color:#888 !important; box-shadow:none !important; cursor:not-allowed;" disabled>Tạm hết món</button>`
+                    : `<button class="btn-add" onclick="openOptionsModal(${item.id})">🛒 Thêm vào giỏ hàng</button>`;
 
                 grid.innerHTML += `
-    <div class="${itemClass}">
-        ${soldOutBadge}
-        <div>
-            <div class="img-container" onclick="${tiktokAction}">
-                ${imgContent}
-                <span class="img-detail-badge">👆 Xem chi tiết</span>
-            </div>
-            <h4 onclick="${clickAction}">${item.name}</h4>
-        </div>
-        <div>
-            <div class="price" style="display: flex; flex-direction: column; gap: 2px;">
-                <span>${formatDynamicPrice(item.price)}</span>
-            </div>
-            ${btnActionHtml}
-        </div>
-    </div>
-`;
-
-
+                    <div class="${itemClass}">
+                        ${soldOutBadge}
+                        <div>
+                            <div class="img-container" onclick="${tiktokAction}">
+                                ${imgContent}
+                                <span class="img-detail-badge">👆 Xem chi tiết</span>
+                            </div>
+                            <h4 onclick="${clickAction}">${item.name}</h4>
+                        </div>
+                        <div>
+                            <div class="price" style="display: flex; flex-direction: column; gap: 2px;">
+                                <span>${formatDynamicPrice(item.price)}</span>
+                            </div>
+                            ${btnActionHtml}
+                        </div>
+                    </div>
+                `;
             });
         }
+
 
 
 
