@@ -1376,18 +1376,15 @@ function toggleCustomerMenuMode() {
         }
 
 
-                                async function fetchMenuFromCloud() {
+                                        async function fetchMenuFromCloud() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
                 const data = await response.json();
                 
                 // Đồng bộ trạng thái cửa hàng từ Cloud
                 if (data && data.storeOverride !== undefined) {
-                    // Chuyển đổi giá trị nhận được thành kiểu boolean chính xác
                     isStoreOpen = (data.storeOverride === true || data.storeOverride === 'true');
                     localStorage.setItem('kimbling_store_override', String(isStoreOpen));
-                    
-                    // THÊM DÒNG NÀY ĐỂ GIAO DIỆN CẬP NHẬT NGAY LẬP TỨC:
                     updateStoreStatusUI();
                 }
 
@@ -1395,6 +1392,14 @@ function toggleCustomerMenuMode() {
                     menu = data.menu;
                     if (data.drinkToppings) drinkToppings = data.drinkToppings;
                     if (data.snackToppings) snackToppings = data.snackToppings;
+                    
+                    // --- BỔ SUNG ĐOẠN NÀY ĐỂ ĐỒNG BỘ YÊU THÍCH TỪ CLOUD ---
+                    if (data.favorites && Array.isArray(data.favorites)) {
+                        favorites = data.favorites;
+                        localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
+                    }
+                    // ----------------------------------------------------
+
                     localStorage.setItem('kimbling_menu', JSON.stringify(menu));
                     localStorage.setItem('kim_bling_drink_toppings', JSON.stringify(drinkToppings));
                     localStorage.setItem('kim_bling_snack_toppings', JSON.stringify(snackToppings));
@@ -1404,6 +1409,7 @@ function toggleCustomerMenuMode() {
                 console.log("Auto fetch menu error:", err);
             }
         }
+
 
 
 
