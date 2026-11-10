@@ -1115,15 +1115,18 @@
             <button class="btn-share-full" onclick="shareStoreWebsite()">📤 Chia sẻ</button>
         </div>
 
-        <div class="category-tabs">
-            <button class="cat-btn active" onclick="filterCategory('All', this)">📋 Tất cả</button>
-            <button class="cat-btn btn-fav-highlight" onclick="filterCategory('Favorite', this)">🔥 Món Mới 🔥</button>
-            <button class="cat-btn" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
-            <button class="cat-btn" onclick="filterCategory('MilkTea', this)">🧋 Trà Sữa</button>
-            <button class="cat-btn" onclick="filterCategory('Yogurt', this)">🥛 Sữa Chua</button>
-            <button class="cat-btn" onclick="filterCategory('Food', this)">🍢 Ăn Vặt</button>
-            <button class="cat-btn" onclick="filterCategory('Topping', this)">🧋 Topping</button>
-        </div>
+   <div class="category-tabs">
+    <button class="cat-btn active" onclick="filterCategory('All', this)">📋 Tất cả</button>
+    <button class="cat-btn btn-fav-highlight" onclick="filterCategory('Favorite', this)">🔥 Món Mới 🔥</button>
+    <button class="cat-btn" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
+    <button class="cat-btn" onclick="filterCategory('Tea', this)">🍵 Trà</button>
+    <button class="cat-btn" onclick="filterCategory('MilkTea', this)">🧋 Trà Sữa</button>
+    <button class="cat-btn" onclick="filterCategory('Soda', this)">🥤 Soda</button>
+    <button class="cat-btn" onclick="filterCategory('Yogurt', this)">🥛 Sữa Chua</button>
+    <button class="cat-btn" onclick="filterCategory('Food', this)">🍢 Ăn Vặt</button>
+    <button class="cat-btn" onclick="filterCategory('Topping', this)">🧋 Topping</button>
+</div>
+
 
         <div class="menu-grid" id="menuGrid">
             <p style="text-align: center; grid-column: 1/-1; color: #666; padding: 20px;">Đang tải menu...</p>
@@ -2287,17 +2290,38 @@ loadExternalDescriptionsFile();
         }
 
         function getCategoryType(itemName, assignedCat) {
-            if (assignedCat && ['MilkTea', 'Coffee', 'Yogurt', 'Food'].includes(assignedCat)) return assignedCat;
-            const n = removeDiacritics(itemName || '');
-            if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ') || n.includes('sua sot') || n.includes('an vat')) {
-                return 'Food';
-            }
-            if (n.includes('sua chua')) return 'Yogurt';
-            if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso') || n.includes('cafe')) return 'Coffee';
-            return 'MilkTea';
-        }
+    if (assignedCat && ['MilkTea', 'Tea', 'Coffee', 'Soda', 'Yogurt', 'Food'].includes(assignedCat)) return assignedCat;
+    const n = removeDiacritics(itemName || '');
+    
+    // Đồ ăn vặt
+    if (n.includes('chan ga') || n.includes('lap xuong') || n.includes('sua sot thai') || n.includes('ca vien') || n.includes('tokbokki') || n.includes('banh trang') || n.includes('com chien') || n.includes('goi kho bo') || n.includes('mi ') || n.includes('sua sot') || n.includes('an vat')) {
+        return 'Food';
+    }
+    // Sữa chua
+    if (n.includes('sua chua')) return 'Yogurt';
+    
+    // Soda
+    if (n.includes('soda')) return 'Soda';
+    
+    // Cà phê
+    if (n.includes('ca phe') || n.includes('bac siu') || n.includes('cacao') || n.includes('espresso') || n.includes('cafe')) return 'Coffee';
+    
+    // Trà sữa (chứa chữ "tra sua" hoặc "sua")
+    if (n.includes('tra sua') || n.includes('sua')) {
+        return 'MilkTea';
+    }
+    
+    // Trà (các món trà còn lại như hồng trà, trà đào, trà tắc, matcha...)
+    if (n.includes('tra')) {
+        return 'Tea';
+    }
+    
+    return 'MilkTea';
+}
 
-                                                                function renderMenu() {
+
+
+    function renderMenu() {
             const rawKw = document.getElementById('searchInput').value.trim();
             const kw = removeDiacritics(rawKw);
             const grid = document.getElementById('menuGrid');
@@ -2343,7 +2367,7 @@ loadExternalDescriptionsFile();
                 }
                 let otherItems = menu.filter(x => !explicitIds.includes(x.id));
                 filteredMenu = [...explicitFavorites, ...otherItems];
-            } else {
+                       } else {
                 filteredMenu = menu.filter(item => {
                     const descNorm = removeDiacritics(getItemDescription(item.name));
                     const matchKw = !kw || smartMatch(kw, item.name) || smartMatch(kw, descNorm);
