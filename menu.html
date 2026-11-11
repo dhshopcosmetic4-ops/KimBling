@@ -2549,30 +2549,20 @@ function renderTiktokCard() {
         }, 2500);
     }
 
-    document.getElementById('tiktokTitle').innerText = item.name;
-    document.getElementById('tiktokPrice').innerHTML = formatDynamicPrice(item.price);
+    // Lấy nội dung mô tả của món ăn
+    const itemDescription = getItemDescription(item.name);
 
-    let descEl = document.getElementById('tiktokDesc');
-    if (!descEl) {
-        const titleEl = document.getElementById('tiktokTitle');
-        descEl = document.createElement('div');
-        descEl.id = 'tiktokDesc';
-        descEl.className = 'tiktok-desc';
-        titleEl.parentNode.insertBefore(descEl, titleEl.nextSibling);
-    }
-    descEl.innerText = getItemDescription(item.name);
-
-    // KIỂM TRA TRẠNG THÁI HẾT HÀNG ĐỂ ĐỔI NÚT BẤM TRONG POPUP TIKTOK
     let tiktokBtnHtml = item.isSoldOut 
         ? `<button class="btn-tiktok-add" style="background:#e0e0e0 !important; color:#888 !important; box-shadow:none !important; cursor:not-allowed;" disabled>Tạm hết món</button>`
         : `<button class="btn-tiktok-add pulse-attention" onclick="confirmAddFromTiktok()">🛒 ĐẶT MÓN NÀY NGAY</button>`;
 
-    // Cập nhật lại giao diện chân trang TikTok kèm nút bấm động
+    // Đưa trực tiếp phần mô tả vào khung footer của popup TikTok
     const footerActionsEl = card.querySelector('.tiktok-footer');
     if (footerActionsEl) {
         footerActionsEl.innerHTML = `
             <div class="tiktok-tag">🔥 Best Seller - Kim Bling</div>
             <div class="tiktok-title" id="tiktokTitle">${item.name}</div>
+            <div class="tiktok-desc" id="tiktokDesc">${itemDescription}</div>
             <div class="tiktok-price" id="tiktokPrice">${formatDynamicPrice(item.price)}</div>
             <div class="tiktok-actions">
                 ${tiktokBtnHtml}
