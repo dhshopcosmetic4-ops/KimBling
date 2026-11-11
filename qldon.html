@@ -183,6 +183,7 @@
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
         <button class="action-btn" onclick="fetchOrders(true);">🔄 Tải lại</button>
         
+        <!-- 🧹 NÚT XÓA SẠCH ĐƠN HÀNG MỚI THÊM -->
         <button class="action-btn" style="background:#dc2626; color:#fff;" onclick="requestClearAllOrders()">🧹 Xóa Sạch Đơn</button>
       </div>
 
@@ -385,7 +386,6 @@
         btn.style.color = '#fff';
         let extraText = [];
         if (status.config.doubleDiamond) extraText.push("x2 💎");
-        if (status.config.doublePoints) extraText.push("x2 ⭐ Điểm món");
         if (status.config.bonusTurns) extraText.push(`+${status.config.bonusTurnsValue || 5} lượt`);
         btn.innerHTML = `🟢 Event: Đang Chạy (${extraText.join(', ') || 'Bật'})`;
       } else {
@@ -403,7 +403,6 @@
       if (status.active) {
         let msg = "🟢 EVENT LỄ LỘC ĐANG HOẠT ĐỘNG (Đồng bộ Sheets):\n";
         if (status.config.doubleDiamond) msg += "💎 Đang áp dụng Nhân đôi Kim Cương.\n";
-        if (status.config.doublePoints) msg += "⭐ Đang áp dụng x2 Điểm Món.\n";
         if (status.config.bonusTurns) msg += `🎁 Đang tặng thêm ${status.config.bonusTurnsValue || 5} lượt mở hộp khi đặt hàng.\n`;
         alert(msg);
       } else {
@@ -977,7 +976,6 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
-    // 🚀 HÀM ĐẨY POS ĐÃ ĐƯỢC TỐI ƯU CHẠY ỔN ĐỊNH, HIỆN BẢNG PIN NGAY LẬP TỨC & HỖ TRỢ X2 ĐIỂM MÓN
     async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
@@ -1036,19 +1034,25 @@
         }).catch(e => {});
       }
 
-      // Xử lý tích điểm và Event chạy ngầm không làm gián đoạn giao diện
+      if (isTichDiemChecked && customerPhone.length >= 9) {
+        const pointPayload = JSON.stringify({
+          action: 'add_points', sdt: customerPhone,
+          ly: totalItemsCount, txid: `ONLINE_${orderId}`
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
+        } else {
+          fetch(KIMBLING_API_URL, {
+            method: 'POST', mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: pointPayload
+          }).catch(e => {});
+        }
+      }
+
       checkActiveEventFromSheets().then(eventCheck => {
-        let actualPoints = totalItemsCount;
-        
         if (eventCheck.active && eventCheck.config) {
           const eventConfig = eventCheck.config;
-          
-          // Kiểm tra x2 Điểm Món từ Event
-          if (eventConfig.doublePoints) {
-            actualPoints = totalItemsCount * 2;
-          }
-
-          // Kiểm tra tặng thêm lượt mở hộp
           if (eventConfig.bonusTurns && customerPhone.length >= 9) {
             const bonusAmount = eventConfig.bonusTurnsValue || 5;
             const eventPayload = JSON.stringify({
@@ -1064,23 +1068,6 @@
                 body: eventPayload
               }).catch(e => {});
             }
-          }
-        }
-
-        // Gửi lệnh cộng điểm cho khách
-        if (isTichDiemChecked && customerPhone.length >= 9) {
-          const pointPayload = JSON.stringify({
-            action: 'add_points', sdt: customerPhone,
-            ly: actualPoints, txid: `ONLINE_${orderId}`
-          });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
-          } else {
-            fetch(KIMBLING_API_URL, {
-              method: 'POST', mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: pointPayload
-            }).catch(e => {});
           }
         }
       }).catch(e => {});
@@ -1159,8 +1146,10 @@
 
         if (res.success) {
           stopContinuousAlarm();
+          cachedOrdersMap.clear();
           knownOrderIds.clear();
           
+          // Xóa luôn trạng thái đã đẩy POS trong LocalStorage
           Object.keys(localStorage).forEach(key => {
             if (key.startsWith('kimbling_pushed_pos_')) {
               localStorage.removeItem(key);
@@ -1176,6 +1165,8 @@
         setTimeout(() => { isFetchingOrders = false; }, 2000);
       }
     }
+
+
   </script>
 </body>
 </html>
