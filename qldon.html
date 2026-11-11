@@ -976,7 +976,7 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
-    async function pushOrderToPOS(orderId, orderObj, button) {
+        async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
 
@@ -1034,25 +1034,19 @@
         }).catch(e => {});
       }
 
-      if (isTichDiemChecked && customerPhone.length >= 9) {
-        const pointPayload = JSON.stringify({
-          action: 'add_points', sdt: customerPhone,
-          ly: totalItemsCount, txid: `ONLINE_${orderId}`
-        });
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
-        } else {
-          fetch(KIMBLING_API_URL, {
-            method: 'POST', mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: pointPayload
-          }).catch(e => {});
-        }
-      }
-
+      // 🔍 KIỂM TRA EVENT TỪ GOOGLE SHEETS VÀ XỬ LÝ X2 ĐIỂM / TẶNG LƯỢT
       checkActiveEventFromSheets().then(eventCheck => {
+        let actualPoints = totalItemsCount;
+        
         if (eventCheck.active && eventCheck.config) {
           const eventConfig = eventCheck.config;
+          
+          // 🔥 Kích hoạt x2 Điểm Món nếu Event bật cấu hình doublePoints
+          if (eventConfig.doublePoints) {
+            actualPoints = totalItemsCount * 2;
+          }
+
+          // Xử lý tặng thêm lượt mở hộp
           if (eventConfig.bonusTurns && customerPhone.length >= 9) {
             const bonusAmount = eventConfig.bonusTurnsValue || 5;
             const eventPayload = JSON.stringify({
@@ -1070,8 +1064,26 @@
             }
           }
         }
+
+        // Gửi điểm cộng chính thức cho khách (Đã nhân đôi nếu event bật)
+        if (isTichDiemChecked && customerPhone.length >= 9) {
+          const pointPayload = JSON.stringify({
+            action: 'add_points', sdt: customerPhone,
+            ly: actualPoints, txid: `ONLINE_${orderId}`
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
+          } else {
+            fetch(KIMBLING_API_URL, {
+              method: 'POST', mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: pointPayload
+            }).catch(e => {});
+          }
+        }
       }).catch(e => {});
     }
+
 
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
