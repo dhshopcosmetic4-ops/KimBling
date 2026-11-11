@@ -192,21 +192,23 @@
       listEl.innerHTML = html;
     }
 
-    function adminRedeem(sdt) {
+        function adminRedeem(sdt) {
       if (!confirm(`Xác nhận trừ 10 điểm để đổi quà tại quầy cho SĐT ${sdt}?`)) return;
 
       fetch(`${SCRIPT_URL}?action=redeem&sdt=${encodeURIComponent(sdt)}`)
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            alert(`🎉 Đã đổi quà thành công! Điểm còn lại: ${data.newTotal}`);
+            let remaining = data.newTotal !== undefined ? data.newTotal : 0;
+            alert(`🎉 Đã đổi quà thành công! Điểm còn lại: ${remaining}`);
             fetchLeaderboardData();
           } else {
-            alert(data.message);
+            alert(data.message || "Có lỗi xảy ra!");
           }
         })
         .catch(() => alert("Lỗi kết nối!"));
     }
+
 
     function manualAdjustPoints(sdt) {
       let adjust = prompt(`Nhập số điểm muốn cộng thêm hoặc trừ bớt cho SĐT ${sdt}\n(Ví dụ: Nhập 5 để cộng thêm 5 điểm, nhập -5 để trừ bớt 5 điểm):`);
