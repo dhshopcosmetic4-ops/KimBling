@@ -3939,7 +3939,7 @@ function closeSuccessOrderPopup() {
             window.open(`https://zalo.me/${ZALO_PHONE}`, '_blank');
         }
 
-        async function fetchMenuFromCloud() {
+                        async function fetchMenuFromCloud() {
             try {
                 const cachedMenu = localStorage.getItem('kimbling_online_cached_menu');
                 if (cachedMenu && menu.length === 0) {
@@ -3962,10 +3962,12 @@ function closeSuccessOrderPopup() {
                     drinkToppings = data.drinkToppings || [];
                     snackToppings = data.snackToppings || [];
                     
+                    // --- ĐỒNG BỘ MÓN YÊU THÍCH TỪ CLOUD (SHEET POS_Data) ---
                     if (data.favorites && Array.isArray(data.favorites)) {
                         favorites = data.favorites;
                         localStorage.setItem('kimbling_favorites', JSON.stringify(favorites));
                     }
+                    // --------------------------------------------------------
                     
                     localStorage.setItem('kimbling_online_cached_menu', JSON.stringify(menu));
                     localStorage.setItem('kimbling_online_cached_drinks', JSON.stringify(drinkToppings));
@@ -3977,6 +3979,8 @@ function closeSuccessOrderPopup() {
                 console.error("Lỗi đồng bộ ngầm từ cloud:", e);
             }
         }
+
+
 
         setInterval(() => {
             fetchMenuFromCloud();

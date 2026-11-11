@@ -992,14 +992,7 @@
       });
     }
 
-    function pushOrderButton(button) {
-      let orderObj;
-      try { orderObj = JSON.parse(button.getAttribute('data-order') || '{}'); }
-      catch (e) { alert('Không đọc được dữ liệu đơn hàng.'); return; }
-      pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
-    }
-
-    async function pushOrderToPOS(orderId, orderObj, button) {
+        async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
 
@@ -1057,25 +1050,19 @@
         }).catch(e => {});
       }
 
-      if (isTichDiemChecked && customerPhone.length >= 9) {
-        const pointPayload = JSON.stringify({
-          action: 'add_points', sdt: customerPhone,
-          ly: totalItemsCount, txid: `ONLINE_${orderId}`
-        });
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
-        } else {
-          fetch(KIMBLING_API_URL, {
-            method: 'POST', mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: pointPayload
-          }).catch(e => {});
-        }
-      }
-
+      // 🔍 KIỂM TRA TRẠNG THÁI EVENT VÀ TÍCH ĐIỂM (CÓ HỖ TRỢ X2 ĐIỂM MÓN)
       checkActiveEventFromSheets().then(eventCheck => {
+        let actualPoints = totalItemsCount;
+        
         if (eventCheck.active && eventCheck.config) {
           const eventConfig = eventCheck.config;
+          
+          // Kiểm tra x2 Điểm Món
+          if (eventConfig.doublePoints) {
+            actualPoints = totalItemsCount * 2;
+          }
+
+          // Kiểm tra tặng thêm lượt mở hộp
           if (eventConfig.bonusTurns && customerPhone.length >= 9) {
             const bonusAmount = eventConfig.bonusTurnsValue || 5;
             const eventPayload = JSON.stringify({
@@ -1093,8 +1080,26 @@
             }
           }
         }
+
+        // Gửi request cộng điểm cho khách (với số điểm đã được x2 nếu Event bật)
+        if (isTichDiemChecked && customerPhone.length >= 9) {
+          const pointPayload = JSON.stringify({
+            action: 'add_points', sdt: customerPhone,
+            ly: actualPoints, txid: `ONLINE_${orderId}`
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
+          } else {
+            fetch(KIMBLING_API_URL, {
+              method: 'POST', mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: pointPayload
+            }).catch(e => {});
+          }
+        }
       }).catch(e => {});
     }
+
 
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
