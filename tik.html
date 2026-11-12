@@ -126,9 +126,8 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 (Đã sửa lỗi che khuất chữ hoàn toàn) -->
+    <!-- MODAL CAMERA AR 9:16 -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
-        <!-- Thanh tiêu đề trên cùng với pt-12 để tránh tai thỏ / thanh trạng thái iPhone -->
         <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md shadow-lg">✕</button>
             <div class="bg-black/85 backdrop-blur-md px-4 py-2 rounded-2xl border-2 border-white/20 text-center shadow-lg">
@@ -142,7 +141,6 @@
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <!-- Thanh chọn bộ lọc màu (đặt thấp hơn header để không bị che) -->
             <div class="absolute top-28 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
                 <button onclick="setFilter('beauty', this)" class="filter-chip px-3.5 py-2 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
                 <button onclick="setFilter('food', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
@@ -150,7 +148,6 @@
                 <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
             </div>
 
-            <!-- Khung lưới AR & Hướng dẫn trực quan (Đã nới rộng khung, tách biệt vị trí để đọc rõ từng chữ) -->
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
                 <div class="absolute inset-x-4 top-40 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
@@ -169,7 +166,6 @@
                     </div>
                 </div>
 
-                <!-- Bảng hướng dẫn hành động & thoại ở phía trên nút bấm (không bị che) -->
                 <div class="absolute bottom-4 inset-x-4 bg-slate-950/95 backdrop-blur-md p-3.5 rounded-2xl border-2 border-rose-500/50 text-center z-30 pointer-events-auto space-y-1 shadow-2xl">
                     <p id="camActionGuide" class="text-xs text-slate-100 font-extrabold leading-snug"></p>
                     <p id="camSpeechPrompt" class="text-xs text-amber-300 italic font-bold"></p>
@@ -191,76 +187,80 @@
         </div>
     </div>
 
-    <!-- MODAL STUDIO CẮT SỬA, TRIM VIDEO & ĐIỀU CHỈNH SÁNG TỐI -->
-    <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden">
-        <div class="flex items-center justify-between p-5 bg-slate-900 border-b-2 border-slate-800">
+    <!-- MODAL STUDIO CẮT SỬA (ĐÃ KHẮC PHỤC LỖI TRÀN HÌNH & THẤY RÕ CÔNG CỤ) -->
+    <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden overflow-hidden">
+        <!-- Header Modal -->
+        <div class="flex items-center justify-between p-4 bg-slate-900 border-b-2 border-slate-800 shrink-0">
             <div class="flex items-center space-x-3">
                 <span class="text-2xl">✂️</span>
                 <div>
                     <h2 class="font-black text-base text-white">Studio Cắt & Hiệu Chỉnh Video</h2>
-                    <p class="text-sm text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối chuẩn cẩm nang & Tăng sáng</p>
+                    <p class="text-xs text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối chuẩn cẩm nang & Tăng sáng</p>
                 </div>
             </div>
-            <button onclick="closeEditorModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-xl">✕</button>
+            <button onclick="closeEditorModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-lg">✕</button>
         </div>
 
-        <div class="relative flex-1 w-full bg-black flex items-center justify-center p-4">
-            <video id="previewVideo" controls playsinline class="max-h-full max-w-full rounded-2xl shadow-2xl border-2 border-slate-800"></video>
-        </div>
+        <!-- Thân Modal cuộn dọc (Giúp hiển thị trọn vẹn video nhỏ gọn và đầy đủ công cụ bên dưới) -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 max-w-md mx-auto w-full">
+            <!-- Khung video thu gọn vừa vặn tỷ lệ 9:16 -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-800 shadow-xl max-h-[42vh]">
+                <video id="previewVideo" controls playsinline class="w-full h-auto max-h-[42vh] object-contain"></video>
+            </div>
 
-        <div class="bg-slate-900 border-t-2 border-slate-800 p-5 space-y-4 max-w-md mx-auto w-full">
-            <!-- MỤC CẮT VIDEO (TRIM) -->
-            <div class="bg-slate-950 p-4 rounded-2xl border-2 border-rose-500/40 space-y-3">
+            <!-- Mục Cắt Video (Trim) -->
+            <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-rose-500/40 space-y-2.5">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-black text-rose-300 flex items-center space-x-1.5">
+                    <span class="text-xs font-black text-rose-300 flex items-center space-x-1">
                         <span>✂️</span>
                         <span>Cắt Bỏ 1s Đầu & Cuối (Cẩm Nang):</span>
                     </span>
                     <span id="trimDurationText" class="text-xs text-amber-300 font-bold">Gốc: --s</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <button onclick="applyTrimPreset(1)" class="py-2.5 px-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500 text-rose-200 text-xs font-extrabold flex items-center justify-center space-x-1">
-                        <span>✂️ Cắt bỏ 1s đầu/cuối chuẩn</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="applyTrimPreset(1)" class="py-2 px-2.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/35 border border-rose-500 text-rose-200 text-xs font-extrabold flex items-center justify-center space-x-1">
+                        <span>✂️ Cắt bỏ 1s chuẩn</span>
                     </button>
-                    <button onclick="applyTrimPreset(0)" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-extrabold flex items-center justify-center space-x-1">
-                        <span>🔄 Giữ nguyên gốc</span>
+                    <button onclick="applyTrimPreset(0)" class="py-2 px-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-extrabold flex items-center justify-center space-x-1">
+                        <span>🔄 Giữ nguyên</span>
                     </button>
                 </div>
-                <div class="grid grid-cols-2 gap-3 pt-1">
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
                     <div class="space-y-1">
-                        <label class="text-xs text-slate-400 font-bold block">Bỏ bớt đầu (giây):</label>
-                        <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-bold text-center" onchange="updateTrimTimes()">
+                        <label class="text-xs text-slate-400 font-bold block">Bỏ đầu (giây):</label>
+                        <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-white text-xs font-bold text-center" onchange="updateTrimTimes()">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs text-slate-400 font-bold block">Bỏ bớt đuôi (giây):</label>
-                        <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-bold text-center" onchange="updateTrimTimes()">
+                        <label class="text-xs text-slate-400 font-bold block">Bỏ đuôi (giây):</label>
+                        <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-white text-xs font-bold text-center" onchange="updateTrimTimes()">
                     </div>
                 </div>
             </div>
 
-            <!-- ĐIỀU CHỈNH SÁNG & TƯƠNG PHẢN -->
-            <div class="space-y-3">
-                <div class="space-y-1.5">
+            <!-- Điều chỉnh Sáng & Tương phản -->
+            <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-3">
+                <div class="space-y-1">
                     <div class="flex justify-between text-xs font-black">
                         <span class="text-amber-300">☀️ Độ Sáng / Tối</span>
                         <span id="brightnessVal" class="text-white">100%</span>
                     </div>
-                    <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-2.5 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
+                    <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-2 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
                 </div>
-                <div class="space-y-1.5">
+                <div class="space-y-1">
                     <div class="flex justify-between text-xs font-black">
                         <span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span>
                         <span id="contrastVal" class="text-white">100%</span>
                     </div>
-                    <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-2.5 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
+                    <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-2 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
                 </div>
             </div>
 
-            <div class="flex space-x-3 pt-1">
-                <button onclick="closeEditorModal()" class="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-sm shadow-lg">
+            <!-- Nút thao tác dưới cùng -->
+            <div class="flex space-x-3 pt-1 pb-4">
+                <button onclick="closeEditorModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-xs shadow-lg">
                     Quay lại
                 </button>
-                <button onclick="downloadFinalVideo()" class="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2">
+                <button onclick="downloadFinalVideo()" class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-xs shadow-xl flex items-center justify-center space-x-1.5">
                     <span>💾</span>
                     <span>Tải Về Máy Ngay</span>
                 </button>
