@@ -1,7 +1,126 @@
 // ==========================================
 // FILE DỮ LIỆU: tenmon.js
-// Dễ dàng thêm bớt món ăn, thức uống, sản phẩm và dịch vụ phun xăm
+// Quản lý danh mục món ăn, thức uống và phun xăm cho Kim Bling Coffee & Tea
 // ==========================================
+
+const descriptionsMap = {
+    "matcha latte": "Matcha Uji đậm vị quyện sữa tươi béo ngậy, thanh mát dịu nhẹ tan ngay đầu lưỡi.",
+    "matcha bac ha": "Sự kết hợp hoàn hảo giữa matcha đậm đà và bạc hà mát lạnh, đập tan cái nóng tức thì.",
+    "matcha ca phe": "Vị đắng thanh của matcha hòa quyện cùng cà phê nguyên chất, thức tỉnh năng lượng cả ngày.",
+    "matcha dau": "Matcha thơm dịu hòa cùng vị dâu tây chua ngọt mọng nước, béo mịn xinh xắn.",
+    "matcha oreo": "Matcha đậm vị kết hợp bánh Oreo giòn rụm béo béo, nhai vui miệng không thể dừng.",
+    "matcha chuoi": "Matcha đắng nhẹ quyện nhịp cùng chuối thơm ngọt tự nhiên, lạ miệng béo ngậy.",
+    "matcha socola oreo": "Sự bùng nổ vị giác từ matcha, socola đậm đặc và vụn Oreo giòn tan béo ngậy.",
+    "matcha viet quat": "Matcha thanh mát quyện sốt việt quất chua ngọt mọng nước độc lạ cuốn hút.",
+    "matcha yen mach": "Matcha Uji đậm đà quyện sữa yến mạch bùi thơm tốt cho sức khỏe.",
+    "matcha latte kem machiato": "Matcha thơm béo ngập tràn lớp kem machiato mằn mặn béo ngậy sánh mịn.",
+
+    "tra nho xanh mau don": "Hương vị siêu phẩm thơm mát vị nho xanh mẫu đơn thượng hạng, ngọt thanh giòn giòn cực đã.",
+    "tra sua o long lai": "Trà ô long lài thơm ngát đặc trưng quyện trân châu đen dẻo dai béo ngậy.",
+    "tra sua truyen thong": "Trà sữa béo thơm chuẩn vị truyền thống, ngọt thanh dễ chịu kèm trân châu dai giòn.",
+    "tra sua socola": "Trà sữa béo ngậy hòa quyện socola nguyên chất đậm đặc, thơm nức mũi.",
+    "tra sua yen mach": "Trà sữa béo mịn kết hợp hạt yến mạch bùi bùi thơm ngon, bổ dưỡng khó cưỡng.",
+    "tra sua khoai mon": "Vị khoai môn bùi bùi đặc trưng đượm trong từng ngụm trà sữa ngọt ngào.",
+    "tra sua matcha": "Trà xanh thanh mát đan xen lớp sữa béo mịn màng, đậm đà chuẩn gu ghiền.",
+    "tra sua than tre": "Sắc đen huyền bí, vị trà thanh dịu kết hợp độ béo nhẹ thanh lọc cơ thể cực đỉnh.",
+    "khoai mon latte kem": "Khoai môn bùi béo phủ lớp kem béo ngậy sánh mịn ngọt ngào ngất ngây.",
+    "hong tra tac": "Hồng trà đậm đà đượm vị tắc tươi chua ngọt, giải khát cực nhanh.",
+    "tra tac thai": "Trà Thái thơm đặc trưng hòa vị tắc tươi chua dịu, giải khát tức thì.",
+    "hong tra xi muoi": "Hồng trà kết hợp xí muội mặn ngọt chua thanh kích thích vị giác cực mạnh.",
+    "hong tra dau": "Hồng trà đậm vị thơm ngát hương dâu tây tươi mọng chua ngọt sảng khoái.",
+    "hong tra dao": "Hồng trà thơm đậm kết hợp những miếng đào giòn ngọt đập tan cơn khát.",
+    "hong tra xoai": "Hồng trà thơm lừng đượm vị xoài chín ngọt mát đỉnh cao.",
+    "hong tra dua luoi": "Hồng trà thanh mát thơm ngát hương dưa lưới ngọt lịm lịm tim.",
+    "hong tra viet quat": "Hồng trà đậm đà quyện vị việt quất chua ngọt mọng nước.",
+    "hong tra vai": "Hồng trà thanh tao thoảng hương vải thiều ngọt ngào mọng nước.",
+    "hong tra oi": "Hồng trà thơm đậm quyện vị ổi hồng giòn ngọt độc lạ.",
+    "hong tra mang cau": "Hồng trà kết hợp mãng cầu xiêm chua ngọt thơm lừng tê tái.",
+    "hong tra dau tam": "Hồng trà đượm vị dâu tầm chua ngọt đậm đà kích thích vị giác.",
+    "hong tra chanh day": "Hồng trà chanh dây chua ngọt thanh mát, nạp lại năng lượng tức thì.",
+    "hong tra me": "Hồng trà me chua ngọt đậm đà kèm đậu phộng bùi bùi ăn là ghiền.",
+
+    "ca phe den da": "Cà phê phin Trung Nguyên đậm đà nguyên bản, đắng thanh bừng tỉnh tinh thần.",
+    "ca phe sua da": "Hương cà phê rang xay đậm đặc hòa quyện sữa đặc ngọt béo sảng khoái bất tận.",
+    "ca phe muoi": "Cà phê đắng đậm phủ lớp kem muối mặn mặn béo ngậy đánh thức mọi giác quan.",
+    "bac siu da": "Nền sữa tươi ngọt ngào thơm thoảng vị cà phê nhẹ nhàng, êm dịu dễ nghiện.",
+    "ca phe trung sua": "Lớp kem trứng vàng sánh mịn, đánh bông béo ngậy ngập tràn trên nền cà phê đậm đà.",
+    "ca phe bot bien": "Bọt cà phê Dalgona bồng bềnh mịn màng trên ly sữa tươi mát lạnh cực chill.",
+    "ca phe pha may": "Espresso chiết xuất chuẩn máy thơm nồng nàn, đậm vị nguyên bản từng giọt.",
+    "ca phe sua pha may": "Cà phê máy đậm đặc hòa quyện sữa đặc sánh mịn, ngọt ngào thơm phức.",
+    "ca phe sua caramel": "Cà phê thơm lừng tưới đẫm sốt caramel ngọt ngào, quyến rũ trong từng ngụm.",
+    "ca phe yen mach": "Cà phê đậm vị kết hợp sữa yến mạch thơm bùi dinh dưỡng, healthy khó cưỡng.",
+    "ca phe sua chuoi": "Sự kết hợp độc lạ giữa cà phê đậm đà và hương chuối thơm ngọt béo mịn.",
+    "cacao latte": "Cacao nguyên chất đậm đặc sánh mịn cùng sữa tươi, ấm áp ngọt ngào.",
+    "cacao pho mai sua": "Cacao đắng dịu quyện lớp phô mai béo ngậy mặn mặn tan chảy trong lồng ngực.",
+    "cacao chuoi": "Hương cacao đậm đà thơm lừng vị chuối chín ngọt tự nhiên, béo mịn lạ miệng.",
+    "cacao oreo": "Cacao đậm đặc kết hợp Oreo giòn rụm tan chảy béo ngậy siêu bánh cuốn.",
+    "cacao bac ha": "Cacao đậm vị điểm xuyết hương bạc hà the mát sảng khoái đến tận tim.",
+    "cacao latte kem machiato": "Cacao đậm đặc phủ lớp kem machiato béo ngậy mằn mặn siêu hấp dẫn.",
+    "cafe mat ong": "Cà phê đậm đà hòa quyện vị ngọt thanh tự nhiên từ mật ong nguyên chất.",
+
+    "hoa anh dao": "Hương hoa anh đào ngọt ngào lãng mạn kết hợp kem béo hoặc sốt trái cây mọng nước.",
+    "hoa anh dao oreo": "Hương anh đào thơm ngọt quyện vụn bánh Oreo giòn rụm béo béo độc lạ.",
+    "soda viet quat": "Soda nổ bọt mát lạnh chua ngọt vị việt quất tươi mọng cùng thạch dẻo dai.",
+    "soda dau": "Soda trái cây gas nhẹ ngập tràn hương dâu tây ngọt ngào và thạch giòn sần sật.",
+    "soda bac ha": "Đập tan cơn khát với soda bạc hà siêu the mát cùng thạch dẻo giòn cực đã.",
+    "soda dao": "Soda đào thơm ngọt lịm kết hợp thạch trái cây dai giòn sảng khoái tột đỉnh.",
+    "soda xoai": "Vị xoài chín mọng ngọt mát trong từng ngụm soda nổ bọt vui miệng.",
+    "soda oi": "Hương ổi hồng thơm lừng đặc trưng quyện soda mát lạnh và thạch giòn.",
+    "soda mang cau": "Mãng cầu chua chua ngọt ngọt độc lạ, giải nhiệt cực mạnh ngày nắng.",
+
+    "ly 1 lit bi dao": "Trà bí đao ngọt thanh mát lạnh ly khổng lồ 1 Lít uống ngập ngụa đã cái nết.",
+    "ly 1 lit hoa cuc": "Trà hoa cúc thanh dịu ngọt mát, giải nhiệt thanh lọc cơ thể dung tích siêu to.",
+    "ly 1 lit rong bien": "Rong biển sương sáo hạt chia thanh mát, giải nhiệt độc đáo ly 1 lít sảng khoái.",
+    "ly 1 lit tra tac": "Trà tắc chua ngọt sảng khoái đập tan khát khô cổ họng dung tích 1 lít khổng lồ.",
+    "tra da duong": "Trà đá đường ngọt mát bình dân, giải khát nhanh chóng tức thì.",
+    "milo dam": "Milo đậm đặc dầm đá mát lạnh ngập tràn sốt béo ngậy và topping giòn rụm.",
+    "khoai mon": "Khoai môn bùi béo tự nhiên quyện sữa tươi mềm mịn ngọt dịu ngất ngây.",
+    "sam dua sua": "Hương sâm dứa thơm lừng quen thuộc quyện sữa ngậy mát lạnh lịm tim.",
+    "sua tuoi tran chau duong den": "Trân châu đường đen dẻo ấm ngọt lịm rót quanh ly sữa tươi thanh mát.",
+    "oreo latte": "Sữa tươi latte thơm béo kết hợp vụn bánh Oreo giòn tan béo ngậy.",
+    "viet quat latte": "Vị việt quất chua ngọt mọng nước hòa quyện sữa tươi béo mịn màng.",
+    "dau latte": "Dâu tây tươi mọng ngọt ngào quyện cùng sữa tươi béo ngậy xinh xắn.",
+    "dao latte": "Đào thơm ngọt thanh mát quyện lớp sữa tươi mềm mịn cực chill.",
+    "xoai latte": "Xoài chín vàng ngọt lịm thơm phức quyện sữa tươi béo ngậy.",
+    "sua dua suong sao": "Nước cốt dừa thơm béo ngậy quyện sương sáo thanh mát giòn dai sần sật.",
+    "da me": "Đá me chua ngọt mát lạnh lịm tim, thêm đậu phộng bùi bùi và hạt đát dẻo dai.",
+    "hojicha latte": "Trà xanh nướng Hojicha thơm mùi khói đặc trưng quyện sữa tươi béo dịu.",
+    "socola chuoi oreo": "Sự kết hợp đỉnh cao giữa socola đậm đặc, chuối thơm và Oreo giòn béo.",
+    "sua tuyet": "Thức uống xay mịn màng mát lạnh ngập tràn vị trái cây và kem béo ngậy thượng hạng.",
+    "lipton latte": "Trà Lipton đậm đà quen thuộc quyện lớp sữa tươi béo ngậy thơm ngon khó cưỡng.",
+    "banh flan": "Bánh flan béo ngậy thơm mùi trứng sữa chan sốt cà phê đắng thanh cực đỉnh.",
+
+    "sua chua kem": "Sữa chua sánh mịn chua ngọt mát lạnh phủ lớp kem béo ngậy.",
+    "sua chua pho mai": "Sữa chua lên men sánh mịn hòa quyện phô mai béo ngậy tan chảy trong miệng.",
+    "sua chua viet quat": "Sữa chua việt quất chua ngọt mọng nước mát lạnh ly khổng lồ 1 lít sảng khoái.",
+    "sua chua dau tay": "Sữa chua dâu tây kết hợp Oreo giòn rụm béo béo chua ngọt ly 1 lít siêu cuốn.",
+    "sua chua dao": "Sữa chua đào thơm ngọt thanh mát ly khổng lồ 1 lít ăn hoài không ngán.",
+    "sua chua xoai": "Sữa chua xoài chín mọng ngọt lịm thơm mát ly 1 lít đã thèm.",
+    "sua chua oi hong": "Sữa chua ổi hồng thơm lừng độc lạ chua ngọt mát lạnh ly 1 lít.",
+    "sua chua chuoi": "Sữa chua chuối béo ngậy thơm ngọt tự nhiên ly 1 lít dinh dưỡng.",
+    "sua chua dua luoi": "Sữa chua dưa lưới ngọt mát thơm lừng giải nhiệt cực mạnh ly 1 lít.",
+    "sua chua ca phe": "Sữa chua chua dịu kết hợp chút đắng nhẹ của cà phê lạ miệng khó quên.",
+    "sua chua matcha": "Sữa chua sánh mịn kết hợp vị matcha thơm thanh độc đáo.",
+
+    "chan ga": "Chân gà rút xương giòn sần sật đẫm sốt Thái chua cay mặn ngọt đậm đà kích thích.",
+    "lap xuong": "Lạp xưởng tươi nướng đá thơm nức mũi, thịt mọng nước nóng hổi cắn ngập răng.",
+    "sua sot thai": "Sứa tươi sần sật trộn sốt Thái chua cay đậm đà chuẩn vị lai rai nhức nách.",
+    "ca vien": "Cá viên chiên vàng giòn rụm thơm phức, chấm tương đậm đà ăn hoài không ngán.",
+    "sot pho mai": "Đẫm ngập sốt phô mai béo ngậy vàng óng kéo sợi thơm phức.",
+    "sot mam toi": "Phủ đầy sốt mắm tỏi phi thơm lừng đậm đà mặn ngọt cực kỳ đưa miệng.",
+    "sot trung suoi": "Sốt trứng muối béo ngậy vàng ươm mặn mặn bùi bùi phủ kín món ăn.",
+    "tokbokki": "Bánh gạo Hàn Quốc dẻo mềm đẫm sốt cay nồng và phô mai kéo sợi ngậy béo.",
+    "banh gao tokbokki nuong": "Bánh gạo nướng vỏ giòn tan chấm kèm sốt phô mai sữa béo ngậy thơm lừng.",
+    "banh trang": "Mẹt bánh tráng dẻo thơm đủ vị chấm kèm sốt bơ me chua cay đậm đà ăn là nghiện.",
+    "com chien": "Cơm chiên hạt vàng giòn tơi xốp đậm đà gia vị thơm ngon ấm bụng.",
+    "goi du du": "Đu đủ bào giòn sần sật trộn khô bò đen Tây Ninh đậm đà, nước sốt chua ngọt chuẩn vị.",
+    "mi suon uc ga": "Tô mì nóng hổi topping sườn ức gà mềm thơm đẫm sốt phô mai cay nồng siêu đã.",
+    "mi suon canh ga bbq": "Mì nóng hổi kết hợp cánh gà BBQ đẫm sốt đậm đà phô mai cay kích thích vị giác.",
+    "mi tuong den": "Mì trộn sốt tương đen Hàn Quốc đậm đà chuẩn vị, óng ánh thơm phức.",
+    "mi tron": "Mì trộn đậm vị sốt đặc biệt ăn kèm topping ngập tràn giòn dai no căng bụng.",
+    "canh ga bbq": "Cánh gà chiên giòn rụm áo lớp sốt BBQ đậm đà, thơm lừng mặn ngọt siêu cuốn.",
+    "bot chien canh ga bbq": "Cánh gà tẩm bột chiên giòn rụm đẫm sốt BBQ và phô mai béo ngậy thơm phức."
+};
 
 const pmuSubData = {
     may: {
@@ -88,7 +207,7 @@ const pmuSubData = {
                 time: '36 - 45s',
                 clips: [
                     { name: 'Đoạn 1: Thoa dưỡng bóng mọng', action: 'Quay thoa thỏi son dưỡng lên môi.', motionGuide: 'Quét chậm thỏi dưỡng lướt trên môi 3 giây.', speech: '"Làm xong môi hồng hào căng mọng tức thì!"' },
-                    { name: 'Đoạn 2: Khách khoe môi dưới ánh đèn', action: 'Quay cận cảnh môi bắt sáng lung linh.', motionGuide: 'Quay lướt chậm sát đôi môi bắt sáng 3 giây.', speech: '"...mặt mộc không son vẫn rạng rỡ cả ngày!"' },
+                    { name: 'Đoạn 2: Khách khoe môi dưới ánh đèn', action: 'Quay cận cảnh môi bắt sáng lung linh.', motionGuide: 'Quay lướt chậm sát đôi môi bắt sáng 3 giây.', speech: '"...m mặt mộc không son vẫn rạng rỡ cả ngày!"' },
                     { name: 'Đoạn 3: Lời mời ưu đãi khử thâm', action: 'Quay chuyên viên mỉm cười vẫy tay.', motionGuide: 'Quét máy nhẹ từ mặt chuyên viên ra bảng màu 3 giây.', speech: '"Inbox ngay cho em nhận ưu đãi khử thâm tháng này nhé!"' }
                 ]
             }
@@ -99,204 +218,102 @@ const pmuSubData = {
 const categoriesData = [
     {
         id: 'tra-sua-cafe',
-        name: 'Trà Sữa & Cà Phê (Review Thật)',
+        name: 'Trà Sữa & Cà Phê (Kim Bling)',
         icon: '🧋',
-        desc: 'Người thật uống thử, pha chế cuốn hút',
+        desc: 'Review chân thực từ menu quán',
         supportsCustomDish: true,
-        inputLabel: 'Nhập tên món nước của quán:',
-        placeholder: 'VD: Trà nho mẫu đơn, Cà phê muối...',
-        quickDishes: ['Trà nho mẫu đơn kem cheese', 'Cà phê muối béo ngậy', 'Trà đào cam sả', 'Trà sữa khoai môn', 'Matcha Latte'],
+        inputLabel: 'Nhập tên món nước:',
+        placeholder: 'VD: Matcha Latte, Cà phê muối...',
+        quickDishes: ['Matcha Latte', 'Trà nho xanh mẫu đơn', 'Cà phê muối', 'Trà sữa truyền thống'],
         steps: [
             {
                 title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
                 time: '0 - 9s',
                 clips: [
-                    { name: 'Đoạn 1: Người thật cầm ly đưa sát camera', action: 'Quay người thật giơ ly nước cười rạng rỡ.', motionGuide: 'Đưa ly nước tiến sát camera mượt mà 3 giây.', speech: '"Đố bạn tìm được ly nước nào thơm ngon béo ngậy như thế này!"' },
-                    { name: 'Đoạn 2: Cận cảnh lớp kem cheese sánh mịn', action: 'Zoom chậm vào miệng ly nước.', motionGuide: 'Đẩy máy tiến sát vào lớp topping óng ánh 3 giây.', speech: '"...nhìn lớp kem béo ngậy ngập tràn thế này..."' },
-                    { name: 'Đoạn 3: Biểu cảm thèm thuồng', action: 'Quay góc mặt người thật nuốt nước bọt cười.', motionGuide: 'Quét nhẹ từ ly nước lên nét mặt hóng chuyện 3 giây.', speech: '"...xem xong clip là chỉ muốn chạy ra quán mua liền!"' }
+                    { name: 'Đoạn 1: Đưa sản phẩm sát camera', action: 'Đưa ly nước tiến sát camera mượt mà.', motionGuide: 'Đưa ly nước tiến sát camera mượt mà 3 giây.', speech: (dish) => `"${dish ? dish + ' - ' : ''}Đố bạn tìm được ly nước nào thơm ngon béo ngậy như thế này!"` },
+                    { name: 'Đoạn 2: Cận cảnh lớp kem / topping', action: 'Zoom sát vào lớp topping óng ánh.', motionGuide: 'Đẩy máy tiến sát vào lớp topping óng ánh 3 giây.', speech: () => `"...nhìn lớp kem béo ngậy ngập tràn thế này..."` },
+                    { name: 'Đoạn 3: Biểu cảm thèm thuồng', action: 'Quét nhẹ từ ly nước lên nét mặt hóng.', motionGuide: 'Quét nhẹ từ ly nước lên nét mặt hóng chuyện 3 giây.', speech: () => `"...xem xong clip là chỉ muốn chạy ra quán mua liền!"` }
                 ]
             },
             {
-                title: 'Bước 2: Chuẩn bị nguyên liệu & Pha chế (12s - 4 đoạn)',
+                title: 'Bước 2: Pha chế & Nguyên liệu (12s - 4 đoạn)',
                 time: '9 - 21s',
                 clips: [
-                    { name: 'Đoạn 1: Đong cốt trà thơm phức', action: 'Quay rót cốt trà vào ly.', motionGuide: 'Quay dịch chuyển tay rót trà mượt mà 3 giây.', speech: '"Bước 1: Ủ cốt trà tươi mới mỗi ngày..."' },
-                    { name: 'Đoạn 2: Rót sữa tươi béo ngậy', action: 'Quay rót dòng sữa trắng hòa quyện.', motionGuide: 'Quét máy theo dòng sữa chảy xuống 3 giây.', speech: '"...kết hợp sữa tươi thơm ngậy chuẩn vị..."' },
-                    { name: 'Đoạn 3: Múc topping đầy ắp', action: 'Quay muỗng múc trân châu/topping đầy.', motionGuide: 'Đưa muỗng topping vun vút vào ly 3 giây.', speech: '"...topping nhà làm dai giòn sần sật..."' },
-                    { name: 'Đoạn 4: Xịt lớp kem cheese phủ đầy', action: 'Quay xịt lớp kem phủ lên trên.', motionGuide: 'Quét máy chậm theo chiều cao của ly nước 3 giây.', speech: '"...phủ lớp kem cheese mặn ngọt đỉnh chóp."' }
+                    { name: 'Đoạn 1: Rót cốt trà / Cà phê', action: 'Quay dịch chuyển tay rót mượt mà.', motionGuide: 'Quay dịch chuyển tay rót trà mượt mà 3 giây.', speech: (dish) => `"Bước 1: Chuẩn bị cốt nguyên liệu cho món ${dish || 'này'}..."` },
+                    { name: 'Đoạn 2: Hòa quyện sữa / Sốt', action: 'Quét máy theo dòng chảy.', motionGuide: 'Quét máy theo dòng sữa chảy xuống 3 giây.', speech: () => `"...kết hợp sữa tươi thơm ngậy chuẩn công thức..."` },
+                    { name: 'Đoạn 3: Thêm topping đầy ắp', action: 'Đưa muỗng topping vun vút vào ly.', motionGuide: 'Đưa muỗng topping vun vút vào ly 3 giây.', speech: () => `"...topping nhà làm dai giòn sần sật ngập tràn..."` },
+                    { name: 'Đoạn 4: Hoàn thiện ly nước', action: 'Quét máy theo chiều cao ly.', motionGuide: 'Quét máy chậm theo chiều cao của ly nước 3 giây.', speech: () => `"...hoàn thiện siêu phẩm xinh xắn đỉnh chóp."` }
                 ]
             },
             {
                 title: 'Bước 3: Trải nghiệm thực tế (15s - 5 đoạn)',
                 time: '21 - 36s',
                 clips: [
-                    { name: 'Đoạn 1: Cắm ống hút xuyên qua lớp kem', action: 'Quay tay cắm ống hút dứt khoát.', motionGuide: 'Quay cận cảnh ống hút cắm ngập lớp kem 3 giây.', speech: '"Bước 2: Cắm ống hút khuấy đều thưởng thức..."' },
-                    { name: 'Đoạn 2: Người thật hút ngụm đầu tiên', action: 'Quay người thật nhắm mắt tận hưởng.', motionGuide: 'Quay góc mặt thưởng thức biểu cảm thăng hoa 3 giây.', speech: '"...vị trà thanh mát hòa quyện lớp kem béo ngậy..."' },
-                    { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Quay biểu cảm tròn mắt ngạc nhiên.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: '"...trời ơi ngon nhức nách mọi người ạ..."' },
-                    { name: 'Đoạn 4: Nhai topping sần sật', action: 'Quay biểu cảm nhai topping cuốn hút.', motionGuide: 'Quay góc cằm nhai biểu cảm vui vẻ 3 giây.', speech: '"...topping ngập tràn nhai vui miệng cực kỳ..."' },
-                    { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quay giơ ngón cái trước camera.', motionGuide: 'Quét máy từ ly nước ra ngón tay cái like mạnh 3 giây.', speech: '"...xứng đáng 10/10 điểm không chê vào đâu được!"' }
+                    { name: 'Đoạn 1: Cắm ống hút / Khuấy đều', action: 'Quay cận cảnh cắm ống hút.', motionGuide: 'Quay cận cảnh ống hút cắm ngập lớp kem 3 giây.', speech: () => `"Bước 2: Cắm ống hút khuấy đều thưởng thức..."` },
+                    { name: 'Đoạn 2: Hút ngụm đầu tiên', action: 'Quay góc mặt thưởng thức thăng hoa.', motionGuide: 'Quay góc mặt thưởng thức biểu cảm thăng hoa 3 giây.', speech: (dish) => `"...vị ${dish || 'này'} thanh mát hòa quyện béo ngậy tuyệt đỉnh..."` },
+                    { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Đẩy máy lại gần nét mặt ngạc nhiên.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: () => `"...trời ơi ngon nhức nách mọi người ạ..."` },
+                    { name: 'Đoạn 4: Nhai topping sần sật', action: 'Quay góc cằm nhai biểu cảm vui vẻ.', motionGuide: 'Quay góc cằm nhai biểu cảm vui vẻ 3 giây.', speech: () => `"...topping nhai vui miệng cực kỳ cuốn hút..."` },
+                    { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quét máy từ ly ra ngón tay like.', motionGuide: 'Quét máy từ ly nước ra ngón tay cái like mạnh 3 giây.', speech: () => `"...xứng đáng 10/10 điểm không chê vào đâu được!"` }
                 ]
             },
             {
                 title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
                 time: '36 - 45s',
                 clips: [
-                    { name: 'Đoạn 1: Ly nước hoàn chỉnh dưới đèn', action: 'Quay tổng thể ly nước bắt sáng.', motionGuide: 'Quét máy vòng quanh ly nước lấp lánh 3 giây.', speech: '"Ly nước xinh xắn sẵn sàng phục vụ các bác đây!"' },
-                    { name: 'Đoạn 2: Quay không gian quán chill', action: 'Quét góc rộng quán tấp nập.', motionGuide: 'Quét máy toàn cảnh quán ấm cúng 3 giây.', speech: '"Ghé ngay quán em hoặc đặt ship liền tay nhé!"' },
-                    { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười tươi.', motionGuide: 'Quét máy từ quầy bar ra vẫy tay chào 3 giây.', speech: '"Nhớ ghé quán em chơi nha, bye bye!"' }
+                    { name: 'Đoạn 1: Ly nước lung linh dưới đèn', action: 'Quét máy vòng quanh ly nước.', motionGuide: 'Quét máy vòng quanh ly nước lấp lánh 3 giây.', speech: (dish) => `"${dish || 'Món ngon'} sẵn sàng phục vụ các bác đây!"` },
+                    { name: 'Đoạn 2: Không gian quán chill', action: 'Quét máy toàn cảnh quán.', motionGuide: 'Quét máy toàn cảnh quán ấm cúng 3 giây.', speech: () => `"Ghé ngay Kim Bling hoặc đặt ship liền tay nhé!"` },
+                    { name: 'Đoạn 3: Vẫy tay chào', action: 'Quét máy ra vẫy tay chào.', motionGuide: 'Quét máy từ quầy bar ra vẫy tay chào 3 giây.', speech: () => `"Nhớ ghé quán em chơi nha, bye bye!"` }
                 ]
             }
         ]
     },
     {
         id: 'an-vat-nuong',
-        name: 'Đồ Ăn Vặt & Nướng (Review Thật)',
+        name: 'Đồ Ăn Vặt & Nướng (Kim Bling)',
         icon: '🔥',
-        desc: 'Người thật ăn review, sốt ngập tràn',
+        desc: 'Món nóng, sốt ngập tràn, siêu ghiền',
         supportsCustomDish: true,
-        inputLabel: 'Nhập tên món ăn của quán:',
-        placeholder: 'VD: Tokbokki phô mai, Chân gà sốt Thái...',
-        quickDishes: ['Tokbokki phô mai kéo sợi', 'Bánh tráng trộn sốt me', 'Cánh gà chiên mắm', 'Xúc xích nướng đá', 'Cá viên chiên mắm tỏi'],
+        inputLabel: 'Nhập tên món ăn:',
+        placeholder: 'VD: Chân gà, Lạp xưởng, Tokbokki...',
+        quickDishes: ['Chân gà rút xương', 'Lạp xưởng tươi nướng đá', 'Tokbokki', 'Cánh gà BBQ'],
         steps: [
             {
                 title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
                 time: '0 - 9s',
                 clips: [
-                    { name: 'Đoạn 1: Người thật cầm đĩa đồ ăn nóng hổi', action: 'Quay giơ đĩa thức ăn bốc khói trước máy.', motionGuide: 'Đưa đĩa đồ ăn tiến sát camera mượt mà 3 giây.', speech: '"Nhìn phần ăn nóng hổi ngập sốt thế này ai mà cưỡng lại được!"' },
-                    { name: 'Đoạn 2: Cận cảnh phô mai kéo sợi dài', action: 'Zoom sát vào thớ phô mai kéo dài.', motionGuide: 'Đẩy máy từ từ theo chiều kéo sợi phô mai 3 giây.', speech: '"...phô mai kéo sợi dẻo quánh thơm phức..."' },
-                    { name: 'Đoạn 3: Biểu cảm nuốt nước bọt', action: 'Quay góc mặt thèm thuồng cười.', motionGuide: 'Quét nhẹ từ đĩa đồ ăn lên nét mặt hóng chuyện 3 giây.', speech: '"...xem xong clip là đó bụng ngang luôn các bác ạ!"' }
+                    { name: 'Đoạn 1: Giơ đĩa đồ ăn nóng hổi', action: 'Đưa đĩa đồ ăn tiến sát camera.', motionGuide: 'Đưa đĩa đồ ăn tiến sát camera mượt mà 3 giây.', speech: (dish) => `"${dish ? dish + ' - ' : ''}Nhìn phần ăn nóng hổi ngập sốt thế này ai mà cưỡng lại được!"` },
+                    { name: 'Đoạn 2: Cận cảnh phô mai kéo sợi', action: 'Đẩy máy theo chiều kéo sợi.', motionGuide: 'Đẩy máy từ từ theo chiều kéo sợi phô mai 3 giây.', speech: () => `"...phô mai kéo sợi dẻo quánh thơm phức..."` },
+                    { name: 'Đoạn 3: Biểu cảm thèm thuồng', action: 'Quét nhẹ lên nét mặt hóng.', motionGuide: 'Quét nhẹ từ đĩa đồ ăn lên nét mặt hóng chuyện 3 giây.', speech: () => `"...xem xong clip là đó bụng ngang luôn các bác ạ!"` }
                 ]
             },
             {
                 title: 'Bước 2: Chế biến xèo xèo (12s - 4 đoạn)',
                 time: '9 - 21s',
                 clips: [
-                    { name: 'Đoạn 1: Đảo chảo sốt sôi sùng sục', action: 'Quay chảo thức ăn đang xèo xèo.', motionGuide: 'Quay dịch chuyển chảo thức ăn bốc khói 3 giây.', speech: '"Bước 1: Chế biến nóng hổi trên chảo sốt đậm đà..."' },
-                    { name: 'Đoạn 2: Rưới nước sốt thần thánh', action: 'Quay rưới lớp sốt sánh mịn lên trên.', motionGuide: 'Quét máy theo dòng sốt chảy óng ánh 3 giây.', speech: '"...chan hòa lớp nước sốt bí truyền cay cay ngọt ngọt..."' },
-                    { name: 'Đoạn 3: Rắc hành phi & đậu phộng', action: 'Quay tay rắc topping đầy ắp.', motionGuide: 'Đưa tay rắc hành phi thơm phức xuống đĩa 3 giây.', speech: '"...rắc thêm hành phi giòn rụm thơm nức mũi..."' },
-                    { name: 'Đoạn 4: Múc ra hộp khói nghi ngút', action: 'Quay múc đồ ăn ra hộp đầy ú ụ.', motionGuide: 'Quét máy theo xẻng múc đồ ăn ra hộp 3 giây.', speech: '"...múc ra hộp nóng giòn ngon nhức nách!"' }
+                    { name: 'Đoạn 1: Đảo chảo sốt sôi sùng sục', action: 'Quay chảo bốc khói.', motionGuide: 'Quay dịch chuyển chảo thức ăn bốc khói 3 giây.', speech: (dish) => `"Bước 1: Chế biến món ${dish || 'này'} nóng hổi trên chảo sốt..."` },
+                    { name: 'Đoạn 2: Rưới nước sốt thần thánh', action: 'Quét theo dòng sốt chảy.', motionGuide: 'Quét máy theo dòng sốt chảy óng ánh 3 giây.', speech: () => `"...chan hòa lớp nước sốt đậm đà cay cay ngọt ngọt..."` },
+                    { name: 'Đoạn 3: Rắc topping thơm phức', action: 'Đưa tay rắc topping.', motionGuide: 'Đưa tay rắc hành phi/topping thơm xuống đĩa 3 giây.', speech: () => `"...rắc thêm topping giòn rụm thơm nức mũi..."` },
+                    { name: 'Đoạn 4: Múc ra đĩa/hộp khói nghi ngút', action: 'Quay xẻng múc đồ ăn.', motionGuide: 'Quét máy theo xẻng múc đồ ăn ra đĩa 3 giây.', speech: () => `"...múc ra đĩa nóng giòn ngon nhức nách!"` }
                 ]
             },
             {
                 title: 'Bước 3: Trải nghiệm ăn uống (15s - 5 đoạn)',
                 time: '21 - 36s',
                 clips: [
-                    { name: 'Đoạn 1: Chấm đẫm chén sốt thần thánh', action: 'Quay nhúng miếng ăn vào chén sốt.', motionGuide: 'Quay cận cảnh nhúng ngập sốt đậm đặc 3 giây.', speech: '"Bước 2: Chấm đẫm chén sốt thần thánh ăn là ghiền..."' },
-                    { name: 'Đoạn 2: Cắn ngập răng giòn rụm', action: 'Quay người thật cắn miếng to biểu cảm.', motionGuide: 'Quay góc mặt cắn ngập răng giòn rụm 3 giây.', speech: '"...bên ngoài giòn rụm bên trong mềm ngọt tuyệt đỉnh..."' },
-                    { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Quay biểu cảm tròn mắt tấm tắc.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: '"...trời ơi đỉnh chóp thực sự mọi người ạ..."' },
-                    { name: 'Đoạn 4: Húp xì xụp nước sốt', action: 'Quay biểu cảm húp sốt cay cay.', motionGuide: 'Quay góc cằm biểu cảm ăn uống ngon lành 3 giây.', speech: '"...vị cay cay tê tê kích thích vị giác cực kỳ..."' },
-                    { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quay giơ ngón cái trước camera.', motionGuide: 'Quét máy từ đĩa đồ ăn ra ngón tay cái like mạnh 3 giây.', speech: '"...xứng đáng 10/10 điểm phải thử ngay nha!"' }
+                    { name: 'Đoạn 1: Chấm đẫm chén sốt', action: 'Quay cận cảnh nhúng ngập sốt.', motionGuide: 'Quay cận cảnh nhúng ngập sốt đậm đặc 3 giây.', speech: () => `"Bước 2: Chấm đẫm chén sốt thần thánh ăn là ghiền..."` },
+                    { name: 'Đoạn 2: Cắn ngập răng giòn rụm', action: 'Quay góc mặt cắn ngập răng.', motionGuide: 'Quay góc mặt cắn ngập răng giòn rụm 3 giây.', speech: () => `"...bên ngoài giòn rụm bên trong mềm ngọt tuyệt đỉnh..."` },
+                    { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Đẩy máy lại gần nét mặt ngạc nhiên.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: () => `"...trời ơi đỉnh chóp thực sự mọi người ạ..."` },
+                    { name: 'Đoạn 4: Húp xì xụp nước sốt', action: 'Quay góc cằm biểu cảm ăn ngon.', motionGuide: 'Quay góc cằm biểu cảm ăn uống ngon lành 3 giây.', speech: () => `"...vị cay cay tê tê kích thích vị giác cực kỳ..."` },
+                    { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quét máy ra ngón like.', motionGuide: 'Quét máy từ đĩa đồ ăn ra ngón tay cái like mạnh 3 giây.', speech: () => `"...xứng đáng 10/10 điểm phải thử ngay nha!"` }
                 ]
             },
             {
                 title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
                 time: '36 - 45s',
                 clips: [
-                    { name: 'Đoạn 1: Hộp đồ ăn đầy ắp topping', action: 'Quay hộp thức ăn đóng nắp gọn gàng.', motionGuide: 'Quét máy vòng quanh hộp đồ ăn hấp dẫn 3 giây.', speech: '"Một phần đầy ú ụ giá siêu hạt dẻ cho các bác đây!"' },
-                    { name: 'Đoạn 2: Quay không gian quán tấp nập', action: 'Quét góc rộng quán ăn đông khách.', motionGuide: 'Quét máy toàn cảnh quán nhộn nhịp 3 giây.', speech: '"Ghé ngay quán hoặc đặt ship liền tay kẻo lỡ nhé!"' },
-                    { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười tươi rạng rỡ.', motionGuide: 'Quét máy từ quầy bán ra vẫy tay chào 3 giây.', speech: '"Đặt hàng ngay bên dưới nha, bye bye!"' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'review-san-pham',
-        name: 'Review Sản Phẩm / Mỹ Phẩm',
-        icon: '📦',
-        desc: 'Mở hộp, test texture, trước & sau',
-        supportsCustomDish: true,
-        inputLabel: 'Nhập tên sản phẩm cần review:',
-        placeholder: 'VD: Kem chống nắng, Serum dưỡng ẩm...',
-        quickDishes: ['Kem chống nắng nâng tông', 'Serum dưỡng ẩm phục hồi', 'Son lì không trôi', 'Sữa rửa mặt tạo bọt', 'Mặt nạ giấy cấp ẩm'],
-        steps: [
-            {
-                title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                time: '0 - 9s',
-                clips: [
-                    { name: 'Đoạn 1: Cầm sản phẩm thần thái', action: 'Quay giơ sản phẩm sát camera.', motionGuide: 'Đưa hộp sản phẩm tiến sát camera mượt mà 3 giây.', speech: '"Cứ dùng em này là da đẹp lên trông thấy mỗi ngày!"' },
-                    { name: 'Đoạn 2: Khuôn mặt mộc tự tin', action: 'Zoom sát vào làn da mộc mịn màng.', motionGuide: 'Đẩy máy tiến sát lại gần da mặt 3 giây.', speech: '"...tạm biệt làn da khô sạm hay xỉn màu..."' },
-                    { name: 'Đoạn 3: Giới thiệu bí quyết hot', action: 'Quay lắc nhẹ hộp sản phẩm.', motionGuide: 'Quét máy từ sản phẩm ra nụ cười rạng rỡ 3 giây.', speech: '"...hãy xem ngay bài review chi tiết siêu phẩm này nhé!"' }
-                ]
-            },
-            {
-                title: 'Bước 2: Mở hộp & Test chất kem (12s - 4 đoạn)',
-                time: '9 - 21s',
-                clips: [
-                    { name: 'Đoạn 1: Mở nắp hộp sang xịn', action: 'Quay tay mở nắp hộp tinh tế.', motionGuide: 'Quay dịch chuyển tay mở hộp mượt mà 3 giây.', speech: '"Bước 1: Thiết kế bao bì sang trọng tinh tế..."' },
-                    { name: 'Đoạn 2: Lấy chất kem ra mu bàn tay', action: 'Quay nặn chất kem mướt mịn.', motionGuide: 'Quét theo giọt kem nặn ra mu bàn tay 3 giây.', speech: '"...kết cấu dạng sữa mướt mịn cực kỳ..."' },
-                    { name: 'Đoạn 3: Tán đều thẩm thấu nhanh', action: 'Quay tay tán đều kem trên da.', motionGuide: 'Quét ngón tay xoa đều lớp kem mỏng nhẹ 3 giây.', speech: '"...thẩm thấu sâu vào da không hề bết dính..."' },
-                    { name: 'Đoạn 4: Hiệu quả nâng tông tự nhiên', action: 'Quay bề mặt da sáng mịn sau thoa.', motionGuide: 'Quét nhanh qua vùng da đã test sáng bừng 3 giây.', speech: '"...nâng tông hồng hào tự nhiên suốt cả ngày."' }
-                ]
-            },
-            {
-                title: 'Bước 3: Trải nghiệm thực tế (15s - 5 đoạn)',
-                time: '21 - 36s',
-                clips: [
-                    { name: 'Đoạn 1: Thoa trực tiếp lên mặt', action: 'Quay thoa kem lên má mịn màng.', motionGuide: 'Quay cận cảnh thoa kem nhẹ nhàng 3 giây.', speech: '"Bước 2: Trải nghiệm thực tế trên da mặt..."' },
-                    { name: 'Đoạn 2: Vỗ nhẹ cho dưỡng chất thấm sâu', action: 'Quay tay vỗ nhẹ vào má.', motionGuide: 'Quay góc mặt vỗ nhịp nhàng 3 giây.', speech: '"...vỗ nhẹ là dưỡng chất ngấm sâu tức thì..."' },
-                    { name: 'Đoạn 3: So sánh rõ rệt trước và sau', action: 'Quay cận vùng da sáng mịn màng.', motionGuide: 'Đẩy máy lại gần vùng da khác biệt rõ rệt 3 giây.', speech: '"...da căng bóng mướt mịn như gái Hàn..."' },
-                    { name: 'Đoạn 4: Kiểm tra không trôi nước', action: 'Quay xịt nước thử độ bền.', motionGuide: 'Quay xịt nước lên da vẫn khô ráo 3 giây.', speech: '"...khả năng kháng nước đỉnh cao không lo trôi phai..."' },
-                    { name: 'Đoạn 5: Biểu cảm hài lòng tuyệt đối', action: 'Quay rạng rỡ trước ống kính.', motionGuide: 'Quét máy từ sản phẩm ra nụ cười mãn nguyện 3 giây.', speech: '"...xứng đáng 10/10 điểm phải đầu tư ngay nha!"' }
-                ]
-            },
-            {
-                title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
-                time: '36 - 45s',
-                clips: [
-                    { name: 'Đoạn 1: Sản phẩm kèm giỏ hàng', action: 'Quay giơ sản phẩm cuối clip.', motionGuide: 'Quét máy vòng quanh sản phẩm chính hãng 3 giây.', speech: '"Hàng chính hãng giá ưu đãi độc quyền cho các bác!"' },
-                    { name: 'Đoạn 2: Hướng dẫn bấm mua', action: 'Quay chỉ tay xuống góc video.', motionGuide: 'Quét máy hướng tay xuống nút giỏ hàng 3 giây.', speech: '"Nhanh tay bấm vào giỏ hàng bên dưới để chốt đơn..."' },
-                    { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười thân thiện.', motionGuide: 'Quét máy từ sản phẩm ra vẫy tay chào 3 giây.', speech: '"...hẹn gặp lại ở video review tiếp theo nhé, bye bye!"' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'vlog-doi-thuong',
-        name: 'Vlog / Đời Thường & Tiệm',
-        icon: '☕',
-        desc: 'Một ngày làm việc, chuẩn bị mở tiệm',
-        supportsCustomDish: true,
-        inputLabel: 'Nhập tiêu đề vlog / công việc:',
-        placeholder: 'VD: Một ngày mở tiệm lúc 5h sáng...',
-        quickDishes: ['Một ngày mở tiệm từ A-Z', 'Chuẩn bị nguyên liệu lúc 6h sáng', 'Hậu trường đóng hàng ship tỉnh', 'Tâm sự nghề nghiệp cùng chủ tiệm'],
-        steps: [
-            {
-                title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                time: '0 - 9s',
-                clips: [
-                    { name: 'Đoạn 1: Mở cửa tiệm đón nắng ban mai', action: 'Quay mở cửa cuốn tiệm buổi sớm.', motionGuide: 'Quét máy từ dưới lên mở rộng không gian 3 giây.', speech: '"Một ngày mới bắt đầu tại tiệm nhà em diễn ra thế nào?"' },
-                    { name: 'Đoạn 2: Pha ly cà phê tỉnh táo buổi sáng', action: 'Quay rót cà phê thơm phức.', motionGuide: 'Đẩy máy tiến sát ly cà phê bốc khói 3 giây.', speech: '"...nhâm nhi ly cà phê nạp năng lượng tràn đầy..."' },
-                    { name: 'Đoạn 3: Nụ cười rạng rỡ sẵn sàng đón khách', action: 'Quay chủ tiệm cười tươi nhìn máy.', motionGuide: 'Quét nhẹ từ ly cà phê lên nụ cười rạng rỡ 3 giây.', speech: '"...hãy cùng chân mình khám phá công việc hôm nay nhé!"' }
-                ]
-            },
-            {
-                title: 'Bước 2: Vận hành chuẩn bị (12s - 4 đoạn)',
-                time: '9 - 21s',
-                clips: [
-                    { name: 'Đoạn 1: Sắp xếp kệ hàng ngăn nắp', action: 'Quay tay bày biện chai lọ gọn gàng.', motionGuide: 'Quay dịch chuyển tay sắp xếp mượt mà 3 giây.', speech: '"Bước 1: Dọn dẹp không gian sạch sẽ ngăn nắp..."' },
-                    { name: 'Đoạn 2: Sơ chế nguyên liệu tươi ngon', action: 'Quay sơ chế hoa quả / dụng cụ.', motionGuide: 'Quét máy theo thao tác sơ chế nhanh gọn 3 giây.', speech: '"...chuẩn bị nguyên liệu tươi mới mỗi ngày..."' },
-                    { name: 'Đoạn 3: Kiểm tra thiết bị máy móc', action: 'Quay bật công tắc máy móc hoạt động.', motionGuide: 'Quay tay bật công tắc đèn sáng trưng 3 giây.', speech: '"...kiểm tra kỹ lưỡng các thiết bị sẵn sàng..."' },
-                    { name: 'Đoạn 4: Biển hiệu sẵn sàng đón khách', action: 'Quay bảng hiệu lung linh ngoài cửa.', motionGuide: 'Quét máy từ bảng hiệu vào trong tiệm ấm cúng 3 giây.', speech: '"...mở cửa chào đón những vị khách đầu tiên."' }
-                ]
-            },
-            {
-                title: 'Bước 3: Phục vụ & Trải nghiệm (15s - 5 đoạn)',
-                time: '21 - 36s',
-                clips: [
-                    { name: 'Đoạn 1: Đón vị khách đầu tiên vào tiệm', action: 'Quay niềm nở chào đón khách.', motionGuide: 'Quay cúi đầu mỉm cười chào khách thân thiện 3 giây.', speech: '"Bước 2: Đón tiếp những vị khách dễ thương..."' },
-                    { name: 'Đoạn 2: Tư vấn tận tâm chu đáo', action: 'Quay ân cần trò chuyện với khách.', motionGuide: 'Quay góc mặt tư vấn nhiệt tình 3 giây.', speech: '"...lắng nghe và tư vấn dịch vụ tận tâm nhất..."' },
-                    { name: 'Đoạn 3: Chăm sóc phục vụ khéo léo', action: 'Quay tay làm việc chuyên nghiệp.', motionGuide: 'Quay cận cảnh thao tác phục vụ tỉ mỉ 3 giây.', speech: '"...từng công đoạn đều làm bằng tất cả tâm huyết..."' },
-                    { name: 'Đoạn 4: Khách vui vẻ cảm ơn ra về', action: 'Quay khách vẫy tay cười tươi.', motionGuide: 'Quay khách bước ra cửa vẫy tay tạm biệt 3 giây.', speech: '"...nhìn khách hài lòng ra về là vui rồi..."' },
-                    { name: 'Đoạn 5: Dọn dẹp kết thúc ngày làm việc', action: 'Quay tắt đèn khép cửa cuối ngày.', motionGuide: 'Quét máy từ trong ra ngoài khép cửa tiệm 3 giây.', speech: '"...khép lại một ngày làm việc năng suất tuyệt vời!"' }
-                ]
-            },
-            {
-                title: 'Bước 4: Tổng kết & CTA (9s - 3 đoạn)',
-                time: '36 - 45s',
-                clips: [
-                    { name: 'Đoạn 1: Ngồi nghỉ ngơi thư giãn cuối ngày', action: 'Quay chủ tiệm cườimỉm uống nước.', motionGuide: 'Quét nhẹ từ ly nước lên nét mặt thư thái 3 giây.', speech: '"Làm việc hết mình và tận hưởng trọn vẹn niềm vui!"' },
-                    { name: 'Đoạn 2: Nhắn gửi cộng đồng yêu mến', action: 'Quay hướng mắt trìu mến nhìn máy.', motionGuide: 'Đẩy máy tiến sát lại gần nụ cười ấm áp 3 giây.', speech: '"...cảm ơn mọi người luôn đồng hành cùng tiệm nhé!"' },
-                    { name: 'Đoạn 3: Địa chỉ tiệm & Lời chào tạm biệt', action: 'Quay bảng hiệu tiệm vẫy tay chào.', motionGuide: 'Quét máy từ bảng hiệu ra vẫy tay tạm biệt 3 giây.', speech: '"Ghé tiệm em chơi nha, địa chỉ ở phần tiểu sử ạ!"' }
+                    { name: 'Đoạn 1: Đĩa đồ ăn đầy ắp', action: 'Quét máy vòng quanh đĩa ăn.', motionGuide: 'Quét máy vòng quanh đĩa đồ ăn hấp dẫn 3 giây.', speech: () => `"Một phần đầy ú ụ giá siêu hạt dẻ cho các bác đây!"` },
+                    { name: 'Đoạn 2: Không gian quán tấp nập', action: 'Quét toàn cảnh quán.', motionGuide: 'Quét máy toàn cảnh quán nhộn nhịp 3 giây.', speech: () => `"Ghé ngay Kim Bling hoặc đặt ship liền tay nhé!"` },
+                    { name: 'Đoạn 3: Vẫy tay chào', action: 'Quét máy vẫy tay chào.', motionGuide: 'Quét máy từ quầy bán ra vẫy tay chào 3 giây.', speech: () => `"Đặt hàng ngay bên dưới nha, bye bye!"` }
                 ]
             }
         ]
@@ -305,67 +322,19 @@ const categoriesData = [
         id: 'phun-xam-tham-my',
         name: 'Phun Xăm Thẩm Mỹ',
         icon: '✨',
-        desc: 'Chọn Mày hoặc Môi chuyên sâu',
+        desc: 'Chuyên sâu Phun Mày & Phun Môi',
         supportsCustomDish: false,
         isPmuCategory: true,
         steps: pmuSubData.may.steps
-    },
-    {
-        id: 'day-hoc-phun-xam',
-        name: 'Dạy Học Phun Xăm',
-        icon: '🎓',
-        desc: 'Đào tạo học viên, cầm tay chỉ việc',
-        supportsCustomDish: false,
-        steps: [
-            {
-                title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                time: '0 - 9s',
-                clips: [
-                    { name: 'Đoạn 1: Học viên thực hành chăm chú', action: 'Quay góc rộng lớp học xăm tấp nập.', motionGuide: 'Quét máy mượt mà qua các bàn học viên 3 giây.', speech: '"Học phun xăm mấy tháng là ra nghề có khách?"' },
-                    { name: 'Đoạn 2: Tác phẩm da giả đẹp xuất sắc', action: 'Zoom sát vào dáng mày da giả nét mịn.', motionGuide: 'Đẩy máy tiến sát lại tác phẩm da giả 3 giây.', speech: '"...nhìn nét điêu khắc bay bổng thế này cơ mà..."' },
-                    { name: 'Đoạn 3: Giảng viên tự tin giới thiệu', action: 'Quay giảng viên mỉm cười cầm máy xăm.', motionGuide: 'Quét máy từ giảng viên ra lớp học 3 giây.', speech: '"...hãy xem bí quyết đào tạo chuẩn chỉnh từ A-Z nhé!"' }
-                ]
-            },
-            {
-                title: 'Bước 2: Đào tạo nền tảng (12s - 4 đoạn)',
-                time: '9 - 21s',
-                clips: [
-                    { name: 'Đoạn 1: Hướng dẫn vẽ khuôn mặt chuẩn', action: 'Quay giảng viên vẽ trên giấy/da giả.', motionGuide: 'Quay dịch chuyển tay vẽ mượt mà 3 giây.', speech: '"Bước 1: Lên khung vẽ tỉ lệ vàng chuẩn xác..."' },
-                    { name: 'Đoạn 2: Cầm tay chỉ việc 1 kèm 1', action: 'Quay thầy cô uốn nắn từng ngón tay.', motionGuide: 'Quét theo cử chỉ tay cầm máy của học viên 3 giây.', speech: '"...cầm tay chỉ việc 1 kèm 1 không giấu nghề..."' },
-                    { name: 'Đoạn 3: Thực hành kỹ thuật đi nét', action: 'Quay học viên đi nét trên da giả.', motionGuide: 'Quay cận cảnh đường kim lướt êm ái 3 giây.', speech: '"...rèn luyện lực tay vững chắc từng đường đi nét lại..."' },
-                    { name: 'Đoạn 4: Bí quyết pha mực độc quyền', action: 'Quay trộn màu mực xăm chuyên nghiệp.', motionGuide: 'Quét chậm qua bảng màu pha chế chuẩn tông 3 giây.', speech: '"...học bí quyết pha mực không bao giờ trổ đỏ!"' }
-                ]
-            },
-            {
-                title: 'Bước 3: Thực hành người thật & Sửa lỗi (15s - 5 đoạn)',
-                time: '21 - 36s',
-                clips: [
-                    { name: 'Đoạn 1: Học viên thao tác trên mẫu thật', action: 'Quay học viên làm mẫu dưới sự giám sát.', motionGuide: 'Quay cận cảnh thao tác cẩn trọng 3 giây.', speech: '"Bước 2: Trải nghiệm thực hành trên mẫu thật..."' },
-                    { name: 'Đoạn 2: Giảng viên tận tình góp ý', action: 'Quay thầy cô chỉnh sửa từng chi tiết nhỏ.', motionGuide: 'Quay góc mặt thầy cô hướng dẫn ân cần 3 giây.', speech: '"...giảng viên luôn theo sát sửa từng lỗi nhỏ..."' },
-                    { name: 'Đoạn 3: Thành quả mẫu thật hoàn hảo', action: 'Quay cận cảnh dáng mày mẫu thật sắc nét.', motionGuide: 'Đẩy máy lại gần đường sợi mày hoàn mỹ 3 giây.', speech: '"...đảm bảo tay nghề cứng cáp tự tin vững vàng..."' },
-                    { name: 'Đoạn 4: Lễ trao chứng chỉ tốt nghiệp', action: 'Quay học viên cười rạng rỡ cầm chứng chỉ.', motionGuide: 'Quét nhanh qua nụ cười hạnh phúc nhận bằng 3 giây.', speech: '"...tốt nghiệp nhận chứng chỉ hành nghề chính quy..."' },
-                    { name: 'Đoạn 5: Học viên tự tin mở tiệm riêng', action: 'Quay học viên chụp ảnh lưu niệm.', motionGuide: 'Quét máy toàn cảnh tập thể lớp vui mừng 3 giây.', speech: '"...tự tin mở tiệm riêng làm chủ tài chính!"' }
-                ]
-            },
-            {
-                title: 'Bước 4: Tổng kết & Tuyển sinh CTA (9s - 3 đoạn)',
-                time: '36 - 45s',
-                clips: [
-                    { name: 'Đoạn 1: Khai giảng lớp mới tấp nập', action: 'Quay toàn cảnh lớp học đông vui.', motionGuide: 'Quét máy vòng quanh lớp học nhộn nhịp 3 giây.', speech: '"Khai giảng lớp mới tuần tới tại viện đào tạo!"' },
-                    { name: 'Đoạn 2: Ưu đãi học phí số lượng có hạn', action: 'Quay bảng thông báo ưu đãi.', motionGuide: 'Quét máy hướng vào bảng ưu đãi học phí 3 giây.', speech: '"...nhận ngay ưu đãi giảm học phí khủng..."' },
-                    { name: 'Đoạn 3: Lời mời đăng ký khóa học', action: 'Quay giảng viên vẫy tay cười tươi.', motionGuide: 'Quét máy từ bảng hiệu ra vẫy tay chào 3 giây.', speech: '"Nhanh tay inbox đăng ký giữ chỗ ngay nhé!"' }
-                ]
-            }
-        ]
     }
 ];
 
 const viralCaptions = [
     "Đừng ai mua/làm sản phẩm này khi chưa xem hết video! Xem xong chỉ muốn chốt đơn ngay lập tức 🤤🔥",
-    "Sức hút khó cưỡng từ siêu phẩm này đây các bác ơi! Dùng/Ăn một lần là ghiền, không ngon không lấy tiền ✨",
-    "Tận mắt chứng kiến quá trình làm/test siêu phẩm này mới hiểu vì sao khách xếp hàng dài mỗi ngày 💯",
-    "Hôm nay mời mọi người cùng trải nghiệm món hot hit / sản phẩm triệu view nhà em nhé. Nhìn có kích thích không ạ? 😍",
-    "Trời lạnh/nóng thế này mà có sản phẩm này thì hết nước chấm! Đang có ưu đãi sốc, bấm vào giỏ hàng/nhắn tin ngay 👇"
+    "Sức hút khó cưỡng từ siêu phẩm Kim Bling đây các bác ơi! Thưởng thức một lần là ghiền, không ngon không lấy tiền ✨",
+    "Tận mắt chứng kiến quá trình làm siêu phẩm này mới hiểu vì sao khách xếp hàng dài mỗi ngày 💯",
+    "Hôm nay mời mọi người cùng trải nghiệm món hot hit triệu view nhà em nhé. Nhìn có kích thích không ạ? 😍",
+    "Trời lạnh/nóng thế này mà có món này thì hết nước chấm! Đang có ưu đãi sốc, bấm vào giỏ hàng ngay 👇"
 ];
 
 const capcutDetailedGuides = [
