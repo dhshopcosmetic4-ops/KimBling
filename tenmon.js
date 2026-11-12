@@ -1,6 +1,6 @@
 // ==========================================
-// FILE DỮ LIỆU: tenmon.js
-// Cấu trúc chuẩn: Phân đoạn 1 (3s), Phân đoạn 2 (4 đoạn x 7s -> cắt còn 5s/đoạn), Phân đoạn 3 (4s)
+// FILE DỮ LIỆU: cntik.js
+// Cẩm nang quay & dựng siêu chi tiết (Khoảng cách cm, góc độ, tốc độ lia và CapCut)
 // ==========================================
 
 const descriptionsMap = {
@@ -168,7 +168,7 @@ const pmuSubData = {
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao máy nhanh sát camera, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 30-40cm | Góc 60 độ] Lao máy nhanh sát chân mày trong 1s rồi giữ yên.',
                 speech: () => `"Cảnh báo! Đừng bỏ qua siêu phẩm chân mày này!"`
             },
             {
@@ -176,10 +176,10 @@ const pmuSubData = {
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Sát khuẩn & ủ tê', motionGuide: 'Quét nhanh tay thoa tê êm ái.', speech: 'Vô trùng sạch sẽ, ủ tê êm ái.' },
-                    { id: 1, name: 'Đoạn 2.2: Đo vẽ tỉ lệ vàng', motionGuide: 'Lao máy nhanh sát thước đo tỉ lệ.', speech: 'Đo vẽ tỉ lệ vàng chuẩn xác.' },
-                    { id: 2, name: 'Đoạn 2.3: Đi kim rải hạt', motionGuide: 'Quét chớp nhoáng đầu kim đi hạt tơi mịn.', speech: 'Kỹ thuật đi kim rải hạt tơi mịn.' },
-                    { id: 3, name: 'Đoạn 2.4: Lau bông lộ mực', motionGuide: 'Hất nhanh máy khăn bông lướt lộ dáng mày.', speech: 'Lau bông lộ mực sắc nét tự nhiên.' }
+                    { id: 0, name: 'Đoạn 2.1: Sát khuẩn & ủ tê', motionGuide: '🎯 [Cự ly 20cm | Góc 0 độ] Quét nhanh tay thoa tê êm ái.', speech: 'Vô trùng sạch sẽ, ủ tê êm ái.' },
+                    { id: 1, name: 'Đoạn 2.2: Đo vẽ tỉ lệ vàng', motionGuide: '🎯 [Cự ly 25cm | Góc 45 độ] Lao máy nhanh sát thước đo tỉ lệ.', speech: 'Đo vẽ tỉ lệ vàng chuẩn xác.' },
+                    { id: 2, name: 'Đoạn 2.3: Đi kim rải hạt', motionGuide: '🎯 [Cự ly 15cm | Góc 90 độ] Quét chớp nhoáng đầu kim đi hạt tơi mịn.', speech: 'Kỹ thuật đi kim rải hạt tơi mịn.' },
+                    { id: 3, name: 'Đoạn 2.4: Lau bông lộ mực', motionGuide: '🎯 [Cự ly 20cm | Góc 45 độ] Hất nhanh máy khăn bông lướt lộ dáng mày.', speech: 'Lau bông lộ mực sắc nét tự nhiên.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: () => 'Quá trình thực hiện tỉ mỉ từng chi tiết.'
@@ -187,7 +187,7 @@ const pmuSubData = {
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 4s)',
-                motionGuide: 'Hất nhanh máy từ gương ra nụ cười rạng rỡ của khách.',
+                motionGuide: '🎯 [Cự ly 30-50cm | Góc ngước 15 độ] Hất nhanh máy từ gương ra nụ cười rạng rỡ.',
                 speech: () => '"Mới làm xong trẻ ra cả chục tuổi, inbox ngay nhé!"'
             }
         ]
@@ -199,7 +199,7 @@ const pmuSubData = {
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao máy nhanh sát camera, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 30-40cm | Góc 60 độ] Lao máy nhanh sát vào môi trong 1s rồi dừng.',
                 speech: () => `"Đừng bỏ qua siêu phẩm môi hồng hào này!"`
             },
             {
@@ -207,10 +207,10 @@ const pmuSubData = {
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Sát khuẩn & ủ tê', motionGuide: 'Quét nhanh miếng ủ tê môi.', speech: 'Vô trùng sạch sẽ, ủ tê thư giãn.' },
-                    { id: 1, name: 'Đoạn 2.2: Khử gốc thâm', motionGuide: 'Lao máy sát nền môi đi tinh chất.', speech: 'Tinh chất khử sạch gốc thâm đen.' },
-                    { id: 2, name: 'Đoạn 2.3: Cấy màu hữu cơ', motionGuide: 'Quét chớp nhoáng đầu máy cấy màu.', speech: 'Cấy màu hữu cơ trong veo mướt mịn.' },
-                    { id: 3, name: 'Đoạn 2.4: Lau bông lộ màu', motionGuide: 'Hất nhanh máy khăn bông lộ sắc môi.', speech: 'Màu lên trong veo chuẩn tông ngay.' }
+                    { id: 0, name: 'Đoạn 2.1: Sát khuẩn & ủ tê', motionGuide: '🎯 [Cự ly 20cm | Góc 0 độ] Quét nhanh miếng ủ tê môi.', speech: 'Vô trùng sạch sẽ, ủ tê thư giãn.' },
+                    { id: 1, name: 'Đoạn 2.2: Khử gốc thâm', motionGuide: '🎯 [Cự ly 25cm | Góc 45 độ] Lao máy sát nền môi đi tinh chất.', speech: 'Tinh chất khử sạch gốc thâm đen.' },
+                    { id: 2, name: 'Đoạn 2.3: Cấy màu hữu cơ', motionGuide: '🎯 [Cự ly 15cm | Góc 90 độ] Quét chớp nhoáng đầu máy cấy màu.', speech: 'Cấy màu hữu cơ trong veo mướt mịn.' },
+                    { id: 3, name: 'Đoạn 2.4: Lau bông lộ màu', motionGuide: '🎯 [Cự ly 20cm | Góc 45 độ] Hất nhanh máy khăn bông lộ sắc môi.', speech: 'Màu lên trong veo chuẩn tông ngay.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: () => 'Quy trình khử thâm cấy màu chuẩn y khoa.'
@@ -218,7 +218,7 @@ const pmuSubData = {
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 4s)',
-                motionGuide: 'Hất nhanh máy thoa dưỡng và đôi môi bắt sáng.',
+                motionGuide: '🎯 [Cự ly 30-50cm | Góc ngước 15 độ] Hất nhanh máy thoa dưỡng và đôi môi bắt sáng.',
                 speech: () => '"Môi căng mọng tức thì, nhận ưu đãi ngay bên dưới nhé!"'
             }
         ]
@@ -240,7 +240,7 @@ const categoriesData = [
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao máy nhanh sát ly nước, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 30-40cm | Góc 60 độ] Lao máy nhanh sát vào ly nước trong 1s rồi dừng.',
                 speech: (dish) => `"Cảnh báo! Đừng uống thử ${dish || 'món này'} nếu không muốn nghiện!"`
             },
             {
@@ -248,10 +248,10 @@ const categoriesData = [
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Cho đá viên rào rào', motionGuide: 'Lao máy sát miệng ly lúc đá rơi xuống.', speech: 'Tiếng đá rơi mát lạnh sảng khoái.' },
-                    { id: 1, name: 'Đoạn 2.2: Rót cốt trà/cà phê sóng sánh', motionGuide: 'Quét nhanh theo dòng nước chảy xuống ly.', speech: 'Rót cốt nguyên liệu đậm đà chuẩn vị.' },
-                    { id: 2, name: 'Đoạn 2.3: Thêm lớp kem machiato/sữa', motionGuide: 'Đưa máy sát lớp kem béo ngậy chảy tràn.', speech: 'Phủ lớp kem machiato mằn mặn béo ngậy.' },
-                    { id: 3, name: 'Đoạn 2.4: Thêm muỗng topping đầy ắp', motionGuide: 'Hất nhanh máy múc muỗng topping vun vút.', speech: 'Topping nhà làm dai giòn sần sật ngập tràn.' }
+                    { id: 0, name: 'Đoạn 2.1: Cho đá viên rào rào', motionGuide: '🎯 [Cự ly 20cm | Góc 0 độ] Lao máy sát miệng ly lúc đá rơi xuống.', speech: 'Tiếng đá rơi mát lạnh sảng khoái.' },
+                    { id: 1, name: 'Đoạn 2.2: Rót cốt trà/cà phê sóng sánh', motionGuide: '🎯 [Cự ly 25-30cm | Góc 45 độ chuẩn] Quét nhanh theo dòng nước chảy.', speech: 'Rót cốt nguyên liệu đậm đà chuẩn vị.' },
+                    { id: 2, name: 'Đoạn 2.3: Thêm lớp kem machiato/sữa', motionGuide: '🎯 [Cự ly 15cm | Góc 90 độ] Đưa máy sát lớp kem béo ngậy chảy tràn.', speech: 'Phủ lớp kem machiato mằn mặn béo ngậy.' },
+                    { id: 3, name: 'Đoạn 2.4: Thêm muỗng topping đầy ắp', motionGuide: '🎯 [Cự ly 20cm | Góc 45 độ] Hất nhanh máy múc muỗng topping vun vút.', speech: 'Topping nhà làm dai giòn sần sật ngập tràn.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: (dish) => `Pha chế siêu phẩm ${dish || 'nước ngon'} hấp dẫn.`
@@ -259,7 +259,7 @@ const categoriesData = [
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 4s)',
-                motionGuide: 'Hất nhanh máy biểu cảm thưởng thức và vẫy tay chào.',
+                motionGuide: '🎯 [Cự ly 30-50cm | Góc ngước 15 độ] Hất nhanh máy lướt 1 vòng quanh ly nước.',
                 speech: () => `"Ngon nhức nách 10 điểm, ghé Kim Bling ngay nhé!"`
             }
         ]
@@ -278,7 +278,7 @@ const categoriesData = [
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao máy nhanh sát đĩa đồ ăn, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 30-40cm | Góc 60 độ] Lao máy nhanh sát đĩa đồ ăn trong 1s.',
                 speech: (dish) => `"Đừng xem clip ${dish || 'này'} lúc nửa đêm nhé!"`
             },
             {
@@ -286,10 +286,10 @@ const categoriesData = [
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Đảo chảo xèo xèo sôi bùng', motionGuide: 'Lao sát chảo thức ăn bốc khói ngút ngàn.', speech: 'Chế biến nóng hổi trên chảo sốt.' },
-                    { id: 1, name: 'Đoạn 2.2: Rưới đẫm sốt óng ánh', motionGuide: 'Quét nhanh dòng sốt cay đậm đà phủ kín.', speech: 'Chan hòa lớp nước sốt béo ngậy đậm đà.' },
-                    { id: 2, name: 'Đoạn 2.3: Rắc topping thơm phức', motionGuide: 'Đưa tay rắc hành phi/mè thơm xuống.', speech: 'Rắc thêm topping giòn rụm thơm nức mũi.' },
-                    { id: 3, name: 'Đoạn 2.4: Múc ra đĩa khói nghi ngút', motionGuide: 'Hất nhanh máy múc đĩa đồ ăn nóng giòn.', speech: 'Múc ra đĩa thơm ngon nhức nách.' }
+                    { id: 0, name: 'Đoạn 2.1: Đảo chảo xèo xèo sôi bùng', motionGuide: '🎯 [Cự ly 20cm | Góc 0 độ] Lao sát chảo thức ăn bốc khói ngút ngàn.', speech: 'Chế biến nóng hổi trên chảo sốt.' },
+                    { id: 1, name: 'Đoạn 2.2: Rưới đẫm sốt óng ánh', motionGuide: '🎯 [Cự ly 25-30cm | Góc 45 độ] Quét nhanh dòng sốt cay đậm đà.', speech: 'Chan hòa lớp nước sốt béo ngậy đậm đà.' },
+                    { id: 2, name: 'Đoạn 2.3: Rắc topping thơm phức', motionGuide: '🎯 [Cự ly 15cm | Góc 90 độ] Đưa tay rắc hành phi/mè thơm xuống.', speech: 'Rắc thêm topping giòn rụm thơm nức mũi.' },
+                    { id: 3, name: 'Đoạn 2.4: Múc ra đĩa khói nghi ngút', motionGuide: '🎯 [Cự ly 20cm | Góc 45 độ] Hất nhanh máy múc đĩa đồ ăn nóng giòn.', speech: 'Múc ra đĩa thơm ngon nhức nách.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: (dish) => `Làm món ${dish || 'đồ ăn'} nóng giòn siêu hấp dẫn.`
@@ -297,7 +297,7 @@ const categoriesData = [
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 4s)',
-                motionGuide: 'Hất nhanh máy nhúng đũa ngập sốt và chỉ tay chốt đơn.',
+                motionGuide: '🎯 [Cự ly 30-50cm | Góc ngước 15 độ] Hất nhanh máy nhúng đũa ngập sốt.',
                 speech: () => `"Chấm đẫm sốt ngon xuất sắc, đặt hàng ngay bên dưới nhé!"`
             }
         ]
@@ -322,7 +322,7 @@ const categoriesData = [
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao nhanh lớp học năng lượng, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 30-40cm | Góc 60 độ] Lao nhanh lớp học năng lượng.',
                 speech: () => '"Không cần bằng đại học, 1 tháng học vững tay nghề kiếm tiền triệu!"'
             },
             {
@@ -330,10 +330,10 @@ const categoriesData = [
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Giảng dạy lý thuyết', motionGuide: 'Lướt bảng vẽ sơ đồ kỹ thuật.', speech: 'Học từ gốc rễ cấu trúc da chuẩn xác.' },
-                    { id: 1, name: 'Đoạn 2.2: Hướng dẫn cầm máy', motionGuide: 'Lao sát tay giáo viên chỉ việc.', speech: 'Cầm tay chỉ việc từng mũi kim tơi mịn.' },
-                    { id: 2, name: 'Đoạn 2.3: Thực hành da giả', motionGuide: 'Quét nhanh học viên luyện tập hăng say.', speech: 'Luyện tập thuần thục trên da giả.' },
-                    { id: 3, name: 'Đoạn 2.4: Thực chiến mẫu thật', motionGuide: 'Hất nhanh máy học viên làm cho khách.', speech: 'Thực chiến trực tiếp trên mẫu thật tự tin.' }
+                    { id: 0, name: 'Đoạn 2.1: Giảng dạy lý thuyết', motionGuide: '🎯 [Cự ly 25cm | Góc 45 độ] Lướt bảng vẽ sơ đồ kỹ thuật.', speech: 'Học từ gốc rễ cấu trúc da chuẩn xác.' },
+                    { id: 1, name: 'Đoạn 2.2: Hướng dẫn cầm máy', motionGuide: '🎯 [Cự ly 15cm | Góc 90 độ] Lao sát tay giáo viên chỉ việc.', speech: 'Cầm tay chỉ việc từng mũi kim tơi mịn.' },
+                    { id: 2, name: 'Đoạn 2.3: Thực hành da giả', motionGuide: '🎯 [Cự ly 20cm | Góc 45 độ] Quét nhanh học viên luyện tập hăng say.', speech: 'Luyện tập thuần thục trên da giả.' },
+                    { id: 3, name: 'Đoạn 2.4: Thực chiến mẫu thật', motionGuide: '🎯 [Cự ly 30cm | Góc 45 độ] Hất nhanh máy học viên làm cho khách.', speech: 'Thực chiến trực tiếp trên mẫu thật tự tin.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: () => 'Quy trình đào tạo bài bản từ A đến Z.'
@@ -341,7 +341,7 @@ const categoriesData = [
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 4s)',
-                motionGuide: 'Hất nhanh máy trao chứng chỉ và vẫy tay chào.',
+                motionGuide: '🎯 [Cự ly 30-50cm | Góc ngước 15 độ] Hất nhanh máy trao chứng chỉ.',
                 speech: () => '"Nhận chứng chỉ chính quy, nhanh tay inbox nhận ưu đãi 50%!"'
             }
         ]
@@ -357,7 +357,7 @@ const categoriesData = [
                 title: 'Phân đoạn 1: Mở đầu Hook (Quay 5s -> Cắt còn 3s)',
                 time: 'Quay 5s (Cắt trước/sau 1s còn 3s)',
                 isHookStep: true,
-                motionGuide: 'Lao nhanh mở cửa quán sớm, góc máy động dồn dập.',
+                motionGuide: '🎯 [Cự ly 40-50cm | Góc 45 độ] Lao nhanh mở cửa quán sớm.',
                 speech: () => '"Cùng theo chân em xem 1 ngày làm chủ quán Kim Bling từ 5h sáng!"'
             },
             {
@@ -365,10 +365,10 @@ const categoriesData = [
                 time: 'Tổng 28s (4 đoạn nhỏ x 7s, cắt còn 20s)',
                 isMultiSegment: true,
                 subClips: [
-                    { id: 0, name: 'Đoạn 2.1: Mở cửa đón bình minh', motionGuide: 'Đẩy vào cửa quán lúc sáng sớm.', speech: 'Bắt đầu ngày mới từ 5h sáng năng lượng.' },
-                    { id: 1, name: 'Đoạn 2.2: Pha chế liên tay', motionGuide: 'Quay team làm đồ uống tấp nập.', speech: 'Pha chế phục vụ khách đông liên tục.' },
-                    { id: 2, name: 'Đoạn 2.3: Đóng đơn ship online', motionGuide: 'Quay tay dán túi đơn hàng bão táp.', speech: 'Đóng gói đơn hàng gửi đi khắp nơi.' },
-                    { id: 3, name: 'Đoạn 2.4: Test công thức món mới', motionGuide: 'Quay nếm thử món mới gật đầu ưng ý.', speech: 'Sáng tạo nghiên cứu công thức món mới.' }
+                    { id: 0, name: 'Đoạn 2.1: Mở cửa đón bình minh', motionGuide: '🎯 [Cự ly 40cm | Góc 0 độ] Đẩy vào cửa quán lúc sáng sớm.', speech: 'Bắt đầu ngày mới từ 5h sáng năng lượng.' },
+                    { id: 1, name: 'Đoạn 2.2: Pha chế liên tay', motionGuide: '🎯 [Cự ly 25cm | Góc 45 độ] Quay team làm đồ uống tấp nập.', speech: 'Pha chế phục vụ khách đông liên tục.' },
+                    { id: 2, name: 'Đoạn 2.3: Đóng đơn ship online', motionGuide: '🎯 [Cự ly 20cm | Góc 90 độ] Quay tay dán túi đơn hàng bão táp.', speech: 'Đóng gói đơn hàng gửi đi khắp nơi.' },
+                    { id: 3, name: 'Đoạn 2.4: Test công thức món mới', motionGuide: '🎯 [Cự ly 25cm | Góc 45 độ] Quay nếm thử món mới gật đầu ưng ý.', speech: 'Sáng tạo nghiên cứu công thức món mới.' }
                 ],
                 motionGuide: 'Quay từng đoạn nhỏ 7 giây để cắt bớt trước sau.',
                 speech: () => 'Hành trình 1 ngày làm chủ quán tất bật.'
@@ -376,7 +376,7 @@ const categoriesData = [
             {
                 title: 'Phân đoạn 3: Thành phẩm & CTA (Quay 6s -> Cắt còn 4s)',
                 time: 'Quay 6s (Cắt trước/sau 1s còn 3s)',
-                motionGuide: 'Hất nhanh máy góc quán lên đèn lung linh và thả tim.',
+                motionGuide: '🎯 [Cự ly 50cm | Góc ngước 15 độ] Hất nhanh máy góc quán lên đèn.',
                 speech: () => '"Quán lên đèn ấm cúng tuyệt vời, chúc mọi người năng lượng bye bye!"'
             }
         ]
@@ -402,43 +402,44 @@ const viralCaptions = [
     "Trời lạnh/nóng thế này mà có món này thì hết nước chấm! Đang có ưu đãi sốc, bấm vào giỏ hàng ngay 👇"
 ];
 
+// Cẩm nang chi tiết CapCut cho người mới
 const capcutDetailedGuides = [
     {
         tabTitle: '1. Sắp Xếp 1-2-3',
         heading: 'Bước 1: Ghép video theo đúng thứ tự 1 - 2 - 3',
         steps: [
-            { title: 'Thứ tự ghép chuẩn', detail: 'Đưa video vào CapCut theo thứ tự: <strong>Video Phân Đoạn 1 (Hook 3s) -> 4 video Phân Đoạn 2 (Mỗi video 5s) -> Video Phân Đoạn 3 (Thành phẩm 4s)</strong>.' },
-            { title: 'Khóa khung dọc 9:16', detail: 'Chọn Tỷ lệ khung hình <strong>9:16</strong> chuẩn TikTok.' },
-            { title: 'Xóa logo kết thúc', detail: 'Xóa phần kết đen chứa logo CapCut ở cuối.' }
+            { title: 'Thứ tự ghép chuẩn', detail: 'Mở CapCut -> Bấm Dự án mới. Đưa video vào theo thứ tự: <strong>Video Phân Đoạn 1 (Hook 3s) -> 4 video Phân Đoạn 2 (Mỗi đoạn 5s) -> Video Phân Đoạn 3 (Thành phẩm 4s)</strong>.' },
+            { title: 'Khóa khung dọc 9:16', detail: 'Chọn Tỷ lệ khung hình <strong>9:16</strong> chuẩn TikTok để video hiển thị tràn màn hình điện thoại.' },
+            { title: 'Xóa logo kết thúc', detail: 'Kéo thanh thời gian về cuối cùng, bấm vào đoạn kết đen chứa logo CapCut rồi bấm <strong>Xóa (Delete)</strong>.' }
         ]
     },
     {
         tabTitle: '2. Cắt Bớt Đầu/Đuôi',
-        heading: 'Bước 2: Cắt bớt 1s đầu và 1s cuối mỗi video',
+        heading: 'Bước 2: Cắt bỏ 1s đầu và 1s cuối mỗi video',
         steps: [
-            { title: 'Cắt chuẩn xác', detail: 'Cắt bỏ 1 giây đầu và 1 giây cuối của mỗi đoạn quay 7s để thu về đúng 5s/đoạn cực kỳ mượt mà.' }
+            { title: 'Cắt chuẩn xác', detail: 'Do lúc bấm quay tay hay bị rung, anh hãy cắt bỏ đúng 1 giây đầu và 1 giây cuối của mỗi đoạn quay 7s để thu về đúng 5s/đoạn cực kỳ mượt mà.' }
         ]
     },
     {
         tabTitle: '3. Hiệu Ứng Động',
         heading: 'Bước 3: Thêm chuyển cảnh giật beat dồn dập',
         steps: [
-            { title: 'Chuyển cảnh Flash', detail: 'Thêm hiệu ứng chuyển cảnh <strong>Chớp trắng (Flash)</strong> thời gian <strong>0.2s</strong> giữa các đoạn để tạo cảm giác điện ảnh hành động dồn dập.' }
+            { title: 'Chuyển cảnh Flash', detail: 'Bấm vào ô vuông chuyển cảnh giữa các đoạn video -> Chọn mục <strong>Chớp trắng (Flash)</strong> -> Chỉnh thời lượng ngắn lại <strong>0.2 giây</strong> rồi bấm "Áp dụng cho tất cả".' }
         ]
     },
     {
         tabTitle: '4. Lồng Tiếng & Màu',
         heading: 'Bước 4: Ghi âm & Tăng độ nét',
         steps: [
-            { title: 'Ghi âm thuyết minh', detail: 'Ghi âm đọc lời thoại theo đúng nhịp video, giảm âm nhạc nền xuống 10%.' },
-            { title: 'Chỉnh màu sắc nét', detail: 'Chọn bộ lọc Ẩm thực hoặc Chân dung mức 35% để video rực rỡ.' }
+            { title: 'Ghi âm thuyết minh', detail: 'Về đầu video -> Chọn <strong>Âm thanh (Audio)</strong> -> Chọn <strong>Thu âm (Voiceover)</strong>. Đọc theo lời thoại gợi ý, sau đó giảm âm nhạc nền xuống 10%.' },
+            { title: 'Chỉnh màu sắc nét', detail: 'Bấm vào video -> Chọn <strong>Điều chỉnh (Adjust)</strong> hoặc Bộ lọc <strong>Ẩm thực (Food)</strong> mức 35% để video rực rỡ, ngon mắt.' }
         ]
     },
     {
         tabTitle: '5. Xuất File',
         heading: 'Bước 5: Xuất video 1080P 60fps',
         steps: [
-            { title: 'Xuất file nét căng', detail: 'Cài đặt 1080P, 60fps rồi xuất video lưu vào máy đăng TikTok!' }
+            { title: 'Xuất file nét căng', detail: 'Nhìn lên góc phải chọn độ phân giải <strong>1080P</strong> và khung hình <strong>60fps</strong>, sau đó bấm <strong>Xuất (Export)</strong> lưu về máy đăng TikTok!' }
         ]
     }
 ];

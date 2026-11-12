@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        input, select, textarea { font-size: 16px !important; }
+        input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
         .filter-food { filter: saturate(1.45) contrast(1.18) brightness(1.08) sepia(0.08); }
         .filter-beauty { filter: brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px); }
         .filter-cinematic { filter: contrast(1.3) saturate(1.25) brightness(0.95); }
@@ -18,213 +18,207 @@
     </style>
     <script src="tenmon.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-28">
 
     <!-- HEADER -->
-    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3.5">
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-4">
         <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-rose-500/20">KB</div>
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-rose-500/25">KB</div>
                 <div>
-                    <h1 class="font-extrabold text-base leading-tight text-white">Kim Bling Studio Pro</h1>
-                    <p class="text-xs text-slate-400">Lê Minh Dũng • Chuẩn 3-20-4 Giây Điện Ảnh</p>
+                    <h1 class="font-extrabold text-lg leading-tight text-white">Kim Bling Studio Pro</h1>
+                    <p class="text-sm text-slate-300 font-semibold">Lê Minh Dũng • Chuẩn 3-20-4s</p>
                 </div>
             </div>
-            <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-extrabold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform shadow">
+            <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-4 py-3 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border-2 border-sky-400 text-sky-200 font-extrabold text-base flex items-center space-x-2 active:scale-95 transition-transform shadow-lg">
                 <span>🎬</span>
                 <span>Dựng CapCut</span>
             </button>
         </div>
     </header>
 
-    <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-5">
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-6">
 
-        <!-- 1. CHỌN LĨNH VỰC -->
-        <section class="space-y-2.5">
-            <label class="text-xs font-bold uppercase tracking-wider text-slate-400">1. Chọn Lĩnh Vực Của Bạn (5 Mục)</label>
-            <div class="grid grid-cols-2 gap-2.5" id="categoryGrid"></div>
+        <section class="space-y-3">
+            <label class="text-sm font-extrabold uppercase tracking-wider text-amber-300 block">1. Chọn Lĩnh Vực Của Bạn (5 Mục)</label>
+            <div class="grid grid-cols-1 gap-3.5" id="categoryGrid"></div>
         </section>
 
-        <!-- 2A. CHỌN DỊCH VỤ PHUN XĂM -->
-        <section id="pmuSubTypeBox" class="hidden bg-gradient-to-br from-slate-900 to-rose-950/30 rounded-2xl border border-rose-500/35 p-4 space-y-3 shadow-lg">
+        <section id="pmuSubTypeBox" class="hidden bg-gradient-to-br from-slate-900 to-rose-950/40 rounded-2xl border-2 border-rose-500/50 p-5 space-y-4 shadow-xl">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-rose-300 flex items-center space-x-1.5">
+                <span class="text-sm font-extrabold text-rose-300 flex items-center space-x-2">
                     <span>💄</span>
                     <span>Chọn dịch vụ Phun Xăm:</span>
                 </span>
-                <span id="pmuServiceBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">Phun Mày</span>
+                <span id="pmuServiceBadge" class="text-sm px-3 py-1 rounded-full bg-rose-500/25 text-rose-200 border border-rose-500/40 font-black">Phun Mày</span>
             </div>
-            <div class="grid grid-cols-2 gap-2.5">
-                <button onclick="selectPmuType('may')" id="btnPmuMay" class="py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="selectPmuType('may')" id="btnPmuMay" class="py-3.5 px-3 rounded-xl border-2 text-sm font-extrabold flex items-center justify-center space-x-2 transition-all">
                     <span>👁️</span>
                     <span>Phun / Sợi Mày</span>
                 </button>
-                <button onclick="selectPmuType('moi')" id="btnPmuMoi" class="py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all">
+                <button onclick="selectPmuType('moi')" id="btnPmuMoi" class="py-3.5 px-3 rounded-xl border-2 text-sm font-extrabold flex items-center justify-center space-x-2 transition-all">
                     <span>💋</span>
-                    <span>Phun / Khử Thâm Môi</span>
+                    <span>Phun / Khử Môi</span>
                 </button>
             </div>
         </section>
 
-        <!-- 2B. NHẬP TÊN SẢN PHẨM / MÓN ĂN -->
-        <section id="customDishBox" class="hidden bg-gradient-to-br from-slate-900 to-slate-900/60 rounded-2xl border border-amber-500/30 p-4 space-y-3 shadow-lg">
+        <section id="customDishBox" class="hidden bg-gradient-to-br from-slate-900 to-slate-900/60 rounded-2xl border-2 border-amber-500/40 p-5 space-y-4 shadow-xl">
             <div class="flex items-center justify-between">
-                <label for="dishNameInput" class="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
+                <label for="dishNameInput" class="text-sm font-extrabold text-amber-300 flex items-center space-x-2">
                     <span>✍️</span>
                     <span id="dishInputLabel">Nhập tên món từ menu:</span>
                 </label>
-                <span id="activeDishBadge" class="hidden text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">Đã áp dụng</span>
+                <span id="activeDishBadge" class="hidden text-sm px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black">Đã áp dụng</span>
             </div>
-            <div class="flex space-x-2">
-                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-3.5 py-3 text-white placeholder-slate-500 outline-none font-medium">
-                <button onclick="applyCustomDish()" class="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs whitespace-nowrap active:scale-95 transition-transform shadow">
+            <div class="flex space-x-2.5">
+                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3.5 text-white placeholder-slate-400 outline-none font-bold">
+                <button onclick="applyCustomDish()" class="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm whitespace-nowrap active:scale-95 transition-transform shadow-lg">
                     Áp dụng
                 </button>
             </div>
-            <div id="quickDishChips" class="flex flex-wrap gap-1.5 pt-1"></div>
-            <div id="dishDescriptionBox" class="hidden text-xs text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800 italic leading-relaxed"></div>
+            <div id="quickDishChips" class="flex flex-wrap gap-2 pt-1"></div>
+            <div id="dishDescriptionBox" class="hidden text-sm text-slate-200 bg-slate-950/90 p-4 rounded-xl border border-slate-700 italic leading-relaxed font-semibold"></div>
         </section>
 
-        <!-- 3. 3 PHÂN ĐOẠN CHÍNH (3 - 20 - 4 GIÂY) -->
-        <section class="space-y-2.5">
+        <section class="space-y-3">
             <div class="flex items-center justify-between">
-                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Quy Trình Quay Chuẩn (3 - 20 - 4s)</label>
-                <span id="stepProgressText" class="text-xs text-rose-400 font-extrabold">Phân đoạn 1 / 3</span>
+                <label class="text-sm font-extrabold uppercase tracking-wider text-amber-300 block">2. Quy Trình Quay Chuẩn (3 - 20 - 4s)</label>
+                <span id="stepProgressText" class="text-sm text-rose-400 font-black">Phân đoạn 1 / 3</span>
             </div>
-            <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800" id="stepTabs"></div>
+            <div class="grid grid-cols-3 gap-2.5 bg-slate-900 p-2 rounded-2xl border-2 border-slate-800" id="stepTabs"></div>
         </section>
 
-        <!-- 4. NỘI DUNG CHI TIẾT & CHỌN KIỂU QUAY -->
-        <section id="stepContentContainer" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 space-y-4 shadow-xl"></section>
+        <section id="stepContentContainer" class="bg-slate-900/95 rounded-2xl border-2 border-slate-800 p-5 space-y-5 shadow-2xl"></section>
 
-        <!-- 5. GỢI Ý TIÊU ĐỀ & HASHTAG -->
-        <section class="bg-gradient-to-br from-slate-900 to-indigo-950/30 rounded-2xl border border-indigo-500/30 p-4 space-y-3.5 shadow-xl">
+        <section class="bg-gradient-to-br from-slate-900 to-indigo-950/40 rounded-2xl border-2 border-indigo-500/40 p-5 space-y-4 shadow-xl">
             <div class="flex items-center justify-between">
-                <h3 class="text-xs font-extrabold text-indigo-300 flex items-center space-x-1.5">
+                <h3 class="text-sm font-black text-indigo-300 flex items-center space-x-2">
                     <span>🚀</span>
-                    <span>Gợi Ý Tiêu Đề & 5 Hashtag Theo Tên Món</span>
+                    <span>Gợi Ý Tiêu Đề & 5 Hashtag Hot</span>
                 </h3>
-                <button onclick="copyCaptionAndHashtags()" id="copyCaptionBtn" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-bold shadow">📋 Chép tất cả</button>
+                <button onclick="copyCaptionAndHashtags()" id="copyCaptionBtn" class="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-black shadow-lg">📋 Chép tất cả</button>
             </div>
-            <div class="space-y-2.5" id="captionListContainer"></div>
+            <div class="space-y-3" id="captionListContainer"></div>
         </section>
 
     </main>
 
     <!-- MODAL HƯỚNG DẪN CAPCUT -->
     <div id="capcutGuideModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col hidden">
-        <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
-            <div class="flex items-center space-x-2.5">
-                <span class="text-2xl">🎬</span>
+        <div class="flex items-center justify-between p-5 border-b-2 border-slate-800 bg-slate-900">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🎬</span>
                 <div>
-                    <h2 class="font-extrabold text-sm text-white">Cẩm Nang Dựng CapCut Free</h2>
-                    <p class="text-xs text-slate-400">Sắp xếp thứ tự 1 - 2 - 3 chuẩn dồn dập</p>
+                    <h2 class="font-black text-base text-white">Cẩm Nang Dựng CapCut Cho Người Mới</h2>
+                    <p class="text-sm text-slate-300 font-semibold">Hướng dẫn chậm rãi, chi tiết từng bước</p>
                 </div>
             </div>
-            <button onclick="closeCapcutGuideModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-lg">✕</button>
+            <button onclick="closeCapcutGuideModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-xl">✕</button>
         </div>
-        <div class="grid grid-cols-5 gap-1 p-2 bg-slate-900/60 border-b border-slate-800 text-center" id="capcutTabBar"></div>
-        <div id="capcutGuideBody" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-        <div class="p-4 bg-slate-900 border-t border-slate-800">
-            <button onclick="closeCapcutGuideModal()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-xl text-sm shadow">
-                Đã hiểu, quay lại làm video
+        <div class="grid grid-cols-5 gap-1.5 p-3 bg-slate-900/80 border-b border-slate-800 text-center" id="capcutTabBar"></div>
+        <div id="capcutGuideBody" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
+        <div class="p-5 bg-slate-900 border-t-2 border-slate-800">
+            <button onclick="closeCapcutGuideModal()" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-base shadow-xl">
+                Đã hiểu rõ, quay lại làm video ngay
             </button>
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 -->
+    <!-- MODAL CAMERA AR 9:16 (Đã khắc phục lỗi bị che khuất bằng pt-12) -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
-        <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 to-transparent pointer-events-auto">
-            <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
-            <div class="bg-black/65 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15 text-center">
-                <span id="camClipTitle" class="text-xs font-bold text-rose-400 block">Quay video</span>
-                <span id="camTimer" class="text-xs font-mono text-white font-bold">00:00 / 7s</span>
+        <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
+            <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md">✕</button>
+            <div class="bg-black/80 backdrop-blur-md px-5 py-2 rounded-full border-2 border-white/20 text-center shadow-lg">
+                <span id="camClipTitle" class="text-sm font-extrabold text-rose-300 block">Quay video</span>
+                <span id="camTimer" class="text-sm font-mono text-white font-black">00:00 / 7s</span>
             </div>
-            <button id="switchCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center text-sm backdrop-blur-md">🔄</button>
+            <button id="switchCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center text-lg backdrop-blur-md">🔄</button>
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <div class="absolute top-20 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
-                <button onclick="setFilter('beauty', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-extrabold shadow border border-rose-400">✨ Mịn Da / Mờ Hậu Cảnh</button>
-                <button onclick="setFilter('food', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">🍔 Món Ngon</button>
-                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">🎥 Điện Ảnh</button>
-                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">Gốc</button>
+            <div class="absolute top-28 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
+                <button onclick="setFilter('beauty', this)" class="filter-chip px-4 py-2 rounded-full bg-rose-500 text-white text-sm font-black shadow-lg border-2 border-rose-300">✨ Mịn Da</button>
+                <button onclick="setFilter('food', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">🍔 Món Ngon</button>
+                <button onclick="setFilter('cinematic', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">🎥 Điện Ảnh</button>
+                <button onclick="setFilter('none', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">Gốc</button>
             </div>
 
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
-                <div class="absolute inset-6 border border-white/25 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
-                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
-                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
+                <div class="absolute inset-6 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
+                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div></div><div></div><div></div>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-56 h-56 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
-                        <span class="text-3xl animate-bounce" id="camModeEmoji">🎬</span>
-                        <span id="arGuideText" class="text-xs font-extrabold text-white drop-shadow">Quay trừ hao 1s trước sau</span>
+                    <div class="w-64 h-64 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-5 bg-rose-500/15 backdrop-blur-[2px] space-y-2">
+                        <span class="text-4xl animate-bounce" id="camModeEmoji">🎬</span>
+                        <span id="arGuideText" class="text-sm font-black text-white drop-shadow-md">Quay trừ hao 1s trước sau</span>
                     </div>
                 </div>
 
-                <div class="bg-slate-950/90 backdrop-blur-md p-4 rounded-2xl border border-rose-500/40 text-center z-20 pointer-events-none space-y-1.5 shadow-2xl">
-                    <p id="camActionGuide" class="text-xs text-slate-100 font-bold leading-relaxed"></p>
-                    <p id="camSpeechPrompt" class="text-xs text-amber-300 italic font-semibold"></p>
+                <div class="bg-slate-950/95 backdrop-blur-md p-5 rounded-2xl border-2 border-rose-500/50 text-center z-20 pointer-events-none space-y-2 shadow-2xl mb-4">
+                    <p id="camActionGuide" class="text-sm text-slate-100 font-extrabold leading-relaxed"></p>
+                    <p id="camSpeechPrompt" class="text-sm text-amber-300 italic font-bold"></p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-950 p-6 flex items-center justify-around border-t border-slate-900 z-30 relative">
+        <div class="bg-slate-950 p-6 flex items-center justify-around border-t-2 border-slate-900 z-30 relative">
             <div class="w-12"></div>
-            <button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
-                <div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div>
+            <button id="recordBtn" class="w-24 h-24 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
+                <div id="recordInnerBtn" class="w-20 h-20 bg-rose-500 rounded-full transition-all duration-300"></div>
             </button>
             <div class="w-12 flex justify-center">
-                <button id="toggleArBtn" class="w-10 h-10 rounded-full bg-slate-900 text-slate-300 border border-slate-800 text-xs font-bold flex items-center justify-center">AR</button>
+                <button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL STUDIO CẮT SỬA & ĐIỀU CHỈNH SÁNG TỐI -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden">
-        <div class="flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
-            <div class="flex items-center space-x-2">
-                <span class="text-xl">🎛️</span>
+        <div class="flex items-center justify-between p-5 bg-slate-900 border-b-2 border-slate-800">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🎛️</span>
                 <div>
-                    <h2 class="font-extrabold text-sm text-white">Studio Hiệu Chỉnh Video</h2>
-                    <p class="text-xs text-slate-400">Cắt bỏ 1s trước/sau & Tăng giảm Sáng/Tối</p>
+                    <h2 class="font-black text-base text-white">Studio Hiệu Chỉnh Video</h2>
+                    <p class="text-sm text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối & Tăng giảm Sáng/Tối</p>
                 </div>
             </div>
-            <button onclick="closeEditorModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">✕</button>
+            <button onclick="closeEditorModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-xl">✕</button>
         </div>
 
         <div class="relative flex-1 w-full bg-black flex items-center justify-center p-4">
-            <video id="previewVideo" controls playsinline class="max-h-full max-w-full rounded-2xl shadow-2xl border border-slate-800"></video>
+            <video id="previewVideo" controls playsinline class="max-h-full max-w-full rounded-2xl shadow-2xl border-2 border-slate-800"></video>
         </div>
 
-        <div class="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-w-md mx-auto w-full">
-            <div class="space-y-1.5">
-                <div class="flex justify-between text-xs font-bold">
-                    <span class="text-amber-400">☀️ Độ Sáng / Tối</span>
+        <div class="bg-slate-900 border-t-2 border-slate-800 p-5 space-y-5 max-w-md mx-auto w-full">
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm font-black">
+                    <span class="text-amber-300">☀️ Độ Sáng / Tối</span>
                     <span id="brightnessVal" class="text-white">100%</span>
                 </div>
-                <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
+                <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-3 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
             </div>
 
-            <div class="space-y-1.5">
-                <div class="flex justify-between text-xs font-bold">
-                    <span class="text-sky-400">💎 Độ Rõ Nét & Tương Phản</span>
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm font-black">
+                    <span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span>
                     <span id="contrastVal" class="text-white">100%</span>
                 </div>
-                <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
+                <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-3 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
             </div>
 
-            <div class="flex space-x-2 pt-2">
-                <button onclick="closeEditorModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs">
+            <div class="flex space-x-3 pt-2">
+                <button onclick="closeEditorModal()" class="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-sm shadow-lg">
                     Quay lại
                 </button>
-                <button onclick="downloadFinalVideo()" class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-1.5">
+                <button onclick="downloadFinalVideo()" class="flex-1 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2">
                     <span>💾</span>
                     <span>Tải Về Máy Ngay</span>
                 </button>
@@ -263,9 +257,9 @@
 
         function setFilter(filterType, btn) {
             document.querySelectorAll('.filter-chip').forEach(b => {
-                b.className = "filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700";
+                b.className = "filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700";
             });
-            btn.className = "filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-extrabold shadow border border-rose-400";
+            btn.className = "filter-chip px-4 py-2 rounded-full bg-rose-500 text-white text-sm font-black shadow-lg border-2 border-rose-300";
 
             const videoEl = document.getElementById('liveVideo');
             videoEl.className = "absolute inset-0 w-full h-full object-cover";
@@ -286,14 +280,12 @@
         function renderCategories() {
             const container = document.getElementById('categoryGrid');
             container.innerHTML = categoriesData.map((cat, idx) => {
-                const isLast = idx === categoriesData.length - 1 && categoriesData.length % 2 !== 0;
-                const spanClass = isLast ? 'col-span-2' : '';
                 return `
-                    <button onclick="selectCategory(${idx})" class="${spanClass} p-3.5 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/60 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
-                        <span class="text-3xl">${cat.icon}</span>
+                    <button onclick="selectCategory(${idx})" class="w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center space-x-4 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-rose-500 shadow-xl shadow-rose-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
+                        <span class="text-4xl">${cat.icon}</span>
                         <div>
-                            <h3 class="font-extrabold text-xs text-white leading-snug">${cat.name}</h3>
-                            <p class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${cat.desc}</p>
+                            <h3 class="font-black text-base text-white leading-snug">${cat.name}</h3>
+                            <p class="text-sm text-slate-300 font-semibold mt-1">${cat.desc}</p>
                         </div>
                     </button>
                 `;
@@ -337,7 +329,7 @@
                 document.getElementById('dishNameInput').placeholder = cat.placeholder;
                 const chipsContainer = document.getElementById('quickDishChips');
                 chipsContainer.innerHTML = cat.quickDishes.map(dish => `
-                    <button onclick="selectQuickDish('${dish}')" class="text-xs px-3 py-1.5 rounded-full border transition-colors font-bold ${currentCustomDish === dish ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-amber-500/40'}">
+                    <button onclick="selectQuickDish('${dish}')" class="text-sm px-3.5 py-2 rounded-xl border-2 transition-colors font-bold ${currentCustomDish === dish ? 'bg-amber-500 text-slate-950 border-amber-300 font-black shadow' : 'bg-slate-950 text-slate-200 border-slate-700 hover:border-amber-400'}">
                         + ${dish}
                     </button>
                 `).join('');
@@ -354,11 +346,11 @@
                 badge.innerText = pmuSubData[currentPmuType].label;
 
                 if (currentPmuType === 'may') {
-                    btnMay.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
-                    btnMoi.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
+                    btnMay.className = 'py-3.5 px-3 rounded-xl border-2 text-sm font-black flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-300 shadow-lg';
+                    btnMoi.className = 'py-3.5 px-3 rounded-xl border-2 text-sm font-black flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800';
                 } else {
-                    btnMoi.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
-                    btnMay.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
+                    btnMoi.className = 'py-3.5 px-3 rounded-xl border-2 text-sm font-black flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-300 shadow-lg';
+                    btnMay.className = 'py-3.5 px-3 rounded-xl border-2 text-sm font-black flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800';
                 }
             } else {
                 pmuBox.classList.add('hidden');
@@ -421,7 +413,7 @@
         function renderStepTabs() {
             const container = document.getElementById('stepTabs');
             container.innerHTML = [0, 1, 2].map((idx) => `
-                <button onclick="selectStep(${idx})" class="py-3 rounded-xl text-xs font-extrabold transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'text-slate-400 hover:text-white bg-slate-950/40'}">
+                <button onclick="selectStep(${idx})" class="py-3.5 rounded-xl text-sm font-black transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'text-slate-300 hover:text-white bg-slate-950/60 border border-slate-800'}">
                     Phân đoạn ${idx + 1}
                 </button>
             `).join('');
@@ -449,19 +441,19 @@
             if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
                 const hooksList = hooksLibrary[cat.id];
                 hookSelectorHtml = `
-                    <div class="bg-slate-950/90 p-3.5 rounded-xl border border-rose-500/30 space-y-2.5">
+                    <div class="bg-slate-950 p-4 rounded-2xl border-2 border-rose-500/40 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-rose-400 flex items-center space-x-1.5">
+                            <span class="text-sm font-black text-rose-300 flex items-center space-x-2">
                                 <span>🔥</span>
                                 <span>Chọn Kiểu Mở Đầu (Hook Hot Trend):</span>
                             </span>
-                            <span class="text-[11px] text-slate-400 font-semibold">${currentHookIndex + 1} / ${hooksList.length} mẫu</span>
+                            <span class="text-xs text-slate-300 font-bold">${currentHookIndex + 1} / ${hooksList.length} mẫu</span>
                         </div>
-                        <div class="flex space-x-2 overflow-x-auto pb-1 no-scrollbar">
+                        <div class="flex space-x-3 overflow-x-auto pb-2 no-scrollbar">
                             ${hooksList.map((h, idx) => `
-                                <button onclick="selectHook(${idx})" class="shrink-0 p-2.5 rounded-xl border text-left transition-all w-44 ${idx === currentHookIndex ? 'bg-rose-500/20 border-rose-500 text-white shadow' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'}">
-                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${idx === currentHookIndex ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-300'}">${h.badge}</span>
-                                    <p class="text-xs font-bold mt-1.5 line-clamp-2 leading-snug ${idx === currentHookIndex ? 'text-white' : 'text-slate-300'}">${h.title}</p>
+                                <button onclick="selectHook(${idx})" class="shrink-0 p-3 rounded-xl border-2 text-left transition-all w-48 ${idx === currentHookIndex ? 'bg-rose-500/25 border-rose-400 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-300'}">
+                                    <span class="text-xs font-black px-2.5 py-0.5 rounded-full ${idx === currentHookIndex ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-200'}">${h.badge}</span>
+                                    <p class="text-sm font-extrabold mt-2 line-clamp-2 leading-snug ${idx === currentHookIndex ? 'text-white' : 'text-slate-200'}">${h.title}</p>
                                 </button>
                             `).join('')}
                         </div>
@@ -470,11 +462,11 @@
             }
 
             let modeSelectorHtml = `
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between space-x-2">
-                    <span class="text-xs font-bold text-slate-300">🎥 Kiểu góc quay:</span>
-                    <div class="flex space-x-1.5">
-                        <button onclick="setCameraMode('dynamic')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${currentCamMode === 'dynamic' ? 'bg-rose-600 text-white shadow' : 'bg-slate-900 text-slate-400'}">⚡ Điện Ảnh Động</button>
-                        <button onclick="setCameraMode('standard')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${currentCamMode === 'standard' ? 'bg-sky-600 text-white shadow' : 'bg-slate-900 text-slate-400'}">🛡️ Tiêu Chuẩn</button>
+                <div class="bg-slate-950 p-3.5 rounded-xl border-2 border-slate-800 flex items-center justify-between space-x-3">
+                    <span class="text-sm font-black text-slate-200">🎥 Góc quay:</span>
+                    <div class="flex space-x-2">
+                        <button onclick="setCameraMode('dynamic')" class="px-3.5 py-2 rounded-xl text-sm font-black transition-all ${currentCamMode === 'dynamic' ? 'bg-rose-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">⚡ Động</button>
+                        <button onclick="setCameraMode('standard')" class="px-3.5 py-2 rounded-xl text-sm font-black transition-all ${currentCamMode === 'standard' ? 'bg-sky-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">🛡️ Chuẩn</button>
                     </div>
                 </div>
             `;
@@ -489,19 +481,18 @@
 
             let actionAreaHtml = '';
             if (step.isMultiSegment && step.subClips) {
-                // Phân đoạn 2: Tách riêng nút quay cho từng đoạn nhỏ 7s
                 actionAreaHtml = `
-                    <div class="space-y-3 pt-1">
-                        <span class="text-xs font-black text-amber-400 block">⚡ Quay lần lượt 4 đoạn nhỏ (Mỗi đoạn đúng 7s, cắt trước sau còn 5s):</span>
-                        <div class="space-y-2.5">
+                    <div class="space-y-3.5 pt-1">
+                        <span class="text-sm font-black text-amber-300 block">⚡ Quay lần lượt 4 đoạn nhỏ (Mỗi đoạn đúng 7s, cắt trước sau còn 5s):</span>
+                        <div class="space-y-3">
                             ${step.subClips.map((sub) => `
-                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between space-x-2">
-                                    <div class="space-y-0.5">
-                                        <span class="text-xs font-extrabold text-rose-300 block">${sub.name}</span>
-                                        <span class="text-[11px] text-slate-400 block">🎯 ${sub.motionGuide}</span>
-                                        <span class="text-[10px] text-amber-300 italic">💬 ${sub.speech}</span>
+                                <div class="bg-slate-950 p-4 rounded-2xl border-2 border-slate-800 flex items-center justify-between space-x-3">
+                                    <div class="space-y-1">
+                                        <span class="text-sm font-black text-rose-300 block">${sub.name}</span>
+                                        <span class="text-sm text-slate-300 font-semibold block">${sub.motionGuide}</span>
+                                        <span class="text-sm text-amber-300 italic font-medium">💬 "${sub.speech}"</span>
                                     </div>
-                                    <button onclick="openCameraModal(${currentStepIndex}, ${sub.id})" class="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
+                                    <button onclick="openCameraModal(${currentStepIndex}, ${sub.id})" class="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-sm flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
                                         <span>🔴 Quay (7s)</span>
                                     </button>
                                 </div>
@@ -510,19 +501,18 @@
                     </div>
                 `;
             } else {
-                // Phân đoạn 1 hoặc Phân đoạn 3
                 actionAreaHtml = `
-                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="bg-slate-950 p-4.5 rounded-2xl border-2 border-slate-800 space-y-4">
                         <div class="flex items-center justify-between">
-                            <div>
-                                <span class="text-xs font-extrabold text-rose-300 block">🔴 Nút Bắt Đầu Quay</span>
-                                <span class="text-[11px] text-slate-400 font-medium">⚡ Hướng dẫn: ${step.motionGuide}</span>
+                            <div class="space-y-1">
+                                <span class="text-sm font-black text-rose-300 block">🔴 Hướng Dẫn Cự Ly & Động Tác</span>
+                                <span class="text-sm text-slate-200 font-semibold">${step.motionGuide}</span>
                             </div>
-                            <button onclick="openCameraModal(${currentStepIndex}, 0)" class="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1.5 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
+                            <button onclick="openCameraModal(${currentStepIndex}, 0)" class="px-5 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-sm flex items-center space-x-2 shadow-xl shadow-rose-600/40 active:scale-95 transition-transform shrink-0">
                                 <span>🔴 Quay Video Này</span>
                             </button>
                         </div>
-                        <div class="text-xs text-slate-200 bg-slate-900 p-3 rounded-lg border border-slate-800/80 leading-relaxed">
+                        <div class="text-sm text-slate-100 bg-slate-900 p-4 rounded-xl border border-slate-800 leading-relaxed font-semibold">
                             💬 <em>Thoại gợi ý:</em> ${speechText}
                         </div>
                     </div>
@@ -531,11 +521,11 @@
 
             container.innerHTML = `
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-lg">${step.time}</span>
-                    <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-xs text-sky-400 font-bold underline">📖 Xem hướng dẫn CapCut</button>
+                    <span class="px-3.5 py-1.5 bg-rose-500/20 border-2 border-rose-500/40 text-rose-300 font-black text-sm rounded-xl">${step.time}</span>
+                    <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-sm text-sky-300 font-black underline">📖 Hướng dẫn CapCut</button>
                 </div>
                 <div>
-                    <h2 class="text-base font-extrabold text-white mb-1">${step.title}</h2>
+                    <h2 class="text-lg font-black text-white mb-2">${step.title}</h2>
                 </div>
                 ${hookSelectorHtml}
                 ${modeSelectorHtml}
@@ -549,9 +539,9 @@
             const tags = getDynamicHashtags(currentCustomDish, cat.name);
 
             container.innerHTML = viralCaptions.map((cap, i) => `
-                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-start justify-between space-x-2">
-                    <p class="text-xs text-slate-200 leading-relaxed font-medium"><strong class="text-indigo-400 font-bold">#${i + 1}:</strong> "${cap}" <span class="text-amber-300 font-bold block mt-1">${tags.join(' ')}</span></p>
-                    <button onclick="copySingleCaption(${i})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold shrink-0">Chép</button>
+                <div class="bg-slate-950 p-4 rounded-2xl border-2 border-slate-800 flex items-start justify-between space-x-3">
+                    <p class="text-sm text-slate-200 leading-relaxed font-semibold"><strong class="text-indigo-300 font-black">#${i + 1}:</strong> "${cap}" <span class="text-amber-300 font-bold block mt-1.5">${tags.join(' ')}</span></p>
+                    <button onclick="copySingleCaption(${i})" class="text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl font-black shrink-0 shadow">Chép</button>
                 </div>
             `).join('');
         }
@@ -592,7 +582,7 @@
         function renderCapcutGuideModal() {
             const tabBar = document.getElementById('capcutTabBar');
             tabBar.innerHTML = capcutDetailedGuides.map((g, idx) => `
-                <button onclick="selectCapcutTab(${idx})" class="py-2.5 px-1 rounded-lg text-xs font-extrabold transition-all ${idx === currentCapcutTab ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                <button onclick="selectCapcutTab(${idx})" class="py-3 px-2 rounded-xl text-sm font-black transition-all ${idx === currentCapcutTab ? 'bg-sky-500 text-slate-950 shadow-lg' : 'text-slate-300 hover:text-white bg-slate-950 border border-slate-800'}">
                     ${g.tabTitle}
                 </button>
             `).join('');
@@ -600,18 +590,18 @@
             const guide = capcutDetailedGuides[currentCapcutTab];
             const body = document.getElementById('capcutGuideBody');
             body.innerHTML = `
-                <div class="bg-sky-500/10 border border-sky-500/25 rounded-2xl p-4">
-                    <h3 class="text-xs font-bold text-sky-300 leading-snug">${guide.heading}</h3>
+                <div class="bg-sky-500/15 border-2 border-sky-500/40 rounded-2xl p-4.5">
+                    <h3 class="text-sm font-black text-sky-200 leading-snug">${guide.heading}</h3>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-4">
                     ${guide.steps.map((st, i) => `
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-start space-x-3">
-                            <div class="w-7 h-7 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        <div class="bg-slate-900 border-2 border-slate-800 rounded-2xl p-4.5 flex items-start space-x-3.5">
+                            <div class="w-8 h-8 rounded-full bg-sky-500/25 border border-sky-400 text-sky-200 font-black text-sm flex items-center justify-center shrink-0 mt-0.5 shadow">
                                 ${i + 1}
                             </div>
-                            <div class="space-y-1">
-                                <h4 class="text-xs font-extrabold text-white">${st.title}</h4>
-                                <p class="text-xs text-slate-300 leading-relaxed font-medium">${st.detail}</p>
+                            <div class="space-y-1.5">
+                                <h4 class="text-sm font-black text-white">${st.title}</h4>
+                                <p class="text-sm text-slate-200 leading-relaxed font-medium">${st.detail}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -627,13 +617,12 @@
             const steps = getCurrentStepsData();
             const step = steps[stepIdx];
 
-            // Thiết lập thời gian quay chuẩn
             if (stepIdx === 0) {
-                targetRecordingSeconds = 5; // Phân đoạn 1: 5s
+                targetRecordingSeconds = 5;
             } else if (stepIdx === 1) {
-                targetRecordingSeconds = 7; // Phân đoạn 2: Mỗi đoạn nhỏ đúng 7s
+                targetRecordingSeconds = 7;
             } else {
-                targetRecordingSeconds = 6; // Phân đoạn 3: 6s
+                targetRecordingSeconds = 6;
             }
 
             let speechText = '';
@@ -652,11 +641,11 @@
                 speechText = typeof step.speech === 'function' ? step.speech(currentCustomDish) : step.speech;
             }
 
-            let modeTitle = currentCamMode === 'dynamic' ? '⚡ [Điện Ảnh Hành Động]' : '🛡️ [Tiêu Chuẩn Ngành Nghề]';
+            let modeTitle = currentCamMode === 'dynamic' ? '⚡ [Điện Ảnh Động]' : '🛡️ [Tiêu Chuẩn]';
             let titlePrefix = stepIdx === 1 ? `Phân đoạn 2 (Đoạn 2.${subId + 1})` : `Phân đoạn ${stepIdx + 1}`;
             document.getElementById('camClipTitle').innerText = `${modeTitle} ${titlePrefix}`;
             document.getElementById('camActionGuide').innerText = guideText;
-            document.getElementById('camSpeechPrompt').innerText = `💬 ${speechText}`;
+            document.getElementById('camSpeechPrompt').innerText = `💬 "${speechText}"`;
             document.getElementById('camModeEmoji').innerText = currentCamMode === 'dynamic' ? '⚡' : '🛡️';
             document.getElementById('cameraModal').classList.remove('hidden');
 
@@ -669,12 +658,7 @@
                     mediaStream.getTracks().forEach(t => t.stop());
                 }
                 mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: facingMode, 
-                        width: { ideal: 1080 }, 
-                        height: { ideal: 1920 },
-                        advanced: [{ zoom: 1 }]
-                    },
+                    video: { facingMode: facingMode, width: { ideal: 1080 }, height: { ideal: 1920 } },
                     audio: true
                 });
                 const videoElement = document.getElementById('liveVideo');
@@ -849,11 +833,11 @@
         function setRecordingUI(recording) {
             const inner = document.getElementById('recordInnerBtn');
             if (recording) {
-                inner.classList.remove('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
-                inner.classList.add('rounded-lg', 'w-8', 'h-8', 'bg-white');
+                inner.classList.remove('rounded-full', 'w-20', 'h-20', 'bg-rose-500');
+                inner.classList.add('rounded-xl', 'w-10', 'h-10', 'bg-white');
             } else {
-                inner.classList.remove('rounded-lg', 'w-8', 'h-8', 'bg-white');
-                inner.classList.add('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
+                inner.classList.remove('rounded-xl', 'w-10', 'h-10', 'bg-white');
+                inner.classList.add('rounded-full', 'w-20', 'h-20', 'bg-rose-500');
             }
         }
 
