@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Viral Studio - Pro Full Edition v5</title>
+    <title>TikTok Viral Studio - Pro Cinematics v6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         input, select, textarea { font-size: 16px !important; }
     </style>
+    <!-- Đọc dữ liệu độc lập từ file tenmon.js -->
+    <script src="tenmon.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
 
@@ -20,7 +22,7 @@
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-rose-500/20">V</div>
                 <div>
                     <h1 class="font-bold text-sm leading-tight text-white">TikTok Viral Studio Pro</h1>
-                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • Quay Từng Đoạn 3s (~45s)</p>
+                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • Cinematics & tenmon.js</p>
                 </div>
             </div>
             <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-bold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform">
@@ -135,7 +137,7 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 -->
+    <!-- MODAL CAMERA AR 9:16 CÓ HIỆU ỨNG CINEMATIC -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
         <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
@@ -150,16 +152,17 @@
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
+            <!-- HIỆU ỨNG CINEMATIC & LƯỚI TỈ LỆ VÀNG -->
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
-                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
-                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
-                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
+                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
+                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div></div><div></div><div></div>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-52 h-52 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
-                        <span class="text-2xl animate-bounce">🎥</span>
+                    <div class="w-56 h-56 border-2 border-dashed border-rose-500/80 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[2px] space-y-2 animate-pulse">
+                        <span class="text-2xl">✨</span>
                         <span id="arGuideText" class="text-xs font-bold text-white drop-shadow">Quay chuyển động mượt mà 3 giây</span>
                     </div>
                 </div>
@@ -167,7 +170,7 @@
                 <div class="flex flex-col space-y-2 mt-12 z-20 pointer-events-none">
                     <div class="flex justify-between items-center">
                         <div id="aeLockBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center space-x-1">
-                            <span>🔒 ĐÃ KHÓA SÁNG & NÉT</span>
+                            <span>🔒 ĐÃ KHÓA SÁNG & NÉT (AE/AF LOCK)</span>
                         </div>
                         <div class="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/40 text-[11px] text-amber-300 font-bold ml-auto animate-pulse">
                             👆 Chạm màn hình để khóa sáng
@@ -193,427 +196,12 @@
         </div>
     </div>
 
+    <!-- SCRIPT ĐIỀU KHIỂN GIAO DIỆN & CAMERA -->
     <script>
-        // --- DỮ LIỆU 4 BƯỚC HOÀN CHỈNH CHO TẤT CẢ LĨNH VỰC (~45S) ---
-        const pmuSubData = {
-            may: {
-                label: 'Phun / Điêu Khắc Mày',
-                techs: ['Shading bay bay', 'Hairstroke tự nhiên', 'Xử lý mày trổ', 'Mày phong thủy'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Cận cảnh chân mày thưa cũ', action: 'Quét máy nhẹ từ ngoài vào trong chân mày thưa.', motionGuide: 'Quét máy mượt mà từ trái sang phải 3 giây.', speech: '"Chân mày thưa nhạt, trổ đỏ thế này..."' },
-                            { name: 'Đoạn 2: Khuôn mặt ngậm ngùi trước làm', action: 'Zoom chậm vào góc mặt khách.', motionGuide: 'Đẩy máy tiến sát lại gần khuôn mặt 3 giây.', speech: '"...khiến chị em mất tự tin mỗi khi để mặt mộc..."' },
-                            { name: 'Đoạn 3: Cận cảnh chuyên viên tự tin', action: 'Quay lướt chuyên viên mỉm cười cầm máy xăm.', motionGuide: 'Quét máy từ dưới lên trên 3 giây.', speech: '"...nhưng nay đã có bí quyết lột xác siêu đỉnh này!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Chuẩn bị & đo vẽ (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Sát khuẩn dụng cụ sạch sẽ', action: 'Quay tay cầm bông gòn lau khay dụng cụ.', motionGuide: 'Quay dịch chuyển tay mượt mà 3 giây.', speech: '"Bước 1: Chuẩn bị dụng cụ vô trùng tuyệt đối..."' },
-                            { name: 'Đoạn 2: Thoa tê êm ái', action: 'Quay thoa kem tê lên chân mày.', motionGuide: 'Quét nhẹ đầu ngón tay lướt trên mày 3 giây.', speech: '"...thoa tê êm ái không đau rát chút nào..."' },
-                            { name: 'Đoạn 3: Đặt thước đo tỉ lệ vàng', action: 'Quay đặt thước đo trên cung mày.', motionGuide: 'Đưa thước đo áp sát và căn chỉnh 3 giây.', speech: '"...đo vẽ chuẩn xác tỉ lệ vàng từng khuôn mặt..."' },
-                            { name: 'Đoạn 4: Khung dáng hoàn hảo', action: 'Quay cận khung dáng mày đã vẽ.', motionGuide: 'Quét chậm dọc theo đường dáng mày 3 giây.', speech: '"...tạo dáng phong thủy sang chảnh hết nấc."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Thực hiện đi kim / Shading (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Lắp kim xăm vô trùng', action: 'Quay thao tác mở hộp và lắp kim.', motionGuide: 'Quay cận cảnh tay lắp đầu kim 3 giây.', speech: '"Bước 2: Sử dụng đầu kim siêu vi điểm..."' },
-                            { name: 'Đoạn 2: Đi kim rải hạt phần đuôi', action: 'Quay máy xăm đi hạt ở đuôi mày.', motionGuide: 'Di chuyển máy xăm uyển chuyển theo khung 3 giây.', speech: '"...kỹ thuật rải hạt tơi mịn tự nhiên..."' },
-                            { name: 'Đoạn 3: Tạo hiệu ứng Shading đầu mày', action: 'Quay máy lướt nhẹ phần đầu mày.', motionGuide: 'Đưa máy lùi nhẹ tạo góc nhìn nghệ thuật 3 giây.', speech: '"...hiệu ứng ombre đậm nhạt hài hòa..."' },
-                            { name: 'Đoạn 4: Lau bông lộ mực sắc nét', action: 'Quay dùng bông lau sạch lớp mực thừa.', motionGuide: 'Quét nhanh khăn bông lộ dáng mày cực nét 3 giây.', speech: '"...mực bám đều ngay từ lần đi kim đầu tiên..."' },
-                            { name: 'Đoạn 5: Kiểm tra độ hoàn thiện', action: 'Quay rọi đèn soi kỹ từng sợi mày.', motionGuide: 'Quay lướt camera qua lại kiểm tra chi tiết 3 giây.', speech: '"...khách nằm ngủ quên lúc nào không hay."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Kết quả & Chốt đơn CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Khách soi gương cười rạng rỡ', action: 'Quay khách ngắm mình trong gương.', motionGuide: 'Quét máy từ gương ra nụ cười của khách 3 giây.', speech: '"Mới làm xong mà nhẹ tênh trẻ ra cả chục tuổi!"' },
-                            { name: 'Đoạn 2: Cận cảnh dáng mày bay bổng', action: 'Quay cận dáng mày hoàn thiện dưới đèn.', motionGuide: 'Quay lướt chậm sát đường sợi mày 3 giây.', speech: '"...không đóng khung cứng đơ tự nhiên vô cùng!"' },
-                            { name: 'Đoạn 3: Lời mời & Địa chỉ tiệm', action: 'Quay chuyên viên vẫy tay cười chào.', motionGuide: 'Quét máy nhẹ từ mặt chuyên viên ra bảng hiệu 3 giây.', speech: '"Chị em nào chân mày thưa inbox ngay cho em nhé!"' }
-                        ]
-                    }
-                ]
-            },
-            moi: {
-                label: 'Phun / Khử Thâm Môi',
-                techs: ['Collagen căng bóng', 'Khử thâm nam nữ', 'Baby Lips', 'Pha lê trong veo'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Cận cảnh nền môi thâm xỉn', action: 'Quét máy chậm qua đôi môi thâm sậm.', motionGuide: 'Quét máy mượt mà qua đôi môi 3 giây.', speech: '"Đừng ai đi phun môi khi chưa biết bí quyết này!"' },
-                            { name: 'Đoạn 2: Góc mặt buồn vì môi kém sắc', action: 'Zoom chậm vào khuôn mặt.', motionGuide: 'Đẩy máy tiến sát lại góc mặt khách 3 giây.', speech: '"...môi thâm xỉn khiến bạn già đi trước tuổi..."' },
-                            { name: 'Đoạn 3: Chuyên viên tự tin giới thiệu', action: 'Quay chuyên viên giơ lọ mực hữu cơ.', motionGuide: 'Quét máy từ lọ mực ra nụ cười tự tin 3 giây.', speech: '"...hãy xem màn lột xác môi hồng hào siêu đỉnh sau đây!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Chuẩn bị & Khử thâm (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Vô trùng dụng cụ sạch', action: 'Quay sắp xếp dụng cụ xăm.', motionGuide: 'Quay dịch chuyển tay mượt mà 3 giây.', speech: '"Bước 1: Khử trùng dụng cụ sạch sẽ tuyệt đối..."' },
-                            { name: 'Đoạn 2: Ủ tê môi êm ái', action: 'Quay dán miếng ủ tê lên môi.', motionGuide: 'Quét nhẹ ngón tay vuốt miếng ủ tê 3 giây.', speech: '"...ủ tê êm ái thư giãn tuyệt vời..."' },
-                            { name: 'Đoạn 3: Đi dung dịch khử gốc thâm', action: 'Quay máy đi dung dịch khử thâm.', motionGuide: 'Quay đầu kim lướt nhẹ trên nền môi 3 giây.', speech: '"...sử dụng tinh chất khử sạch gốc thâm đen..."' },
-                            { name: 'Đoạn 4: Lau bông lộ nền môi sáng', action: 'Quay dùng bông lau sạch.', motionGuide: 'Quét nhanh khăn bông lộ sắc môi sáng 3 giây.', speech: '"...trả lại nền môi sạch thâm hoàn toàn."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Cấy màu hữu cơ (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Trộn màu mực hữu cơ', action: 'Quay giọt mực hòa quyện vào nhau.', motionGuide: 'Quay cận cảnh giọt mực sánh mịn 3 giây.', speech: '"Bước 2: Pha chế màu mực hữu cơ cao cấp..."' },
-                            { name: 'Đoạn 2: Đi kim lướt nhẹ trên môi', action: 'Quay máy xăm đi đều trên môi.', motionGuide: 'Di chuyển máy xăm uyển chuyển theo đường môi 3 giây.', speech: '"...kỹ thuật đi kim siêu vi chạm hạt mỏng nhẹ..."' },
-                            { name: 'Đoạn 3: Tản màu đều đặn', action: 'Quay máy đi màu ở lòng môi.', motionGuide: 'Đưa máy lùi nhẹ tạo góc nhìn nghệ thuật 3 giây.', speech: '"...giúp màu mực tản đều trong veo tự nhiên..."' },
-                            { name: 'Đoạn 4: Lau bông lộ màu môi hồng', action: 'Quay lau bông lộ sắc môi hồng hào.', motionGuide: 'Quét nhanh khăn bông lộ màu môi rạng rỡ 3 giây.', speech: '"...màu lên trong veo chuẩn tông ngay lập tức..."' },
-                            { name: 'Đoạn 5: Kiểm tra độ bóng mọng', action: 'Quay rọi đèn soi kỹ bề mặt môi.', motionGuide: 'Quay lướt camera qua lại kiểm tra chi tiết 3 giây.', speech: '"...môi mướt mịn không hề sưng nề."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Kết quả & Chốt đơn CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Thoa dưỡng bóng mọng', action: 'Quay thoa thỏi son dưỡng lên môi.', motionGuide: 'Quét chậm thỏi dưỡng lướt trên môi 3 giây.', speech: '"Làm xong môi hồng hào căng mọng tức thì!"' },
-                            { name: 'Đoạn 2: Khách khoe môi dưới ánh đèn', action: 'Quay cận cảnh môi bắt sáng lung linh.', motionGuide: 'Quay lướt chậm sát đôi môi bắt sáng 3 giây.', speech: '"...mặt mộc không son vẫn rạng rỡ cả ngày!"' },
-                            { name: 'Đoạn 3: Lời mời ưu đãi khử thâm', action: 'Quay chuyên viên mỉm cười vẫy tay.', motionGuide: 'Quét máy nhẹ từ mặt chuyên viên ra bảng màu 3 giây.', speech: '"Inbox ngay cho em nhận ưu đãi khử thâm tháng này nhé!"' }
-                        ]
-                    }
-                ]
-            }
-        };
-
-        const categoriesData = [
-            {
-                id: 'tra-sua-cafe',
-                name: 'Trà Sữa & Cà Phê (Review Thật)',
-                icon: '🧋',
-                desc: 'Người thật uống thử, pha chế cuốn hút',
-                supportsCustomDish: true,
-                inputLabel: 'Nhập tên món nước của quán:',
-                placeholder: 'VD: Trà nho mẫu đơn, Cà phê muối...',
-                quickDishes: ['Trà nho mẫu đơn kem cheese', 'Cà phê muối béo ngậy', 'Trà đào cam sả', 'Trà sữa khoai môn', 'Matcha Latte'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Người thật cầm ly đưa sát camera', action: 'Quay người thật giơ ly nước cười rạng rỡ.', motionGuide: 'Đưa ly nước tiến sát camera mượt mà 3 giây.', speech: '"Đố bạn tìm được ly nước nào thơm ngon béo ngậy như thế này!"' },
-                            { name: 'Đoạn 2: Cận cảnh lớp kem cheese sánh mịn', action: 'Zoom chậm vào miệng ly nước.', motionGuide: 'Đẩy máy tiến sát vào lớp topping óng ánh 3 giây.', speech: '"...nhìn lớp kem béo ngậy ngập tràn thế này..."' },
-                            { name: 'Đoạn 3: Biểu cảm thèm thuồng', action: 'Quay góc mặt người thật nuốt nước bọt cười.', motionGuide: 'Quét nhẹ từ ly nước lên nét mặt hóng chuyện 3 giây.', speech: '"...xem xong clip là chỉ muốn chạy ra quán mua liền!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Chuẩn bị nguyên liệu & Pha chế (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Đong cốt trà thơm phức', action: 'Quay rót cốt trà vào ly.', motionGuide: 'Quay dịch chuyển tay rót trà mượt mà 3 giây.', speech: '"Bước 1: Ủ cốt trà tươi mới mỗi ngày..."' },
-                            { name: 'Đoạn 2: Rót sữa tươi béo ngậy', action: 'Quay rót dòng sữa trắng hòa quyện.', motionGuide: 'Quét máy theo dòng sữa chảy xuống 3 giây.', speech: '"...kết hợp sữa tươi thơm ngậy chuẩn vị..."' },
-                            { name: 'Đoạn 3: Múc topping đầy ắp', action: 'Quay muỗng múc trân châu/topping đầy.', motionGuide: 'Đưa muỗng topping vun vút vào ly 3 giây.', speech: '"...topping nhà làm dai giòn sần sật..."' },
-                            { name: 'Đoạn 4: Xịt lớp kem cheese phủ đầy', action: 'Quay xịt lớp kem phủ lên trên.', motionGuide: 'Quét máy chậm theo chiều cao của ly nước 3 giây.', speech: '"...phủ lớp kem cheese mặn ngọt đỉnh chóp."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Trải nghiệm thực tế (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Cắm ống hút xuyên qua lớp kem', action: 'Quay tay cắm ống hút dứt khoát.', motionGuide: 'Quay cận cảnh ống hút cắm ngập lớp kem 3 giây.', speech: '"Bước 2: Cắm ống hút khuấy đều thưởng thức..."' },
-                            { name: 'Đoạn 2: Người thật hút ngụm đầu tiên', action: 'Quay người thật nhắm mắt tận hưởng.', motionGuide: 'Quay góc mặt thưởng thức biểu cảm thăng hoa 3 giây.', speech: '"...vị trà thanh mát hòa quyện lớp kem béo ngậy..."' },
-                            { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Quay biểu cảm tròn mắt ngạc nhiên.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: '"...trời ơi ngon nhức nách mọi người ạ..."' },
-                            { name: 'Đoạn 4: Nhai topping sần sật', action: 'Quay biểu cảm nhai topping cuốn hút.', motionGuide: 'Quay góc cằm nhai biểu cảm vui vẻ 3 giây.', speech: '"...topping ngập tràn nhai vui miệng cực kỳ..."' },
-                            { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quay giơ ngón cái trước camera.', motionGuide: 'Quét máy từ ly nước ra ngón tay cái like mạnh 3 giây.', speech: '"...xứng đáng 10/10 điểm không chê vào đâu được!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Ly nước hoàn chỉnh dưới đèn', action: 'Quay tổng thể ly nước bắt sáng.', motionGuide: 'Quét máy vòng quanh ly nước lấp lánh 3 giây.', speech: '"Ly nước xinh xắn sẵn sàng phục vụ các bác đây!"' },
-                            { name: 'Đoạn 2: Quay không gian quán chill', action: 'Quét góc rộng quán tấp nập.', motionGuide: 'Quét máy toàn cảnh quán ấm cúng 3 giây.', speech: '"Ghé ngay quán em hoặc đặt ship liền tay nhé!"' },
-                            { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười tươi.', motionGuide: 'Quét máy từ quầy bar ra vẫy tay chào 3 giây.', speech: '"Nhớ ghé quán em chơi nha, bye bye!"' }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'an-vat-nuong',
-                name: 'Đồ Ăn Vặt & Nướng (Review Thật)',
-                icon: '🔥',
-                desc: 'Người thật ăn review, sốt ngập tràn',
-                supportsCustomDish: true,
-                inputLabel: 'Nhập tên món ăn của quán:',
-                placeholder: 'VD: Tokbokki phô mai, Chân gà sốt Thái...',
-                quickDishes: ['Tokbokki phô mai kéo sợi', 'Bánh tráng trộn sốt me', 'Cánh gà chiên mắm', 'Xúc xích nướng đá', 'Cá viên chiên mắm tỏi'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Người thật cầm đĩa đồ ăn nóng hổi', action: 'Quay giơ đĩa thức ăn bốc khói trước máy.', motionGuide: 'Đưa đĩa đồ ăn tiến sát camera mượt mà 3 giây.', speech: '"Nhìn phần ăn nóng hổi ngập sốt thế này ai mà cưỡng lại được!"' },
-                            { name: 'Đoạn 2: Cận cảnh phô mai kéo sợi dài', action: 'Zoom sát vào thớ phô mai kéo dài.', motionGuide: 'Đẩy máy từ từ theo chiều kéo sợi phô mai 3 giây.', speech: '"...phô mai kéo sợi dẻo quánh thơm phức..."' },
-                            { name: 'Đoạn 3: Biểu cảm nuốt nước bọt', action: 'Quay góc mặt thèm thuồng cười.', motionGuide: 'Quét nhẹ từ đĩa đồ ăn lên nét mặt hóng chuyện 3 giây.', speech: '"...xem xong clip là đó bụng ngang luôn các bác ạ!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Chế biến xèo xèo (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Đảo chảo sốt sôi sùng sục', action: 'Quay chảo thức ăn đang xèo xèo.', motionGuide: 'Quay dịch chuyển chảo thức ăn bốc khói 3 giây.', speech: '"Bước 1: Chế biến nóng hổi trên chảo sốt đậm đà..."' },
-                            { name: 'Đoạn 2: Rưới nước sốt thần thánh', action: 'Quay rưới lớp sốt sánh mịn lên trên.', motionGuide: 'Quét máy theo dòng sốt chảy óng ánh 3 giây.', speech: '"...chan hòa lớp nước sốt bí truyền cay cay ngọt ngọt..."' },
-                            { name: 'Đoạn 3: Rắc hành phi & đậu phộng', action: 'Quay tay rắc topping đầy ắp.', motionGuide: 'Đưa tay rắc hành phi thơm phức xuống đĩa 3 giây.', speech: '"...rắc thêm hành phi giòn rụm thơm nức mũi..."' },
-                            { name: 'Đoạn 4: Múc ra hộp khói nghi ngút', action: 'Quay múc đồ ăn ra hộp đầy ú ụ.', motionGuide: 'Quét máy theo xẻng múc đồ ăn ra hộp 3 giây.', speech: '"...múc ra hộp nóng giòn ngon nhức nách!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Trải nghiệm ăn uống (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Chấm đẫm chén sốt thần thánh', action: 'Quay nhúng miếng ăn vào chén sốt.', motionGuide: 'Quay cận cảnh nhúng ngập sốt đậm đặc 3 giây.', speech: '"Bước 2: Chấm đẫm chén sốt thần thánh ăn là ghiền..."' },
-                            { name: 'Đoạn 2: Cắn ngập răng giòn rụm', action: 'Quay người thật cắn miếng to biểu cảm.', motionGuide: 'Quay góc mặt cắn ngập răng giòn rụm 3 giây.', speech: '"...bên ngoài giòn rụm bên trong mềm ngọt tuyệt đỉnh..."' },
-                            { name: 'Đoạn 3: Tròn mắt khen ngon', action: 'Quay biểu cảm tròn mắt tấm tắc.', motionGuide: 'Đẩy máy lại gần nét mặt ngạc nhiên thích thú 3 giây.', speech: '"...trời ơi đỉnh chóp thực sự mọi người ạ..."' },
-                            { name: 'Đoạn 4: Húp xì xụp nước sốt', action: 'Quay biểu cảm húp sốt cay cay.', motionGuide: 'Quay góc cằm biểu cảm ăn uống ngon lành 3 giây.', speech: '"...vị cay cay tê tê kích thích vị giác cực kỳ..."' },
-                            { name: 'Đoạn 5: Giơ ngón cái công nhận', action: 'Quay giơ ngón cái trước camera.', motionGuide: 'Quét máy từ đĩa đồ ăn ra ngón tay cái like mạnh 3 giây.', speech: '"...xứng đáng 10/10 điểm phải thử ngay nha!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Hộp đồ ăn đầy ắp topping', action: 'Quay hộp thức ăn đóng nắp gọn gàng.', motionGuide: 'Quét máy vòng quanh hộp đồ ăn hấp dẫn 3 giây.', speech: '"Một phần đầy ú ụ giá siêu hạt dẻ cho các bác đây!"' },
-                            { name: 'Đoạn 2: Quay không gian quán tấp nập', action: 'Quét góc rộng quán ăn đông khách.', motionGuide: 'Quét máy toàn cảnh quán nhộn nhịp 3 giây.', speech: '"Ghé ngay quán hoặc đặt ship liền tay kẻo lỡ nhé!"' },
-                            { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười tươi rạng rỡ.', motionGuide: 'Quét máy từ quầy bán ra vẫy tay chào 3 giây.', speech: '"Đặt hàng ngay bên dưới nha, bye bye!"' }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'review-san-pham',
-                name: 'Review Sản Phẩm / Mỹ Phẩm',
-                icon: '📦',
-                desc: 'Mở hộp, test texture, trước & sau',
-                supportsCustomDish: true,
-                inputLabel: 'Nhập tên sản phẩm cần review:',
-                placeholder: 'VD: Kem chống nắng, Serum dưỡng ẩm...',
-                quickDishes: ['Kem chống nắng nâng tông', 'Serum dưỡng ẩm phục hồi', 'Son lì không trôi', 'Sữa rửa mặt tạo bọt', 'Mặt nạ giấy cấp ẩm'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Cầm sản phẩm thần thái', action: 'Quay giơ sản phẩm sát camera.', motionGuide: 'Đưa hộp sản phẩm tiến sát camera mượt mà 3 giây.', speech: '"Cứ dùng em này là da đẹp lên trông thấy mỗi ngày!"' },
-                            { name: 'Đoạn 2: Khuôn mặt mộc tự tin', action: 'Zoom sát vào làn da mộc mịn màng.', motionGuide: 'Đẩy máy tiến sát lại gần da mặt 3 giây.', speech: '"...tạm biệt làn da khô sạm hay xỉn màu..."' },
-                            { name: 'Đoạn 3: Giới thiệu bí quyết hot', action: 'Quay lắc nhẹ hộp sản phẩm.', motionGuide: 'Quét máy từ sản phẩm ra nụ cười rạng rỡ 3 giây.', speech: '"...hãy xem ngay bài review chi tiết siêu phẩm này nhé!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Mở hộp & Test chất kem (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Mở nắp hộp sang xịn', action: 'Quay tay mở nắp hộp tinh tế.', motionGuide: 'Quay dịch chuyển tay mở hộp mượt mà 3 giây.', speech: '"Bước 1: Thiết kế bao bì sang trọng tinh tế..."' },
-                            { name: 'Đoạn 2: Lấy chất kem ra mu bàn tay', action: 'Quay nặn chất kem mướt mịn.', motionGuide: 'Quét theo giọt kem nặn ra mu bàn tay 3 giây.', speech: '"...kết cấu dạng sữa mướt mịn cực kỳ..."' },
-                            { name: 'Đoạn 3: Tán đều thẩm thấu nhanh', action: 'Quay tay tán đều kem trên da.', motionGuide: 'Quét ngón tay xoa đều lớp kem mỏng nhẹ 3 giây.', speech: '"...thẩm thấu sâu vào da không hề bết dính..."' },
-                            { name: 'Đoạn 4: Hiệu quả nâng tông tự nhiên', action: 'Quay bề mặt da sáng mịn sau thoa.', motionGuide: 'Quét nhanh qua vùng da đã test sáng bừng 3 giây.', speech: '"...nâng tông hồng hào tự nhiên suốt cả ngày."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Trải nghiệm thực tế (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Thoa trực tiếp lên mặt', action: 'Quay thoa kem lên má mịn màng.', motionGuide: 'Quay cận cảnh thoa kem nhẹ nhàng 3 giây.', speech: '"Bước 2: Trải nghiệm thực tế trên da mặt..."' },
-                            { name: 'Đoạn 2: Vỗ nhẹ cho dưỡng chất thấm sâu', action: 'Quay tay vỗ nhẹ vào má.', motionGuide: 'Quay góc mặt vỗ nhịp nhàng 3 giây.', speech: '"...vỗ nhẹ là dưỡng chất ngấm sâu tức thì..."' },
-                            { name: 'Đoạn 3: So sánh rõ rệt trước và sau', action: 'Quay cận vùng da sáng mịn màng.', motionGuide: 'Đẩy máy lại gần vùng da khác biệt rõ rệt 3 giây.', speech: '"...da căng bóng mướt mịn như gái Hàn..."' },
-                            { name: 'Đoạn 4: Kiểm tra không trôi nước', action: 'Quay xịt nước thử độ bền.', motionGuide: 'Quay xịt nước lên da vẫn khô ráo 3 giây.', speech: '"...khả năng kháng nước đỉnh cao không lo trôi phai..."' },
-                            { name: 'Đoạn 5: Biểu cảm hài lòng tuyệt đối', action: 'Quay rạng rỡ trước ống kính.', motionGuide: 'Quét máy từ sản phẩm ra nụ cười mãn nguyện 3 giây.', speech: '"...xứng đáng 10/10 điểm phải đầu tư ngay nha!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Hoàn thiện & CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Sản phẩm kèm giỏ hàng', action: 'Quay giơ sản phẩm cuối clip.', motionGuide: 'Quét máy vòng quanh sản phẩm chính hãng 3 giây.', speech: '"Hàng chính hãng giá ưu đãi độc quyền cho các bác!"' },
-                            { name: 'Đoạn 2: Hướng dẫn bấm mua', action: 'Quay chỉ tay xuống góc video.', motionGuide: 'Quét máy hướng tay xuống nút giỏ hàng 3 giây.', speech: '"Nhanh tay bấm vào giỏ hàng bên dưới để chốt đơn..."' },
-                            { name: 'Đoạn 3: Vẫy tay chào kết video', action: 'Quay vẫy tay cười thân thiện.', motionGuide: 'Quét máy từ sản phẩm ra vẫy tay chào 3 giây.', speech: '"...hẹn gặp lại ở video review tiếp theo nhé, bye bye!"' }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'vlog-doi-thuong',
-                name: 'Vlog / Đời Thường & Tiệm',
-                icon: '☕',
-                desc: 'Một ngày làm việc, chuẩn bị mở tiệm',
-                supportsCustomDish: true,
-                inputLabel: 'Nhập tiêu đề vlog / công việc:',
-                placeholder: 'VD: Một ngày mở tiệm lúc 5h sáng...',
-                quickDishes: ['Một ngày mở tiệm từ A-Z', 'Chuẩn bị nguyên liệu lúc 6h sáng', 'Hậu trường đóng hàng ship tỉnh', 'Tâm sự nghề nghiệp cùng chủ tiệm'],
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Mở cửa tiệm đón nắng ban mai', action: 'Quay mở cửa cuốn tiệm buổi sớm.', motionGuide: 'Quét máy từ dưới lên mở rộng không gian 3 giây.', speech: '"Một ngày mới bắt đầu tại tiệm nhà em diễn ra thế nào?"' },
-                            { name: 'Đoạn 2: Pha ly cà phê tỉnh táo buổi sáng', action: 'Quay rót cà phê thơm phức.', motionGuide: 'Đẩy máy tiến sát ly cà phê bốc khói 3 giây.', speech: '"...nhâm nhi ly cà phê nạp năng lượng tràn đầy..."' },
-                            { name: 'Đoạn 3: Nụ cười rạng rỡ sẵn sàng đón khách', action: 'Quay chủ tiệm cười tươi nhìn máy.', motionGuide: 'Quét nhẹ từ ly cà phê lên nụ cười rạng rỡ 3 giây.', speech: '"...hãy cùng chân mình khám phá công việc hôm nay nhé!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Vận hành chuẩn bị (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Sắp xếp kệ hàng ngăn nắp', action: 'Quay tay bày biện chai lọ gọn gàng.', motionGuide: 'Quay dịch chuyển tay sắp xếp mượt mà 3 giây.', speech: '"Bước 1: Dọn dẹp không gian sạch sẽ ngăn nắp..."' },
-                            { name: 'Đoạn 2: Sơ chế nguyên liệu tươi ngon', action: 'Quay sơ chế hoa quả / dụng cụ.', motionGuide: 'Quét máy theo thao tác sơ chế nhanh gọn 3 giây.', speech: '"...chuẩn bị nguyên liệu tươi mới mỗi ngày..."' },
-                            { name: 'Đoạn 3: Kiểm tra thiết bị máy móc', action: 'Quay bật công tắc máy móc hoạt động.', motionGuide: 'Quay tay bật công tắc đèn sáng trưng 3 giây.', speech: '"...kiểm tra kỹ lưỡng các thiết bị sẵn sàng..."' },
-                            { name: 'Đoạn 4: Biển hiệu sẵn sàng đón khách', action: 'Quay bảng hiệu lung linh ngoài cửa.', motionGuide: 'Quét máy từ bảng hiệu vào trong tiệm ấm cúng 3 giây.', speech: '"...mở cửa chào đón những vị khách đầu tiên."' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Phục vụ & Trải nghiệm (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Đón vị khách đầu tiên vào tiệm', action: 'Quay niềm nở chào đón khách.', motionGuide: 'Quay cúi đầu mỉm cười chào khách thân thiện 3 giây.', speech: '"Bước 2: Đón tiếp những vị khách dễ thương..."' },
-                            { name: 'Đoạn 2: Tư vấn tận tâm chu đáo', action: 'Quay ân cần trò chuyện với khách.', motionGuide: 'Quay góc mặt tư vấn nhiệt tình 3 giây.', speech: '"...lắng nghe và tư vấn dịch vụ tận tâm nhất..."' },
-                            { name: 'Đoạn 3: Chăm sóc phục vụ khéo léo', action: 'Quay tay làm việc chuyên nghiệp.', motionGuide: 'Quay cận cảnh thao tác phục vụ tỉ mỉ 3 giây.', speech: '"...từng công đoạn đều làm bằng tất cả tâm huyết..."' },
-                            { name: 'Đoạn 4: Khách vui vẻ cảm ơn ra về', action: 'Quay khách vẫy tay cười tươi.', motionGuide: 'Quay khách bước ra cửa vẫy tay tạm biệt 3 giây.', speech: '"...nhìn khách hài lòng ra về là vui rồi..."' },
-                            { name: 'Đoạn 5: Dọn dẹp kết thúc ngày làm việc', action: 'Quay tắt đèn khép cửa cuối ngày.', motionGuide: 'Quét máy từ trong ra ngoài khép cửa tiệm 3 giây.', speech: '"...khép lại một ngày làm việc năng suất tuyệt vời!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Tổng kết & CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Ngồi nghỉ ngơi thư giãn cuối ngày', action: 'Quay chủ tiệm cườimỉm uống nước.', motionGuide: 'Quét nhẹ từ ly nước lên nét mặt thư thái 3 giây.', speech: '"Làm việc hết mình và tận hưởng trọn vẹn niềm vui!"' },
-                            { name: 'Đoạn 2: Nhắn gửi cộng đồng yêu mến', action: 'Quay hướng mắt trìu mến nhìn máy.', motionGuide: 'Đẩy máy tiến sát lại gần nụ cười ấm áp 3 giây.', speech: '"...cảm ơn mọi người luôn đồng hành cùng tiệm nhé!"' },
-                            { name: 'Đoạn 3: Địa chỉ tiệm & Lời chào tạm biệt', action: 'Quay bảng hiệu tiệm vẫy tay chào.', motionGuide: 'Quét máy từ bảng hiệu ra vẫy tay tạm biệt 3 giây.', speech: '"Ghé tiệm em chơi nha, địa chỉ ở phần tiểu sử ạ!"' }
-                        ]
-                    }
-                ]
-            },
-            {
-                id: 'phun-xam-tham-my',
-                name: 'Phun Xăm Thẩm Mỹ',
-                icon: '✨',
-                desc: 'Chọn Mày hoặc Môi chuyên sâu',
-                supportsCustomDish: false,
-                isPmuCategory: true,
-                steps: pmuSubData.may.steps
-            },
-            {
-                id: 'day-hoc-phun-xam',
-                name: 'Dạy Học Phun Xăm',
-                icon: '🎓',
-                desc: 'Đào tạo học viên, cầm tay chỉ việc',
-                supportsCustomDish: false,
-                steps: [
-                    {
-                        title: 'Bước 1: Mở đầu Hook (9s - 3 đoạn)',
-                        time: '0 - 9s',
-                        clips: [
-                            { name: 'Đoạn 1: Học viên thực hành chăm chú', action: 'Quay góc rộng lớp học xăm tấp nập.', motionGuide: 'Quét máy mượt mà qua các bàn học viên 3 giây.', speech: '"Học phun xăm mấy tháng là ra nghề có khách?"' },
-                            { name: 'Đoạn 2: Tác phẩm da giả đẹp xuất sắc', action: 'Zoom sát vào dáng mày da giả nét mịn.', motionGuide: 'Đẩy máy tiến sát lại tác phẩm da giả 3 giây.', speech: '"...nhìn nét điêu khắc bay bổng thế này cơ mà..."' },
-                            { name: 'Đoạn 3: Giảng viên tự tin giới thiệu', action: 'Quay giảng viên mỉm cười cầm máy xăm.', motionGuide: 'Quét máy từ giảng viên ra lớp học 3 giây.', speech: '"...hãy xem bí quyết đào tạo chuẩn chỉnh từ A-Z nhé!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 2: Đào tạo nền tảng (12s - 4 đoạn)',
-                        time: '9 - 21s',
-                        clips: [
-                            { name: 'Đoạn 1: Hướng dẫn vẽ khuôn mặt chuẩn', action: 'Quay giảng viên vẽ trên giấy/da giả.', motionGuide: 'Quay dịch chuyển tay vẽ mượt mà 3 giây.', speech: '"Bước 1: Lên khung vẽ tỉ lệ vàng chuẩn xác..."' },
-                            { name: 'Đoạn 2: Cầm tay chỉ việc 1 kèm 1', action: 'Quay thầy cô uốn nắn từng ngón tay.', motionGuide: 'Quét theo cử chỉ tay cầm máy của học viên 3 giây.', speech: '"...cầm tay chỉ việc 1 kèm 1 không giấu nghề..."' },
-                            { name: 'Đoạn 3: Thực hành kỹ thuật đi nét', action: 'Quay học viên đi nét trên da giả.', motionGuide: 'Quay cận cảnh đường kim lướt êm ái 3 giây.', speech: '"...rèn luyện lực tay vững chắc từng đường đi nét lại..."' },
-                            { name: 'Đoạn 4: Bí quyết pha mực độc quyền', action: 'Quay trộn màu mực xăm chuyên nghiệp.', motionGuide: 'Quét chậm qua bảng màu pha chế chuẩn tông 3 giây.', speech: '"...học bí quyết pha mực không bao giờ trổ đỏ!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 3: Thực hành người thật & Sửa lỗi (15s - 5 đoạn)',
-                        time: '21 - 36s',
-                        clips: [
-                            { name: 'Đoạn 1: Học viên thao tác trên mẫu thật', action: 'Quay học viên làm mẫu dưới sự giám sát.', motionGuide: 'Quay cận cảnh thao tác cẩn trọng 3 giây.', speech: '"Bước 2: Trải nghiệm thực hành trên mẫu thật..."' },
-                            { name: 'Đoạn 2: Giảng viên tận tình góp ý', action: 'Quay thầy cô chỉnh sửa từng chi tiết nhỏ.', motionGuide: 'Quay góc mặt thầy cô hướng dẫn ân cần 3 giây.', speech: '"...giảng viên luôn theo sát sửa từng lỗi nhỏ..."' },
-                            { name: 'Đoạn 3: Thành quả mẫu thật hoàn hảo', action: 'Quay cận cảnh dáng mày mẫu thật sắc nét.', motionGuide: 'Đẩy máy lại gần đường sợi mày hoàn mỹ 3 giây.', speech: '"...đảm bảo tay nghề cứng cáp tự tin vững vàng..."' },
-                            { name: 'Đoạn 4: Lễ trao chứng chỉ tốt nghiệp', action: 'Quay học viên cười rạng rỡ cầm chứng chỉ.', motionGuide: 'Quét nhanh qua nụ cười hạnh phúc nhận bằng 3 giây.', speech: '"...tốt nghiệp nhận chứng chỉ hành nghề chính quy..."' },
-                            { name: 'Đoạn 5: Học viên tự tin mở tiệm riêng', action: 'Quay học viên chụp ảnh lưu niệm.', motionGuide: 'Quét máy toàn cảnh tập thể lớp vui mừng 3 giây.', speech: '"...tự tin mở tiệm riêng làm chủ tài chính!"' }
-                        ]
-                    },
-                    {
-                        title: 'Bước 4: Tổng kết & Tuyển sinh CTA (9s - 3 đoạn)',
-                        time: '36 - 45s',
-                        clips: [
-                            { name: 'Đoạn 1: Khai giảng lớp mới tấp nập', action: 'Quay toàn cảnh lớp học đông vui.', motionGuide: 'Quét máy vòng quanh lớp học nhộn nhịp 3 giây.', speech: '"Khai giảng lớp mới tuần tới tại viện đào tạo!"' },
-                            { name: 'Đoạn 2: Ưu đãi học phí số lượng có hạn', action: 'Quay bảng thông báo ưu đãi.', motionGuide: 'Quét máy hướng vào bảng ưu đãi học phí 3 giây.', speech: '"...nhận ngay ưu đãi giảm học phí khủng..."' },
-                            { name: 'Đoạn 3: Lời mời đăng ký khóa học', action: 'Quay giảng viên vẫy tay cười tươi.', motionGuide: 'Quét máy từ bảng hiệu ra vẫy tay chào 3 giây.', speech: '"Nhanh tay inbox đăng ký giữ chỗ ngay nhé!"' }
-                        ]
-                    }
-                ]
-            }
-        ];
-
-        const viralCaptions = [
-            "Đừng ai mua/làm sản phẩm này khi chưa xem hết video! Xem xong chỉ muốn chốt đơn ngay lập tức 🤤🔥",
-            "Sức hút khó cưỡng từ siêu phẩm này đây các bác ơi! Dùng/Ăn một lần là ghiền, không ngon không lấy tiền ✨",
-            "Tận mắt chứng kiến quá trình làm/test siêu phẩm này mới hiểu vì sao khách xếp hàng dài mỗi ngày 💯",
-            "Hôm nay mời mọi người cùng trải nghiệm món hot hit / sản phẩm triệu view nhà em nhé. Nhìn có kích thích không ạ? 😍",
-            "Trời lạnh/nóng thế này mà có sản phẩm này thì hết nước chấm! Đang có ưu đãi sốc, bấm vào giỏ hàng/nhắn tin ngay 👇"
-        ];
-
-        const capcutDetailedGuides = [
-            {
-                tabTitle: '1. Ghép Nhiều Clip',
-                heading: 'Bước 1: Ghép các đoạn video ngắn 3 giây liên tục vào CapCut',
-                steps: [
-                    { title: 'Mở app CapCut', detail: 'Bấm dấu cộng màu xanh <strong>Dự án mới (New Project)</strong> trên màn hình chính.' },
-                    { title: 'Chọn tất cả các clip ngắn 3s', detail: 'Chọn lần lượt từng đoạn video ngắn 3 giây bạn vừa quay (từ Bước 1 đến Bước 4) theo đúng thứ tự rồi bấm <strong>Thêm (Add)</strong>.' },
-                    { title: 'Khóa chuẩn khung dọc TikTok', detail: 'Vuốt thanh công cụ dưới cùng sang phải -> Bấm mục <strong>Tỷ lệ (Aspect Ratio)</strong> -> Chọn <strong>9:16</strong> (biểu tượng TikTok).' },
-                    { title: 'Xóa đuôi logo CapCut', detail: 'Vuốt thanh video về cuối cùng -> Bấm vào ô đen <strong>Phần kết (Ending)</strong> -> Bấm nút <strong>Xóa (Delete)</strong>.' }
-                ]
-            },
-            {
-                tabTitle: '2. Cắt & Nhịp 3s',
-                heading: 'Bước 2: Cắt ngắn mỗi đoạn đúng 3 giây & Thêm chuyển cảnh dồn dập',
-                steps: [
-                    { title: 'Cắt gọt clip ngắn gọn', detail: 'Chạm vào từng đoạn video -> Kéo hai đầu mút để độ dài mỗi đoạn chỉ từ <strong>2.5 đến 3 giây</strong> là phải chuyển sang góc khác.' },
-                    { title: 'Thêm chuyển cảnh giật beat', detail: 'Bấm vào ô vuông trắng nhỏ nằm giữa các đoạn clip -> Chọn hiệu ứng <strong>Chớp trắng (Flash)</strong> hoặc <strong>Trượt nhanh</strong> và kéo thời gian về <strong>0.3s</strong>.' },
-                    { title: 'Tạo nhịp điệu dồn dập', detail: 'Việc ghép liên tục các góc quay 3 giây giúp video cực kỳ cuốn hút, giữ chân người xem từ đầu đến cuối.' }
-                ]
-            },
-            {
-                tabTitle: '3. Lồng Tiếng',
-                heading: 'Bước 3: Ghi âm lời thoại & Nhạc nền',
-                steps: [
-                    { title: 'Tắt tiếng ồn nền', detail: 'Chạm vào các clip -> Bấm <strong>Âm lượng (Volume)</strong> -> Kéo về <strong>0</strong>.' },
-                    { title: 'Ghi âm lời thoại', detail: 'Bấm <strong>Âm thanh (Audio)</strong> -> Bấm <strong>Ghi âm (Record)</strong> -> Giữ nút Micro và đọc theo câu thoại trong app này.' },
-                    { title: 'Thêm nhạc nền nhỏ', detail: 'Vào <strong>Âm thanh</strong> -> Chọn nhạc hot trend -> Giảm âm lượng nhạc nền xuống <strong>10% - 15%</strong> để nghe rõ lời thoại.' }
-                ]
-            },
-            {
-                tabTitle: '4. Chữ & Màu',
-                heading: 'Bước 4: Phụ đề tự động & Chỉnh màu sắc nét',
-                steps: [
-                    { title: 'Tạo phụ đề 1 chạm', detail: 'Bấm <strong>Văn bản (Text)</strong> -> Chọn <strong>Phụ đề tự động</strong> -> Ngôn ngữ <strong>Tiếng Việt</strong> -> Bấm <strong>Tạo</strong>.' },
-                    { title: 'Chọn kiểu chữ đẹp', detail: 'Bấm vào chữ -> Chọn <strong>Phong cách</strong> -> Chọn mẫu <strong>Chữ trắng viền đen</strong> nổi bật.' },
-                    { title: 'Chỉnh màu tươi tắn', detail: 'Chạm vào clip -> Bấm <strong>Bộ lọc (Filters)</strong> -> Chọn <strong>Ẩm thực</strong> hoặc <strong>Chân dung</strong> mức 35%.' }
-                ]
-            },
-            {
-                tabTitle: '5. Xuất File',
-                heading: 'Bước 5: Xuất video sắc nét đăng TikTok',
-                steps: [
-                    { title: 'Chỉnh độ phân giải', detail: 'Bấm vào chữ <strong>1080P</strong> ở góc trên bên phải màn hình CapCut.' },
-                    { title: 'Cài đặt thông số chuẩn', detail: 'Chọn Độ phân giải <strong>1080P</strong> | Khung hình <strong>60fps</strong> | Tốc độ mã <strong>Khuyến nghị</strong>.' },
-                    { title: 'Xuất video', detail: 'Bấm mũi tên xuất file -> Video tự lưu vào Ảnh iPhone và sẵn sàng đăng TikTok!' }
-                ]
-            }
-        ];
-
         let currentCatIndex = 0;
         let currentStepIndex = 0;
         let currentCustomDish = '';
         let currentPmuType = 'may';
-        let currentPmuTech = '';
         let currentCapcutTab = 0;
 
         let activeStepIndex = 0;
@@ -650,7 +238,6 @@
             currentCatIndex = index;
             currentStepIndex = 0;
             currentCustomDish = '';
-            currentPmuTech = '';
             document.getElementById('dishNameInput').value = '';
             document.getElementById('activeDishBadge').classList.add('hidden');
             renderCategories();
@@ -792,7 +379,7 @@
             container.innerHTML = `
                 <div class="flex items-center justify-between">
                     <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-xs rounded-lg">${step.time} (~45s tổng video)</span>
-                    <button onclick="openCapcutGuideModal(${currentStepIndex})" class="text-xs text-sky-400 font-semibold underline">📖 Xem cách dựng CapCut</button>
+                    <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-xs text-sky-400 font-semibold underline">📖 Xem cách dựng CapCut</button>
                 </div>
                 <div>
                     <h2 class="text-base font-bold text-white mb-1">${step.title}</h2>
