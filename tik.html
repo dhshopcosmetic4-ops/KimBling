@@ -38,7 +38,7 @@
 
     <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
 
-        <!-- 1. CHỌN LĨNH VỰC -->
+        <!-- 1. CHỌN LĨNH VỰC (5 MỤC: DẠNG LƯỚI 2 CỘT, MỤC CUỐI TRẢN FULL) -->
         <section class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">1. Chọn Lĩnh Vực Của Bạn</label>
             <div class="grid grid-cols-2 gap-2" id="categoryGrid"></div>
@@ -81,7 +81,6 @@
                 </button>
             </div>
             <div id="quickDishChips" class="flex flex-wrap gap-1.5 pt-0.5"></div>
-            <!-- Hiển thị mô tả món từ descriptionsMap -->
             <div id="dishDescriptionBox" class="hidden text-xs text-slate-300 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 italic"></div>
         </section>
 
@@ -235,15 +234,20 @@
 
         function renderCategories() {
             const container = document.getElementById('categoryGrid');
-            container.innerHTML = categoriesData.map((cat, idx) => `
-                <button onclick="selectCategory(${idx})" class="p-3 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/60 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
-                    <span class="text-2xl">${cat.icon}</span>
-                    <div>
-                        <h3 class="font-bold text-xs text-white">${cat.name}</h3>
-                        <p class="text-[10px] text-slate-400 line-clamp-1">${cat.desc}</p>
-                    </div>
-                </button>
-            `).join('');
+            container.innerHTML = categoriesData.map((cat, idx) => {
+                // Nếu là phần tử cuối (mục thứ 5), cho nó trải full 2 cột
+                const isLast = idx === categoriesData.length - 1 && categoriesData.length % 2 !== 0;
+                const spanClass = isLast ? 'col-span-2' : '';
+                return `
+                    <button onclick="selectCategory(${idx})" class="${spanClass} p-3 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/60 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
+                        <span class="text-2xl">${cat.icon}</span>
+                        <div>
+                            <h3 class="font-bold text-xs text-white">${cat.name}</h3>
+                            <p class="text-[10px] text-slate-400 line-clamp-1">${cat.desc}</p>
+                        </div>
+                    </button>
+                `;
+            }).join('');
         }
 
         function selectCategory(index) {
@@ -253,6 +257,12 @@
             document.getElementById('dishNameInput').value = '';
             document.getElementById('activeDishBadge').classList.add('hidden');
             document.getElementById('dishDescriptionBox').classList.add('hidden');
+
+            const cat = categoriesData[currentCatIndex];
+            if (cat.isPmuCategory) {
+                cat.steps = pmuSubData[currentPmuType].steps;
+            }
+
             renderCategories();
             renderSubControls();
             renderStepTabs();
@@ -300,6 +310,7 @@
 
         function selectPmuType(type) {
             currentPmuType = type;
+            categoriesData[currentCatIndex].steps = pmuSubData[type].steps;
             renderSubControls();
             renderStepContent();
         }
@@ -319,7 +330,6 @@
                 badge.innerText = `Đã chọn: ${currentCustomDish}`;
                 badge.classList.remove('hidden');
 
-                // Lấy mô tả tự động từ descriptionsMap trong tenmon.js
                 let keyNorm = currentCustomDish.toLowerCase();
                 let foundDesc = "Món ngon độc quyền tại Kim Bling Coffee & Tea.";
                 for (let k in descriptionsMap) {
@@ -347,9 +357,6 @@
 
         function getCurrentStepsData() {
             const cat = categoriesData[currentCatIndex];
-            if (cat.isPmuCategory) {
-                return pmuSubData[currentPmuType].steps;
-            }
             return cat.steps;
         }
 
