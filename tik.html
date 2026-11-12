@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Viral Studio - Pro Cinematics v6</title>
+    <title>TikTok Viral Studio - Pro Filters v7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         input, select, textarea { font-size: 16px !important; }
+        /* Cấu hình bộ lọc màu CSS trực tiếp trên khung camera */
+        .filter-none { filter: none; }
+        .filter-food { filter: saturate(1.4) contrast(1.15) brightness(1.05) sepia(0.1); }
+        .filter-beauty { filter: brightness(1.12) contrast(0.95) saturate(1.1) blur(0.2px); }
+        .filter-cinematic { filter: contrast(1.25) saturate(1.2) brightness(0.95); }
     </style>
-    <!-- Đọc dữ liệu độc lập từ file tenmon.js -->
+    <!-- Đọc dữ liệu từ file tenmon.js -->
     <script src="tenmon.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
@@ -22,7 +27,7 @@
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-rose-500/20">V</div>
                 <div>
                     <h1 class="font-bold text-sm leading-tight text-white">TikTok Viral Studio Pro</h1>
-                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • Cinematics & tenmon.js</p>
+                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • Pro Filters Edition</p>
                 </div>
             </div>
             <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-bold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform">
@@ -59,7 +64,6 @@
                     <span>Phun / Khử Thâm Môi</span>
                 </button>
             </div>
-            <div id="pmuTechChips" class="flex flex-wrap gap-1.5"></div>
         </section>
 
         <!-- 2B. NHẬP TÊN SẢN PHẨM / MÓN ĂN / VLOG -->
@@ -102,16 +106,6 @@
                 <button onclick="copyCaptionAndHashtags()" id="copyCaptionBtn" class="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-lg font-bold">📋 Chép tất cả</button>
             </div>
             <div class="space-y-2" id="captionListContainer"></div>
-            <div class="pt-2 border-t border-slate-800 space-y-1">
-                <p class="text-[11px] text-slate-400 font-bold">5 Hashtag xu hướng:</p>
-                <div class="flex flex-wrap gap-1.5">
-                    <span class="text-[11px] bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">#reviewanngon</span>
-                    <span class="text-[11px] bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">#ancuchat</span>
-                    <span class="text-[11px] bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">#ghienmontrend</span>
-                    <span class="text-[11px] bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">#xuhuongtiktok</span>
-                    <span class="text-[11px] bg-slate-950 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">#quanngonmoingay</span>
-                </div>
-            </div>
         </section>
 
     </main>
@@ -137,7 +131,7 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 CÓ HIỆU ỨNG CINEMATIC -->
+    <!-- MODAL CAMERA AR 9:16 CÓ BỘ LỌC LÀM MỊN DA & MÓN ĂN NGON -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
         <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
@@ -149,32 +143,30 @@
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
+            <!-- Thẻ video áp dụng bộ lọc trực tiếp -->
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-food"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <!-- HIỆU ỨNG CINEMATIC & LƯỚI TỈ LỆ VÀNG -->
+            <!-- THANH CHỌN FILTER TRỰC TIẾP TRÊN CAMERA -->
+            <div class="absolute top-20 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
+                <button onclick="setFilter('food', this)" class="filter-chip px-3 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold shadow border border-rose-400">🍔 Món Ngon</button>
+                <button onclick="setFilter('beauty', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">✨ Mịn Da</button>
+                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">🎥 Điện Ảnh</button>
+                <button onclick="setFilter('none', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">Gốc</button>
+            </div>
+
+            <!-- HIỆU ỨNG TỈ LỆ VÀNG & HƯỚNG DẪN -->
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
-                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
-                    <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
+                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
+                    <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
                     <div></div><div></div><div></div>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-56 h-56 border-2 border-dashed border-rose-500/80 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[2px] space-y-2 animate-pulse">
-                        <span class="text-2xl">✨</span>
+                    <div class="w-52 h-52 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
+                        <span class="text-2xl animate-bounce">🎥</span>
                         <span id="arGuideText" class="text-xs font-bold text-white drop-shadow">Quay chuyển động mượt mà 3 giây</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col space-y-2 mt-12 z-20 pointer-events-none">
-                    <div class="flex justify-between items-center">
-                        <div id="aeLockBadge" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center space-x-1">
-                            <span>🔒 ĐÃ KHÓA SÁNG & NÉT (AE/AF LOCK)</span>
-                        </div>
-                        <div class="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/40 text-[11px] text-amber-300 font-bold ml-auto animate-pulse">
-                            👆 Chạm màn hình để khóa sáng
-                        </div>
                     </div>
                 </div>
 
@@ -196,13 +188,13 @@
         </div>
     </div>
 
-    <!-- SCRIPT ĐIỀU KHIỂN GIAO DIỆN & CAMERA -->
     <script>
         let currentCatIndex = 0;
         let currentStepIndex = 0;
         let currentCustomDish = '';
         let currentPmuType = 'may';
         let currentCapcutTab = 0;
+        let currentFilterClass = 'filter-food'; // Mặc định bật filter món ngon
 
         let activeStepIndex = 0;
         let activeClipIndex = 0;
@@ -219,6 +211,30 @@
             renderStepTabs();
             renderStepContent();
             renderCaptions();
+        }
+
+        function setFilter(filterType, btn) {
+            // Đổi style nút bấm
+            document.querySelectorAll('.filter-chip').forEach(b => {
+                b.className = "filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700";
+            });
+            btn.className = "filter-chip px-3 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold shadow border border-rose-400";
+
+            // Áp dụng class filter vào video live
+            const videoEl = document.getElementById('liveVideo');
+            videoEl.className = "absolute inset-0 w-full h-full object-cover";
+            if (filterType === 'food') {
+                currentFilterClass = 'filter-food';
+                videoEl.classList.add('filter-food');
+            } else if (filterType === 'beauty') {
+                currentFilterClass = 'filter-beauty';
+                videoEl.classList.add('filter-beauty');
+            } else if (filterType === 'cinematic') {
+                currentFilterClass = 'filter-cinematic';
+                videoEl.classList.add('filter-cinematic');
+            } else {
+                currentFilterClass = 'filter-none';
+            }
         }
 
         function renderCategories() {
@@ -398,13 +414,6 @@
             `).join('');
         }
 
-        function copySingleCaption(index) {
-            const text = viralCaptions[index];
-            const hashtags = " #reviewanngon #ancuchat #ghienmontrend #xuhuongtiktok #quanngonmoingay";
-            navigator.clipboard.writeText(text + hashtags);
-            alert(`Đã sao chép tiêu đề #${index + 1} kèm hashtag!`);
-        }
-
         function copyCaptionAndHashtags() {
             const allText = viralCaptions.join("\n\n") + "\n\n#reviewanngon #ancuchat #ghienmontrend #xuhuongtiktok #quanngonmoingay";
             navigator.clipboard.writeText(allText);
@@ -502,12 +511,6 @@
             resetRecordButtonUI();
         }
 
-        document.getElementById('cameraViewport').addEventListener('click', async () => {
-            const badge = document.getElementById('aeLockBadge');
-            badge.classList.remove('hidden');
-            setTimeout(() => { badge.classList.add('hidden'); }, 3000);
-        });
-
         document.getElementById('switchCameraBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
@@ -552,7 +555,20 @@
                 } else {
                     sWidth = vW; sHeight = vW / targetAspect; sX = 0; sY = (vH - sHeight) / 2;
                 }
+
+                // Đưa bộ lọc màu vào bản ghi hình để video xuất ra đẹp y hệt màn hình xem trước
+                ctx.save();
+                if (currentFilterClass === 'filter-food') {
+                    ctx.filter = 'saturate(1.4) contrast(1.15) brightness(1.05) sepia(0.1)';
+                } else if (currentFilterClass === 'filter-beauty') {
+                    ctx.filter = 'brightness(1.12) contrast(0.95) saturate(1.1) blur(0.2px)';
+                } else if (currentFilterClass === 'filter-cinematic') {
+                    ctx.filter = 'contrast(1.25) saturate(1.2) brightness(0.95)';
+                }
+
                 ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+
                 animId = requestAnimationFrame(drawCanvas);
             }
 
@@ -609,7 +625,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            alert(`Đã lưu thành công đoạn: "${steps[activeStepIndex].clips[activeClipIndex].name}"! Bạn có thể bấm quay lại bất cứ lúc nào nếu cần.`);
+            alert(`Đã lưu thành công đoạn: "${steps[activeStepIndex].clips[activeClipIndex].name}"!`);
         }
 
         function setRecordingUI(recording) {
