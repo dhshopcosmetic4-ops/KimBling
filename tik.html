@@ -9,10 +9,13 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         input, select, textarea { font-size: 16px !important; }
-        .filter-food { filter: saturate(1.4) contrast(1.15) brightness(1.05) sepia(0.1); }
-        .filter-beauty { filter: brightness(1.12) contrast(0.95) saturate(1.1) blur(0.2px); }
-        .filter-cinematic { filter: contrast(1.25) saturate(1.2) brightness(0.95); }
+        .filter-food { filter: saturate(1.45) contrast(1.18) brightness(1.08) sepia(0.08); }
+        .filter-beauty { filter: brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px); }
+        .filter-cinematic { filter: contrast(1.3) saturate(1.25) brightness(0.95); }
         .filter-none { filter: none; }
+        /* Ẩn thanh cuộn ngang nhưng vẫn vuốt mượt trên iPhone */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
     <!-- Đọc dữ liệu tự động từ tenmon.js -->
     <script src="tenmon.js"></script>
@@ -20,45 +23,45 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
 
     <!-- HEADER -->
-    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3.5">
         <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-rose-500/20">KB</div>
+            <div class="flex items-center space-x-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-rose-500/20">KB</div>
                 <div>
-                    <h1 class="font-bold text-sm leading-tight text-white">Kim Bling Studio Pro</h1>
-                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • Menu Chuẩn Viral</p>
+                    <h1 class="font-extrabold text-base leading-tight text-white">Kim Bling Studio Pro</h1>
+                    <p class="text-xs text-slate-400">Lê Minh Dũng • Kho Hook Hot Trend</p>
                 </div>
             </div>
-            <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-bold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform">
+            <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-extrabold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform shadow">
                 <span>🎬</span>
                 <span>Dựng CapCut</span>
             </button>
         </div>
     </header>
 
-    <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-5">
 
-        <!-- 1. CHỌN LĨNH VỰC (5 MỤC: DẠNG LƯỚI 2 CỘT, MỤC CUỐI TRẢN FULL) -->
-        <section class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">1. Chọn Lĩnh Vực Của Bạn</label>
-            <div class="grid grid-cols-2 gap-2" id="categoryGrid"></div>
+        <!-- 1. CHỌN LĨNH VỰC -->
+        <section class="space-y-2.5">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400">1. Chọn Lĩnh Vực Của Bạn (5 Mục)</label>
+            <div class="grid grid-cols-2 gap-2.5" id="categoryGrid"></div>
         </section>
 
         <!-- 2A. CHỌN DỊCH VỤ PHUN XĂM -->
-        <section id="pmuSubTypeBox" class="hidden bg-gradient-to-br from-slate-900 to-rose-950/30 rounded-2xl border border-rose-500/35 p-3.5 space-y-3 shadow-lg">
+        <section id="pmuSubTypeBox" class="hidden bg-gradient-to-br from-slate-900 to-rose-950/30 rounded-2xl border border-rose-500/35 p-4 space-y-3 shadow-lg">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-rose-300 flex items-center space-x-1.5">
                     <span>💄</span>
                     <span>Chọn dịch vụ Phun Xăm:</span>
                 </span>
-                <span id="pmuServiceBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold">Phun Mày</span>
+                <span id="pmuServiceBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">Phun Mày</span>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="selectPmuType('may')" id="btnPmuMay" class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all">
+            <div class="grid grid-cols-2 gap-2.5">
+                <button onclick="selectPmuType('may')" id="btnPmuMay" class="py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all">
                     <span>👁️</span>
                     <span>Phun / Sợi Mày</span>
                 </button>
-                <button onclick="selectPmuType('moi')" id="btnPmuMoi" class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all">
+                <button onclick="selectPmuType('moi')" id="btnPmuMoi" class="py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all">
                     <span>💋</span>
                     <span>Phun / Khử Thâm Môi</span>
                 </button>
@@ -66,46 +69,46 @@
         </section>
 
         <!-- 2B. NHẬP TÊN SẢN PHẨM / MÓN ĂN -->
-        <section id="customDishBox" class="hidden bg-gradient-to-br from-slate-900 to-slate-900/60 rounded-2xl border border-amber-500/30 p-3.5 space-y-2.5 shadow-lg">
+        <section id="customDishBox" class="hidden bg-gradient-to-br from-slate-900 to-slate-900/60 rounded-2xl border border-amber-500/30 p-4 space-y-3 shadow-lg">
             <div class="flex items-center justify-between">
                 <label for="dishNameInput" class="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
                     <span>✍️</span>
                     <span id="dishInputLabel">Nhập tên món từ menu:</span>
                 </label>
-                <span id="activeDishBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">Đã áp dụng</span>
+                <span id="activeDishBadge" class="hidden text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">Đã áp dụng</span>
             </div>
             <div class="flex space-x-2">
-                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-3 py-2.5 text-white placeholder-slate-500 outline-none">
-                <button onclick="applyCustomDish()" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl text-sm whitespace-nowrap active:scale-95 transition-transform">
+                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-3.5 py-3 text-white placeholder-slate-500 outline-none font-medium">
+                <button onclick="applyCustomDish()" class="px-4 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs whitespace-nowrap active:scale-95 transition-transform shadow">
                     Áp dụng
                 </button>
             </div>
-            <div id="quickDishChips" class="flex flex-wrap gap-1.5 pt-0.5"></div>
-            <div id="dishDescriptionBox" class="hidden text-xs text-slate-300 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 italic"></div>
+            <div id="quickDishChips" class="flex flex-wrap gap-1.5 pt-1"></div>
+            <div id="dishDescriptionBox" class="hidden text-xs text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800 italic leading-relaxed"></div>
         </section>
 
         <!-- 3. QUY TRÌNH 4 CÔNG ĐOẠN -->
-        <section class="space-y-2">
+        <section class="space-y-2.5">
             <div class="flex items-center justify-between">
-                <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">2. Quy Trình 4 Công Đoạn (~45s)</label>
-                <span id="stepProgressText" class="text-xs text-rose-400 font-bold">Bước 1 / 4</span>
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Quy Trình 4 Công Đoạn (~45s)</label>
+                <span id="stepProgressText" class="text-xs text-rose-400 font-extrabold">Bước 1 / 4</span>
             </div>
             <div class="grid grid-cols-4 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800" id="stepTabs"></div>
         </section>
 
-        <!-- 4. NỘI DUNG CHI TIẾT & NÚT QUAY TỪNG ĐOẠN -->
+        <!-- 4. NỘI DUNG CHI TIẾT & BỘ CHỌN HOOK HOT TREND -->
         <section id="stepContentContainer" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 space-y-4 shadow-xl"></section>
 
         <!-- 5. GỢI Ý TIÊU ĐỀ & HASHTAG -->
-        <section class="bg-gradient-to-br from-slate-900 to-indigo-950/30 rounded-2xl border border-indigo-500/30 p-4 space-y-3 shadow-xl">
+        <section class="bg-gradient-to-br from-slate-900 to-indigo-950/30 rounded-2xl border border-indigo-500/30 p-4 space-y-3.5 shadow-xl">
             <div class="flex items-center justify-between">
-                <h3 class="text-xs font-bold text-indigo-300 flex items-center space-x-1.5">
+                <h3 class="text-xs font-extrabold text-indigo-300 flex items-center space-x-1.5">
                     <span>🚀</span>
-                    <span>Gợi Ý Tiêu Đề & Hashtag Đăng TikTok</span>
+                    <span>Gợi Ý Tiêu Đề & 5 Hashtag Theo Tên Món</span>
                 </h3>
-                <button onclick="copyCaptionAndHashtags()" id="copyCaptionBtn" class="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-lg font-bold">📋 Chép tất cả</button>
+                <button onclick="copyCaptionAndHashtags()" id="copyCaptionBtn" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-bold shadow">📋 Chép tất cả</button>
             </div>
-            <div class="space-y-2" id="captionListContainer"></div>
+            <div class="space-y-2.5" id="captionListContainer"></div>
         </section>
 
     </main>
@@ -113,19 +116,19 @@
     <!-- MODAL HƯỚNG DẪN CAPCUT -->
     <div id="capcutGuideModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col hidden">
         <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
-            <div class="flex items-center space-x-2">
-                <span class="text-xl">🎬</span>
+            <div class="flex items-center space-x-2.5">
+                <span class="text-2xl">🎬</span>
                 <div>
-                    <h2 class="font-bold text-sm text-white">Cẩm Nang Dựng CapCut Free</h2>
-                    <p class="text-[11px] text-slate-400">Cách ghép các đoạn 3s thành video 45s hoàn chỉnh</p>
+                    <h2 class="font-extrabold text-sm text-white">Cẩm Nang Dựng CapCut Free</h2>
+                    <p class="text-xs text-slate-400">Cách ghép & cắt bớt 2 đầu video chuẩn 3s</p>
                 </div>
             </div>
-            <button onclick="closeCapcutGuideModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">✕</button>
+            <button onclick="closeCapcutGuideModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-lg">✕</button>
         </div>
         <div class="grid grid-cols-5 gap-1 p-2 bg-slate-900/60 border-b border-slate-800 text-center" id="capcutTabBar"></div>
         <div id="capcutGuideBody" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
         <div class="p-4 bg-slate-900 border-t border-slate-800">
-            <button onclick="closeCapcutGuideModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm">
+            <button onclick="closeCapcutGuideModal()" class="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-extrabold rounded-xl text-sm shadow">
                 Đã hiểu, quay lại làm video
             </button>
         </div>
@@ -135,22 +138,22 @@
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
         <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
-            <div class="bg-black/65 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/15 text-center">
+            <div class="bg-black/65 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15 text-center">
                 <span id="camClipTitle" class="text-xs font-bold text-rose-400 block">Đang quay: Đoạn 1</span>
-                <span id="camTimer" class="text-xs font-mono text-white">00:00 / 03s (Tự lưu khi đủ 3s)</span>
+                <span id="camTimer" class="text-xs font-mono text-white font-bold">00:00 / 05s (Trừ hao cắt bớt còn 3s)</span>
             </div>
             <button id="switchCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center text-sm backdrop-blur-md">🔄</button>
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-food"></video>
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
             <div class="absolute top-20 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
-                <button onclick="setFilter('food', this)" class="filter-chip px-3 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold shadow border border-rose-400">🍔 Món Ngon</button>
-                <button onclick="setFilter('beauty', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">✨ Mịn Da</button>
-                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">🎥 Điện Ảnh</button>
-                <button onclick="setFilter('none', this)" class="filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700">Gốc</button>
+                <button onclick="setFilter('beauty', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-extrabold shadow border border-rose-400">✨ Mịn Da / Mờ Hậu Cảnh</button>
+                <button onclick="setFilter('food', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">🍔 Món Ngon</button>
+                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">🎥 Điện Ảnh</button>
+                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700">Gốc</button>
             </div>
 
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
@@ -161,15 +164,15 @@
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-52 h-52 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
-                        <span class="text-2xl animate-bounce">🎥</span>
-                        <span id="arGuideText" class="text-xs font-bold text-white drop-shadow">Quay chuyển động mượt mà 3 giây</span>
+                    <div class="w-56 h-56 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
+                        <span class="text-3xl animate-bounce">🎥</span>
+                        <span id="arGuideText" class="text-xs font-extrabold text-white drop-shadow">Quay 5 giây (về cắt bớt 2 đầu còn 3s)</span>
                     </div>
                 </div>
 
-                <div class="bg-slate-950/90 backdrop-blur-md p-3.5 rounded-2xl border border-rose-500/40 text-center z-20 pointer-events-none space-y-1 shadow-2xl">
-                    <p id="camActionGuide" class="text-xs text-slate-100 font-medium leading-relaxed"></p>
-                    <p id="camSpeechPrompt" class="text-[11px] text-amber-300 italic"></p>
+                <div class="bg-slate-950/90 backdrop-blur-md p-4 rounded-2xl border border-rose-500/40 text-center z-20 pointer-events-none space-y-1.5 shadow-2xl">
+                    <p id="camActionGuide" class="text-xs text-slate-100 font-bold leading-relaxed"></p>
+                    <p id="camSpeechPrompt" class="text-xs text-amber-300 italic font-semibold"></p>
                 </div>
             </div>
         </div>
@@ -188,10 +191,11 @@
     <script>
         let currentCatIndex = 0;
         let currentStepIndex = 0;
+        let currentHookIndex = 0; // Lưu chỉ số Hook đang chọn
         let currentCustomDish = '';
         let currentPmuType = 'may';
         let currentCapcutTab = 0;
-        let currentFilterClass = 'filter-food';
+        let currentFilterClass = 'filter-beauty';
 
         let activeStepIndex = 0;
         let activeClipIndex = 0;
@@ -212,18 +216,18 @@
 
         function setFilter(filterType, btn) {
             document.querySelectorAll('.filter-chip').forEach(b => {
-                b.className = "filter-chip px-3 py-1 rounded-full bg-slate-900/80 text-slate-300 text-[11px] font-bold shadow border border-slate-700";
+                b.className = "filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/80 text-slate-300 text-xs font-extrabold shadow border border-slate-700";
             });
-            btn.className = "filter-chip px-3 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold shadow border border-rose-400";
+            btn.className = "filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-extrabold shadow border border-rose-400";
 
             const videoEl = document.getElementById('liveVideo');
             videoEl.className = "absolute inset-0 w-full h-full object-cover";
-            if (filterType === 'food') {
-                currentFilterClass = 'filter-food';
-                videoEl.classList.add('filter-food');
-            } else if (filterType === 'beauty') {
+            if (filterType === 'beauty') {
                 currentFilterClass = 'filter-beauty';
                 videoEl.classList.add('filter-beauty');
+            } else if (filterType === 'food') {
+                currentFilterClass = 'filter-food';
+                videoEl.classList.add('filter-food');
             } else if (filterType === 'cinematic') {
                 currentFilterClass = 'filter-cinematic';
                 videoEl.classList.add('filter-cinematic');
@@ -235,15 +239,14 @@
         function renderCategories() {
             const container = document.getElementById('categoryGrid');
             container.innerHTML = categoriesData.map((cat, idx) => {
-                // Nếu là phần tử cuối (mục thứ 5), cho nó trải full 2 cột
                 const isLast = idx === categoriesData.length - 1 && categoriesData.length % 2 !== 0;
                 const spanClass = isLast ? 'col-span-2' : '';
                 return `
-                    <button onclick="selectCategory(${idx})" class="${spanClass} p-3 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/60 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
-                        <span class="text-2xl">${cat.icon}</span>
+                    <button onclick="selectCategory(${idx})" class="${spanClass} p-3.5 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/60 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
+                        <span class="text-3xl">${cat.icon}</span>
                         <div>
-                            <h3 class="font-bold text-xs text-white">${cat.name}</h3>
-                            <p class="text-[10px] text-slate-400 line-clamp-1">${cat.desc}</p>
+                            <h3 class="font-extrabold text-xs text-white leading-snug">${cat.name}</h3>
+                            <p class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${cat.desc}</p>
                         </div>
                     </button>
                 `;
@@ -253,6 +256,7 @@
         function selectCategory(index) {
             currentCatIndex = index;
             currentStepIndex = 0;
+            currentHookIndex = 0; // Reset về Hook đầu tiên của danh mục mới
             currentCustomDish = '';
             document.getElementById('dishNameInput').value = '';
             document.getElementById('activeDishBadge').classList.add('hidden');
@@ -263,9 +267,26 @@
                 cat.steps = pmuSubData[currentPmuType].steps;
             }
 
+            syncHookToStep();
             renderCategories();
             renderSubControls();
             renderStepTabs();
+            renderStepContent();
+            renderCaptions();
+        }
+
+        // Đồng bộ Hook đang chọn vào Bước 1 của chuyên mục hiện tại
+        function syncHookToStep() {
+            const cat = categoriesData[currentCatIndex];
+            const availableHooks = hooksLibrary[cat.id];
+            if (availableHooks && availableHooks[currentHookIndex]) {
+                cat.steps[0].clips = availableHooks[currentHookIndex].clips;
+            }
+        }
+
+        function selectHook(hookIdx) {
+            currentHookIndex = hookIdx;
+            syncHookToStep();
             renderStepContent();
         }
 
@@ -280,7 +301,7 @@
                 document.getElementById('dishNameInput').placeholder = cat.placeholder;
                 const chipsContainer = document.getElementById('quickDishChips');
                 chipsContainer.innerHTML = cat.quickDishes.map(dish => `
-                    <button onclick="selectQuickDish('${dish}')" class="text-[11px] px-2.5 py-1 rounded-full border transition-colors ${currentCustomDish === dish ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold' : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-amber-500/40'}">
+                    <button onclick="selectQuickDish('${dish}')" class="text-xs px-3 py-1.5 rounded-full border transition-colors font-bold ${currentCustomDish === dish ? 'bg-amber-500 text-slate-950 border-amber-400 font-black' : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-amber-500/40'}">
                         + ${dish}
                     </button>
                 `).join('');
@@ -297,11 +318,11 @@
                 badge.innerText = pmuSubData[currentPmuType].label;
 
                 if (currentPmuType === 'may') {
-                    btnMay.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
-                    btnMoi.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
+                    btnMay.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
+                    btnMoi.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
                 } else {
-                    btnMoi.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
-                    btnMay.className = 'py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
+                    btnMoi.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/25';
+                    btnMay.className = 'py-3 px-3 rounded-xl border text-xs font-extrabold flex items-center justify-center space-x-2 transition-all bg-slate-950 text-slate-300 border-slate-800 hover:border-rose-500/40';
                 }
             } else {
                 pmuBox.classList.add('hidden');
@@ -311,6 +332,7 @@
         function selectPmuType(type) {
             currentPmuType = type;
             categoriesData[currentCatIndex].steps = pmuSubData[type].steps;
+            syncHookToStep();
             renderSubControls();
             renderStepContent();
         }
@@ -330,7 +352,7 @@
                 badge.innerText = `Đã chọn: ${currentCustomDish}`;
                 badge.classList.remove('hidden');
 
-                let keyNorm = currentCustomDish.toLowerCase();
+                let keyNorm = currentCustomDish.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 let foundDesc = "Món ngon độc quyền tại Kim Bling Coffee & Tea.";
                 for (let k in descriptionsMap) {
                     if (keyNorm.includes(k)) {
@@ -345,6 +367,7 @@
                 descBox.classList.add('hidden');
             }
             renderStepContent();
+            renderCaptions();
         }
 
         document.getElementById('dishNameInput').addEventListener('keydown', (e) => {
@@ -363,7 +386,7 @@
         function renderStepTabs() {
             const container = document.getElementById('stepTabs');
             container.innerHTML = [0, 1, 2, 3].map((idx) => `
-                <button onclick="selectStep(${idx})" class="py-2.5 rounded-xl text-xs font-bold transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'text-slate-400 hover:text-white bg-slate-950/40'}">
+                <button onclick="selectStep(${idx})" class="py-3 rounded-xl text-xs font-extrabold transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'text-slate-400 hover:text-white bg-slate-950/40'}">
                     Bước ${idx + 1}
                 </button>
             `).join('');
@@ -377,32 +400,58 @@
         }
 
         function renderStepContent() {
+            const cat = categoriesData[currentCatIndex];
             const steps = getCurrentStepsData();
             const step = steps[currentStepIndex];
             const container = document.getElementById('stepContentContainer');
 
+            // Nếu đang ở Bước 1 (Hook), hiển thị thêm bộ chọn 5 Hook Hot Trend
+            let hookSelectorHtml = '';
+            if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
+                const hooksList = hooksLibrary[cat.id];
+                hookSelectorHtml = `
+                    <div class="bg-slate-950/90 p-3.5 rounded-xl border border-rose-500/30 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-rose-400 flex items-center space-x-1.5">
+                                <span>🔥</span>
+                                <span>Chọn Kiểu Mở Đầu (Hook Hot Trend):</span>
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-semibold">${currentHookIndex + 1} / ${hooksList.length} mẫu</span>
+                        </div>
+                        <div class="flex space-x-2 overflow-x-auto pb-1 no-scrollbar">
+                            ${hooksList.map((h, idx) => `
+                                <button onclick="selectHook(${idx})" class="shrink-0 p-2.5 rounded-xl border text-left transition-all w-44 ${idx === currentHookIndex ? 'bg-rose-500/20 border-rose-500 text-white shadow' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'}">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${idx === currentHookIndex ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-300'}">${h.badge}</span>
+                                    <p class="text-xs font-bold mt-1.5 line-clamp-2 leading-snug ${idx === currentHookIndex ? 'text-white' : 'text-slate-300'}">${h.title}</p>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
             let clipsHtml = '';
             if (step.clips && step.clips.length > 0) {
                 clipsHtml = `
-                    <div class="space-y-2.5 pt-1">
-                        <div class="text-xs font-extrabold text-amber-400 flex items-center space-x-1.5">
-                            <span>🎞️ Các đoạn clip ngắn 3 giây (Bấm quay riêng từng đoạn):</span>
+                    <div class="space-y-3 pt-1">
+                        <div class="text-xs font-black text-amber-400 flex items-center space-x-1.5">
+                            <span>🎞️ Các đoạn clip ngắn (Quay 5s, cắt bớt còn 3s):</span>
                         </div>
-                        <div class="space-y-2.5">
+                        <div class="space-y-3">
                             ${step.clips.map((c, i) => {
                                 let speechText = typeof c.speech === 'function' ? c.speech(currentCustomDish) : c.speech;
                                 return `
-                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <span class="text-xs font-bold text-rose-300 block">${c.name}</span>
-                                            <span class="text-[10px] text-slate-400">🎯 Thao tác: ${c.motionGuide}</span>
+                                            <span class="text-xs font-extrabold text-rose-300 block">${c.name}</span>
+                                            <span class="text-[11px] text-slate-400 font-medium">🎯 Thao tác: ${c.motionGuide}</span>
                                         </div>
-                                        <button onclick="openCameraModal(${currentStepIndex}, ${i})" class="px-3 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-lg text-xs flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
+                                        <button onclick="openCameraModal(${currentStepIndex}, ${i})" class="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
                                             <span>🔴 Quay đoạn này</span>
                                         </button>
                                     </div>
-                                    <div class="text-[11px] text-slate-200 bg-slate-900 p-2 rounded border border-slate-800/80">
+                                    <div class="text-xs text-slate-200 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 leading-relaxed">
                                         💬 <em>Thoại:</em> ${speechText}
                                     </div>
                                 </div>
@@ -414,35 +463,42 @@
 
             container.innerHTML = `
                 <div class="flex items-center justify-between">
-                    <span class="px-2.5 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-bold text-xs rounded-lg">${step.time} (~45s tổng video)</span>
-                    <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-xs text-sky-400 font-semibold underline">📖 Xem cách dựng CapCut</button>
+                    <span class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-lg">${step.time} (~45s tổng video)</span>
+                    <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-xs text-sky-400 font-bold underline">📖 Xem hướng dẫn CapCut</button>
                 </div>
                 <div>
-                    <h2 class="text-base font-bold text-white mb-1">${step.title}</h2>
+                    <h2 class="text-base font-extrabold text-white mb-1">${step.title}</h2>
                 </div>
+                ${hookSelectorHtml}
                 ${clipsHtml}
             `;
         }
 
         function renderCaptions() {
             const container = document.getElementById('captionListContainer');
+            const cat = categoriesData[currentCatIndex];
+            const tags = getDynamicHashtags(currentCustomDish, cat.name);
+
             container.innerHTML = viralCaptions.map((cap, i) => `
-                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 flex items-start justify-between space-x-2">
-                    <p class="text-xs text-slate-200 leading-relaxed"><strong class="text-indigo-400">#${i + 1}:</strong> "${cap}"</p>
-                    <button onclick="copySingleCaption(${i})" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded shrink-0">Chép</button>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 flex items-start justify-between space-x-2">
+                    <p class="text-xs text-slate-200 leading-relaxed font-medium"><strong class="text-indigo-400 font-bold">#${i + 1}:</strong> "${cap}" <span class="text-amber-300 font-bold block mt-1">${tags.join(' ')}</span></p>
+                    <button onclick="copySingleCaption(${i})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold shrink-0">Chép</button>
                 </div>
             `).join('');
         }
 
         function copySingleCaption(index) {
-            const text = viralCaptions[index];
-            const hashtags = " #kimblingcoffeetea #ancuchat #reviewanngon #ghienmontrend #xuhuongtiktok";
-            navigator.clipboard.writeText(text + hashtags);
-            alert(`Đã sao chép tiêu đề #${index + 1} kèm hashtag!`);
+            const cat = categoriesData[currentCatIndex];
+            const tags = getDynamicHashtags(currentCustomDish, cat.name);
+            const text = viralCaptions[index] + "\n\n" + tags.join(' ');
+            navigator.clipboard.writeText(text);
+            alert(`Đã sao chép tiêu đề #${index + 1} kèm 5 hashtag!`);
         }
 
         function copyCaptionAndHashtags() {
-            const allText = viralCaptions.join("\n\n") + "\n\n#kimblingcoffeetea #ancuchat #reviewanngon #ghienmontrend #xuhuongtiktok";
+            const cat = categoriesData[currentCatIndex];
+            const tags = getDynamicHashtags(currentCustomDish, cat.name);
+            const allText = viralCaptions.map(c => c + "\n" + tags.join(' ')).join("\n\n");
             navigator.clipboard.writeText(allText);
             const btn = document.getElementById('copyCaptionBtn');
             btn.innerText = '✅ Đã chép tất cả!';
@@ -467,7 +523,7 @@
         function renderCapcutGuideModal() {
             const tabBar = document.getElementById('capcutTabBar');
             tabBar.innerHTML = capcutDetailedGuides.map((g, idx) => `
-                <button onclick="selectCapcutTab(${idx})" class="py-2 px-1 rounded-lg text-[10px] font-bold transition-all ${idx === currentCapcutTab ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
+                <button onclick="selectCapcutTab(${idx})" class="py-2.5 px-1 rounded-lg text-xs font-extrabold transition-all ${idx === currentCapcutTab ? 'bg-sky-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'}">
                     ${g.tabTitle}
                 </button>
             `).join('');
@@ -475,18 +531,18 @@
             const guide = capcutDetailedGuides[currentCapcutTab];
             const body = document.getElementById('capcutGuideBody');
             body.innerHTML = `
-                <div class="bg-sky-500/10 border border-sky-500/25 rounded-2xl p-3.5">
-                    <h3 class="text-sm font-bold text-sky-300 leading-snug">${guide.heading}</h3>
+                <div class="bg-sky-500/10 border border-sky-500/25 rounded-2xl p-4">
+                    <h3 class="text-xs font-bold text-sky-300 leading-snug">${guide.heading}</h3>
                 </div>
                 <div class="space-y-3">
                     ${guide.steps.map((st, i) => `
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-start space-x-3">
-                            <div class="w-6 h-6 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-start space-x-3">
+                            <div class="w-7 h-7 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
                                 ${i + 1}
                             </div>
                             <div class="space-y-1">
-                                <h4 class="text-xs font-bold text-white">${st.title}</h4>
-                                <p class="text-xs text-slate-300 leading-relaxed">${st.detail}</p>
+                                <h4 class="text-xs font-extrabold text-white">${st.title}</h4>
+                                <p class="text-xs text-slate-300 leading-relaxed font-medium">${st.detail}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -585,12 +641,12 @@
                 }
 
                 ctx.save();
-                if (currentFilterClass === 'filter-food') {
-                    ctx.filter = 'saturate(1.4) contrast(1.15) brightness(1.05) sepia(0.1)';
-                } else if (currentFilterClass === 'filter-beauty') {
-                    ctx.filter = 'brightness(1.12) contrast(0.95) saturate(1.1) blur(0.2px)';
+                if (currentFilterClass === 'filter-beauty') {
+                    ctx.filter = 'brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px)';
+                } else if (currentFilterClass === 'filter-food') {
+                    ctx.filter = 'saturate(1.45) contrast(1.18) brightness(1.08) sepia(0.08)';
                 } else if (currentFilterClass === 'filter-cinematic') {
-                    ctx.filter = 'contrast(1.25) saturate(1.2) brightness(0.95)';
+                    ctx.filter = 'contrast(1.3) saturate(1.25) brightness(0.95)';
                 }
 
                 ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
@@ -648,11 +704,11 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `KimBling-${activeStepIndex + 1}-${clipName}.mp4`;
+            a.download = `KimBling-5s-${activeStepIndex + 1}-${clipName}.mp4`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            alert(`Đã lưu thành công đoạn clip!`);
+            alert(`Đã lưu thành công đoạn clip 5s (vào CapCut cắt bớt 2 đầu còn 3s)!`);
         }
 
         function setRecordingUI(recording) {
@@ -673,8 +729,8 @@
                 recordingSeconds++;
                 let m = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
                 let s = (recordingSeconds % 60).toString().padStart(2, '0');
-                timerEl.innerText = `${m}:${s} / 03s`;
-                if (recordingSeconds >= 3) {
+                timerEl.innerText = `${m}:${s} / 05s (Trừ hao cắt bớt còn 3s)`;
+                if (recordingSeconds >= 5) {
                     stopRecording();
                 }
             }, 1000);
