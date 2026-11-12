@@ -126,8 +126,9 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 -->
+    <!-- MODAL CAMERA AR 9:16 (Tích hợp Zoom 0.5x/1x/2.5x & Khóa AE/AF) -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
+        <!-- Thanh tiêu đề trên cùng -->
         <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md shadow-lg">✕</button>
             <div class="bg-black/85 backdrop-blur-md px-4 py-2 rounded-2xl border-2 border-white/20 text-center shadow-lg">
@@ -141,22 +142,32 @@
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <div class="absolute top-28 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
-                <button onclick="setFilter('beauty', this)" class="filter-chip px-3.5 py-2 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
-                <button onclick="setFilter('food', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
-                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🎥 Điện Ảnh</button>
-                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
+            <!-- Nút Khóa AE/AF (Chống lóa / Khóa sáng ngược) -->
+            <div class="absolute top-24 inset-x-0 z-30 flex justify-center pointer-events-auto">
+                <button id="lockAeAfBtn" onclick="toggleAeAfLock()" class="px-4 py-1.5 rounded-full bg-slate-900/90 text-amber-400 text-xs font-black shadow-lg border-2 border-amber-500/60 flex items-center space-x-1.5 active:scale-95 transition-all">
+                    <span>🔒</span>
+                    <span id="aeAfText">KHÓA AE/AF</span>
+                </button>
             </div>
 
+            <!-- Thanh chọn bộ lọc màu -->
+            <div class="absolute top-36 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
+                <button onclick="setFilter('beauty', this)" class="filter-chip px-3 py-1.5 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
+                <button onclick="setFilter('food', this)" class="filter-chip px-3 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
+                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🎥 Điện Ảnh</button>
+                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
+            </div>
+
+            <!-- Khung lưới AR & Hướng dẫn trực quan -->
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
-                <div class="absolute inset-x-4 top-40 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+                <div class="absolute inset-x-4 top-48 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div></div><div></div><div></div>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-72 h-56 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/20 backdrop-blur-[2px] space-y-1.5 shadow-xl">
+                    <div class="w-72 h-52 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/20 backdrop-blur-[2px] space-y-1.5 shadow-xl">
                         <span class="text-3xl animate-bounce" id="camModeEmoji">🎯</span>
                         <div class="flex space-x-2">
                             <span id="arDistanceBadge" class="text-xs px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded-full uppercase shadow">Cự ly: 30-40cm</span>
@@ -173,23 +184,33 @@
             </div>
         </div>
 
-        <div class="bg-slate-950 p-5 flex items-center justify-around border-t-2 border-slate-900 z-30 relative">
-            <div class="w-12 text-center">
-                <span class="text-xs text-slate-400 font-bold block">Tự động</span>
-                <span class="text-xs font-black text-amber-400">Đúng giờ</span>
+        <!-- BẢNG ĐIỀU KHIỂN DƯỚI: Zoom 0.5 | 1 | 2.5 & Nút Quay -->
+        <div class="bg-slate-950 p-4 flex flex-col items-center space-y-3 border-t-2 border-slate-900 z-30 relative">
+            <!-- Thanh chọn mức Zoom cơ học (0.5x | 1x | 2.5x) -->
+            <div class="flex space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
+                <button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">0,5</button>
+                <button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button>
+                <button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">2,5</button>
             </div>
-            <button id="recordBtn" class="w-22 h-22 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
-                <div id="recordInnerBtn" class="w-18 h-18 bg-rose-500 rounded-full transition-all duration-300"></div>
-            </button>
-            <div class="w-12 flex justify-center">
-                <button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button>
+
+            <!-- Nút bấm quay & phụ trợ -->
+            <div class="w-full flex items-center justify-around">
+                <div class="w-12 text-center">
+                    <span class="text-xs text-slate-400 font-bold block">Tự động</span>
+                    <span class="text-xs font-black text-amber-400">Đúng giờ</span>
+                </div>
+                <button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
+                    <div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div>
+                </button>
+                <div class="w-12 flex justify-center">
+                    <button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL STUDIO CẮT SỬA (ĐÃ KHẮC PHỤC LỖI TRÀN HÌNH & THẤY RÕ CÔNG CỤ) -->
+    <!-- MODAL STUDIO CẮT SỬA & HIỆU CHỈNH VIDEO -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden overflow-hidden">
-        <!-- Header Modal -->
         <div class="flex items-center justify-between p-4 bg-slate-900 border-b-2 border-slate-800 shrink-0">
             <div class="flex items-center space-x-3">
                 <span class="text-2xl">✂️</span>
@@ -201,14 +222,11 @@
             <button onclick="closeEditorModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-lg">✕</button>
         </div>
 
-        <!-- Thân Modal cuộn dọc (Giúp hiển thị trọn vẹn video nhỏ gọn và đầy đủ công cụ bên dưới) -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4 max-w-md mx-auto w-full">
-            <!-- Khung video thu gọn vừa vặn tỷ lệ 9:16 -->
             <div class="w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-800 shadow-xl max-h-[42vh]">
                 <video id="previewVideo" controls playsinline class="w-full h-auto max-h-[42vh] object-contain"></video>
             </div>
 
-            <!-- Mục Cắt Video (Trim) -->
             <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-rose-500/40 space-y-2.5">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-black text-rose-300 flex items-center space-x-1">
@@ -237,7 +255,6 @@
                 </div>
             </div>
 
-            <!-- Điều chỉnh Sáng & Tương phản -->
             <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-3">
                 <div class="space-y-1">
                     <div class="flex justify-between text-xs font-black">
@@ -255,7 +272,6 @@
                 </div>
             </div>
 
-            <!-- Nút thao tác dưới cùng -->
             <div class="flex space-x-3 pt-1 pb-4">
                 <button onclick="closeEditorModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-xs shadow-lg">
                     Quay lại
@@ -290,6 +306,8 @@
         let recordedBlobUrl = null;
         let recordedRawBlob = null;
         let videoDuration = 0;
+        let currentZoom = 1.0;
+        let isAeAfLocked = false;
 
         function initApp() {
             renderCategories();
@@ -301,9 +319,9 @@
 
         function setFilter(filterType, btn) {
             document.querySelectorAll('.filter-chip').forEach(b => {
-                b.className = "filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap";
+                b.className = "filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap";
             });
-            btn.className = "filter-chip px-3.5 py-2 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap";
+            btn.className = "filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap";
 
             const videoEl = document.getElementById('liveVideo');
             videoEl.className = "absolute inset-0 w-full h-full object-cover";
@@ -318,6 +336,60 @@
                 videoEl.classList.add('filter-cinematic');
             } else {
                 currentFilterClass = 'filter-none';
+            }
+        }
+
+        // TÍNH NĂNG ZOOM CƠ HỌC (0.5x | 1x | 2.5x)
+        function setZoomLevel(zoom, btn) {
+            currentZoom = zoom;
+            document.querySelectorAll('.zoom-btn').forEach(b => {
+                b.className = "zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all";
+            });
+            btn.className = "zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all";
+
+            const videoEl = document.getElementById('liveVideo');
+            videoEl.style.transform = `scale(${zoom})`;
+
+            // Áp dụng zoom cứng vào track camera nếu thiết bị hỗ trợ
+            if (mediaStream) {
+                const track = mediaStream.getVideoTracks()[0];
+                if (track) {
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.zoom) {
+                        track.applyConstraints({ advanced: [{ zoom: zoom }] }).catch(err => console.log(err));
+                    }
+                }
+            }
+        }
+
+        // TÍNH NĂNG KHÓA SÁNG & LẤY NÉT (AE/AF LOCK)
+        function toggleAeAfLock() {
+            isAeAfLocked = !isAeAfLocked;
+            const btn = document.getElementById('lockAeAfBtn');
+            const txt = document.getElementById('aeAfText');
+            if (isAeAfLocked) {
+                btn.className = "px-4 py-1.5 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-lg border-2 border-amber-300 flex items-center space-x-1.5 active:scale-95 transition-all";
+                txt.innerText = "ĐÃ KHÓA AE/AF";
+                // Khóa exposure/focus nếu track hỗ trợ
+                if (mediaStream) {
+                    const track = mediaStream.getVideoTracks()[0];
+                    if (track) {
+                        track.applyConstraints({
+                            advanced: [{ exposureMode: 'locked', focusMode: 'locked' }]
+                        }).catch(e => {});
+                    }
+                }
+            } else {
+                btn.className = "px-4 py-1.5 rounded-full bg-slate-900/90 text-amber-400 text-xs font-black shadow-lg border-2 border-amber-500/60 flex items-center space-x-1.5 active:scale-95 transition-all";
+                txt.innerText = "KHÓA AE/AF";
+                if (mediaStream) {
+                    const track = mediaStream.getVideoTracks()[0];
+                    if (track) {
+                        track.applyConstraints({
+                            advanced: [{ exposureMode: 'continuous', focusMode: 'continuous' }]
+                        }).catch(e => {});
+                    }
+                }
             }
         }
 
@@ -689,6 +761,8 @@
             document.getElementById('arAngleBadge').innerText = angleStr;
             document.getElementById('cameraModal').classList.remove('hidden');
 
+            // Reset zoom về 1x khi mở camera
+            setZoomLevel(1.0, document.getElementById('zoomBtn1'));
             await startCamera(currentFacingMode);
         }
 
@@ -783,6 +857,11 @@
                 } else if (currentFilterClass === 'filter-cinematic') {
                     ctx.filter = 'contrast(1.3) saturate(1.25) brightness(0.95)';
                 }
+
+                // Hỗ trợ scale zoom trực tiếp vào canvas khi quay
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.scale(currentZoom, currentZoom);
+                ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
                 ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
@@ -902,11 +981,11 @@
         function setRecordingUI(recording) {
             const inner = document.getElementById('recordInnerBtn');
             if (recording) {
-                inner.classList.remove('rounded-full', 'w-18', 'h-18', 'bg-rose-500');
+                inner.classList.remove('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
                 inner.classList.add('rounded-xl', 'w-10', 'h-10', 'bg-white');
             } else {
                 inner.classList.remove('rounded-xl', 'w-10', 'h-10', 'bg-white');
-                inner.classList.add('rounded-full', 'w-18', 'h-18', 'bg-rose-500');
+                inner.classList.add('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
             }
         }
 
