@@ -124,39 +124,189 @@ const descriptionsMap = {
 
 const hooksLibrary = {
     'tra-sua-cafe': [
-        { id: 'hook-canh-bao', badge: '🔥 Trend Cảnh Báo', title: 'Cảnh báo gây nghiện cực mạnh', speech: (dish) => `"Cảnh báo! Đừng uống thử ${dish || 'món này'} nếu không muốn nghiện từ ngụm đầu!"` },
-        { id: 'hook-asmr', badge: '🎧 Trend ASMR', title: 'Cận cảnh âm thanh đá & rót trà', speech: (dish) => `"(Tiếng đá rào rào) Trời nóng thế này pha ngay một ly ${dish || 'đặc biệt'} mát lạnh!"` },
-        { id: 'hook-thach-thuc', badge: '💥 Trend Thách Thức', title: 'Thử thách tìm quán ngon hơn', speech: (dish) => `"Đố các bác tìm được ở đâu bán ${dish || 'món này'} mà topping ngập tràn như Kim Bling!"` },
-        { id: 'hook-tam-su', badge: '🥺 Trend Tâm Sự', title: 'Kể chuyện tâm huyết làm nghề', speech: (dish) => `"Nhiều khách hỏi sao ${dish || 'món này'} bên quán lúc nào cũng đông khách đặt thế..."` },
-        { id: 'hook-gia-soc', badge: '💸 Trend Giá Sốc', title: 'Bất ngờ với mức giá siêu hời', speech: (dish) => `"Tin được không? Một ly ${dish || 'siêu to khổng lồ'} đầy ú ụ thế này mà giá siêu rẻ!"` }
+        { 
+            id: 'hook-canh-bao', 
+            badge: '🔥 Trend Cảnh Báo', 
+            title: 'Cảnh báo gây nghiện cực mạnh', 
+            speech: (dish) => `"Cảnh báo! Đừng uống thử ${dish || 'món này'} nếu không muốn nghiện từ ngụm đầu!"`,
+            motionGuide: "⚡ [Động tác Cảnh Báo]: Đặt máy thấp góc 45 độ, hất ngược máy hướng mạnh lên mặt ly trong 1s đầu tạo bất ngờ, sau đó giữ tĩnh."
+        },
+        { 
+            id: 'hook-asmr', 
+            badge: '🎧 Trend ASMR', 
+            title: 'Cận cảnh âm thanh đá & rót trà', 
+            speech: (dish) => `"(Tiếng đá rào rào) Trời nóng thế này pha ngay một ly ${dish || 'đặc biệt'} mát lạnh!"`,
+            motionGuide: "🛡️ [Động tác ASMR]: Kê máy cực gần (cự ly 15cm), giữ tay tuyệt đối tĩnh, tập trung toàn bộ vào bọt trà và đá lạnh chuyển động."
+        },
+        { 
+            id: 'hook-thach-thuc', 
+            badge: '💥 Trend Thách Thức', 
+            title: 'Thử thách tìm quán ngon hơn', 
+            speech: (dish) => `"Đố các bác tìm được ở đâu bán ${dish || 'món này'} mà topping ngập tràn như Kim Bling!"`,
+            motionGuide: "⚡ [Động tác Thách Thức]: Đưa máy ở xa (50cm), lao nhanh dứt khoát thẳng vào giữa lòng ly trong 1 giây tạo độ phóng lớn trực diện."
+        },
+        { 
+            id: 'hook-tam-su', 
+            badge: '🥺 Trend Tâm Sự', 
+            title: 'Kể chuyện tâm huyết làm nghề', 
+            speech: (dish) => `"Nhiều khách hỏi sao ${dish || 'món này'} bên quán lúc nào cũng đông khách đặt thế..."`,
+            motionGuide: "🛡️ [Động tác Tâm Sự]: Góc máy ngang tầm mắt, lia máy chậm rãi từ trái sang phải lướt qua ly nước và quầy bar ấm cúng."
+        },
+        { 
+            id: 'hook-gia-soc', 
+            badge: '💸 Trend Giá Sốc', 
+            title: 'Bất ngờ với mức giá siêu hời', 
+            speech: (dish) => `"Tin được không? Một ly ${dish || 'siêu to khổng lồ'} đầy ú ụ thế này mà giá siêu rẻ!"`,
+            motionGuide: "⚡ [Động tác Giá Sốc]: Giật nhẹ máy 2 nhịp sang ngang thu hút sự chú ý, sau đó zoom cận cảnh vào lớp topping đầy ắp."
+        }
     ],
     'an-vat-nuong': [
-        { id: 'hook-keo-soi', badge: '🧀 Trend Kéo Sợi', title: 'Cận cảnh phô mai / sốt chảy', speech: (dish) => `"Nhìn sợi phô mai kéo dài thế này thì ai mà chịu nổi với món ${dish || 'này'} cơ chứ!"` },
-        { id: 'hook-xeo-xeo', badge: '🔥 Trend Xèo Xèo', title: 'Âm thanh nướng/chiên giòn rụm', speech: (dish) => `"(Tiếng xèo xèo) Nghe tiếng ${dish || 'đồ ăn'} chín vàng trên bếp thôi là réo ầm ĩ rồi!"` },
-        { id: 'hook-hoi-dap', badge: '💬 Trend Hỏi Đáp', title: 'Trả lời bình luận của khách', speech: (dish) => `"Có bạn hỏi quán em có bán ${dish || 'món này'} ship tận nơi không? Có luôn nha!"` },
-        { id: 'hook-canh-bao-an', badge: '🚨 Trend Cấm Xem Đêm', title: 'Cảnh báo cấm xem sau 10h đêm', speech: (dish) => `"Ai đang giảm cân hoặc xem clip này sau 10 giờ đêm thì lướt qua gấp món ${dish || 'này'} nhé!"` },
-        { id: 'hook-full-topping', badge: '🍖 Trend Đầy Ú Ụ', title: 'Bóc giá phần ăn siêu nhiều', speech: (dish) => `"Đố các bác đoán được phần ${dish || 'ăn vặt'} đầy ú ụ như núi này bao nhiêu tiền?"` }
+        { 
+            id: 'hook-keo-soi', 
+            badge: '🧀 Trend Kéo Sợi', 
+            title: 'Cận cảnh phô mai / sốt chảy', 
+            speech: (dish) => `"Nhìn sợi phô mai kéo dài thế này thì ai mà chịu nổi với món ${dish || 'này'} cơ chứ!"`,
+            motionGuide: "⚡ [Động tác Kéo Sợi]: Dùng đũa/nĩa gắp miếng ăn kéo lên cao đồng thời kéo máy dịch chuyển theo nhịp đũa."
+        },
+        { 
+            id: 'hook-xeo-xeo', 
+            badge: '🔥 Trend Xèo Xèo', 
+            title: 'Âm thanh nướng/chiên giòn rụm', 
+            speech: (dish) => `"(Tiếng xèo xèo) Nghe tiếng ${dish || 'đồ ăn'} chín vàng trên bếp thôi là réo ầm ĩ rồi!"`,
+            motionGuide: "🛡️ [Động tác ASMR Bếp]: Đặt máy cách chảo/đĩa 20cm, giữ tĩnh tuyệt đối để thu trọn âm thanh xèo xèo chân thực nhất."
+        },
+        { 
+            id: 'hook-hoi-dap', 
+            badge: '💬 Trend Hỏi Đáp', 
+            title: 'Trả lời bình luận của khách', 
+            speech: (dish) => `"Có bạn hỏi quán em có bán ${dish || 'món này'} ship tận nơi không? Có luôn nha!"`,
+            motionGuide: "🛡️ [Động tác Hỏi Đáp]: Góc máy nghiêng 45 độ, đưa tay chỉ vào đĩa đồ ăn nóng hổi rồi lướt nhẹ toàn cảnh phần ăn."
+        },
+        { 
+            id: 'hook-canh-bao-an', 
+            badge: '🚨 Trend Cấm Xem Đêm', 
+            title: 'Cảnh báo cấm xem sau 10h đêm', 
+            speech: (dish) => `"Ai đang giảm cân hoặc xem clip này sau 10 giờ đêm thì lướt qua gấp món ${dish || 'này'} nhé!"`,
+            motionGuide: "⚡ [Động tác Cấm Xem Đêm]: Lao nhanh máy từ trên cao xuống thẳng đĩa đồ ăn bốc khói trong 1s tạo cảm giác thèm thuồng."
+        },
+        { 
+            id: 'hook-full-topping', 
+            badge: '🍖 Trend Đầy Ú Ụ', 
+            title: 'Bóc giá phần ăn siêu nhiều', 
+            speech: (dish) => `"Đố các bác đoán được phần ${dish || 'ăn vặt'} đầy ú ụ như núi này bao nhiêu tiền?"`,
+            motionGuide: "⚡ [Động tác Đầy Ú Ụ]: Hất máy giật mạnh 1 nhịp sang trái rồi dừng ngay vào góc cận cảnh phần sốt bóng bẩy."
+        }
     ],
     'phun-xam-tham-my': [
-        { id: 'hook-lot-xac', badge: '✨ Trend Lột Xác', title: 'Biến hình Trước & Sau ngoạn mục', speech: () => '"Chân mày thưa nhạt, môi thâm xỉn khiến chị em mất tự tin khi để mặt mộc..."' },
-        { id: 'hook-sai-lam', badge: '⚠️ Trend Cảnh Báo', title: '3 sai lầm khi đi phun xăm', speech: () => '"Đừng vội đi phun mày, phun môi nếu chưa biết 3 điều cực kỳ quan trọng này!"' },
-        { id: 'hook-khong-dau', badge: '😴 Trend Ngủ Quên', title: 'Làm đẹp êm như đi spa', speech: () => '"Ai bảo đi phun xăm đau sưng? Khách nhà em còn nằm ngủ quên luôn đây này!"' },
-        { id: 'hook-sua-loi', badge: '🛠️ Trend Giải Cứu', title: 'Giải cứu ca mày/môi hỏng', speech: () => '"Tiếp nhận một ca khách làm hỏng ở nơi khác tới cầu cứu Kim Bling..."' },
-        { id: 'hook-uu-dai-lam-dep', badge: '🎁 Trend Ưu Đãi', title: 'Tặng suất làm đẹp giá trải nghiệm', speech: () => '"Duy nhất tuần này, Kim Bling dành tặng suất phun mày/môi giá sốc!"' }
+        { 
+            id: 'hook-lot-xac', 
+            badge: '✨ Trend Lột Xác', 
+            title: 'Biến hình Trước & Sau ngoạn mục', 
+            speech: () => '"Chân mày thưa nhạt, môi thâm xỉn khiến chị em mất tự tin khi để mặt mộc..."',
+            motionGuide: "⚡ [Động tác Biến Hình]: Đưa tay/máy lướt nhanh che khung hình 0.5s rồi mở ra góc cận cảnh dáng mày/môi hoàn thiện sắc nét."
+        },
+        { 
+            id: 'hook-sai-lam', 
+            badge: '⚠️ Trend Cảnh Báo', 
+            title: '3 sai lầm khi đi phun xăm', 
+            speech: () => '"Đừng vội đi phun mày, phun môi nếu chưa biết 3 điều cực kỳ quan trọng này!"',
+            motionGuide: "⚡ [Động tác Cảnh Báo]: Lao nhanh máy từ xa (40cm) vào sát vùng mày/môi trong 1s đầu để tạo điểm nhấn giật gân."
+        },
+        { 
+            id: 'hook-khong-dau', 
+            badge: '😴 Trend Ngủ Quên', 
+            title: 'Làm đẹp êm như đi spa', 
+            speech: () => '"Ai bảo đi phun xăm đau sưng? Khách nhà em còn nằm ngủ quên luôn đây này!"',
+            motionGuide: "🛡️ [Động tác Êm Ái]: Giữ máy tĩnh ở cự ly 25cm, dịch chuyển cực chậm theo chiều dọc đường sợi để thấy độ mướt mịn."
+        },
+        { 
+            id: 'hook-sua-loi', 
+            badge: '🛠️ Trend Giải Cứu', 
+            title: 'Giải cứu ca mày/môi hỏng', 
+            speech: () => '"Tiếp nhận một ca khách làm hỏng ở nơi khác tới cầu cứu Kim Bling..."',
+            motionGuide: "🛡️ [Động tác Giải Cứu]: Quay góc chính diện 30cm, giữ cố định để khách thấy rõ tình trạng ban đầu và độ hài hòa tổng thể."
+        },
+        { 
+            id: 'hook-uu-dai-lam-dep', 
+            badge: '🎁 Trend Ưu Đãi', 
+            title: 'Tặng suất làm đẹp giá trải nghiệm', 
+            speech: () => '"Duy nhất tuần này, Kim Bling dành tặng suất phun mày/môi giá sốc!"',
+            motionGuide: "⚡ [Động tác Ưu Đãi]: Lia máy vòng cung nhẹ quanh gương mặt khách để bắt trọn ánh sáng căng bóng tự nhiên."
+        }
     ],
     'dao-tao-phun-xam': [
-        { id: 'hook-hoc-nghe', badge: '🎓 Trend Hướng Nghiệp', title: 'Chọn nghề thu nhập cao', speech: () => '"Không cần bằng đại học, chỉ 1 tháng học vững tay nghề tự tin kiếm tiền triệu!"' },
-        { id: 'hook-so-sanh-da-gia', badge: '✍️ Trend Thực Chiến', title: 'Từ giấy đến mẫu thật', speech: () => '"Học viên tại Kim Bling được thực hành trực tiếp trên mẫu thật 100%!"' },
-        { id: 'hook-tam-su-nghe', badge: '❤️ Trend Truyền Cảm Hứng', title: 'Thay đổi cuộc sống', speech: () => '"Từ con số 0 nay các bạn đã tự chủ tài chính và làm chủ cuộc đời mình!"' },
-        { id: 'hook-boc-phot-day', badge: '🔍 Trend Minh Bạch', title: 'Học phí trọn gói', speech: () => '"Tặng trọn bộ đồ nghề cao cấp, cam kết không phát sinh chi phí!"' },
-        { id: 'hook-tuyen-sinh', badge: '📢 Trend Tuyển Sinh', title: 'Ưu đãi khóa mới', speech: () => '"Khai giảng khóa mới, giảm ngay 50% học phí cho 5 bạn đăng ký sớm!"' }
+        { 
+            id: 'hook-hoc-nghe', 
+            badge: '🎓 Trend Hướng Nghiệp', 
+            title: 'Chọn nghề thu nhập cao', 
+            speech: () => '"Không cần bằng đại học, chỉ 1 tháng học vững tay nghề tự tin kiếm tiền triệu!"',
+            motionGuide: "⚡ [Động tác Hướng Nghiệp]: Lao nhanh máy từ cửa lớp học tiến thẳng vào bàn thực hành của học viên trong 1s."
+        },
+        { 
+            id: 'hook-so-sanh-da-gia', 
+            badge: '✍️ Trend Thực Chiến', 
+            title: 'Từ giấy đến mẫu thật', 
+            speech: () => '"Học viên tại Kim Bling được thực hành trực tiếp trên mẫu thật 100%!"',
+            motionGuide: "🛡️ [Động tác Thực Chiến]: Kê máy cự ly 20cm góc nghiêng 45 độ, giữ tĩnh quay cận cảnh tay học viên đi kim."
+        },
+        { 
+            id: 'hook-tam-su-nghe', 
+            badge: '❤️ Trend Truyền Cảm Hứng', 
+            title: 'Thay đổi cuộc sống', 
+            speech: () => '"Từ con số 0 nay các bạn đã tự chủ tài chính và làm chủ cuộc đời mình!"',
+            motionGuide: "🛡️ [Động tác Truyền Cảm Hứng]: Lia máy chậm rãi ngang tầm mắt lướt qua không khí lớp học tập trung."
+        },
+        { 
+            id: 'hook-boc-phot-day', 
+            badge: '🔍 Trend Minh Bạch', 
+            title: 'Học phí trọn gói', 
+            speech: () => '"Tặng trọn bộ đồ nghề cao cấp, cam kết không phát sinh chi phí!"',
+            motionGuide: "⚡ [Động tác Minh Bạch]: Hất máy từ dưới lên quét qua toàn bộ cốp đồ nghề phun xăm đầy đủ."
+        },
+        { 
+            id: 'hook-tuyen-sinh', 
+            badge: '📢 Trend Tuyển Sinh', 
+            title: 'Ưu đãi khóa mới', 
+            speech: () => '"Khai giảng khóa mới, giảm ngay 50% học phí cho 5 bạn đăng ký sớm!"',
+            motionGuide: "⚡ [Động tác Tuyển Sinh]: Đẩy máy tiến sát vào tác phẩm hoàn thiện xuất sắc của học viên tốt nghiệp."
+        }
     ],
     'vlog-doi-thuong': [
-        { id: 'hook-5h-sang', badge: '🌅 Trend 5H Sáng', title: '1 ngày làm chủ quán', speech: () => '"Cùng theo chân em xem 1 ngày làm chủ quán Kim Bling từ 5h sáng có gì nhé!"' },
-        { id: 'hook-chot-don', badge: '📦 Trend Bão Đơn', title: 'Đóng đơn mỏi tay', speech: () => '"Giờ cao điểm tại Kim Bling khi đơn hàng nổ ting ting không kịp thở..."' },
-        { id: 'hook-khoi-nghiep', badge: '💪 Trend Khởi Nghiệp', title: 'Sự thật mở quán', speech: () => '"Nhiều người nghĩ làm chủ quán nhàn hạ, nhưng thực tế thế này đây..."' },
-        { id: 'hook-mon-moi', badge: '🧪 Trend Test Món', title: 'Nghiên cứu món mới', speech: () => '"Hôm nay cùng em vào bếp test thử công thức món mới ra mắt menu nhé!"' },
-        { id: 'hook-goc-chill', badge: '✨ Trend Góc Chill', title: 'Quán lên đèn buổi tối', speech: () => '"Khoảnh khắc em thích nhất là lúc quán nhỏ bắt đầu lên đèn lung linh..."' }
+        { 
+            id: 'hook-5h-sang', 
+            badge: '🌅 Trend 5H Sáng', 
+            title: '1 ngày làm chủ quán', 
+            speech: () => '"Cùng theo chân em xem 1 ngày làm chủ quán Kim Bling từ 5h sáng có gì nhé!"',
+            motionGuide: "⚡ [Động tác 5H Sáng]: Đẩy máy nhanh qua cánh cửa quán vừa mở đón nắng sớm để tạo năng lượng."
+        },
+        { 
+            id: 'hook-chot-don', 
+            badge: '📦 Trend Bão Đơn', 
+            title: 'Đóng đơn mỏi tay', 
+            speech: () => '"Giờ cao điểm tại Kim Bling khi đơn hàng nổ ting ting không kịp thở..."',
+            motionGuide: "⚡ [Động tác Bão Đơn]: Lia máy nhanh qua hàng dài bill đơn hàng và ly nước đang xếp kín quầy."
+        },
+        { 
+            id: 'hook-khoi-nghiep', 
+            badge: '💪 Trend Khởi Nghiệp', 
+            title: 'Sự thật mở quán', 
+            speech: () => '"Nhiều người nghĩ làm chủ quán nhàn hạ, nhưng thực tế thế này đây..."',
+            motionGuide: "🛡️ [Động tác Chân Thực]: Đặt máy cố định góc rộng 50cm quay toàn cảnh quá trình chuẩn bị nguyên liệu."
+        },
+        { 
+            id: 'hook-mon-moi', 
+            badge: '🧪 Trend Test Món', 
+            title: 'Nghiên cứu món mới', 
+            speech: () => '"Hôm nay cùng em vào bếp test thử công thức món mới ra mắt menu nhé!"',
+            motionGuide: "🛡️ [Động tác Test Món]: Kê máy cận cảnh 20cm quay chi tiết từng bước pha trộn công thức mới."
+        },
+        { 
+            id: 'hook-goc-chill', 
+            badge: '✨ Trend Góc Chill', 
+            title: 'Quán lên đèn buổi tối', 
+            speech: () => '"Khoảnh khắc em thích nhất là lúc quán nhỏ bắt đầu lên đèn lung linh..."',
+            motionGuide: "🛡️ [Động tác Góc Chill]: Lia máy thật êm và chậm từ ngoài mặt tiền hướng vào không gian ánh đèn vàng."
+        }
     ]
 };
 

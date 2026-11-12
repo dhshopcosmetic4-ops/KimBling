@@ -126,9 +126,8 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 (Tích hợp Zoom 0.5x/1x/2.5x & Khóa AE/AF) -->
+    <!-- MODAL CAMERA AR 9:16 -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
-        <!-- Thanh tiêu đề trên cùng -->
         <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md shadow-lg">✕</button>
             <div class="bg-black/85 backdrop-blur-md px-4 py-2 rounded-2xl border-2 border-white/20 text-center shadow-lg">
@@ -142,7 +141,6 @@
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <!-- Nút Khóa AE/AF (Chống lóa / Khóa sáng ngược) -->
             <div class="absolute top-24 inset-x-0 z-30 flex justify-center pointer-events-auto">
                 <button id="lockAeAfBtn" onclick="toggleAeAfLock()" class="px-4 py-1.5 rounded-full bg-slate-900/90 text-amber-400 text-xs font-black shadow-lg border-2 border-amber-500/60 flex items-center space-x-1.5 active:scale-95 transition-all">
                     <span>🔒</span>
@@ -150,7 +148,6 @@
                 </button>
             </div>
 
-            <!-- Thanh chọn bộ lọc màu -->
             <div class="absolute top-36 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
                 <button onclick="setFilter('beauty', this)" class="filter-chip px-3 py-1.5 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
                 <button onclick="setFilter('food', this)" class="filter-chip px-3 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
@@ -158,7 +155,6 @@
                 <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
             </div>
 
-            <!-- Khung lưới AR & Hướng dẫn trực quan -->
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
                 <div class="absolute inset-x-4 top-48 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
@@ -184,16 +180,13 @@
             </div>
         </div>
 
-        <!-- BẢNG ĐIỀU KHIỂN DƯỚI: Zoom 0.5 | 1 | 2.5 & Nút Quay -->
         <div class="bg-slate-950 p-4 flex flex-col items-center space-y-3 border-t-2 border-slate-900 z-30 relative">
-            <!-- Thanh chọn mức Zoom cơ học (0.5x | 1x | 2.5x) -->
             <div class="flex space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15">
                 <button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">0,5</button>
                 <button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button>
                 <button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">2,5</button>
             </div>
 
-            <!-- Nút bấm quay & phụ trợ -->
             <div class="w-full flex items-center justify-around">
                 <div class="w-12 text-center">
                     <span class="text-xs text-slate-400 font-bold block">Tự động</span>
@@ -339,7 +332,6 @@
             }
         }
 
-        // TÍNH NĂNG ZOOM CƠ HỌC (0.5x | 1x | 2.5x)
         function setZoomLevel(zoom, btn) {
             currentZoom = zoom;
             document.querySelectorAll('.zoom-btn').forEach(b => {
@@ -350,7 +342,6 @@
             const videoEl = document.getElementById('liveVideo');
             videoEl.style.transform = `scale(${zoom})`;
 
-            // Áp dụng zoom cứng vào track camera nếu thiết bị hỗ trợ
             if (mediaStream) {
                 const track = mediaStream.getVideoTracks()[0];
                 if (track) {
@@ -362,7 +353,6 @@
             }
         }
 
-        // TÍNH NĂNG KHÓA SÁNG & LẤY NÉT (AE/AF LOCK)
         function toggleAeAfLock() {
             isAeAfLocked = !isAeAfLocked;
             const btn = document.getElementById('lockAeAfBtn');
@@ -370,7 +360,6 @@
             if (isAeAfLocked) {
                 btn.className = "px-4 py-1.5 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-lg border-2 border-amber-300 flex items-center space-x-1.5 active:scale-95 transition-all";
                 txt.innerText = "ĐÃ KHÓA AE/AF";
-                // Khóa exposure/focus nếu track hỗ trợ
                 if (mediaStream) {
                     const track = mediaStream.getVideoTracks()[0];
                     if (track) {
@@ -577,10 +566,25 @@
                 `;
             }
 
+            let modeSelectorHtml = `
+                <div class="bg-slate-950 p-3.5 rounded-xl border-2 border-slate-800 flex items-center justify-between space-x-3">
+                    <span class="text-sm font-black text-slate-200">🎥 Phong cách quay:</span>
+                    <div class="flex space-x-2">
+                        <button onclick="setCameraMode('dynamic')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${currentCamMode === 'dynamic' ? 'bg-rose-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">⚡ Động (Lia nhanh)</button>
+                        <button onclick="setCameraMode('standard')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${currentCamMode === 'standard' ? 'bg-sky-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">🛡️ Chuẩn (Tĩnh êm)</button>
+                    </div>
+                </div>
+            `;
+
             let speechText = '';
+            let motionInstruction = step.motionGuide;
+
             if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
                 const hObj = hooksLibrary[cat.id][currentHookIndex];
                 speechText = typeof hObj.speech === 'function' ? hObj.speech(currentCustomDish) : hObj.speech;
+                if (hObj.motionGuide) {
+                    motionInstruction = hObj.motionGuide;
+                }
             } else {
                 speechText = typeof step.speech === 'function' ? step.speech(currentCustomDish) : step.speech;
             }
@@ -612,9 +616,9 @@
                     <div class="bg-slate-950 p-4.5 rounded-2xl border-2 border-slate-800 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="space-y-1">
-                                <span class="text-sm font-black text-rose-300 block">🔴 Hướng Dẫn Cự Ly & Góc Động Tác</span>
+                                <span class="text-sm font-black text-rose-300 block">🔴 Hướng Dẫn Cự Ly & Động Tác</span>
                                 <span class="text-xs text-amber-300 font-black block">${step.distance || ''} ${step.angle ? '| ' + step.angle : ''}</span>
-                                <span class="text-sm text-slate-200 font-semibold">${step.motionGuide}</span>
+                                <span class="text-sm text-slate-200 font-semibold">${motionInstruction}</span>
                             </div>
                             <button onclick="openCameraModal(${currentStepIndex}, 0)" class="px-5 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-sm flex items-center space-x-2 shadow-xl shadow-rose-600/40 active:scale-95 transition-transform shrink-0">
                                 <span>🔴 Quay Video Này</span>
@@ -636,6 +640,7 @@
                     <h2 class="text-lg font-black text-white mb-2">${step.title}</h2>
                 </div>
                 ${hookSelectorHtml}
+                ${modeSelectorHtml}
                 ${actionAreaHtml}
             `;
         }
@@ -741,6 +746,9 @@
                 const cat = categoriesData[currentCatIndex];
                 const hObj = hooksLibrary[cat.id][currentHookIndex];
                 speechText = typeof hObj.speech === 'function' ? hObj.speech(currentCustomDish) : hObj.speech;
+                if (hObj.motionGuide) {
+                    guideText = hObj.motionGuide;
+                }
             } else if (stepIdx === 1 && step.subClips) {
                 const subObj = step.subClips.find(s => s.id === subId);
                 if (subObj) {
@@ -761,7 +769,6 @@
             document.getElementById('arAngleBadge').innerText = angleStr;
             document.getElementById('cameraModal').classList.remove('hidden');
 
-            // Reset zoom về 1x khi mở camera
             setZoomLevel(1.0, document.getElementById('zoomBtn1'));
             await startCamera(currentFacingMode);
         }
@@ -858,7 +865,6 @@
                     ctx.filter = 'contrast(1.3) saturate(1.25) brightness(0.95)';
                 }
 
-                // Hỗ trợ scale zoom trực tiếp vào canvas khi quay
                 ctx.translate(canvas.width / 2, canvas.height / 2);
                 ctx.scale(currentZoom, currentZoom);
                 ctx.translate(-canvas.width / 2, -canvas.height / 2);
