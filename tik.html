@@ -93,7 +93,7 @@
                     <div></div><div></div><div></div>
                 </div>
 
-                <!-- Hướng dẫn đồ họa tâm điểm (Ví dụ khung căn chỉnh) -->
+                <!-- Hướng dẫn đồ họa tâm điểm -->
                 <div class="absolute inset-0 flex items-center justify-center">
                     <div id="arGuideShape" class="w-48 h-48 border-2 border-dashed border-rose-500 rounded-2xl flex items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[2px]">
                         <span id="arGuideText" class="text-xs font-bold text-white drop-shadow">Đặt món vào giữa khung này</span>
@@ -392,7 +392,7 @@
                     Bước ${idx + 1}
                 </button>
             `).join('');
-            document.getElementById('stepProgressTextinnerText') = `${currentStepIndex + 1} / 4 Hoàn thành`;
+            document.getElementById('stepProgressText').innerText = `${currentStepIndex + 1} / 4 Hoàn thành`;
         }
 
         function selectStep(index) {
@@ -525,11 +525,9 @@
             canvas.height = 1920;
             const ctx = canvas.getContext('2d');
 
-            // Vẽ khung hình chuẩn 9:16 liên tục qua Canvas
             let animId;
             function drawCanvas() {
                 if (!isRecording) return;
-                // Center-crop khung hình cảm biến sang chuẩn 9:16
                 const vW = videoElement.videoWidth;
                 const vH = videoElement.videoHeight;
                 let sWidth = vH * (9/16);
@@ -547,7 +545,6 @@
             }
 
             const canvasStream = canvas.captureStream(30);
-            // Kết hợp audio từ mic
             if (mediaStream.getAudioTracks().length > 0) {
                 canvasStream.addTrack(mediaStream.getAudioTracks()[0]);
             }
@@ -612,7 +609,7 @@
                 let m = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
                 let s = (recordingSeconds % 60).toString().padStart(2, '0');
                 timerEl.innerText = `${m}:${s} / 03s`;
-                if (recordingSeconds >= 15) { // Gợi ý thời lượng tối ưu cho 1 công đoạn viral
+                if (recordingSeconds >= 15) {
                     stopRecording();
                 }
             }, 1000);
@@ -620,6 +617,10 @@
 
         function stopTimer() {
             if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function resetRecordButtonUI() {
+            setRecordingUI(false);
         }
 
         // --- XEM TRƯỚC & LƯU VÀO ẢNH IPHONE CHO CAPCUT ---
@@ -651,7 +652,6 @@
                 }
             }
 
-            // Fallback lưu file trực tiếp
             const a = document.createElement('a');
             a.href = URL.createObjectURL(recordedBlob);
             a.download = `TikTok-CongDoan-${currentStepIndex + 1}.mp4`;
