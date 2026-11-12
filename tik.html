@@ -3,1336 +3,665 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Viral Studio - Trợ Lý Quay & Dựng CapCut</title>
+    <title>TikTok Viral Studio - Quay & Dựng Chuyên Nghiệp</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #09090b;
-            color: #fafafa;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none;
-            font-size: 16px;
-        }
-        /* Đảm bảo kích thước font tối thiểu 16px trên input/button để tránh iOS Safari auto-zoom */
-        button, input, select, textarea {
-            font-size: 16px;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        @keyframes pulse-rec {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.95); }
-        }
-        .animate-rec {
-            animation: pulse-rec 1.2s infinite ease-in-out;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen flex justify-center bg-zinc-950 select-none">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-20">
 
-    <!-- Khung ứng dụng chuẩn Mobile-First (Max width 480px) -->
-    <div id="app" class="w-full max-w-[480px] min-h-screen bg-zinc-900 flex flex-col relative shadow-2xl border-x border-zinc-800/80">
-        
-        <!-- Header & Chọn Chủ Đề -->
-        <header class="sticky top-0 z-30 bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 px-4 pt-3.5 pb-3">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff0050] via-[#ff2a6d] to-[#00f2fe] flex items-center justify-center shadow-lg shadow-pink-500/20">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-extrabold tracking-tight leading-none text-white">TikTok Viral Studio</h1>
-                        <p class="text-xs text-zinc-400 mt-1">Chuẩn iPhone 9:16 & CapCut Free</p>
-                    </div>
+    <!-- HEADER -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-rose-500/20">V</div>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight text-white">TikTok Viral Studio</h1>
+                    <p class="text-[11px] text-slate-400">Lê Minh Dũng • F&B & Phun Xăm</p>
                 </div>
-                <button onclick="openExportModal()" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:scale-95 transition text-sm font-semibold text-cyan-400 border border-cyan-500/30 flex items-center gap-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    <span>Xuất 1080p</span>
-                </button>
             </div>
-
-            <!-- Thanh chọn chủ đề (Pills) -->
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="topic-selector"></div>
-        </header>
-
-        <!-- Thanh tiến độ 4 Công Đoạn -->
-        <section class="px-4 py-3 bg-zinc-900/60 border-b border-zinc-800/80">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Lộ trình quay 4 công đoạn</span>
-                <span id="progress-text" class="text-xs font-extrabold text-[#00f2fe]">0/4 Hoàn thành</span>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 mr-1 bg-emerald-500 rounded-full animate-pulse"></span> iOS 9:16 Ready
+                </span>
             </div>
-            <div class="grid grid-cols-4 gap-2" id="step-tabs"></div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
+
+        <!-- CHỌN DANH MỤC NGÀNH HÀNG -->
+        <section class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Chọn Lĩnh Vực / Sản Phẩm</label>
+            <div class="grid grid-cols-2 gap-2" id="categoryGrid">
+                <!-- JS render categories -->
+            </div>
         </section>
 
-        <!-- Nội dung chính của Công Đoạn đang chọn -->
-        <main class="flex-1 px-4 py-4 pb-28 space-y-4 overflow-y-auto" id="main-content"></main>
-
-        <!-- Thanh điều hướng dưới cùng (Sticky Bottom Bar) -->
-        <nav class="fixed bottom-0 w-full max-w-[480px] bg-zinc-950/95 backdrop-blur-lg border-t border-zinc-800 px-4 py-3 z-30 flex items-center justify-between gap-3">
-            <button id="btn-prev-step" onclick="changeStep(-1)" class="p-3.5 rounded-2xl bg-zinc-800 text-zinc-300 font-semibold active:scale-95 transition disabled:opacity-30" aria-label="Bước trước">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-
-            <button onclick="openARCamera()" class="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#ff0050] to-[#ff2a6d] text-white font-bold text-base shadow-lg shadow-pink-600/30 active:scale-95 transition flex items-center justify-center gap-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                <span>Mở Camera Hướng Dẫn</span>
-            </button>
-
-            <button id="btn-next-step" onclick="changeStep(1)" class="p-3.5 rounded-2xl bg-zinc-800 text-zinc-300 font-semibold active:scale-95 transition" aria-label="Bước tiếp theo">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-            </button>
-        </nav>
-
-        <!-- ==================== MÀN HÌNH CAMERA AR HƯỚNG DẪN ẢO (CHUẨN DỌC 9:16 iOS FIX) ==================== -->
-        <div id="ar-camera-modal" class="fixed inset-0 z-50 bg-black hidden flex-col justify-between max-w-[480px] mx-auto">
-            
-            <div class="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center">
-                <!-- Video gốc từ camera (ẩn, dùng làm nguồn cấp hình ảnh cho Canvas 9:16) -->
-                <video id="camera-video" autoplay playsinline muted class="hidden"></video>
-                
-                <!-- Canvas 720x1280 (9:16) hiển thị trực tiếp và ghi hình chuẩn dọc 100% -->
-                <canvas id="camera-canvas" width="720" height="1280" class="w-full h-full object-cover hidden"></canvas>
-                
-                <!-- Chế độ Giả Lập nếu không có camera/mở trên PC -->
-                <div id="camera-mock-bg" class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-zinc-800 via-zinc-900 to-black p-6 text-center">
-                    <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]"></div>
-                    <div class="z-10 bg-zinc-900/90 border border-zinc-700 px-4 py-2.5 rounded-2xl text-sm text-amber-300 mb-2 flex items-center gap-2 max-w-xs">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
-                        <span>Chế độ Mô Phỏng 9:16 (Cho phép quyền Camera để quay thật)</span>
-                    </div>
-                </div>
-
-                <!-- LỚP PHỦ AR (AR OVERLAY) -->
-                <div class="absolute inset-0 pointer-events-none flex flex-col justify-between">
-                    
-                    <!-- 1. Lưới tỷ lệ vàng 1/3 -->
-                    <div id="ar-grid" class="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                        <div class="border-r border-b border-white/20"></div>
-                        <div class="border-r border-b border-white/20"></div>
-                        <div class="border-b border-white/20"></div>
-                        <div class="border-r border-b border-white/20"></div>
-                        <div class="border-r border-b border-white/20"></div>
-                        <div class="border-b border-white/20"></div>
-                        <div class="border-r border-white/20"></div>
-                        <div class="border-r border-white/20"></div>
-                        <div></div>
-                    </div>
-
-                    <!-- 2. Vùng An Toàn TikTok (Safe Zone) -->
-                    <div id="ar-safezone" class="absolute inset-0">
-                        <div class="absolute right-2 bottom-32 w-14 h-60 border border-dashed border-rose-500/60 bg-rose-500/10 rounded-xl flex flex-col items-center justify-around py-2">
-                            <div class="w-7 h-7 rounded-full bg-rose-500/30"></div>
-                            <div class="w-6 h-6 rounded-full bg-rose-500/30"></div>
-                            <div class="w-6 h-6 rounded-full bg-rose-500/30"></div>
-                            <span class="text-[10px] text-rose-200 font-bold text-center leading-tight">Nút TikTok<br>(Tránh che)</span>
-                        </div>
-                        <div class="absolute left-3 right-20 bottom-28 h-20 border border-dashed border-rose-500/60 bg-rose-500/10 rounded-xl p-2 flex items-end">
-                            <span class="text-[11px] text-rose-200 font-semibold">Vùng Caption & Giỏ hàng (Tránh đặt chủ thể)</span>
-                        </div>
-                    </div>
-
-                    <!-- 3. Khung Vector Định Vị Chủ Thể -->
-                    <div id="ar-stencil-container" class="absolute inset-0 flex items-center justify-center p-6"></div>
-
-                    <!-- Thanh Top HUD trên Camera -->
-                    <div class="relative z-20 p-4 pt-4 bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
-                        <div class="flex items-center justify-between gap-2">
-                            <button onclick="closeARCamera()" class="w-10 h-10 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white active:scale-90 shrink-0" aria-label="Đóng camera">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-
-                            <!-- Đồng hồ đếm thời gian quay chuẩn -->
-                            <div class="px-3.5 py-1.5 rounded-full bg-black/75 border border-white/20 flex items-center gap-2">
-                                <span id="rec-dot" class="w-2.5 h-2.5 rounded-full bg-zinc-500"></span>
-                                <span id="rec-timer" class="font-mono text-base font-bold text-white">00.0s</span>
-                                <span id="rec-target-badge" class="text-xs font-bold px-2 py-0.5 rounded bg-pink-600 text-white">/ 3.0s</span>
-                            </div>
-
-                            <!-- Nút Xoay 90° trực tiếp vào luồng ghi hình (Sửa triệt để lỗi xoay ngang iOS) -->
-                            <button onclick="rotateCameraFeed()" id="btn-rotate-feed" class="px-3 py-2 rounded-full bg-amber-400/20 border border-amber-400/60 text-amber-300 text-xs font-bold flex items-center gap-1 active:scale-95 shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                <span id="rotate-label">Xoay 90°</span>
-                            </button>
-                        </div>
-
-                        <!-- Thẻ nhắc nhanh góc quay ngay trên màn hình camera -->
-                        <div id="ar-hud-instruction" class="mt-2.5 bg-black/80 backdrop-blur-md border border-white/15 rounded-2xl p-3 text-left"></div>
-                    </div>
-
-                    <!-- Thanh Bottom Controls trên Camera -->
-                    <div class="relative z-20 p-4 pb-7 bg-gradient-to-t from-black/95 via-black/70 to-transparent pointer-events-auto flex flex-col items-center gap-3">
-                        
-                        <!-- Thanh chọn ống kính & bật tắt Safe Zone -->
-                        <div class="flex items-center justify-between w-full max-w-sm bg-black/70 px-3 py-1.5 rounded-full border border-white/15">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs text-zinc-400">Zoom:</span>
-                                <button onclick="selectLens('0.5x')" class="lens-btn px-2.5 py-1 rounded-full text-xs font-bold text-zinc-300">0.5x</button>
-                                <button onclick="selectLens('1x')" class="lens-btn px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400 text-black">1x</button>
-                                <button onclick="selectLens('2x')" class="lens-btn px-2.5 py-1 rounded-full text-xs font-bold text-zinc-300">2x</button>
-                            </div>
-                            <button onclick="toggleSafeZone()" id="btn-toggle-safe" class="px-2.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-xs font-bold">
-                                Khung TikTok
-                            </button>
-                        </div>
-
-                        <div class="w-full flex items-center justify-around">
-                            <!-- Nút Chuyển Camera Trước/Sau -->
-                            <button onclick="switchCameraFacing()" class="w-12 h-12 rounded-full bg-zinc-800/90 border border-white/20 flex items-center justify-center text-white active:scale-90" title="Đổi Camera Trước/Sau">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            </button>
-
-                            <!-- Nút Bấm Quay / Dừng -->
-                            <button id="btn-record-action" onclick="toggleRecording()" class="w-20 h-20 rounded-full border-4 border-white p-1.5 flex items-center justify-center active:scale-95 transition" aria-label="Bấm quay video">
-                                <div id="record-inner-circle" class="w-full h-full rounded-full bg-[#ff0050] transition-all duration-200"></div>
-                            </button>
-
-                            <!-- Nút Hoàn thành công đoạn này -->
-                            <button onclick="finishStepFromCamera()" class="px-3.5 py-3 rounded-2xl bg-emerald-500 text-zinc-950 font-bold text-xs flex flex-col items-center active:scale-95">
-                                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                <span>Xong cảnh</span>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== MODAL XEM LẠI VIDEO & LƯU VỀ IPHONE ==================== -->
-        <div id="preview-video-modal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col justify-between p-4 max-w-[480px] mx-auto">
+        <!-- THANH CHỌN 4 CÔNG ĐOẠN -->
+        <section class="space-y-2">
             <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-bold text-white">Kiểm tra video dọc 9:16</h3>
-                    <p class="text-xs text-emerald-400">Đã khóa khung đứng thẳng chuẩn TikTok</p>
-                </div>
-                <button onclick="closePreviewModal()" class="w-10 h-10 rounded-full bg-zinc-800 text-zinc-200 font-bold flex items-center justify-center">✕</button>
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Quy Trình 4 Công Đoạn</label>
+                <span id="stepProgressText" class="text-xs text-rose-400 font-bold">1 / 4 Hoàn thành</span>
             </div>
+            <div class="grid grid-cols-4 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800" id="stepTabs">
+                <!-- JS render tabs -->
+            </div>
+        </section>
+
+        <!-- NỘI DUNG CHI TIẾT CÔNG ĐOẠN ĐANG CHỌN -->
+        <section id="stepContentContainer" class="bg-slate-900/80 rounded-2xl border border-slate-800 p-4 space-y-4 shadow-xl">
+            <!-- JS render step details -->
+        </section>
+
+    </main>
+
+    <!-- MODAL CAMERA AR 9:16 -->
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
+        <!-- Top bar -->
+        <div class="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
+            <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
+            <div class="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 text-center">
+                <span id="camStepTitle" class="text-xs font-bold text-rose-400 block">Công đoạn 1: Hook</span>
+                <span id="camTimer" class="text-xs font-mono text-white">00:00 / 03s</span>
+            </div>
+            <button id="switchCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center text-sm backdrop-blur-md">🔄</button>
+        </div>
+
+        <!-- Viewport Camera & AR Guide -->
+        <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
+            <!-- Video feed thực tế từ camera -->
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
             
-            <div class="my-3 flex-1 bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-700 flex items-center justify-center relative">
-                <video id="recorded-playback" controls playsinline class="w-full h-full object-contain"></video>
-                <div id="mock-saved-banner" class="hidden p-6 text-center">
-                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <p class="text-base font-bold text-white">Đã ghi nhận hoàn thành cảnh quay!</p>
-                    <p class="text-sm text-zinc-400 mt-1">Bạn có thể mở Camera mặc định của iPhone để quay theo thông số vừa luyện tập.</p>
-                </div>
-            </div>
+            <!-- Canvas ẩn dùng xử lý khung hình 9:16 -->
+            <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <div class="space-y-2.5">
-                <div class="grid grid-cols-2 gap-2.5">
-                    <button onclick="retakeVideo()" class="py-3.5 rounded-2xl bg-zinc-800 text-white font-bold text-base border border-zinc-700 active:scale-95 transition">
-                        ↺ Quay lại
-                    </button>
-                    <a id="btn-download-video" href="#" download="TikTok-9x16.mp4" class="py-3.5 rounded-2xl bg-[#00f2fe] text-zinc-950 font-bold text-base flex items-center justify-center gap-1.5 shadow-lg active:scale-95 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        <span>Lưu về iPhone</span>
-                    </a>
+            <!-- Lớp phủ AR Hướng dẫn mô phỏng -->
+            <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6">
+                <!-- Lưới 1/3 tỷ lệ vàng & Khung an toàn TikTok -->
+                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+                    <div class="border-b border-r border-white/10"></div>
+                    <div class="border-b border-r border-white/10"></div>
+                    <div class="border-b border-white/10"></div>
+                    <div class="border-b border-r border-white/10"></div>
+                    <div class="border-b border-r border-white/10"></div>
+                    <div class="border-b border-white/10"></div>
+                    <div></div><div></div><div></div>
                 </div>
-                <button onclick="confirmStepAndGoCapCut()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#ff0050] to-[#ff2a6d] text-white font-bold text-base active:scale-95 transition">
-                    Xem Hướng Dẫn Dựng CapCut Cảnh Này →
-                </button>
+
+                <!-- Hướng dẫn đồ họa tâm điểm (Ví dụ khung căn chỉnh) -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div id="arGuideShape" class="w-48 h-48 border-2 border-dashed border-rose-500 rounded-2xl flex items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[2px]">
+                        <span id="arGuideText" class="text-xs font-bold text-white drop-shadow">Đặt món vào giữa khung này</span>
+                    </div>
+                </div>
+
+                <!-- Khóa sáng AE/AF & Trạng thái -->
+                <div class="flex justify-between items-start z-10">
+                    <div id="aeLockBadge" class="hidden bg-amber-500/90 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center space-x-1">
+                        <span>🔒 KHÓA AE/AF</span>
+                    </div>
+                    <div class="bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 text-[11px] text-slate-300">
+                        Chạm giữ để khóa sáng
+                    </div>
+                </div>
+
+                <!-- Thông số gợi ý dưới màn hình camera -->
+                <div class="bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/10 text-center z-10">
+                    <p id="camTipText" class="text-xs text-slate-200 font-medium">Giữ máy cách 20cm, bật ống kính 2x</p>
+                </div>
             </div>
         </div>
 
-        <!-- ==================== MODAL HƯỚNG DẪN XUẤT FILE NET CĂNG ==================== -->
-        <div id="export-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-end sm:items-center justify-center p-4 max-w-[480px] mx-auto">
-            <div class="bg-zinc-900 border border-zinc-700 rounded-3xl w-full p-5 space-y-4 shadow-2xl">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🚀</span>
-                        <h3 class="text-lg font-extrabold text-white">Công Thức Xuất CapCut Nét Căng</h3>
-                    </div>
-                    <button onclick="closeExportModal()" class="w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center">✕</button>
-                </div>
-
-                <div class="space-y-3 text-base">
-                    <div class="bg-zinc-950 p-3.5 rounded-2xl border border-zinc-800">
-                        <p class="text-xs font-bold uppercase text-cyan-400 mb-1.5">1. Thông số xuất trên CapCut Free</p>
-                        <ul class="text-sm text-zinc-300 space-y-2">
-                            <li>• <b>Độ phân giải:</b> Chọn <span class="text-white font-bold">1080P</span> (Không xuất 4K vì TikTok sẽ tự nén gây giảm độ nét).</li>
-                            <li>• <b>Tỷ lệ khung hình:</b> Kéo lên <span class="text-white font-bold">60fps</span> để chuyển động rót nước/lia máy mượt mà.</li>
-                            <li>• <b>Tỷ lệ mã (Bitrate):</b> Chọn <span class="text-white font-bold">Cao (High)</span> rồi bấm Xuất.</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-zinc-950 p-3.5 rounded-2xl border border-zinc-800">
-                        <p class="text-xs font-bold uppercase text-pink-400 mb-1.5">2. Mẹo đăng lên TikTok không vỡ nét</p>
-                        <ul class="text-sm text-zinc-300 space-y-2">
-                            <li>• Ở bước đăng bài, kéo xuống bấm <b>"Tùy chọn khác"</b> -> Bật xanh mục <b>"Tải lên chất lượng cao"</b>.</li>
-                            <li>• Xóa đoạn logo đen của CapCut ở cuối video trước khi xuất để video chuyên nghiệp như creator triệu view.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <button onclick="closeExportModal()" class="w-full py-3.5 rounded-2xl bg-white text-zinc-950 font-bold text-base active:scale-95 transition">
-                    Đã Hiểu, Sẵn Sàng Viral!
-                </button>
+        <!-- Controls quay video -->
+        <div class="bg-slate-950 p-6 flex items-center justify-around border-t border-slate-900">
+            <div class="w-12"></div>
+            <button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
+                <div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div>
+            </button>
+            <div class="w-12 flex justify-center">
+                <button id="toggleArBtn" class="w-10 h-10 rounded-full bg-slate-900 text-slate-300 border border-slate-800 text-xs font-bold flex items-center justify-center">AR</button>
             </div>
         </div>
+    </div>
 
-        <!-- Hộp thông báo Toast nhỏ gọn -->
-        <div id="toast-box" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-zinc-800 border border-zinc-600 text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 whitespace-nowrap">
-            Thông báo
+    <!-- MODAL XEM TRƯỚC (PREVIEW) & LƯU VÀO ẢNH IPHONE -->
+    <div id="previewModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex flex-col hidden">
+        <div class="flex items-center justify-between p-4 border-b border-slate-900">
+            <h2 class="font-bold text-sm text-white">Xem Trước & Lưu Video</h2>
+            <button id="closePreviewBtn" class="w-8 h-8 rounded-full bg-slate-900 text-slate-400 flex items-center justify-center">✕</button>
         </div>
-
+        <div class="flex-1 flex flex-col items-center justify-center p-4">
+            <div class="relative w-full max-w-xs aspect-[9/16] bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                <video id="previewVideo" controls playsinline class="w-full h-full object-cover"></video>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-900 border-t border-slate-800 space-y-3">
+            <button id="saveToPhotosBtn" class="w-full py-3.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/30 text-sm flex items-center justify-center space-x-2">
+                <span>💾 Lưu vào Ảnh iPhone (Cho CapCut)</span>
+            </button>
+            <p class="text-[11px] text-center text-slate-400">Bấm nút trên để mở bảng chia sẻ iOS, chọn <strong class="text-slate-200">"Lưu video"</strong> để CapCut nhận diện ngay.</p>
+        </div>
     </div>
 
     <script>
-        // ==================== DỮ LIỆU KỊCH BẢN & THÔNG SỐ CHUYÊN SÂU ====================
-        const TOPICS = [
+        // --- DỮ LIỆU KỊCH BẢN CHI TIẾT CHO CÁC NGÀNH HÀNG ---
+        const categoriesData = [
             {
-                id: 'fnb',
-                name: '☕ Ăn uống & Pha chế',
-                subtitle: 'Cà phê, trà sữa, quán ăn vặt',
+                id: 'tra-sua-cafe',
+                name: 'Trà Sữa & Cà Phê',
+                icon: '🧋',
+                desc: 'Pha chế, lớp kem cheese, rót sữa',
                 steps: [
                     {
-                        stepNum: 1,
-                        badge: '0 - 3 Giây Đầu',
-                        title: 'Tạo Hook Bắt Mắt',
-                        goal: 'Giữ chân người xem ngay 3 giây đầu tiên bằng chuyển động cận cảnh hấp dẫn.',
-                        actionScript: 'Rót dòng cà phê/trà sữa từ trên cao vào ly đá, kéo phô mai tan chảy, rắc topping hoặc bẻ đôi món ăn ngay trước ống kính.',
-                        iphoneSpecs: {
-                            lens: '1x hoặc 2x (Cận cảnh)',
-                            resolution: '4K 60fps (Làm slow-motion mượt)',
-                            distance: '20 - 30 cm',
-                            angle: '45° từ trên xuống',
-                            aeafTip: 'Chạm giữ ngón tay vào ly nước trên màn hình iPhone 2 giây cho đến khi hiện chữ "KHÓA AE/AF", sau đó kéo biểu tượng mặt trời xuống nhẹ để màu nước đậm đà, không bị cháy sáng.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Đặt ly nước vào vòng tròn tâm điểm vàng. Rót nước/thả topping từ trên xuống trong 3 giây!',
-                            stencilType: 'hook_pour'
-                        },
-                        capcutGuide: [
-                            { tool: 'Tách (Split)', detail: 'Cắt bỏ 0.5s đầu lúc tay mới đưa vào khung hình bị rung. Chỉ giữ đúng 2.5s - 3s lúc dòng nước rót đẹp nhất.' },
-                            { tool: 'Tốc độ (Speed)', detail: 'Chọn Bình thường (Normal) -> Kéo xuống 0.7x (bật "Làm mượt chuyển động" -> Chất lượng tốt hơn) để tạo hiệu ứng Slow-motion cuốn hút.' },
-                            { tool: 'Hiệu ứng âm thanh', detail: 'Vào Âm thanh -> Hiệu ứng âm thanh -> Tìm tiếng rót nước/đá rơi (Pouring/Ice) hoặc "Whoosh" chèn khớp giây đầu.' },
-                            { tool: 'Văn bản (Text)', detail: 'Chèn tiêu đề Hook giật tít ở 1/3 trên màn hình (cỡ chữ lớn, viền đen/nền nổi), ví dụ: "Ly cà phê 25k khiến dân văn phòng mê mẩn!".' }
-                        ]
+                        title: 'Công đoạn 1: Hook',
+                        time: '0 - 3 giây',
+                        action: 'Cận cảnh giọt cà phê rơi chậm hoặc hành động cho lớp kem cheese sóng sánh lên đầu ly.',
+                        lens: 'iPhone 2x (Cận cảnh)',
+                        distance: 'Khoảng cách: 15cm - 20cm',
+                        speech: '"Đố bạn tìm được ly trà sữa nào đậm vị trân châu mà béo ngậy như thế này!"',
+                        capcutTip: 'Cắt video ngắn lại 2.5s, chèn hiệu ứng Flash trắng chớp giật đúng nhịp beat nhạc.',
+                        arGuide: 'Đặt miệng ly vào tâm vòng tròn'
                     },
                     {
-                        stepNum: 2,
-                        badge: '3 - 8 Giây',
-                        title: 'Bối Cảnh & Chi Tiết Nguyên Liệu',
-                        goal: 'Tạo độ tin cậy và kích thích vị giác bằng 2-3 góc quay ngắn (mỗi góc 1.5 - 2 giây).',
-                        actionScript: 'Quay từ trên xuống toàn cảnh ly nước kèm đĩa bánh/topping xung quanh, sau đó lia máy ngang hoặc đẩy tiến vào thật chậm.',
-                        iphoneSpecs: {
-                            lens: '1x (Camera chính sắc nét)',
-                            resolution: '4K 60fps',
-                            distance: '35 - 50 cm',
-                            angle: 'Ngang tầm mắt hoặc 90° từ trên xuống',
-                            aeafTip: 'Khóa khuỷu tay sát vào sườn, di chuyển cả người tiến tới hoặc lia ngang thật chậm để video mượt như dùng gimbal.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Đặt ly chính ở ô phải, đĩa bánh/topping ở ô trái. Lia máy ngang từ trái sang phải thật chậm.',
-                            stencilType: 'topdown_flatlay'
-                        },
-                        capcutGuide: [
-                            { tool: 'Chuyển cảnh (Transition)', detail: 'Ghép 2-3 đoạn clip ngắn liên tiếp -> Bấm vào ô vuông nhỏ giữa 2 clip -> Chọn "Kéo vào (Pull in)" hoặc "Mờ dần (Mix)" thời lượng 0.2s.' },
-                            { tool: 'Bộ lọc (Filter)', detail: 'Vào Bộ lọc -> Chọn "Ẩm thực (Food)" hoặc "Sống động (Vivid)" kéo mức 30% - 40% để màu đồ ăn tươi ngon bắt mắt.' },
-                            { tool: 'Tùy chỉnh (Adjust)', detail: 'Tăng Độ sắc nét (Sharpen) lên +20 để nhìn rõ lớp bọt kem và từng viên đá lạnh.' }
-                        ]
+                        title: 'Công đoạn 2: Thân bài',
+                        time: '3 - 10 giây',
+                        action: 'Quay thao tác rót sữa tươi vào ly cốt trà đen hoặc khuấy đều lớp trân châu đường đen.',
+                        lens: 'iPhone 1x (Góc chuẩn 45 độ)',
+                        distance: 'Khoảng cách: 30cm',
+                        speech: '"Cốt trà nguyên chất hòa quyện cùng sữa tươi béo ngậy, trân châu nấu mới mỗi ngày dai giòn sần sật."',
+                        capcutTip: 'Tăng tốc độ video (Speed) lên x1.5, lồng âm thanh tiếng rót nước chân thực (ASMR).',
+                        arGuide: 'Giữ tay rót nước ở giữa khung'
                     },
                     {
-                        stepNum: 3,
-                        badge: '8 - 13 Giây',
-                        title: 'Khoảnh Khắc Thưởng Thức',
-                        goal: 'Tạo cảm giác ngon miệng chân thực qua hành động khuấy, hút hoặc cắn miếng đầu tiên.',
-                        actionScript: 'Cầm ống hút khuấy đều lớp kem/trân châu, đưa lên uống thử và gật gù biểu cảm hài lòng tự nhiên.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '40 - 60 cm',
-                            angle: 'Ngang tầm mắt hơi chếch 15°',
-                            aeafTip: 'Đặt chủ thể nằm gọn phía trên phần chữ mô tả TikTok bên dưới. Khóa nét vào khuôn mặt hoặc bàn tay cầm ly.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Canh khuôn mặt vào khung oval phía trên, đưa ly nước lên ở vùng khung vuông bên dưới.',
-                            stencilType: 'face_reaction'
-                        },
-                        capcutGuide: [
-                            { tool: 'Cắt nhịp nhanh', detail: 'Cắt đúng khoảnh khắc khuấy ly và uống thử cao trào nhất, loại bỏ toàn bộ khoảng lặng ngập ngừng.' },
-                            { tool: 'Âm thanh (Audio)', detail: 'Thêm nhạc nền trend TikTok (giảm âm lượng nhạc nền xuống 15% - 20% nếu có tiếng nói/ASMR, giữ tiếng gốc 100%).' },
-                            { tool: 'Phụ đề tự động', detail: 'Vào Văn bản -> Phụ đề tự động -> Tiếng Việt để CapCut tự chạy chữ lời review của bạn.' }
-                        ]
+                        title: 'Công đoạn 3: Trải nghiệm',
+                        time: '10 - 15 giây',
+                        action: 'Cảnh hút ngụm đầu tiên, biểu cảm tận hưởng hoặc khoe trọn độ sánh mịn của đồ uống.',
+                        lens: 'iPhone 1x hoặc Camera trước',
+                        distance: 'Khoảng cách: Ngang tầm mắt',
+                        speech: '"Hút một ngụm là tỉnh cả người, lớp kem cheese mặn béo ngậy tan ngay trong miệng!"',
+                        capcutTip: 'Thêm bộ lọc màu (Filter) tươi sáng, chèn chữ chú thích màu vàng nổi bật giữa màn hình.',
+                        arGuide: 'Đưa ly ngang tầm camera'
                     },
                     {
-                        stepNum: 4,
-                        badge: '13 - 15 Giây',
-                        title: 'Kêu Gọi Hành Động (CTA)',
-                        goal: 'Chốt hạ bằng hình ảnh tổng thể đẹp nhất kèm lời kêu gọi ghé thử/đặt món.',
-                        actionScript: 'Đặt ly nước đẹp nhất ở góc bàn quán, tay nâng nhẹ hoặc chỉ tay xuống góc trái màn hình mời gọi.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '45 - 60 cm',
-                            angle: '45° tổng thể',
-                            aeafTip: 'Giữ máy đứng yên hoàn toàn 3 giây cuối để người xem kịp đọc chữ địa chỉ hoặc bấm vào giỏ hàng.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Giữ máy đứng yên 3 giây cuối! Chừa khoảng trống góc dưới bên trái cho nút Địa điểm/Giỏ hàng.',
-                            stencilType: 'cta_cheers'
-                        },
-                        capcutGuide: [
-                            { tool: 'Văn bản kêu gọi', detail: 'Thêm chữ: "Ghé thử ngay hôm nay!" hoặc "Bấm góc trái đặt liền nha 👇".' },
-                            { tool: 'Hiệu ứng động (Animation)', detail: 'Chọn chữ vừa tạo -> Hiệu ứng động -> Vào (In) kiểu "Bật lên (Pop up)" để thu hút ánh nhìn.' },
-                            { tool: 'Xuất file chuẩn nét', detail: 'Xóa logo CapCut ở cuối -> Bấm nút Xuất góc trên bên phải chọn 1080P, 60fps, Bitrate Cao.' }
-                        ]
+                        title: 'Công đoạn 4: CTA',
+                        time: '5 giây cuối',
+                        action: 'Quay tổng thể quầy bar hoặc bảng menu giá sốc kèm thông tin chốt đơn.',
+                        lens: 'iPhone 0.5x (Góc rộng)',
+                        distance: 'Khoảng cách: 50cm - 1 mét',
+                        speech: '"Ghé ngay quán hoặc nhắn tin để nhận ưu đãi mua 1 tặng 1 hôm nay nhé!"',
+                        capcutTip: 'Chèn sticker mũi tên trỏ vào thông tin liên hệ, thêm nhạc nền trending TikTok.',
+                        arGuide: 'Lấy nét toàn bộ quầy bar'
                     }
                 ]
             },
             {
-                id: 'review',
-                name: '📦 Review Sản Phẩm',
-                subtitle: 'Mỹ phẩm, gia dụng, phụ kiện',
+                id: 'an-vat-nuong',
+                name: 'Đồ Ăn Vặt & Nướng',
+                icon: '🔥',
+                desc: 'Tokbokki, bánh tráng, sốt sệt',
                 steps: [
                     {
-                        stepNum: 1,
-                        badge: '0 - 3 Giây Đầu',
-                        title: 'Tạo Hook (Mở hộp & Test nhanh)',
-                        goal: 'Đánh trúng sự tò mò ngay giây đầu tiên bằng thao tác mở hộp hoặc test công dụng.',
-                        actionScript: 'Đập hộp dứt khoát hoặc bấm nút sử dụng sản phẩm ngay cận cảnh trước ống kính.',
-                        iphoneSpecs: {
-                            lens: '1x hoặc 2x',
-                            resolution: '4K 60fps',
-                            distance: '25 - 35 cm',
-                            angle: '45° từ trên xuống',
-                            aeafTip: 'Chạm khóa nét vào sản phẩm trên tay để camera không bị nhảy nét ra hậu cảnh phía sau.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Đưa sản phẩm vào tâm điểm vàng, thực hiện thao tác mở/test dứt khoát trong 3 giây.',
-                            stencilType: 'hook_pour'
-                        },
-                        capcutGuide: [
-                            { tool: 'Tách (Split)', detail: 'Cắt bỏ 0.5s đầu chưa vào động tác, giữ nhịp nhanh ngay từ giây 0.0s.' },
-                            { tool: 'Âm thanh', detail: 'Chèn hiệu ứng âm thanh "Pop" hoặc "Whoosh" lúc sản phẩm xuất hiện.' },
-                            { tool: 'Văn bản Hook', detail: 'Đặt tiêu đề nổi bật ở 1/3 trên: "Món đồ nhỏ xíu nhưng giải quyết gọn vấn đề này!"' }
-                        ]
+                        title: 'Công đoạn 1: Hook',
+                        time: '0 - 3 giây',
+                        action: 'Cận cảnh miếng phô mai kéo sợi dài hoặc tiếng xèo xèo trên chảo nướng.',
+                        lens: 'iPhone 2x (Macro cực gần)',
+                        distance: 'Khoảng cách: 10cm - 15cm',
+                        speech: '"Nhìn miếng phô mai kéo dài bất tận này xem có chịu nổi không các bác ơi!"',
+                        capcutTip: 'Dùng hiệu ứng Zoom In mạnh ở 2 giây đầu để giữ chân người xem.',
+                        arGuide: 'Đặt món ăn vào tâm ngắm'
                     },
                     {
-                        stepNum: 2,
-                        badge: '3 - 8 Giây',
-                        title: 'Chi Tiết Chất Liệu & Thiết Kế',
-                        goal: 'Chứng minh độ hoàn thiện sắc sảo của sản phẩm.',
-                        actionScript: 'Quay 2 góc cận cảnh: xoay nhẹ sản phẩm dưới ánh sáng và soi kỹ tem mác/kết cấu.',
-                        iphoneSpecs: {
-                            lens: '2x',
-                            resolution: '4K 60fps',
-                            distance: '25 - 35 cm',
-                            angle: '45° hoặc 90° Flat-lay',
-                            aeafTip: 'Lau sạch ống kính camera iPhone bằng vải mềm trước khi quay cận cảnh.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Đặt sản phẩm gọn trong khung trung tâm, xoay chậm để bắt ánh sáng.',
-                            stencilType: 'topdown_flatlay'
-                        },
-                        capcutGuide: [
-                            { tool: 'Chuyển cảnh', detail: 'Nối 2 góc quay bằng chuyển cảnh "Kéo vào" 0.2s.' },
-                            { tool: 'Bộ lọc & Làm nét', detail: 'Chọn bộ lọc Sống động 30% và tăng Sharpen +25.' }
-                        ]
+                        title: 'Công đoạn 2: Thân bài',
+                        time: '3 - 10 giây',
+                        action: 'Trộn đều sốt ớt cay đậm đà phủ kín bánh gạo hoặc lật mặt miếng thịt nướng xèo xèo.',
+                        lens: 'iPhone 1x (Góc nghiêng 45 độ)',
+                        distance: 'Khoảng cách: 25cm',
+                        speech: '"Sốt ớt cay chuẩn vị Hàn Quốc đậm đặc, ngấm đẫm vào từng thớ bánh gạo dẻo quánh."',
+                        capcutTip: 'Tua nhanh thao tác trộn sốt, chèn âm thanh xèo xèo sống động.',
+                        arGuide: 'Canh chảo nằm trong khung chữ nhật'
                     },
                     {
-                        stepNum: 3,
-                        badge: '8 - 13 Giây',
-                        title: 'Trải Nghiệm Thực Tế Trên Người',
-                        goal: 'Cho người xem thấy hiệu quả thực tế khi dùng.',
-                        actionScript: 'Thoa lên tay hoặc sử dụng trực tiếp kèm biểu cảm gật gù hài lòng.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '45 - 60 cm',
-                            angle: 'Ngang tầm mắt chếch 15°',
-                            aeafTip: 'Đứng gần cửa sổ có ánh sáng tự nhiên để màu sắc sản phẩm trung thực nhất.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Canh khuôn mặt vào khung oval, tay cầm sản phẩm ở khung dưới.',
-                            stencilType: 'face_reaction'
-                        },
-                        capcutGuide: [
-                            { tool: 'Âm thanh & Giọng nói', detail: 'Giữ giọng nói gốc 100%, nhạc nền 15% - 20%.' },
-                            { tool: 'Phụ đề tự động', detail: 'Tạo phụ đề tiếng Việt rõ ràng ở khoảng an toàn phía trên caption.' }
-                        ]
+                        title: 'Công đoạn 3: Trải nghiệm',
+                        time: '10 - 15 giây',
+                        action: 'Cắn ngập răng một miếng giòn rụm hoặc cay xé lưỡi, biểu cảm thỏa mãn.',
+                        lens: 'iPhone 1x',
+                        distance: 'Khoảng cách: 20cm',
+                        speech: '"Cay cay ngọt ngọt ăn cuốn thực sự, không ngon em hoàn tiền luôn!"',
+                        capcutTip: 'Chỉnh sáng (Exposure) tăng nhẹ để món ăn trông bóng bẩy, hấp dẫn hơn.',
+                        arGuide: 'Đưa thức ăn vào đúng điểm sáng'
                     },
                     {
-                        stepNum: 4,
-                        badge: '13 - 15 Giây',
-                        title: 'Kêu Gọi Bấm Giỏ Hàng (CTA)',
-                        goal: 'Chốt đơn ngay khi người xem đang hào hứng.',
-                        actionScript: 'Giơ sản phẩm trên tay, tay kia chỉ xuống góc dưới bên trái (nút giỏ hàng TikTok).',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '50 - 60 cm',
-                            angle: 'Ngang tầm mắt',
-                            aeafTip: 'Giữ máy đứng yên 3 giây cuối, nhìn thẳng vào ống kính.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Chỉ tay xuống góc dưới bên trái màn hình và giữ yên 3 giây cuối.',
-                            stencilType: 'cta_cheers'
-                        },
-                        capcutGuide: [
-                            { tool: 'Văn bản & Animation', detail: 'Chèn chữ "Bấm giỏ hàng góc trái săn deal ngay!" kèm hiệu ứng Bật lên (Pop up).' },
-                            { tool: 'Xuất file', detail: 'Xuất 1080P, 60fps, Bitrate Cao.' }
-                        ]
+                        title: 'Công đoạn 4: CTA',
+                        time: '5 giây cuối',
+                        action: 'Quay hộp đựng đầy ắp topping hoặc menu ship tận nơi.',
+                        lens: 'iPhone 0.5x (Góc rộng)',
+                        distance: 'Khoảng cách: 40cm',
+                        speech: '"Đặt ngay một phần ship nóng hổi qua phần tiểu sử (Bio) của em nhé!"',
+                        capcutTip: 'Thêm chữ chạy ngang màn hình hiển thị giá bán và số điện thoại.',
+                        arGuide: 'Căn khung tổng thể hộp đồ ăn'
                     }
                 ]
             },
             {
-                id: 'vlog',
-                name: '✨ Vlog Đời Sống',
-                subtitle: 'A day in my life, đi cafe chill',
+                id: 'phun-xam-tham-my',
+                name: 'Phun Xăm Thẩm Mỹ',
+                icon: '✨',
+                desc: 'Phun mày, phun môi, trước & sau',
                 steps: [
                     {
-                        stepNum: 1,
-                        badge: '0 - 3 Giây Đầu',
-                        title: 'Tạo Hook (Khung cảnh Chill)',
-                        goal: 'Tạo cảm xúc thư giãn ngay giây đầu tiên.',
-                        actionScript: 'Kéo rèm đón nắng sớm hoặc đặt ly nước lên bàn gỗ có nắng chiếu qua.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '4K 60fps',
-                            distance: '30 cm',
-                            angle: '45° ngược sáng nhẹ',
-                            aeafTip: 'Khóa sáng vào vùng nắng chiếu trên bàn để tạo chiều sâu điện ảnh.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Đặt ly nước vào điểm giao lưới 1/3 và giữ yên 3 giây.',
-                            stencilType: 'hook_pour'
-                        },
-                        capcutGuide: [
-                            { tool: 'Tốc độ', detail: 'Chỉnh tốc độ 0.7x tạo nhịp điệu nhẹ nhàng.' },
-                            { tool: 'Tiêu đề', detail: 'Thêm tiêu đề nhỏ tinh tế: "Một buổi sáng bình yên ở Sài Gòn..."' }
-                        ]
+                        title: 'Công đoạn 1: Hook',
+                        time: '0 - 3 giây',
+                        action: 'Quay cận cảnh dáng chân mày thưa/trổ đỏ hoặc môi thâm sậm, cắt bụp sang kết quả sau khi làm xong.',
+                        lens: 'iPhone 2x (Cận cảnh siêu nét)',
+                        distance: 'Khoảng cách: 15cm',
+                        speech: '"Chân mày trổ đỏ thế này mà qua tay em là lột xác thành phượng hoàng ngay!"',
+                        capcutTip: 'Dùng hiệu ứng chuyển cảnh Glitch hoặc Flash đúng nhịp biến hình.',
+                        arGuide: 'Đặt vùng mày/môi vào giữa khung'
                     },
                     {
-                        stepNum: 2,
-                        badge: '3 - 8 Giây',
-                        title: 'Chuỗi Cảnh Chuyển Động (B-Roll)',
-                        goal: 'Kể chuyện bằng hình ảnh đa góc độ.',
-                        actionScript: 'Quay 2-3 cảnh ngắn: mở sổ tay, gõ phím laptop, góc quán xinh xắn.',
-                        iphoneSpecs: {
-                            lens: '1x hoặc 0.5x',
-                            resolution: '4K 60fps',
-                            distance: '40 - 60 cm',
-                            angle: '90° từ trên xuống hoặc ngang tầm mắt',
-                            aeafTip: 'Mỗi cảnh chỉ quay 2 giây nhưng giữ tay thật vững.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Sắp xếp đồ vật trên bàn gọn gàng vào 2 khung hình.',
-                            stencilType: 'topdown_flatlay'
-                        },
-                        capcutGuide: [
-                            { tool: 'Chuyển cảnh', detail: 'Dùng chuyển cảnh Mờ dần (Mix) 0.2s giữa các cảnh.' },
-                            { tool: 'Bộ lọc', detail: 'Chọn bộ lọc màu ấm áp mức 35%.' }
-                        ]
+                        title: 'Công đoạn 2: Thân bài',
+                        time: '3 - 10 giây',
+                        action: 'Thao tác đi kim nhẹ nhàng, lau mực sạch để lộ lớp hạt mực bay bay tự nhiên.',
+                        lens: 'iPhone 2x (Macro chi tiết)',
+                        distance: 'Khoảng cách: 20cm',
+                        speech: '"Kỹ thuật hạt Shading bay bay êm ru, không sưng không đau, khách nằm ngủ quên."',
+                        capcutTip: 'Giảm tốc độ (Slow-mo) nhẹ đoạn lau mực để thấy rõ độ mịn của hạt mực.',
+                        arGuide: 'Giữ máy chắc chắn không rung lắc'
                     },
                     {
-                        stepNum: 3,
-                        badge: '8 - 13 Giây',
-                        title: 'Khoảnh Khắc Thư Giãn Cá Nhân',
-                        goal: 'Tạo sự kết nối gần gũi với người xem.',
-                        actionScript: 'Nhâm nhi ngụm cà phê, mỉm cười hoặc đọc sách.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '50 - 60 cm',
-                            angle: 'Ngang tầm mắt chếch 15°',
-                            aeafTip: 'Dựng cố định điện thoại trên bàn, không cầm tay tự quay quá gần.'
-                        },
-                        targetSeconds: 5,
-                        arGuide: {
-                            shortTip: 'Đặt khuôn mặt vào khung oval phía trên.',
-                            stencilType: 'face_reaction'
-                        },
-                        capcutGuide: [
-                            { tool: 'Lồng tiếng & Nhạc', detail: 'Thêm nhạc Lofi 20% và giọng kể chuyện ấm áp 100%.' }
-                        ]
+                        title: 'Công đoạn 3: Trải nghiệm',
+                        time: '10 - 15 giây',
+                        action: 'Khách hàng soi gương cười tươi ngắm dáng mày/môi sắc nét, tự nhiên.',
+                        lens: 'iPhone 1x',
+                        distance: 'Khoảng cách: 30cm',
+                        speech: '"Mới làm xong mà cứ như phun sương tự nhiên, chuẩn gái Hàn luôn các chị ạ!"',
+                        capcutTip: 'Thêm bộ lọc làm đẹp da nhẹ nhàng, chèn chữ vàng nổi bật.',
+                        arGuide: 'Khung mặt khách ở giữa ống kính'
                     },
                     {
-                        stepNum: 4,
-                        badge: '13 - 15 Giây',
-                        title: 'Câu Hỏi Tương Tác Kết Video',
-                        goal: 'Khuyến khích người xem bình luận.',
-                        actionScript: 'Góc bàn cafe đầy nắng, giữ máy tĩnh 3 giây cuối.',
-                        iphoneSpecs: {
-                            lens: '1x',
-                            resolution: '1080p 60fps',
-                            distance: '50 cm',
-                            angle: '45°',
-                            aeafTip: 'Giữ máy đứng yên hoàn toàn 3 giây cuối.'
-                        },
-                        targetSeconds: 3,
-                        arGuide: {
-                            shortTip: 'Giữ khung hình tĩnh 3 giây cuối để hiển thị câu hỏi tương tác.',
-                            stencilType: 'cta_cheers'
-                        },
-                        capcutGuide: [
-                            { tool: 'Văn bản', detail: 'Chèn câu hỏi: "Cuối tuần này bạn định đi đâu?" với hiệu ứng Bật lên.' },
-                            { tool: 'Xuất file', detail: 'Xuất 1080P, 60fps, Bitrate Cao.' }
-                        ]
+                        title: 'Công đoạn 4: CTA',
+                        time: '5 giây cuối',
+                        action: 'Quay không gian spa sang trọng hoặc hình ảnh chuyên viên mỉm cười chào khách.',
+                        lens: 'iPhone 0.5x (Góc rộng)',
+                        distance: 'Khoảng cách: 1 mét',
+                        speech: '"Inbox ngay cho em để được thiết kế dáng mày phong thủy riêng nhé!"',
+                        capcutTip: 'Chèn thông tin địa chỉ spa và số điện thoại liên hệ ở cuối video.',
+                        arGuide: 'Lấy toàn cảnh tiệm sạch sẽ'
+                    }
+                ]
+            },
+            {
+                id: 'day-hoc-phun-xam',
+                name: 'Dạy Học Phun Xăm',
+                icon: '🎓',
+                desc: 'Đào tạo học viên, cầm tay chỉ việc',
+                steps: [
+                    {
+                        title: 'Công đoạn 1: Hook',
+                        time: '0 - 3 giây',
+                        action: 'Học viên đang chăm chú thực hành đi nét chuẩn xác trên da giả hoặc mẫu thật.',
+                        lens: 'iPhone 1x',
+                        distance: 'Khoảng cách: 30cm',
+                        speech: '"Học phun xăm mấy tháng là ra nghề có khách? Bí quyết tự tay làm đẹp ngay sau khóa học!"',
+                        capcutTip: 'Chèn text giật tít màu đỏ/vàng cực lớn ở những giây đầu.',
+                        arGuide: 'Canh bàn tay học viên vào giữa'
+                    },
+                    {
+                        title: 'Công đoạn 2: Thân bài',
+                        time: '3 - 10 giây',
+                        action: 'Giảng viên cầm tay uốn nắn từng đường kim, chỉ cách pha màu chuẩn tông.',
+                        lens: 'iPhone 2x (Góc từ trên xuống)',
+                        distance: 'Khoảng cách: 40cm',
+                        speech: '"Không giấu nghề! Cầm tay chỉ việc 1 kèm 1 từ con số 0 đến khi thành thạo."',
+                        capcutTip: 'Tua nhanh đoạn thực hành, chèn âm thanh vui tươi, hào hứng.',
+                        arGuide: 'Góc top-down chiếu thẳng bàn tay'
+                    },
+                    {
+                        title: 'Công đoạn 3: Trải nghiệm',
+                        time: '10 - 15 giây',
+                        action: 'Khoe thành phẩm phun mày/môi đầu tay cực xuất sắc do chính học viên thực hiện.',
+                        lens: 'iPhone 1x',
+                        distance: 'Khoảng cách: 25cm',
+                        speech: '"Tác phẩm của học viên ngày thứ 10 đây ạ, đẹp không thua gì thợ chính!"',
+                        capcutTip: 'Lồng nhạc nền truyền cảm hứng, chèn hiệu ứng lấp lánh (Sparkle).',
+                        arGuide: 'Cận cảnh tác phẩm trên da giả'
+                    },
+                    {
+                        title: 'Công đoạn 4: CTA',
+                        time: '5 giây cuối',
+                        action: 'Lớp học đông vui, học viên rạng rỡ nhận chứng chỉ hoặc bộ đồ nghề cao cấp.',
+                        lens: 'iPhone 0.5x (Góc rộng)',
+                        distance: 'Khoảng cách: 1.5 mét',
+                        speech: '"Khai giảng lớp mới tuần tới, đăng ký ngay để nhận ưu đãi học phí!"',
+                        capcutTip: 'Chèn thông tin ưu đãi và nút kêu gọi nhắn tin tư vấn.',
+                        arGuide: 'Lấy toàn cảnh lớp học'
                     }
                 ]
             }
         ];
 
-        // ==================== TRẠNG THÁI ỨNG DỤNG & LOCALSTORAGE ====================
-        const STORAGE_KEY = 'tiktok_viral_studio_progress_v2';
+        let currentCatIndex = 0;
+        let currentStepIndex = 0;
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordedBlob = null;
+        let isRecording = false;
+        let timerInterval = null;
+        let recordingSeconds = 0;
+        let showArGuide = true;
 
-        let state = {
-            currentTopicIndex: 0,
-            currentStepIndex: 0,
-            completedSteps: loadSavedProgress(),
-            activeSubTab: 'shoot',
-            cameraStream: null,
-            facingMode: 'environment',
-            rotationDegrees: 0, // 0, 90, 180, 270 để xoay luồng camera iOS Safari chuẩn 9:16
-            isRecording: false,
-            mediaRecorder: null,
-            recordedChunks: [],
-            timerInterval: null,
-            elapsedSeconds: 0,
-            showSafeZone: true,
-            renderLoopId: null,
-            lastVideoUrl: null
-        };
-
-        function loadSavedProgress() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? JSON.parse(raw) : {};
-            } catch (e) {
-                return {};
-            }
-        }
-
-        function saveProgressToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(state.completedSteps));
-            } catch (e) {
-                // Bỏ qua nếu trình duyệt chặn storage
-            }
-        }
-
-        // ==================== KHỞI TẠO GIAO DIỆN ====================
-        function init() {
-            renderTopicSelector();
+        // --- KHỞI TẠO GIAO DIỆN ---
+        function initApp() {
+            renderCategories();
             renderStepTabs();
-            renderMainContent();
+            renderStepContent();
         }
 
-        function getCurrentTopic() {
-            return TOPICS[state.currentTopicIndex];
+        function renderCategories() {
+            const container = document.getElementById('categoryGrid');
+            container.innerHTML = categoriesData.map((cat, idx) => `
+                <button onclick="selectCategory(${idx})" class="p-3 rounded-2xl border text-left transition-all flex items-center space-x-3 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/20 to-amber-500/20 border-rose-500/50 shadow-lg shadow-rose-500/10' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}">
+                    <span class="text-2xl">${cat.icon}</span>
+                    <div>
+                        <h3 class="font-bold text-xs text-white">${cat.name}</h3>
+                        <p class="text-[10px] text-slate-400 line-clamp-1">${cat.desc}</p>
+                    </div>
+                </button>
+            `).join('');
         }
 
-        function getCurrentStep() {
-            return getCurrentTopic().steps[state.currentStepIndex];
-        }
-
-        function getStepKey(stepIdx = state.currentStepIndex) {
-            return `${getCurrentTopic().id}-${stepIdx}`;
-        }
-
-        function renderTopicSelector() {
-            const container = document.getElementById('topic-selector');
-            container.innerHTML = TOPICS.map((topic, idx) => {
-                const isActive = idx === state.currentTopicIndex;
-                return `
-                    <button onclick="selectTopic(${idx})" 
-                        class="px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition active:scale-95 flex items-center gap-1.5 ${
-                            isActive 
-                            ? 'bg-white text-zinc-950 shadow-md' 
-                            : 'bg-zinc-800/90 text-zinc-300 border border-zinc-700/60 hover:bg-zinc-800'
-                        }">
-                        <span>${topic.name}</span>
-                    </button>
-                `;
-            }).join('');
+        function selectCategory(index) {
+            currentCatIndex = index;
+            currentStepIndex = 0;
+            renderCategories();
+            renderStepTabs();
+            renderStepContent();
         }
 
         function renderStepTabs() {
-            const topic = getCurrentTopic();
-            const container = document.getElementById('step-tabs');
-            let completedCount = 0;
-
-            container.innerHTML = topic.steps.map((step, idx) => {
-                const isDone = !!state.completedSteps[getStepKey(idx)];
-                if (isDone) completedCount++;
-                const isCurrent = idx === state.currentStepIndex;
-
-                let btnClass = 'bg-zinc-800/80 border-zinc-700/70 text-zinc-400';
-                if (isCurrent) {
-                    btnClass = 'bg-gradient-to-br from-[#ff0050]/25 to-[#00f2fe]/15 border-[#ff0050] text-white shadow-sm';
-                } else if (isDone) {
-                    btnClass = 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300';
-                }
-
-                return `
-                    <button onclick="selectStep(${idx})" class="p-2.5 rounded-xl border text-left transition active:scale-95 flex flex-col justify-between ${btnClass}">
-                        <div class="flex items-center justify-between w-full mb-1">
-                            <span class="text-xs font-extrabold">Bước ${step.stepNum}</span>
-                            ${isDone 
-                                ? '<span class="w-4 h-4 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center text-[10px] font-black">✓</span>' 
-                                : `<span class="w-2 h-2 rounded-full ${isCurrent ? 'bg-[#ff0050]' : 'bg-zinc-600'}"></span>`
-                            }
-                        </div>
-                        <span class="text-[11px] font-semibold truncate w-full opacity-90">${step.badge.replace(' Đầu', '')}</span>
-                    </button>
-                `;
-            }).join('');
-
-            document.getElementById('progress-text').innerText = `${completedCount}/4 Hoàn thành`;
-            document.getElementById('btn-prev-step').disabled = state.currentStepIndex === 0;
+            const container = document.getElementById('stepTabs');
+            const steps = categoriesData[currentCatIndex].steps;
+            container.innerHTML = steps.map((s, idx) => `
+                <button onclick="selectStep(${idx})" class="py-2.5 rounded-xl text-xs font-bold transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'text-slate-400 hover:text-white bg-slate-950/40'}">
+                    Bước ${idx + 1}
+                </button>
+            `).join('');
+            document.getElementById('stepProgressTextinnerText') = `${currentStepIndex + 1} / 4 Hoàn thành`;
         }
 
-        function renderMainContent() {
-            const step = getCurrentStep();
-            const isDone = !!state.completedSteps[getStepKey()];
-            const container = document.getElementById('main-content');
+        function selectStep(index) {
+            currentStepIndex = index;
+            renderStepTabs();
+            renderStepContent();
+        }
 
+        function renderStepContent() {
+            const step = categoriesData[currentCatIndex].steps[currentStepIndex];
+            const container = document.getElementById('stepContentContainer');
             container.innerHTML = `
-                <!-- Thẻ Tiêu Đề Công Đoạn -->
-                <div class="bg-zinc-800/60 border border-zinc-700/70 rounded-3xl p-4 space-y-2.5">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="px-3 py-1 rounded-full bg-[#ff0050]/20 border border-[#ff0050]/40 text-[#ff4d85] text-xs font-extrabold tracking-wide">
-                            CÔNG ĐOẠN ${step.stepNum} • ${step.badge}
-                        </span>
-                        <button onclick="toggleStepComplete()" class="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 ${
-                            isDone 
-                            ? 'bg-emerald-500 text-zinc-950' 
-                            : 'bg-zinc-700/80 text-zinc-200 hover:bg-zinc-700'
-                        }">
-                            <span>${isDone ? '✓ Đã xong' : 'Đánh dấu xong'}</span>
-                        </button>
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs rounded-lg">${step.time}</span>
+                    <span class="text-xs text-slate-400 font-medium">${step.lens}</span>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-white mb-1">${step.title}</h2>
+                    <p class="text-xs text-slate-300 leading-relaxed">${step.action}</p>
+                </div>
+                <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-2">
+                    <div class="flex items-center space-x-2 text-xs text-amber-400 font-semibold">
+                        <span>📏</span><span>${step.distance}</span>
                     </div>
-                    <h2 class="text-xl font-extrabold text-white leading-snug">${step.title}</h2>
-                    <p class="text-sm text-zinc-300 leading-relaxed">${step.goal}</p>
+                    <div class="text-xs text-slate-200 bg-slate-900 p-2.5 rounded-lg border border-slate-800 italic">
+                        💬 Lời thoại: <strong class="text-white not-italic">${step.speech}</strong>
+                    </div>
                 </div>
-
-                <!-- Chuyển đổi giữa Tab QUAY PHIM (iPhone) và Tab DỰNG PHIM (CapCut Free) -->
-                <div class="grid grid-cols-2 gap-2 p-1.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <button onclick="switchSubTab('shoot')" class="py-2.5 px-3 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
-                        state.activeSubTab === 'shoot' 
-                        ? 'bg-zinc-800 text-white shadow' 
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }">
-                        <span>📱 Cách Quay iPhone</span>
-                    </button>
-                    <button onclick="switchSubTab('capcut')" class="py-2.5 px-3 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${
-                        state.activeSubTab === 'capcut' 
-                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/40' 
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }">
-                        <span>✂️ Dựng CapCut Free</span>
-                    </button>
+                <div class="space-y-1.5">
+                    <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mẹo Dựng CapCut Free:</h4>
+                    <p class="text-xs text-slate-300 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">${step.capcutTip}</p>
                 </div>
-
-                ${state.activeSubTab === 'shoot' ? renderShootTab(step) : renderCapCutTab(step)}
+                <button onclick="openCameraModal()" class="w-full py-3.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold rounded-xl shadow-lg shadow-rose-600/30 text-xs flex items-center justify-center space-x-2 transition-transform active:scale-95">
+                    <span>🔴 Mở Camera Hướng Dẫn (9:16)</span>
+                </button>
             `;
         }
 
-        function renderShootTab(step) {
-            return `
-                <div class="space-y-3.5">
-                    <div class="bg-gradient-to-br from-zinc-800/90 to-zinc-900 border border-zinc-700/80 rounded-3xl p-4">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-base">🎬</span>
-                            <h3 class="text-base font-bold text-white">Hành động cần quay</h3>
-                        </div>
-                        <p class="text-base text-zinc-200 leading-relaxed font-medium bg-zinc-950/60 p-3.5 rounded-2xl border border-zinc-800">
-                            "${step.actionScript}"
-                        </p>
-                    </div>
+        // --- XỬ LÝ CAMERA & KHÓA SÁNG AE/AF ---
+        let currentFacingMode = 'environment';
 
-                    <div class="bg-zinc-800/50 border border-zinc-700/70 rounded-3xl p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-base">⚙️</span>
-                                <h3 class="text-base font-bold text-white">Thông số đặt máy iPhone</h3>
-                            </div>
-                            <span class="text-xs font-semibold text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded-lg border border-cyan-500/30">Chuẩn 9:16</span>
-                        </div>
+        async function openCameraModal() {
+            document.getElementById('cameraModal').classList.remove('hidden');
+            const step = categoriesData[currentCatIndex].steps[currentStepIndex];
+            document.getElementById('camStepTitle').innerText = step.title;
+            document.getElementById('camTipText').innerText = `${step.distance} • ${step.lens}`;
+            document.getElementById('arGuideText').innerText = step.arGuide;
 
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div class="bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
-                                <span class="text-xs text-zinc-400 block">Ống kính (Zoom)</span>
-                                <span class="text-sm font-bold text-amber-300 mt-0.5 block">${step.iphoneSpecs.lens}</span>
-                            </div>
-                            <div class="bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
-                                <span class="text-xs text-zinc-400 block">Chất lượng quay</span>
-                                <span class="text-sm font-bold text-emerald-400 mt-0.5 block">${step.iphoneSpecs.resolution}</span>
-                            </div>
-                            <div class="bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
-                                <span class="text-xs text-zinc-400 block">Khoảng cách đặt máy</span>
-                                <span class="text-sm font-bold text-white mt-0.5 block">📏 ${step.iphoneSpecs.distance}</span>
-                            </div>
-                            <div class="bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
-                                <span class="text-xs text-zinc-400 block">Góc nghiêng camera</span>
-                                <span class="text-sm font-bold text-pink-400 mt-0.5 block">📐 ${step.iphoneSpecs.angle}</span>
-                            </div>
-                        </div>
-
-                        <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex gap-3 items-start">
-                            <span class="text-xl mt-0.5">☀️</span>
-                            <div>
-                                <p class="text-xs font-extrabold uppercase text-amber-300 mb-0.5">Mẹo Khóa Sáng & Khóa Nét iPhone</p>
-                                <p class="text-sm text-zinc-200 leading-relaxed">${step.iphoneSpecs.aeafTip}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            await startCamera(currentFacingMode);
         }
 
-        function renderCapCutTab(step) {
-            return `
-                <div class="bg-zinc-800/50 border border-cyan-500/30 rounded-3xl p-4 space-y-3.5">
-                    <div class="flex items-center justify-between border-b border-zinc-700/70 pb-3">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-9 h-9 rounded-xl bg-white text-black font-black flex items-center justify-center text-lg shadow">
-                                ✂️
-                            </div>
-                            <div>
-                                <h3 class="text-base font-extrabold text-white">Thao tác trên CapCut Free</h3>
-                                <p class="text-xs text-cyan-300">Áp dụng cho đoạn video ${step.badge}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        ${step.capcutGuide.map((item, i) => `
-                            <div class="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex gap-3 items-start">
-                                <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-cyan-500/40">
-                                    ${i + 1}
-                                </div>
-                                <div>
-                                    <span class="inline-block px-2 py-0.5 rounded bg-zinc-800 text-cyan-300 text-xs font-bold mb-1">
-                                        Công cụ: ${item.tool}
-                                    </span>
-                                    <p class="text-sm text-zinc-200 leading-relaxed">${item.detail}</p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    <div class="pt-1">
-                        <button onclick="markDoneAndNext()" class="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-base active:scale-95 transition">
-                            ${state.currentStepIndex < 3 ? '✓ Hoàn Thành Bước Này & Sang Bước Tiếp' : '🎉 Hoàn Thành Cả 4 Công Đoạn!'}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ==================== ĐIỀU HƯỚNG & TƯƠNG TÁC ====================
-        function selectTopic(idx) {
-            state.currentTopicIndex = idx;
-            state.currentStepIndex = 0;
-            state.activeSubTab = 'shoot';
-            renderTopicSelector();
-            renderStepTabs();
-            renderMainContent();
-        }
-
-        function selectStep(idx) {
-            state.currentStepIndex = idx;
-            renderStepTabs();
-            renderMainContent();
-        }
-
-        function changeStep(delta) {
-            const next = state.currentStepIndex + delta;
-            if (next >= 0 && next < 4) {
-                selectStep(next);
-            } else if (next >= 4) {
-                openExportModal();
-            }
-        }
-
-        function switchSubTab(tab) {
-            state.activeSubTab = tab;
-            renderMainContent();
-        }
-
-        function toggleStepComplete() {
-            const key = getStepKey();
-            state.completedSteps[key] = !state.completedSteps[key];
-            saveProgressToStorage();
-            renderStepTabs();
-            renderMainContent();
-            showToast(state.completedSteps[key] ? '✅ Đã lưu tiến độ hoàn thành!' : 'Đã bỏ đánh dấu');
-        }
-
-        function markDoneAndNext() {
-            state.completedSteps[getStepKey()] = true;
-            saveProgressToStorage();
-            renderStepTabs();
-            if (state.currentStepIndex < 3) {
-                selectStep(state.currentStepIndex + 1);
-                state.activeSubTab = 'shoot';
-                renderMainContent();
-                showToast('🚀 Chuyển sang công đoạn tiếp theo!');
-            } else {
-                openExportModal();
-            }
-        }
-
-        // ==================== HỆ THỐNG CAMERA 9:16 CHUẨN CHO IPHONE (iOS SAFARI FIX) ====================
-        async function openARCamera() {
-            const modal = document.getElementById('ar-camera-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            const step = getCurrentStep();
-            document.getElementById('rec-target-badge').innerText = `/ ${step.targetSeconds}.0s`;
-            document.getElementById('rec-timer').innerText = '00.0s';
-            
-            document.getElementById('ar-hud-instruction').innerHTML = `
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-extrabold text-[#00f2fe]">CÔNG ĐOẠN ${step.stepNum}: ${step.title}</span>
-                    <span class="text-xs font-bold text-amber-300">📏 ${step.iphoneSpecs.distance}</span>
-                </div>
-                <p class="text-sm text-white font-medium leading-snug">${step.arGuide.shortTip}</p>
-            `;
-
-            renderARStencil(step.arGuide.stencilType);
-            await startCameraStream();
-        }
-
-        async function startCameraStream() {
-            const videoEl = document.getElementById('camera-video');
-            const canvasEl = document.getElementById('camera-canvas');
-            const mockBg = document.getElementById('camera-mock-bg');
-
-            if (state.renderLoopId) {
-                cancelAnimationFrame(state.renderLoopId);
-                state.renderLoopId = null;
-            }
-            if (state.cameraStream) {
-                state.cameraStream.getTracks().forEach(track => track.stop());
-            }
-
+        async function startCamera(facingMode) {
             try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Trình duyệt không hỗ trợ Camera API');
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(t => t.stop());
                 }
-                const stream = await navigator.mediaDevices.getUserMedia({
+                mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: state.facingMode,
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        facingMode: facingMode,
+                        width: { ideal: 1080 },
+                        height: { ideal: 1920 }
                     },
                     audio: true
                 });
-
-                state.cameraStream = stream;
-                videoEl.srcObject = stream;
-                await videoEl.play();
-
-                // Đảm bảo kích thước canvas luôn cố định chuẩn dọc 9:16 (720x1280)
-                canvasEl.width = 720;
-                canvasEl.height = 1280;
-                canvasEl.classList.remove('hidden');
-                mockBg.classList.add('hidden');
-
-                // Bắt đầu vòng lặp vẽ khung hình chuẩn dọc 9:16 lên Canvas
-                startCanvasRenderLoop(videoEl, canvasEl);
+                const videoElement = document.getElementById('liveVideo');
+                videoElement.srcObject = mediaStream;
+                videoElement.play();
             } catch (err) {
-                canvasEl.classList.add('hidden');
-                mockBg.classList.remove('hidden');
+                alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên trình duyệt Safari.');
+                closeCameraModal();
             }
         }
 
-        /**
-         * Vòng lặp xử lý khung hình trực tiếp vào Canvas 720x1280 (9:16).
-         * Giải quyết triệt để lỗi cảm biến iPhone trả về video ngang hoặc bị xoay 90 độ.
-         */
-        function startCanvasRenderLoop(videoEl, canvasEl) {
-            const ctx = canvasEl.getContext('2d');
-            const targetW = 720;
-            const targetH = 1280;
-            const targetAspect = targetW / targetH; // 0.5625 (9:16)
-
-            function drawFrame() {
-                if (!state.cameraStream) return;
-
-                const vw = videoEl.videoWidth;
-                const vh = videoEl.videoHeight;
-
-                if (vw > 0 && vh > 0) {
-                    ctx.save();
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, targetW, targetH);
-
-                    // Di chuyển gốc tọa độ về tâm Canvas để hỗ trợ xoay 0/90/180/270 độ
-                    ctx.translate(targetW / 2, targetH / 2);
-
-                    // Lật gương nếu dùng camera trước (selfie)
-                    if (state.facingMode === 'user') {
-                        ctx.scale(-1, 1);
-                    }
-
-                    // Áp dụng góc xoay thủ công nếu người dùng bấm nút Xoay 90°
-                    const rad = (state.rotationDegrees * Math.PI) / 180;
-                    ctx.rotate(rad);
-
-                    const isRotatedSideways = (state.rotationDegrees % 180 !== 0);
-                    // Kích thước vùng đích sau khi xoay
-                    const destW = isRotatedSideways ? targetH : targetW;
-                    const destH = isRotatedSideways ? targetW : targetH;
-                    const destAspect = destW / destH;
-
-                    const srcAspect = vw / vh;
-                    let sx = 0, sy = 0, sWidth = vw, sHeight = vh;
-
-                    // Center-crop luồng video nguồn để khớp khít tỷ lệ đích mà không bị méo hình
-                    if (srcAspect > destAspect) {
-                        // Nguồn rộng hơn đích (ví dụ nguồn 16:9 ngang, đích 9:16 dọc) -> Cắt hai bên
-                        sWidth = vh * destAspect;
-                        sx = (vw - sWidth) / 2;
-                    } else {
-                        // Nguồn cao hơn đích -> Cắt trên dưới
-                        sHeight = vw / destAspect;
-                        sy = (vh - sHeight) / 2;
-                    }
-
-                    ctx.drawImage(videoEl, sx, sy, sWidth, sHeight, -destW / 2, -destH / 2, destW, destH);
-                    ctx.restore();
-                }
-
-                state.renderLoopId = requestAnimationFrame(drawFrame);
+        function closeCameraModal() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
             }
-
-            drawFrame();
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('cameraModal').classList.add('hidden');
+            isRecording = false;
+            resetRecordButtonUI();
         }
 
-        function rotateCameraFeed() {
-            state.rotationDegrees = (state.rotationDegrees + 90) % 360;
-            document.getElementById('rotate-label').innerText = state.rotationDegrees === 0 ? 'Xoay 90°' : `Xoay ${state.rotationDegrees}°`;
-            showToast(`🔄 Đã xoay khung hình ${state.rotationDegrees}° (Khóa dọc 9:16)`);
-        }
-
-        function switchCameraFacing() {
-            state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
-            state.rotationDegrees = 0;
-            document.getElementById('rotate-label').innerText = 'Xoay 90°';
-            startCameraStream();
-            showToast(state.facingMode === 'user' ? '🤳 Đã chuyển Camera Trước' : '📷 Đã chuyển Camera Sau');
-        }
-
-        function closeARCamera() {
-            if (state.isRecording) {
-                stopRecording();
-            }
-            if (state.renderLoopId) {
-                cancelAnimationFrame(state.renderLoopId);
-                state.renderLoopId = null;
-            }
-            if (state.cameraStream) {
-                state.cameraStream.getTracks().forEach(track => track.stop());
-                state.cameraStream = null;
-            }
-            const modal = document.getElementById('ar-camera-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function toggleSafeZone() {
-            state.showSafeZone = !state.showSafeZone;
-            const zone = document.getElementById('ar-safezone');
-            const btn = document.getElementById('btn-toggle-safe');
-            if (state.showSafeZone) {
-                zone.classList.remove('hidden');
-                btn.classList.add('bg-cyan-500/20', 'text-cyan-300');
-            } else {
-                zone.classList.add('hidden');
-                btn.classList.remove('bg-cyan-500/20', 'text-cyan-300');
-            }
-        }
-
-        function selectLens(lens) {
-            document.querySelectorAll('.lens-btn').forEach(b => {
-                if (b.innerText === lens) {
-                    b.className = 'lens-btn px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400 text-black';
-                } else {
-                    b.className = 'lens-btn px-2.5 py-1 rounded-full text-xs font-bold text-zinc-300';
-                }
-            });
-            showToast(`Đã chọn gợi ý ống kính ${lens}`);
-        }
-
-        function renderARStencil(type) {
-            const container = document.getElementById('ar-stencil-container');
+        // Khóa sáng AE/AF khi chạm màn hình camera
+        document.getElementById('cameraViewport').addEventListener('click', async (e) => {
+            const badge = document.getElementById('aeLockBadge');
+            badge.classList.remove('hidden');
             
-            if (type === 'hook_pour') {
-                container.innerHTML = `
-                    <div class="relative w-64 h-80 flex flex-col items-center justify-center">
-                        <svg class="w-20 h-20 text-[#00f2fe] animate-bounce mb-1 drop-shadow-[0_0_8px_rgba(0,242,254,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                        </svg>
-                        <span class="text-xs font-bold bg-[#00f2fe] text-black px-2.5 py-0.5 rounded-full mb-2">Rót nước / Thả topping từ đây</span>
-                        <div class="w-48 h-48 rounded-3xl border-2 border-dashed border-amber-400 bg-amber-400/5 flex flex-col items-center justify-center">
-                            <div class="w-32 h-32 rounded-full border-2 border-amber-300/80 flex items-center justify-center">
-                                <span class="text-xs font-extrabold text-amber-300 text-center px-2">TÂM LY / MÓN ĂN<br>(Cận cảnh 45°)</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'face_reaction') {
-                container.innerHTML = `
-                    <div class="relative w-64 h-96 flex flex-col items-center justify-center">
-                        <div class="w-44 h-52 rounded-[50%] border-2 border-dashed border-[#00f2fe] bg-[#00f2fe]/5 flex flex-col items-center justify-center mb-3">
-                            <span class="text-xs font-extrabold text-[#00f2fe] bg-black/70 px-2.5 py-1 rounded-full">KHUÔN MẶT (Ngang mắt)</span>
-                        </div>
-                        <div class="w-40 h-24 rounded-2xl border-2 border-dashed border-amber-400 flex items-center justify-center">
-                            <span class="text-xs font-bold text-amber-300 text-center">Khuấy / Đưa ly lên<br>ở vùng này</span>
-                        </div>
-                    </div>
-                `;
-            } else if (type === 'topdown_flatlay') {
-                container.innerHTML = `
-                    <div class="relative w-72 h-72 border-2 border-emerald-400/80 rounded-3xl flex items-center justify-center bg-emerald-500/5">
-                        <div class="w-10 h-10 rounded-full border-2 border-emerald-400 flex items-center justify-center">
-                            <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-                        </div>
-                        <span class="absolute top-2.5 text-[11px] font-extrabold text-emerald-300 bg-black/75 px-2.5 py-0.5 rounded-full">
-                            LIA MÁY CHẬM TỪ TRÁI → PHẢI
-                        </span>
-                        <div class="absolute bottom-6 left-6 w-20 h-20 rounded-full border border-dashed border-amber-300 flex items-center justify-center text-[11px] text-amber-300 font-bold">Bánh / Phụ</div>
-                        <div class="absolute top-12 right-6 w-24 h-24 rounded-full border border-dashed border-amber-300 flex items-center justify-center text-[11px] text-amber-300 font-bold">Ly chính</div>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="relative w-72 h-96 flex flex-col items-center justify-center">
-                        <div class="w-56 h-72 rounded-3xl border-2 border-dashed border-pink-400 bg-pink-500/5 flex flex-col items-center justify-between p-4">
-                            <span class="text-xs font-extrabold text-pink-300 bg-black/75 px-2.5 py-1 rounded-full">GIỮ YÊN MÁY 3 GIÂY CUỐI</span>
-                            <div class="w-full flex justify-start">
-                                <div class="px-3 py-2 rounded-xl border border-amber-400 bg-amber-400/15 text-amber-300 text-xs font-bold">
-                                    👈 Nâng ly / Chỉ góc trái
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // ==================== QUAY VIDEO TỪ CANVAS 9:16 & LƯU MP4 ====================
-        function getSupportedMimeType() {
-            const types = [
-                'video/mp4;codecs=avc1',
-                'video/mp4',
-                'video/webm;codecs=vp9',
-                'video/webm;codecs=vp8',
-                'video/webm'
-            ];
-            for (const type of types) {
-                if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
-                    return type;
+            if (mediaStream) {
+                const track = mediaStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+                if (capabilities.exposureMode && capabilities.exposureMode.includes('manual')) {
+                    try {
+                        await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
+                    } catch (err) { console.log(err); }
                 }
             }
-            return '';
-        }
+            setTimeout(() => { badge.classList.add('hidden'); }, 2000);
+        });
+
+        document.getElementById('switchCameraBtn').addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            startCamera(currentFacingMode);
+        });
+
+        document.getElementById('closeCameraBtn').addEventListener('click', closeCameraModal);
+
+        document.getElementById('toggleArBtn').addEventListener('click', () => {
+            showArGuide = !showArGuide;
+            document.getElementById('arOverlay').style.display = showArGuide ? 'flex' : 'none';
+        });
+
+        // --- GHI HÌNH QUA CANVAS 9:16 & XUẤT MP4 CHO CAPCUT ---
+        const recordBtn = document.getElementById('recordBtn');
+        recordBtn.addEventListener('click', toggleRecording);
 
         function toggleRecording() {
-            if (state.isRecording) {
-                stopRecording();
-            } else {
+            if (!isRecording) {
                 startRecording();
+            } else {
+                stopRecording();
             }
         }
 
         function startRecording() {
-            const step = getCurrentStep();
-            state.isRecording = true;
-            state.elapsedSeconds = 0;
-            state.recordedChunks = [];
+            recordedChunks = [];
+            const videoElement = document.getElementById('liveVideo');
+            const canvas = document.getElementById('recordCanvas');
+            canvas.width = 1080;
+            canvas.height = 1920;
+            const ctx = canvas.getContext('2d');
 
-            const innerCircle = document.getElementById('record-inner-circle');
-            innerCircle.classList.remove('rounded-full');
-            innerCircle.classList.add('rounded-lg', 'scale-50');
-            
-            const recDot = document.getElementById('rec-dot');
-            recDot.classList.remove('bg-zinc-500');
-            recDot.classList.add('bg-[#ff0050]', 'animate-rec');
-
-            const canvasEl = document.getElementById('camera-canvas');
-
-            // Ghi hình trực tiếp từ Canvas 720x1280 (9:16) + âm thanh từ micro
-            if (state.cameraStream && canvasEl.captureStream) {
-                try {
-                    const canvasStream = canvasEl.captureStream(30);
-                    const audioTracks = state.cameraStream.getAudioTracks();
-                    if (audioTracks.length > 0) {
-                        canvasStream.addTrack(audioTracks[0]);
-                    }
-
-                    const mimeType = getSupportedMimeType();
-                    const options = mimeType ? { mimeType, videoBitsPerSecond: 5000000 } : { videoBitsPerSecond: 5000000 };
-                    
-                    state.mediaRecorder = new MediaRecorder(canvasStream, options);
-                    state.mediaRecorder.ondataavailable = (e) => {
-                        if (e.data && e.data.size > 0) {
-                            state.recordedChunks.push(e.data);
-                        }
-                    };
-                    state.mediaRecorder.onstop = handleRecordingComplete;
-                    state.mediaRecorder.start(200);
-                } catch (e) {
-                    console.warn('MediaRecorder error:', e);
+            // Vẽ khung hình chuẩn 9:16 liên tục qua Canvas
+            let animId;
+            function drawCanvas() {
+                if (!isRecording) return;
+                // Center-crop khung hình cảm biến sang chuẩn 9:16
+                const vW = videoElement.videoWidth;
+                const vH = videoElement.videoHeight;
+                let sWidth = vH * (9/16);
+                let sHeight = vH;
+                let sX = (vW - sWidth) / 2;
+                let sY = 0;
+                if (vW / vH > 9/16) {
+                    sWidth = vW;
+                    sHeight = vW * (16/9);
+                    sX = 0;
+                    sY = (vH - sHeight) / 2;
                 }
+                ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                animId = requestAnimationFrame(drawCanvas);
             }
 
-            state.timerInterval = setInterval(() => {
-                state.elapsedSeconds += 0.1;
-                const timerEl = document.getElementById('rec-timer');
-                timerEl.innerText = state.elapsedSeconds.toFixed(1) + 's';
+            const canvasStream = canvas.captureStream(30);
+            // Kết hợp audio từ mic
+            if (mediaStream.getAudioTracks().length > 0) {
+                canvasStream.addTrack(mediaStream.getAudioTracks()[0]);
+            }
 
-                if (Math.abs(state.elapsedSeconds - step.targetSeconds) < 0.05) {
-                    timerEl.classList.add('text-emerald-400');
-                    showToast(`🎯 Đã đủ ${step.targetSeconds}s chuẩn viral!`);
-                }
-            }, 100);
+            let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+            if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,opus')) {
+                options = { mimeType: 'video/mp4;codecs=avc1,opus' };
+            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                options = { mimeType: 'video/mp4' };
+            }
+
+            try {
+                mediaRecorder = new MediaRecorder(canvasStream, options);
+            } catch (e) {
+                mediaRecorder = new MediaRecorder(canvasStream);
+            }
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                cancelAnimationFrame(animId);
+                const mime = mediaRecorder.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+                recordedBlob = new Blob(recordedChunks, { type: mime });
+                openPreviewModal();
+            };
+
+            isRecording = true;
+            mediaRecorder.start(100);
+            animId = requestAnimationFrame(drawCanvas);
+            startTimer();
+            setRecordingUI(true);
         }
 
         function stopRecording() {
-            state.isRecording = false;
-            clearInterval(state.timerInterval);
+            isRecording = false;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            stopTimer();
+            setRecordingUI(false);
+            closeCameraModal();
+        }
 
-            const innerCircle = document.getElementById('record-inner-circle');
-            innerCircle.classList.add('rounded-full');
-            innerCircle.classList.remove('rounded-lg', 'scale-50');
-
-            const recDot = document.getElementById('rec-dot');
-            recDot.classList.add('bg-zinc-500');
-            recDot.classList.remove('bg-[#ff0050]', 'animate-rec');
-
-            document.getElementById('rec-timer').classList.remove('text-emerald-400');
-
-            if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
-                state.mediaRecorder.stop();
+        function setRecordingUI(recording) {
+            const inner = document.getElementById('recordInnerBtn');
+            if (recording) {
+                inner.classList.remove('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
+                inner.classList.add('rounded-lg', 'w-8', 'h-8', 'bg-white');
             } else {
-                openPreviewModal(null, 'mp4');
+                inner.classList.remove('rounded-lg', 'w-8', 'h-8', 'bg-white');
+                inner.classList.add('rounded-full', 'w-16', 'h-16', 'bg-rose-500');
             }
         }
 
-        function handleRecordingComplete() {
-            const mimeType = state.mediaRecorder.mimeType || 'video/mp4';
-            const isMp4 = mimeType.includes('mp4');
-            const ext = isMp4 ? 'mp4' : 'webm';
-            const blob = new Blob(state.recordedChunks, { type: mimeType });
+        function startTimer() {
+            recordingSeconds = 0;
+            const timerEl = document.getElementById('camTimer');
+            timerInterval = setInterval(() => {
+                recordingSeconds++;
+                let m = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
+                let s = (recordingSeconds % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s} / 03s`;
+                if (recordingSeconds >= 15) { // Gợi ý thời lượng tối ưu cho 1 công đoạn viral
+                    stopRecording();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        // --- XEM TRƯỚC & LƯU VÀO ẢNH IPHONE CHO CAPCUT ---
+        function openPreviewModal() {
+            const modal = document.getElementById('previewModal');
+            const videoEl = document.getElementById('previewVideo');
+            const videoUrl = URL.createObjectURL(recordedBlob);
+            videoEl.src = videoUrl;
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        });
+
+        document.getElementById('saveToPhotosBtn').addEventListener('click', async () => {
+            const file = new File([recordedBlob], `TikTok-CongDoan-${currentStepIndex + 1}.mp4`, { type: recordedBlob.type || 'video/mp4' });
             
-            if (state.lastVideoUrl) {
-                URL.revokeObjectURL(state.lastVideoUrl);
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Video TikTok 9:16',
+                        text: 'Video quay từ TikTok Viral Studio - Mở bằng CapCut ngay!'
+                    });
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') console.log(err);
+                }
             }
-            const videoUrl = URL.createObjectURL(blob);
-            state.lastVideoUrl = videoUrl;
-            openPreviewModal(videoUrl, ext);
-        }
 
-        function finishStepFromCamera() {
-            if (state.isRecording) {
-                stopRecording();
-            } else {
-                closeARCamera();
-                state.completedSteps[getStepKey()] = true;
-                saveProgressToStorage();
-                state.activeSubTab = 'capcut';
-                renderStepTabs();
-                renderMainContent();
-                showToast('🎬 Đã xong cảnh quay! Xem hướng dẫn CapCut nhé.');
-            }
-        }
+            // Fallback lưu file trực tiếp
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(recordedBlob);
+            a.download = `TikTok-CongDoan-${currentStepIndex + 1}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            alert('Đã tải xuống file video! Bạn có thể mở ứng dụng Tệp hoặc Ảnh trên iPhone.');
+        });
 
-        // ==================== MODAL XEM LẠI & LƯU VIDEO ====================
-        function openPreviewModal(videoUrl, ext) {
-            const modal = document.getElementById('preview-video-modal');
-            const playback = document.getElementById('recorded-playback');
-            const mockBanner = document.getElementById('mock-saved-banner');
-            const downloadBtn = document.getElementById('btn-download-video');
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            if (videoUrl) {
-                playback.src = videoUrl;
-                playback.classList.remove('hidden');
-                mockBanner.classList.add('hidden');
-                downloadBtn.href = videoUrl;
-                downloadBtn.download = `TikTok-9x16-Buoc${getCurrentStep().stepNum}.${ext}`;
-                downloadBtn.classList.remove('hidden');
-            } else {
-                playback.classList.add('hidden');
-                mockBanner.classList.remove('hidden');
-                downloadBtn.classList.add('hidden');
-            }
-        }
-
-        function closePreviewModal() {
-            const playback = document.getElementById('recorded-playback');
-            playback.pause();
-            const modal = document.getElementById('preview-video-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function retakeVideo() {
-            closePreviewModal();
-            showToast('Sẵn sàng quay lại cảnh này!');
-        }
-
-        function confirmStepAndGoCapCut() {
-            closePreviewModal();
-            closeARCamera();
-            state.completedSteps[getStepKey()] = true;
-            saveProgressToStorage();
-            state.activeSubTab = 'capcut';
-            renderStepTabs();
-            renderMainContent();
-        }
-
-        // ==================== MODAL XUẤT FILE & TOAST ====================
-        function openExportModal() {
-            const modal = document.getElementById('export-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeExportModal() {
-            const modal = document.getElementById('export-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast-box');
-            toast.innerText = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 2600);
-        }
-
-        window.onload = init;
+        window.onload = initApp;
     </script>
 </body>
 </html>
