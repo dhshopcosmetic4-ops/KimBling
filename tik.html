@@ -13,11 +13,9 @@
         .filter-beauty { filter: brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px); }
         .filter-cinematic { filter: contrast(1.3) saturate(1.25) brightness(0.95); }
         .filter-none { filter: none; }
-        /* Ẩn thanh cuộn ngang nhưng vẫn vuốt mượt trên iPhone */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-    <!-- Đọc dữ liệu tự động từ tenmon.js -->
     <script src="tenmon.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
@@ -29,7 +27,7 @@
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-rose-500/20">KB</div>
                 <div>
                     <h1 class="font-extrabold text-base leading-tight text-white">Kim Bling Studio Pro</h1>
-                    <p class="text-xs text-slate-400">Lê Minh Dũng • Kho Hook Hot Trend</p>
+                    <p class="text-xs text-slate-400">Lê Minh Dũng • Chuẩn 3-20-4 Giây Điện Ảnh</p>
                 </div>
             </div>
             <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-extrabold text-xs flex items-center space-x-1.5 active:scale-95 transition-transform shadow">
@@ -87,16 +85,16 @@
             <div id="dishDescriptionBox" class="hidden text-xs text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800 italic leading-relaxed"></div>
         </section>
 
-        <!-- 3. QUY TRÌNH 4 CÔNG ĐOẠN -->
+        <!-- 3. 3 PHÂN ĐOẠN CHÍNH (3 - 20 - 4 GIÂY) -->
         <section class="space-y-2.5">
             <div class="flex items-center justify-between">
-                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Quy Trình 4 Công Đoạn (~45s)</label>
-                <span id="stepProgressText" class="text-xs text-rose-400 font-extrabold">Bước 1 / 4</span>
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Quy Trình Quay Chuẩn (3 - 20 - 4s)</label>
+                <span id="stepProgressText" class="text-xs text-rose-400 font-extrabold">Phân đoạn 1 / 3</span>
             </div>
-            <div class="grid grid-cols-4 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800" id="stepTabs"></div>
+            <div class="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800" id="stepTabs"></div>
         </section>
 
-        <!-- 4. NỘI DUNG CHI TIẾT & BỘ CHỌN HOOK HOT TREND -->
+        <!-- 4. NỘI DUNG CHI TIẾT & CHỌN KIỂU QUAY -->
         <section id="stepContentContainer" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 space-y-4 shadow-xl"></section>
 
         <!-- 5. GỢI Ý TIÊU ĐỀ & HASHTAG -->
@@ -120,7 +118,7 @@
                 <span class="text-2xl">🎬</span>
                 <div>
                     <h2 class="font-extrabold text-sm text-white">Cẩm Nang Dựng CapCut Free</h2>
-                    <p class="text-xs text-slate-400">Cách ghép & cắt bớt 2 đầu video chuẩn 3s</p>
+                    <p class="text-xs text-slate-400">Sắp xếp thứ tự 1 - 2 - 3 chuẩn dồn dập</p>
                 </div>
             </div>
             <button onclick="closeCapcutGuideModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-lg">✕</button>
@@ -139,14 +137,14 @@
         <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between p-4 bg-gradient-to-b from-black/85 to-transparent pointer-events-auto">
             <button id="closeCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
             <div class="bg-black/65 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15 text-center">
-                <span id="camClipTitle" class="text-xs font-bold text-rose-400 block">Đang quay: Đoạn 1</span>
-                <span id="camTimer" class="text-xs font-mono text-white font-bold">00:00 / 05s (Trừ hao cắt bớt còn 3s)</span>
+                <span id="camClipTitle" class="text-xs font-bold text-rose-400 block">Quay video</span>
+                <span id="camTimer" class="text-xs font-mono text-white font-bold">00:00 / 7s</span>
             </div>
             <button id="switchCameraBtn" class="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center text-sm backdrop-blur-md">🔄</button>
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty"></video>
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
             <div class="absolute top-20 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
@@ -157,7 +155,7 @@
             </div>
 
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
-                <div class="absolute inset-6 border border-white/20 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+                <div class="absolute inset-6 border border-white/25 rounded-2xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
                     <div class="border-b border-r border-white/10"></div><div class="border-b border-r border-white/10"></div><div class="border-b border-white/10"></div>
                     <div></div><div></div><div></div>
@@ -165,8 +163,8 @@
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="w-56 h-56 border-2 border-dashed border-rose-500 rounded-2xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/10 backdrop-blur-[1px] space-y-2">
-                        <span class="text-3xl animate-bounce">🎥</span>
-                        <span id="arGuideText" class="text-xs font-extrabold text-white drop-shadow">Quay 5 giây (về cắt bớt 2 đầu còn 3s)</span>
+                        <span class="text-3xl animate-bounce" id="camModeEmoji">🎬</span>
+                        <span id="arGuideText" class="text-xs font-extrabold text-white drop-shadow">Quay trừ hao 1s trước sau</span>
                     </div>
                 </div>
 
@@ -188,23 +186,72 @@
         </div>
     </div>
 
+    <!-- MODAL STUDIO CẮT SỬA & ĐIỀU CHỈNH SÁNG TỐI -->
+    <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden">
+        <div class="flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl">🎛️</span>
+                <div>
+                    <h2 class="font-extrabold text-sm text-white">Studio Hiệu Chỉnh Video</h2>
+                    <p class="text-xs text-slate-400">Cắt bỏ 1s trước/sau & Tăng giảm Sáng/Tối</p>
+                </div>
+            </div>
+            <button onclick="closeEditorModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">✕</button>
+        </div>
+
+        <div class="relative flex-1 w-full bg-black flex items-center justify-center p-4">
+            <video id="previewVideo" controls playsinline class="max-h-full max-w-full rounded-2xl shadow-2xl border border-slate-800"></video>
+        </div>
+
+        <div class="bg-slate-900 border-t border-slate-800 p-4 space-y-4 max-w-md mx-auto w-full">
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-amber-400">☀️ Độ Sáng / Tối</span>
+                    <span id="brightnessVal" class="text-white">100%</span>
+                </div>
+                <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
+            </div>
+
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-sky-400">💎 Độ Rõ Nét & Tương Phản</span>
+                    <span id="contrastVal" class="text-white">100%</span>
+                </div>
+                <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
+            </div>
+
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeEditorModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs">
+                    Quay lại
+                </button>
+                <button onclick="downloadFinalVideo()" class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl text-xs shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-1.5">
+                    <span>💾</span>
+                    <span>Tải Về Máy Ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentCatIndex = 0;
         let currentStepIndex = 0;
-        let currentHookIndex = 0; // Lưu chỉ số Hook đang chọn
+        let currentHookIndex = 0;
         let currentCustomDish = '';
         let currentPmuType = 'may';
         let currentCapcutTab = 0;
         let currentFilterClass = 'filter-beauty';
+        let currentCamMode = 'dynamic';
 
         let activeStepIndex = 0;
-        let activeClipIndex = 0;
+        let activeSubClipId = 0;
         let mediaStream = null;
         let mediaRecorder = null;
         let recordedChunks = [];
         let isRecording = false;
         let timerInterval = null;
         let recordingSeconds = 0;
+        let targetRecordingSeconds = 5;
+        let recordedBlobUrl = null;
 
         function initApp() {
             renderCategories();
@@ -256,7 +303,7 @@
         function selectCategory(index) {
             currentCatIndex = index;
             currentStepIndex = 0;
-            currentHookIndex = 0; // Reset về Hook đầu tiên của danh mục mới
+            currentHookIndex = 0;
             currentCustomDish = '';
             document.getElementById('dishNameInput').value = '';
             document.getElementById('activeDishBadge').classList.add('hidden');
@@ -267,7 +314,6 @@
                 cat.steps = pmuSubData[currentPmuType].steps;
             }
 
-            syncHookToStep();
             renderCategories();
             renderSubControls();
             renderStepTabs();
@@ -275,18 +321,8 @@
             renderCaptions();
         }
 
-        // Đồng bộ Hook đang chọn vào Bước 1 của chuyên mục hiện tại
-        function syncHookToStep() {
-            const cat = categoriesData[currentCatIndex];
-            const availableHooks = hooksLibrary[cat.id];
-            if (availableHooks && availableHooks[currentHookIndex]) {
-                cat.steps[0].clips = availableHooks[currentHookIndex].clips;
-            }
-        }
-
         function selectHook(hookIdx) {
             currentHookIndex = hookIdx;
-            syncHookToStep();
             renderStepContent();
         }
 
@@ -332,7 +368,6 @@
         function selectPmuType(type) {
             currentPmuType = type;
             categoriesData[currentCatIndex].steps = pmuSubData[type].steps;
-            syncHookToStep();
             renderSubControls();
             renderStepContent();
         }
@@ -385,17 +420,22 @@
 
         function renderStepTabs() {
             const container = document.getElementById('stepTabs');
-            container.innerHTML = [0, 1, 2, 3].map((idx) => `
+            container.innerHTML = [0, 1, 2].map((idx) => `
                 <button onclick="selectStep(${idx})" class="py-3 rounded-xl text-xs font-extrabold transition-all ${idx === currentStepIndex ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'text-slate-400 hover:text-white bg-slate-950/40'}">
-                    Bước ${idx + 1}
+                    Phân đoạn ${idx + 1}
                 </button>
             `).join('');
-            document.getElementById('stepProgressText').innerText = `Bước ${currentStepIndex + 1} / 4`;
+            document.getElementById('stepProgressText').innerText = `Phân đoạn ${currentStepIndex + 1} / 3`;
         }
 
         function selectStep(index) {
             currentStepIndex = index;
             renderStepTabs();
+            renderStepContent();
+        }
+
+        function setCameraMode(mode) {
+            currentCamMode = mode;
             renderStepContent();
         }
 
@@ -405,7 +445,6 @@
             const step = steps[currentStepIndex];
             const container = document.getElementById('stepContentContainer');
 
-            // Nếu đang ở Bước 1 (Hook), hiển thị thêm bộ chọn 5 Hook Hot Trend
             let hookSelectorHtml = '';
             if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
                 const hooksList = hooksLibrary[cat.id];
@@ -430,32 +469,61 @@
                 `;
             }
 
-            let clipsHtml = '';
-            if (step.clips && step.clips.length > 0) {
-                clipsHtml = `
+            let modeSelectorHtml = `
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between space-x-2">
+                    <span class="text-xs font-bold text-slate-300">🎥 Kiểu góc quay:</span>
+                    <div class="flex space-x-1.5">
+                        <button onclick="setCameraMode('dynamic')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${currentCamMode === 'dynamic' ? 'bg-rose-600 text-white shadow' : 'bg-slate-900 text-slate-400'}">⚡ Điện Ảnh Động</button>
+                        <button onclick="setCameraMode('standard')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${currentCamMode === 'standard' ? 'bg-sky-600 text-white shadow' : 'bg-slate-900 text-slate-400'}">🛡️ Tiêu Chuẩn</button>
+                    </div>
+                </div>
+            `;
+
+            let speechText = '';
+            if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
+                const hObj = hooksLibrary[cat.id][currentHookIndex];
+                speechText = typeof hObj.speech === 'function' ? hObj.speech(currentCustomDish) : hObj.speech;
+            } else {
+                speechText = typeof step.speech === 'function' ? step.speech(currentCustomDish) : step.speech;
+            }
+
+            let actionAreaHtml = '';
+            if (step.isMultiSegment && step.subClips) {
+                // Phân đoạn 2: Tách riêng nút quay cho từng đoạn nhỏ 7s
+                actionAreaHtml = `
                     <div class="space-y-3 pt-1">
-                        <div class="text-xs font-black text-amber-400 flex items-center space-x-1.5">
-                            <span>🎞️ Các đoạn clip ngắn (Quay 5s, cắt bớt còn 3s):</span>
-                        </div>
-                        <div class="space-y-3">
-                            ${step.clips.map((c, i) => {
-                                let speechText = typeof c.speech === 'function' ? c.speech(currentCustomDish) : c.speech;
-                                return `
-                                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <span class="text-xs font-extrabold text-rose-300 block">${c.name}</span>
-                                            <span class="text-[11px] text-slate-400 font-medium">🎯 Thao tác: ${c.motionGuide}</span>
-                                        </div>
-                                        <button onclick="openCameraModal(${currentStepIndex}, ${i})" class="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
-                                            <span>🔴 Quay đoạn này</span>
-                                        </button>
+                        <span class="text-xs font-black text-amber-400 block">⚡ Quay lần lượt 4 đoạn nhỏ (Mỗi đoạn đúng 7s, cắt trước sau còn 5s):</span>
+                        <div class="space-y-2.5">
+                            ${step.subClips.map((sub) => `
+                                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between space-x-2">
+                                    <div class="space-y-0.5">
+                                        <span class="text-xs font-extrabold text-rose-300 block">${sub.name}</span>
+                                        <span class="text-[11px] text-slate-400 block">🎯 ${sub.motionGuide}</span>
+                                        <span class="text-[10px] text-amber-300 italic">💬 ${sub.speech}</span>
                                     </div>
-                                    <div class="text-xs text-slate-200 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 leading-relaxed">
-                                        💬 <em>Thoại:</em> ${speechText}
-                                    </div>
+                                    <button onclick="openCameraModal(${currentStepIndex}, ${sub.id})" class="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
+                                        <span>🔴 Quay (7s)</span>
+                                    </button>
                                 </div>
-                            `;}).join('')}
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Phân đoạn 1 hoặc Phân đoạn 3
+                actionAreaHtml = `
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-extrabold text-rose-300 block">🔴 Nút Bắt Đầu Quay</span>
+                                <span class="text-[11px] text-slate-400 font-medium">⚡ Hướng dẫn: ${step.motionGuide}</span>
+                            </div>
+                            <button onclick="openCameraModal(${currentStepIndex}, 0)" class="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-xs flex items-center space-x-1.5 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
+                                <span>🔴 Quay Video Này</span>
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-200 bg-slate-900 p-3 rounded-lg border border-slate-800/80 leading-relaxed">
+                            💬 <em>Thoại gợi ý:</em> ${speechText}
                         </div>
                     </div>
                 `;
@@ -463,14 +531,15 @@
 
             container.innerHTML = `
                 <div class="flex items-center justify-between">
-                    <span class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-lg">${step.time} (~45s tổng video)</span>
+                    <span class="px-3 py-1 bg-rose-500/15 border border-rose-500/30 text-rose-400 font-extrabold text-xs rounded-lg">${step.time}</span>
                     <button onclick="openCapcutGuideModal(currentStepIndex)" class="text-xs text-sky-400 font-bold underline">📖 Xem hướng dẫn CapCut</button>
                 </div>
                 <div>
                     <h2 class="text-base font-extrabold text-white mb-1">${step.title}</h2>
                 </div>
                 ${hookSelectorHtml}
-                ${clipsHtml}
+                ${modeSelectorHtml}
+                ${actionAreaHtml}
             `;
         }
 
@@ -552,16 +621,43 @@
 
         let currentFacingMode = 'environment';
 
-        async function openCameraModal(stepIdx, clipIdx) {
+        async function openCameraModal(stepIdx, subId = 0) {
             activeStepIndex = stepIdx;
-            activeClipIndex = clipIdx;
+            activeSubClipId = subId;
             const steps = getCurrentStepsData();
-            const clip = steps[stepIdx].clips[clipIdx];
-            let speechText = typeof clip.speech === 'function' ? clip.speech(currentCustomDish) : clip.speech;
+            const step = steps[stepIdx];
 
-            document.getElementById('camClipTitle').innerText = `Bước ${stepIdx + 1} - ${clip.name}`;
-            document.getElementById('camActionGuide').innerText = clip.motionGuide;
+            // Thiết lập thời gian quay chuẩn
+            if (stepIdx === 0) {
+                targetRecordingSeconds = 5; // Phân đoạn 1: 5s
+            } else if (stepIdx === 1) {
+                targetRecordingSeconds = 7; // Phân đoạn 2: Mỗi đoạn nhỏ đúng 7s
+            } else {
+                targetRecordingSeconds = 6; // Phân đoạn 3: 6s
+            }
+
+            let speechText = '';
+            let guideText = step.motionGuide;
+            if (stepIdx === 0) {
+                const cat = categoriesData[currentCatIndex];
+                const hObj = hooksLibrary[cat.id][currentHookIndex];
+                speechText = typeof hObj.speech === 'function' ? hObj.speech(currentCustomDish) : hObj.speech;
+            } else if (stepIdx === 1 && step.subClips) {
+                const subObj = step.subClips.find(s => s.id === subId);
+                if (subObj) {
+                    guideText = subObj.motionGuide;
+                    speechText = subObj.speech;
+                }
+            } else {
+                speechText = typeof step.speech === 'function' ? step.speech(currentCustomDish) : step.speech;
+            }
+
+            let modeTitle = currentCamMode === 'dynamic' ? '⚡ [Điện Ảnh Hành Động]' : '🛡️ [Tiêu Chuẩn Ngành Nghề]';
+            let titlePrefix = stepIdx === 1 ? `Phân đoạn 2 (Đoạn 2.${subId + 1})` : `Phân đoạn ${stepIdx + 1}`;
+            document.getElementById('camClipTitle').innerText = `${modeTitle} ${titlePrefix}`;
+            document.getElementById('camActionGuide').innerText = guideText;
             document.getElementById('camSpeechPrompt').innerText = `💬 ${speechText}`;
+            document.getElementById('camModeEmoji').innerText = currentCamMode === 'dynamic' ? '⚡' : '🛡️';
             document.getElementById('cameraModal').classList.remove('hidden');
 
             await startCamera(currentFacingMode);
@@ -573,15 +669,30 @@
                     mediaStream.getTracks().forEach(t => t.stop());
                 }
                 mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode, width: { ideal: 1080 }, height: { ideal: 1920 } },
+                    video: { 
+                        facingMode: facingMode, 
+                        width: { ideal: 1080 }, 
+                        height: { ideal: 1920 },
+                        advanced: [{ zoom: 1 }]
+                    },
                     audio: true
                 });
                 const videoElement = document.getElementById('liveVideo');
                 videoElement.srcObject = mediaStream;
                 videoElement.play();
             } catch (err) {
-                alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên Safari.');
-                closeCameraModal();
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: facingMode, width: { ideal: 1080 }, height: { ideal: 1920 } },
+                        audio: true
+                    });
+                    const videoElement = document.getElementById('liveVideo');
+                    videoElement.srcObject = mediaStream;
+                    videoElement.play();
+                } catch(e) {
+                    alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên Safari.');
+                    closeCameraModal();
+                }
             }
         }
 
@@ -678,7 +789,8 @@
             mediaRecorder.onstop = () => {
                 cancelAnimationFrame(animId);
                 const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-                downloadClip(blob);
+                recordedBlobUrl = URL.createObjectURL(blob);
+                openEditorModal(recordedBlobUrl);
             };
 
             isRecording = true;
@@ -698,17 +810,40 @@
             closeCameraModal();
         }
 
-        function downloadClip(blob) {
-            const steps = getCurrentStepsData();
-            const clipName = steps[activeStepIndex].clips[activeClipIndex].name.replace(/[^a-zA-Z0-9]/g, '_');
-            const url = URL.createObjectURL(blob);
+        function openEditorModal(videoUrl) {
+            const preview = document.getElementById('previewVideo');
+            preview.src = videoUrl;
+            document.getElementById('editorModal').classList.remove('hidden');
+            document.getElementById('brightnessRange').value = 100;
+            document.getElementById('contrastRange').value = 100;
+            updateVideoFilters();
+        }
+
+        function closeEditorModal() {
+            document.getElementById('editorModal').classList.add('hidden');
+        }
+
+        function updateVideoFilters() {
+            const b = document.getElementById('brightnessRange').value;
+            const c = document.getElementById('contrastRange').value;
+            document.getElementById('brightnessVal').innerText = b + '%';
+            document.getElementById('contrastVal').innerText = c + '%';
+
+            const preview = document.getElementById('previewVideo');
+            preview.style.filter = `brightness(${b}%) contrast(${c}%)`;
+        }
+
+        function downloadFinalVideo() {
+            if (!recordedBlobUrl) return;
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `KimBling-5s-${activeStepIndex + 1}-${clipName}.mp4`;
+            a.href = recordedBlobUrl;
+            let fileName = activeStepIndex === 1 ? `KimBling-Part2-Segment${activeSubClipId + 1}.mp4` : `KimBling-Part-${activeStepIndex + 1}.mp4`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            alert(`Đã lưu thành công đoạn clip 5s (vào CapCut cắt bớt 2 đầu còn 3s)!`);
+            alert(`Đã lưu video thành công vào máy!`);
+            closeEditorModal();
         }
 
         function setRecordingUI(recording) {
@@ -729,8 +864,8 @@
                 recordingSeconds++;
                 let m = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
                 let s = (recordingSeconds % 60).toString().padStart(2, '0');
-                timerEl.innerText = `${m}:${s} / 05s (Trừ hao cắt bớt còn 3s)`;
-                if (recordingSeconds >= 5) {
+                timerEl.innerText = `${m}:${s} / ${targetRecordingSeconds}s`;
+                if (recordingSeconds >= targetRecordingSeconds) {
                     stopRecording();
                 }
             }, 1000);
