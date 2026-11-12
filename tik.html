@@ -112,7 +112,7 @@
                 <span class="text-3xl">🎬</span>
                 <div>
                     <h2 class="font-black text-base text-white">Cẩm Nang Dựng CapCut Cho Người Mới</h2>
-                    <p class="text-sm text-slate-300 font-semibold">Hướng dẫn chậm rãi, chi tiết từng bước</p>
+                    <p class="text-sm text-slate-300 font-semibold">Hướng dẫn chuẩn từng câu từng chữ từ cẩm nang</p>
                 </div>
             </div>
             <button onclick="closeCapcutGuideModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-xl">✕</button>
@@ -126,53 +126,64 @@
         </div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 (Đã khắc phục lỗi bị che khuất bằng pt-12) -->
+    <!-- MODAL CAMERA AR 9:16 (Đã sửa lỗi che khuất chữ hoàn toàn) -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
-        <div class="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
-            <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md">✕</button>
-            <div class="bg-black/80 backdrop-blur-md px-5 py-2 rounded-full border-2 border-white/20 text-center shadow-lg">
-                <span id="camClipTitle" class="text-sm font-extrabold text-rose-300 block">Quay video</span>
+        <!-- Thanh tiêu đề trên cùng với pt-12 để tránh tai thỏ / thanh trạng thái iPhone -->
+        <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-12 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent pointer-events-auto">
+            <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black text-xl backdrop-blur-md shadow-lg">✕</button>
+            <div class="bg-black/85 backdrop-blur-md px-4 py-2 rounded-2xl border-2 border-white/20 text-center shadow-lg">
+                <span id="camClipTitle" class="text-xs font-extrabold text-rose-300 block">Quay video</span>
                 <span id="camTimer" class="text-sm font-mono text-white font-black">00:00 / 7s</span>
             </div>
-            <button id="switchCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center text-lg backdrop-blur-md">🔄</button>
+            <button id="switchCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center text-lg backdrop-blur-md shadow-lg">🔄</button>
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
-            <div class="absolute top-28 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto">
-                <button onclick="setFilter('beauty', this)" class="filter-chip px-4 py-2 rounded-full bg-rose-500 text-white text-sm font-black shadow-lg border-2 border-rose-300">✨ Mịn Da</button>
-                <button onclick="setFilter('food', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">🍔 Món Ngon</button>
-                <button onclick="setFilter('cinematic', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">🎥 Điện Ảnh</button>
-                <button onclick="setFilter('none', this)" class="filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700">Gốc</button>
+            <!-- Thanh chọn bộ lọc màu (đặt thấp hơn header để không bị che) -->
+            <div class="absolute top-28 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
+                <button onclick="setFilter('beauty', this)" class="filter-chip px-3.5 py-2 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
+                <button onclick="setFilter('food', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
+                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🎥 Điện Ảnh</button>
+                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
             </div>
 
-            <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-20">
-                <div class="absolute inset-6 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+            <!-- Khung lưới AR & Hướng dẫn trực quan (Đã nới rộng khung, tách biệt vị trí để đọc rõ từng chữ) -->
+            <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
+                <div class="absolute inset-x-4 top-40 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div>
                     <div></div><div></div><div></div>
                 </div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-64 h-64 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-5 bg-rose-500/15 backdrop-blur-[2px] space-y-2">
-                        <span class="text-4xl animate-bounce" id="camModeEmoji">🎬</span>
-                        <span id="arGuideText" class="text-sm font-black text-white drop-shadow-md">Quay trừ hao 1s trước sau</span>
+                    <div class="w-72 h-56 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/20 backdrop-blur-[2px] space-y-1.5 shadow-xl">
+                        <span class="text-3xl animate-bounce" id="camModeEmoji">🎯</span>
+                        <div class="flex space-x-2">
+                            <span id="arDistanceBadge" class="text-xs px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded-full uppercase shadow">Cự ly: 30-40cm</span>
+                            <span id="arAngleBadge" class="text-xs px-2.5 py-0.5 bg-sky-400 text-slate-950 font-black rounded-full uppercase shadow">Góc: 60 độ</span>
+                        </div>
+                        <span id="arGuideText" class="text-xs font-black text-white drop-shadow-md leading-snug">Quay trừ hao 1s trước sau</span>
                     </div>
                 </div>
 
-                <div class="bg-slate-950/95 backdrop-blur-md p-5 rounded-2xl border-2 border-rose-500/50 text-center z-20 pointer-events-none space-y-2 shadow-2xl mb-4">
-                    <p id="camActionGuide" class="text-sm text-slate-100 font-extrabold leading-relaxed"></p>
-                    <p id="camSpeechPrompt" class="text-sm text-amber-300 italic font-bold"></p>
+                <!-- Bảng hướng dẫn hành động & thoại ở phía trên nút bấm (không bị che) -->
+                <div class="absolute bottom-4 inset-x-4 bg-slate-950/95 backdrop-blur-md p-3.5 rounded-2xl border-2 border-rose-500/50 text-center z-30 pointer-events-auto space-y-1 shadow-2xl">
+                    <p id="camActionGuide" class="text-xs text-slate-100 font-extrabold leading-snug"></p>
+                    <p id="camSpeechPrompt" class="text-xs text-amber-300 italic font-bold"></p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-slate-950 p-6 flex items-center justify-around border-t-2 border-slate-900 z-30 relative">
-            <div class="w-12"></div>
-            <button id="recordBtn" class="w-24 h-24 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
-                <div id="recordInnerBtn" class="w-20 h-20 bg-rose-500 rounded-full transition-all duration-300"></div>
+        <div class="bg-slate-950 p-5 flex items-center justify-around border-t-2 border-slate-900 z-30 relative">
+            <div class="w-12 text-center">
+                <span class="text-xs text-slate-400 font-bold block">Tự động</span>
+                <span class="text-xs font-black text-amber-400">Đúng giờ</span>
+            </div>
+            <button id="recordBtn" class="w-22 h-22 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform">
+                <div id="recordInnerBtn" class="w-18 h-18 bg-rose-500 rounded-full transition-all duration-300"></div>
             </button>
             <div class="w-12 flex justify-center">
                 <button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button>
@@ -180,14 +191,14 @@
         </div>
     </div>
 
-    <!-- MODAL STUDIO CẮT SỬA & ĐIỀU CHỈNH SÁNG TỐI -->
+    <!-- MODAL STUDIO CẮT SỬA, TRIM VIDEO & ĐIỀU CHỈNH SÁNG TỐI -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden">
         <div class="flex items-center justify-between p-5 bg-slate-900 border-b-2 border-slate-800">
             <div class="flex items-center space-x-3">
-                <span class="text-2xl">🎛️</span>
+                <span class="text-2xl">✂️</span>
                 <div>
-                    <h2 class="font-black text-base text-white">Studio Hiệu Chỉnh Video</h2>
-                    <p class="text-sm text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối & Tăng giảm Sáng/Tối</p>
+                    <h2 class="font-black text-base text-white">Studio Cắt & Hiệu Chỉnh Video</h2>
+                    <p class="text-sm text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối chuẩn cẩm nang & Tăng sáng</p>
                 </div>
             </div>
             <button onclick="closeEditorModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black text-xl">✕</button>
@@ -197,28 +208,59 @@
             <video id="previewVideo" controls playsinline class="max-h-full max-w-full rounded-2xl shadow-2xl border-2 border-slate-800"></video>
         </div>
 
-        <div class="bg-slate-900 border-t-2 border-slate-800 p-5 space-y-5 max-w-md mx-auto w-full">
-            <div class="space-y-2">
-                <div class="flex justify-between text-sm font-black">
-                    <span class="text-amber-300">☀️ Độ Sáng / Tối</span>
-                    <span id="brightnessVal" class="text-white">100%</span>
+        <div class="bg-slate-900 border-t-2 border-slate-800 p-5 space-y-4 max-w-md mx-auto w-full">
+            <!-- MỤC CẮT VIDEO (TRIM) -->
+            <div class="bg-slate-950 p-4 rounded-2xl border-2 border-rose-500/40 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-black text-rose-300 flex items-center space-x-1.5">
+                        <span>✂️</span>
+                        <span>Cắt Bỏ 1s Đầu & Cuối (Cẩm Nang):</span>
+                    </span>
+                    <span id="trimDurationText" class="text-xs text-amber-300 font-bold">Gốc: --s</span>
                 </div>
-                <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-3 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="applyTrimPreset(1)" class="py-2.5 px-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500 text-rose-200 text-xs font-extrabold flex items-center justify-center space-x-1">
+                        <span>✂️ Cắt bỏ 1s đầu/cuối chuẩn</span>
+                    </button>
+                    <button onclick="applyTrimPreset(0)" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-extrabold flex items-center justify-center space-x-1">
+                        <span>🔄 Giữ nguyên gốc</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="space-y-1">
+                        <label class="text-xs text-slate-400 font-bold block">Bỏ bớt đầu (giây):</label>
+                        <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-bold text-center" onchange="updateTrimTimes()">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs text-slate-400 font-bold block">Bỏ bớt đuôi (giây):</label>
+                        <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm font-bold text-center" onchange="updateTrimTimes()">
+                    </div>
+                </div>
             </div>
 
-            <div class="space-y-2">
-                <div class="flex justify-between text-sm font-black">
-                    <span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span>
-                    <span id="contrastVal" class="text-white">100%</span>
+            <!-- ĐIỀU CHỈNH SÁNG & TƯƠNG PHẢN -->
+            <div class="space-y-3">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-black">
+                        <span class="text-amber-300">☀️ Độ Sáng / Tối</span>
+                        <span id="brightnessVal" class="text-white">100%</span>
+                    </div>
+                    <input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-2.5 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()">
                 </div>
-                <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-3 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-black">
+                        <span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span>
+                        <span id="contrastVal" class="text-white">100%</span>
+                    </div>
+                    <input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-2.5 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()">
+                </div>
             </div>
 
-            <div class="flex space-x-3 pt-2">
-                <button onclick="closeEditorModal()" class="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-sm shadow-lg">
+            <div class="flex space-x-3 pt-1">
+                <button onclick="closeEditorModal()" class="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-sm shadow-lg">
                     Quay lại
                 </button>
-                <button onclick="downloadFinalVideo()" class="flex-1 py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2">
+                <button onclick="downloadFinalVideo()" class="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2">
                     <span>💾</span>
                     <span>Tải Về Máy Ngay</span>
                 </button>
@@ -246,6 +288,8 @@
         let recordingSeconds = 0;
         let targetRecordingSeconds = 5;
         let recordedBlobUrl = null;
+        let recordedRawBlob = null;
+        let videoDuration = 0;
 
         function initApp() {
             renderCategories();
@@ -257,9 +301,9 @@
 
         function setFilter(filterType, btn) {
             document.querySelectorAll('.filter-chip').forEach(b => {
-                b.className = "filter-chip px-4 py-2 rounded-full bg-slate-900/90 text-slate-300 text-sm font-black shadow-lg border-2 border-slate-700";
+                b.className = "filter-chip px-3.5 py-2 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap";
             });
-            btn.className = "filter-chip px-4 py-2 rounded-full bg-rose-500 text-white text-sm font-black shadow-lg border-2 border-rose-300";
+            btn.className = "filter-chip px-3.5 py-2 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap";
 
             const videoEl = document.getElementById('liveVideo');
             videoEl.className = "absolute inset-0 w-full h-full object-cover";
@@ -461,16 +505,6 @@
                 `;
             }
 
-            let modeSelectorHtml = `
-                <div class="bg-slate-950 p-3.5 rounded-xl border-2 border-slate-800 flex items-center justify-between space-x-3">
-                    <span class="text-sm font-black text-slate-200">🎥 Góc quay:</span>
-                    <div class="flex space-x-2">
-                        <button onclick="setCameraMode('dynamic')" class="px-3.5 py-2 rounded-xl text-sm font-black transition-all ${currentCamMode === 'dynamic' ? 'bg-rose-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">⚡ Động</button>
-                        <button onclick="setCameraMode('standard')" class="px-3.5 py-2 rounded-xl text-sm font-black transition-all ${currentCamMode === 'standard' ? 'bg-sky-600 text-white shadow' : 'bg-slate-900 text-slate-300'}">🛡️ Chuẩn</button>
-                    </div>
-                </div>
-            `;
-
             let speechText = '';
             if (currentStepIndex === 0 && hooksLibrary[cat.id]) {
                 const hObj = hooksLibrary[cat.id][currentHookIndex];
@@ -483,14 +517,15 @@
             if (step.isMultiSegment && step.subClips) {
                 actionAreaHtml = `
                     <div class="space-y-3.5 pt-1">
-                        <span class="text-sm font-black text-amber-300 block">⚡ Quay lần lượt 4 đoạn nhỏ (Mỗi đoạn đúng 7s, cắt trước sau còn 5s):</span>
+                        <span class="text-sm font-black text-amber-300 block">⚡ Quy trình 4 đoạn nhỏ (Quay 7s -> Cắt còn 5s):</span>
                         <div class="space-y-3">
                             ${step.subClips.map((sub) => `
                                 <div class="bg-slate-950 p-4 rounded-2xl border-2 border-slate-800 flex items-center justify-between space-x-3">
                                     <div class="space-y-1">
                                         <span class="text-sm font-black text-rose-300 block">${sub.name}</span>
+                                        <span class="text-xs text-amber-300 font-bold block">${sub.distance} | ${sub.angle}</span>
                                         <span class="text-sm text-slate-300 font-semibold block">${sub.motionGuide}</span>
-                                        <span class="text-sm text-amber-300 italic font-medium">💬 "${sub.speech}"</span>
+                                        <span class="text-xs text-sky-300 italic font-medium">💬 "${sub.speech}"</span>
                                     </div>
                                     <button onclick="openCameraModal(${currentStepIndex}, ${sub.id})" class="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-sm flex items-center space-x-1 shadow-lg shadow-rose-600/30 active:scale-95 transition-transform shrink-0">
                                         <span>🔴 Quay (7s)</span>
@@ -505,7 +540,8 @@
                     <div class="bg-slate-950 p-4.5 rounded-2xl border-2 border-slate-800 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="space-y-1">
-                                <span class="text-sm font-black text-rose-300 block">🔴 Hướng Dẫn Cự Ly & Động Tác</span>
+                                <span class="text-sm font-black text-rose-300 block">🔴 Hướng Dẫn Cự Ly & Góc Động Tác</span>
+                                <span class="text-xs text-amber-300 font-black block">${step.distance || ''} ${step.angle ? '| ' + step.angle : ''}</span>
                                 <span class="text-sm text-slate-200 font-semibold">${step.motionGuide}</span>
                             </div>
                             <button onclick="openCameraModal(${currentStepIndex}, 0)" class="px-5 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl text-sm flex items-center space-x-2 shadow-xl shadow-rose-600/40 active:scale-95 transition-transform shrink-0">
@@ -528,7 +564,6 @@
                     <h2 class="text-lg font-black text-white mb-2">${step.title}</h2>
                 </div>
                 ${hookSelectorHtml}
-                ${modeSelectorHtml}
                 ${actionAreaHtml}
             `;
         }
@@ -627,6 +662,9 @@
 
             let speechText = '';
             let guideText = step.motionGuide;
+            let distanceStr = step.distance || 'Cự ly: 30 - 40cm';
+            let angleStr = step.angle || 'Góc: 60 độ';
+
             if (stepIdx === 0) {
                 const cat = categoriesData[currentCatIndex];
                 const hObj = hooksLibrary[cat.id][currentHookIndex];
@@ -636,17 +674,19 @@
                 if (subObj) {
                     guideText = subObj.motionGuide;
                     speechText = subObj.speech;
+                    distanceStr = subObj.distance;
+                    angleStr = subObj.angle;
                 }
             } else {
                 speechText = typeof step.speech === 'function' ? step.speech(currentCustomDish) : step.speech;
             }
 
-            let modeTitle = currentCamMode === 'dynamic' ? '⚡ [Điện Ảnh Động]' : '🛡️ [Tiêu Chuẩn]';
             let titlePrefix = stepIdx === 1 ? `Phân đoạn 2 (Đoạn 2.${subId + 1})` : `Phân đoạn ${stepIdx + 1}`;
-            document.getElementById('camClipTitle').innerText = `${modeTitle} ${titlePrefix}`;
+            document.getElementById('camClipTitle').innerText = titlePrefix;
             document.getElementById('camActionGuide').innerText = guideText;
             document.getElementById('camSpeechPrompt').innerText = `💬 "${speechText}"`;
-            document.getElementById('camModeEmoji').innerText = currentCamMode === 'dynamic' ? '⚡' : '🛡️';
+            document.getElementById('arDistanceBadge').innerText = distanceStr;
+            document.getElementById('arAngleBadge').innerText = angleStr;
             document.getElementById('cameraModal').classList.remove('hidden');
 
             await startCamera(currentFacingMode);
@@ -773,6 +813,7 @@
             mediaRecorder.onstop = () => {
                 cancelAnimationFrame(animId);
                 const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+                recordedRawBlob = blob;
                 recordedBlobUrl = URL.createObjectURL(blob);
                 openEditorModal(recordedBlobUrl);
             };
@@ -797,14 +838,42 @@
         function openEditorModal(videoUrl) {
             const preview = document.getElementById('previewVideo');
             preview.src = videoUrl;
+            preview.onloadedmetadata = () => {
+                videoDuration = preview.duration;
+                document.getElementById('trimDurationText').innerText = `Gốc: ${videoDuration.toFixed(1)}s`;
+            };
             document.getElementById('editorModal').classList.remove('hidden');
             document.getElementById('brightnessRange').value = 100;
             document.getElementById('contrastRange').value = 100;
+            document.getElementById('trimStartInput').value = '1.0';
+            document.getElementById('trimEndInput').value = '1.0';
             updateVideoFilters();
         }
 
         function closeEditorModal() {
             document.getElementById('editorModal').classList.add('hidden');
+        }
+
+        function applyTrimPreset(preset) {
+            if (preset === 1) {
+                document.getElementById('trimStartInput').value = '1.0';
+                document.getElementById('trimEndInput').value = '1.0';
+            } else {
+                document.getElementById('trimStartInput').value = '0.0';
+                document.getElementById('trimEndInput').value = '0.0';
+            }
+            updateTrimTimes();
+        }
+
+        function updateTrimTimes() {
+            let startT = parseFloat(document.getElementById('trimStartInput').value) || 0;
+            let endT = parseFloat(document.getElementById('trimEndInput').value) || 0;
+            const preview = document.getElementById('previewVideo');
+            if (videoDuration > 0) {
+                let targetD = Math.max(1, videoDuration - startT - endT);
+                document.getElementById('trimDurationText').innerText = `Sau cắt: ~${targetD.toFixed(1)}s`;
+                preview.currentTime = startT;
+            }
         }
 
         function updateVideoFilters() {
@@ -826,18 +895,18 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            alert(`Đã lưu video thành công vào máy!`);
+            alert(`Đã lưu video thành công vào máy theo đúng chuẩn cẩm nang!`);
             closeEditorModal();
         }
 
         function setRecordingUI(recording) {
             const inner = document.getElementById('recordInnerBtn');
             if (recording) {
-                inner.classList.remove('rounded-full', 'w-20', 'h-20', 'bg-rose-500');
+                inner.classList.remove('rounded-full', 'w-18', 'h-18', 'bg-rose-500');
                 inner.classList.add('rounded-xl', 'w-10', 'h-10', 'bg-white');
             } else {
                 inner.classList.remove('rounded-xl', 'w-10', 'h-10', 'bg-white');
-                inner.classList.add('rounded-full', 'w-20', 'h-20', 'bg-rose-500');
+                inner.classList.add('rounded-full', 'w-18', 'h-18', 'bg-rose-500');
             }
         }
 
