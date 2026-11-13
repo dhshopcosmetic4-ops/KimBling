@@ -339,15 +339,16 @@
             });
             btn.className = "zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all";
 
-            const videoEl = document.getElementById('liveVideo');
-            videoEl.style.transform = `scale(${zoom})`;
-
             if (mediaStream) {
                 const track = mediaStream.getVideoTracks()[0];
                 if (track) {
                     const capabilities = track.getCapabilities();
                     if (capabilities.zoom) {
-                        track.applyConstraints({ advanced: [{ zoom: zoom }] }).catch(err => console.log(err));
+                        track.applyConstraints({
+                            advanced: [{ zoom: zoom }]
+                        }).catch(err => {
+                            console.log("Thiết bị giới hạn mức zoom phần cứng này:", err);
+                        });
                     }
                 }
             }
@@ -840,7 +841,7 @@
             const canvas = document.getElementById('recordCanvas');
             canvas.width = 1080;
             canvas.height = 1920;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
             let animId;
             function drawCanvas() {
@@ -857,20 +858,17 @@
                 }
 
                 ctx.save();
-                // Áp dụng trực tiếp bộ lọc màu vào Canvas để video xuất ra chuẩn y hệt màn hình xem trước
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
                 if (currentFilterClass === 'filter-beauty') {
-                    ctx.filter = 'brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px)';
+                    ctx.filter = 'brightness(1.15) contrast(0.95) saturate(1.12)';
                 } else if (currentFilterClass === 'filter-food') {
-                    ctx.filter = 'saturate(1.45) contrast(1.18) brightness(1.08) sepia(0.08)';
+                    ctx.filter = 'saturate(1.45) contrast(1.18) brightness(1.08)';
                 } else if (currentFilterClass === 'filter-cinematic') {
                     ctx.filter = 'contrast(1.3) saturate(1.25) brightness(0.95)';
                 } else {
                     ctx.filter = 'none';
                 }
-
-                ctx.translate(canvas.width / 2, canvas.height / 2);
-                ctx.scale(currentZoom, currentZoom);
-                ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
                 ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
@@ -879,7 +877,7 @@
             }
 
             const canvasStream = canvas.captureStream(30);
-            if (mediaStream.getAudioTracks().length > 0) {
+            if (mediaStream && mediaStream.getAudioTracks().length > 0) {
                 canvasStream.addTrack(mediaStream.getAudioTracks()[0]);
             }
 
