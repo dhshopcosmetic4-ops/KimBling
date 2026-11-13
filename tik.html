@@ -9,7 +9,6 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
-        /* Định nghĩa bộ lọc màu chuẩn đồ họa Web */
         .filter-food { filter: saturate(1.5) contrast(1.2) brightness(1.1) sepia(0.05); }
         .filter-beauty { filter: brightness(1.18) contrast(0.95) saturate(1.12); }
         .filter-cinematic { filter: contrast(1.35) saturate(1.25) brightness(0.92); }
@@ -302,7 +301,6 @@
         let videoDuration = 0;
         let currentZoom = 1.0;
         let isAeAfLocked = false;
-        let videoDevices = [];
 
         function initApp() {
             renderCategories();
@@ -334,57 +332,28 @@
             }
         }
 
-        async function startCamera(facingMode, selectedZoom = 1.0) {
+        async function startCamera(facingMode) {
             try {
                 if (mediaStream) {
                     mediaStream.getTracks().forEach(t => t.stop());
                 }
 
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                videoDevices = devices.filter(d => d.kind === 'videoinput');
-
-                let constraints = {
+                mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: facingMode, 
-                        width: { ideal: 1080 }, 
-                        height: { ideal: 1920 } 
+                        width: { ideal: 1920 }, 
+                        height: { ideal: 1080 } 
                     },
                     audio: true
-                };
+                });
 
-                if (selectedZoom === 0.5 && videoDevices.length > 1) {
-                    let wideCamera = videoDevices.find(d => 
-                        d.label.toLowerCase().includes('ultra') || 
-                        d.label.toLowerCase().includes('wide') || 
-                        d.label.toLowerCase().includes('góc rộng')
-                    );
-                    if (!wideCamera && videoDevices.length >= 2) {
-                        wideCamera = videoDevices[1];
-                    }
-                    if (wideCamera) {
-                        constraints.video.deviceId = { exact: wideCamera.deviceId };
-                        delete constraints.video.facingMode;
-                    }
-                }
-
-                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const videoElement = document.getElementById('liveVideo');
                 videoElement.srcObject = mediaStream;
                 videoElement.play();
 
             } catch (err) {
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: facingMode },
-                        audio: true
-                    });
-                    const videoElement = document.getElementById('liveVideo');
-                    videoElement.srcObject = mediaStream;
-                    videoElement.play();
-                } catch(e) {
-                    alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên Safari.');
-                    closeCameraModal();
-                }
+                alert('Không thể mở camera. Vui lòng cấp quyền Safari.');
+                closeCameraModal();
             }
         }
 
@@ -395,7 +364,28 @@
             });
             btn.className = "zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all";
 
-            startCamera(currentFacingMode, zoom);
+            if (mediaStream) {
+                const track = mediaStream.getVideoTracks()[0];
+                if (track) {
+                    const capabilities = track.getCapabilities();
+                    if (capabilities.zoom) {
+                        track.applyConstraints({
+                            advanced: [{ zoom: zoom }]
+                        }).catch(err => {
+                            console.log("Thiết bị giới hạn mức zoom này:", err);
+                        });
+                    } else {
+                        const videoEl = document.getElementById('liveVideo');
+                        if (zoom === 0.5) {
+                            videoEl.style.transform = 'scale(0.85)';
+                        } else if (zoom === 2.5) {
+                            videoEl.style.transform = 'scale(2.0)';
+                        } else {
+                            videoEl.style.transform = 'scale(1.0)';
+                        }
+                    }
+                }
+            }
         }
 
         function toggleAeAfLock() {
@@ -815,7 +805,7 @@
             document.getElementById('cameraModal').classList.remove('hidden');
 
             setZoomLevel(1.0, document.getElementById('zoomBtn1'));
-            await startCamera(currentFacingMode, 1.0);
+            await startCamera(currentFacingMode);
         }
 
         function closeCameraModal() {
@@ -831,7 +821,7 @@
         document.getElementById('switchCameraBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            startCamera(currentFacingMode, currentZoom);
+            startCamera(currentFacingMode);
         });
 
         document.getElementById('closeCameraBtn').addEventListener('click', (e) => {
@@ -851,7 +841,6 @@
             else stopRecording();
         });
 
-        // 🔥 CƠ CHẾ GHI HÌNH BURN-IN MÀU SẮC TRỰC TIẾP QUA CANVAS PIXEL
         function startRecording() {
             recordedChunks = [];
             const videoElement = document.getElementById('liveVideo');
@@ -877,7 +866,6 @@
                 ctx.save();
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Ép trực tiếp thông số màu sắc bộ lọc vào từng khung hình xuất ra file
                 if (currentFilterClass === 'filter-beauty') {
                     ctx.filter = 'brightness(1.18) contrast(0.95) saturate(1.12)';
                 } else if (currentFilterClass === 'filter-food') {
