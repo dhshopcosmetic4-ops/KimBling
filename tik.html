@@ -301,6 +301,8 @@
         let videoDuration = 0;
         let currentZoom = 1.0;
         let isAeAfLocked = false;
+        let currentBrightness = 100;
+        let currentContrast = 100;
 
         function initApp() {
             renderCategories();
@@ -841,6 +843,7 @@
             else stopRecording();
         });
 
+        // 🔥 HÀM GHI HÌNH BURN-IN: TÍCH HỢP TRỰC TIẾP BỘ LỌC MÀU + SÁNG TỐI + TƯƠNG PHẢN VÀO VIDEO XUẤT RA
         function startRecording() {
             recordedChunks = [];
             const videoElement = document.getElementById('liveVideo');
@@ -866,15 +869,19 @@
                 ctx.save();
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+                let baseFilter = '';
                 if (currentFilterClass === 'filter-beauty') {
-                    ctx.filter = 'brightness(1.18) contrast(0.95) saturate(1.12)';
+                    baseFilter = 'brightness(1.18) contrast(0.95) saturate(1.12)';
                 } else if (currentFilterClass === 'filter-food') {
-                    ctx.filter = 'saturate(1.5) contrast(1.2) brightness(1.1)';
+                    baseFilter = 'saturate(1.5) contrast(1.2) brightness(1.1)';
                 } else if (currentFilterClass === 'filter-cinematic') {
-                    ctx.filter = 'contrast(1.35) saturate(1.25) brightness(0.92)';
+                    baseFilter = 'contrast(1.35) saturate(1.25) brightness(0.92)';
                 } else {
-                    ctx.filter = 'none';
+                    baseFilter = 'none';
                 }
+
+                // Gộp toàn bộ bộ lọc màu và giá trị thanh trượt thủ công vào luồng Canvas xuất file
+                ctx.filter = `${baseFilter} brightness(${currentBrightness}%) contrast(${currentContrast}%)`;
 
                 ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
@@ -935,8 +942,8 @@
                 document.getElementById('trimDurationText').innerText = `Gốc: ${videoDuration.toFixed(1)}s`;
             };
             document.getElementById('editorModal').classList.remove('hidden');
-            document.getElementById('brightnessRange').value = 100;
-            document.getElementById('contrastRange').value = 100;
+            document.getElementById('brightnessRange').value = currentBrightness;
+            document.getElementById('contrastRange').value = currentContrast;
             document.getElementById('trimStartInput').value = '1.0';
             document.getElementById('trimEndInput').value = '1.0';
             updateVideoFilters();
@@ -969,13 +976,13 @@
         }
 
         function updateVideoFilters() {
-            const b = document.getElementById('brightnessRange').value;
-            const c = document.getElementById('contrastRange').value;
-            document.getElementById('brightnessVal').innerText = b + '%';
-            document.getElementById('contrastVal').innerText = c + '%';
+            currentBrightness = document.getElementById('brightnessRange').value;
+            currentContrast = document.getElementById('contrastRange').value;
+            document.getElementById('brightnessVal').innerText = currentBrightness + '%';
+            document.getElementById('contrastVal').innerText = currentContrast + '%';
 
             const preview = document.getElementById('previewVideo');
-            preview.style.filter = `brightness(${b}%) contrast(${c}%)`;
+            preview.style.filter = `brightness(${currentBrightness}%) contrast(${currentContrast}%)`;
         }
 
         function downloadFinalVideo() {
