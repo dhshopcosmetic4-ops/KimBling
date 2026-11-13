@@ -138,7 +138,7 @@
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transform scale-100 transition-transform"></video>
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
 
             <div class="absolute top-24 inset-x-0 z-30 flex justify-center pointer-events-auto">
@@ -301,6 +301,7 @@
         let videoDuration = 0;
         let currentZoom = 1.0;
         let isAeAfLocked = false;
+        let videoDevices = [];
 
         function initApp() {
             renderCategories();
@@ -332,6 +333,63 @@
             }
         }
 
+        // Gọi trực tiếp ống kính vật lý chính xác theo chuẩn iPhone (0.5x, 1x, 2.5x)
+        async function startCamera(facingMode, selectedZoom = 1.0) {
+            try {
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(t => t.stop());
+                }
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                videoDevices = devices.filter(d => d.kind === 'videoinput');
+
+                let constraints = {
+                    video: { 
+                        facingMode: facingMode, 
+                        width: { ideal: 1080 }, 
+                        height: { ideal: 1920 } 
+                    },
+                    audio: true
+                };
+
+                // Xử lý chọn đúng thấu kính phần cứng vật lý cho 0.5x (Ultra Wide)
+                if (selectedZoom === 0.5 && videoDevices.length > 1) {
+                    let wideCamera = videoDevices.find(d => 
+                        d.label.toLowerCase().includes('ultra') || 
+                        d.label.toLowerCase().includes('wide') || 
+                        d.label.toLowerCase().includes('góc rộng')
+                    );
+                    if (!wideCamera && videoDevices.length >= 2) {
+                        wideCamera = videoDevices[1];
+                    }
+                    if (wideCamera) {
+                        constraints.video.deviceId = { exact: wideCamera.deviceId };
+                        delete constraints.video.facingMode;
+                    }
+                }
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('liveVideo');
+                videoElement.srcObject = mediaStream;
+                videoElement.play();
+
+            } catch (err) {
+                console.log("Lỗi gọi ống kính phần cứng riêng lẻ, dùng mặc định:", err);
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: facingMode },
+                        audio: true
+                    });
+                    const videoElement = document.getElementById('liveVideo');
+                    videoElement.srcObject = mediaStream;
+                    videoElement.play();
+                } catch(e) {
+                    alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên Safari.');
+                    closeCameraModal();
+                }
+            }
+        }
+
         function setZoomLevel(zoom, btn) {
             currentZoom = zoom;
             document.querySelectorAll('.zoom-btn').forEach(b => {
@@ -339,19 +397,7 @@
             });
             btn.className = "zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all";
 
-            if (mediaStream) {
-                const track = mediaStream.getVideoTracks()[0];
-                if (track) {
-                    const capabilities = track.getCapabilities();
-                    if (capabilities.zoom) {
-                        track.applyConstraints({
-                            advanced: [{ zoom: zoom }]
-                        }).catch(err => {
-                            console.log("Thiết bị giới hạn mức zoom phần cứng này:", err);
-                        });
-                    }
-                }
-            }
+            startCamera(currentFacingMode, zoom);
         }
 
         function toggleAeAfLock() {
@@ -771,35 +817,7 @@
             document.getElementById('cameraModal').classList.remove('hidden');
 
             setZoomLevel(1.0, document.getElementById('zoomBtn1'));
-            await startCamera(currentFacingMode);
-        }
-
-        async function startCamera(facingMode) {
-            try {
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(t => t.stop());
-                }
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode, width: { ideal: 1080 }, height: { ideal: 1920 } },
-                    audio: true
-                });
-                const videoElement = document.getElementById('liveVideo');
-                videoElement.srcObject = mediaStream;
-                videoElement.play();
-            } catch (err) {
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: facingMode, width: { ideal: 1080 }, height: { ideal: 1920 } },
-                        audio: true
-                    });
-                    const videoElement = document.getElementById('liveVideo');
-                    videoElement.srcObject = mediaStream;
-                    videoElement.play();
-                } catch(e) {
-                    alert('Không thể mở camera. Vui lòng cấp quyền truy cập Camera trên Safari.');
-                    closeCameraModal();
-                }
-            }
+            await startCamera(currentFacingMode, 1.0);
         }
 
         function closeCameraModal() {
@@ -815,7 +833,7 @@
         document.getElementById('switchCameraBtn').addEventListener('click', (e) => {
             e.stopPropagation();
             currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            startCamera(currentFacingMode);
+            startCamera(currentFacingMode, currentZoom);
         });
 
         document.getElementById('closeCameraBtn').addEventListener('click', (e) => {
