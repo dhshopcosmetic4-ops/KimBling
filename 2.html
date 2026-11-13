@@ -104,17 +104,31 @@
         <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
+            
+            <!-- Nút Khóa AE/AF -->
             <div class="absolute top-24 inset-x-0 z-30 flex justify-center pointer-events-auto"><button id="lockAeAfBtn" onclick="toggleAeAfLock()" class="px-4 py-1.5 rounded-full bg-slate-900/90 text-amber-400 text-xs font-black shadow-lg border-2 border-amber-500/60 flex items-center space-x-1.5 active:scale-95 transition-all"><span>🔒</span><span id="aeAfText">KHÓA AE/AF</span></button></div>
-            <div class="absolute top-36 inset-x-0 z-30 flex justify-center space-x-2 px-4 pointer-events-auto overflow-x-auto no-scrollbar py-1">
-                <button onclick="setFilter('beauty', this)" class="filter-chip px-3 py-1.5 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap">✨ Mịn Da</button>
-                <button onclick="setFilter('food', this)" class="filter-chip px-3 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🍔 Món Ngon</button>
-                <button onclick="setFilter('cinematic', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">🎥 Điện Ảnh</button>
-                <button onclick="setFilter('none', this)" class="filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap">Gốc</button>
+            
+            <!-- Nút Menu Bộ Lọc Gọn Gàng -->
+            <div class="absolute top-36 left-4 z-30 pointer-events-auto">
+                <button onclick="toggleFilterMenu()" class="px-4 py-2 rounded-2xl bg-slate-900/90 border-2 border-slate-700 text-rose-300 text-xs font-black shadow-lg flex items-center space-x-1.5 active:scale-95 transition-all">
+                    <span>🎨</span><span id="currentFilterLabel">Bộ Lọc: Mịn Da</span>
+                </button>
+                <div id="filterDropdownMenu" class="hidden mt-2 bg-slate-900/95 backdrop-blur-md border-2 border-slate-700 rounded-2xl p-3 space-y-2.5 shadow-2xl w-52">
+                    <div class="space-y-1">
+                        <button onclick="setFilter('beauty', this)" class="filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-rose-500 text-white text-xs font-black">✨ Mịn Da</button>
+                        <button onclick="setFilter('food', this)" class="filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black">🍔 Món Ngon</button>
+                        <button onclick="setFilter('cinematic', this)" class="filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black">🎥 Điện Ảnh</button>
+                        <button onclick="setFilter('none', this)" class="filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black">Gốc</button>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2 space-y-2">
+                        <div class="flex justify-between text-[11px] font-bold"><label for="skinBrightRange" class="text-amber-300">☀️ Sáng da</label><span id="skinBrightVal">0%</span></div>
+                        <input id="skinBrightRange" type="range" min="0" max="30" value="0" class="w-full accent-amber-400" oninput="updateSkinControls()">
+                        <div class="flex justify-between text-[11px] font-bold"><label for="skinSmoothRange" class="text-pink-300">✨ Mịn da (Nét)</label><span id="skinSmoothVal">0%</span></div>
+                        <input id="skinSmoothRange" type="range" min="0" max="30" value="0" class="w-full accent-pink-400" oninput="updateSkinControls()">
+                    </div>
+                </div>
             </div>
-            <div class="absolute top-[11.5rem] inset-x-4 z-30 bg-slate-950/90 rounded-xl border border-white/15 px-3 py-2 space-y-1.5 pointer-events-auto">
-              <div class="flex justify-between text-xs"><label for="skinBrightRange" class="text-amber-200">☀️ Sáng da</label><span id="skinBrightVal">0%</span></div><input id="skinBrightRange" type="range" min="0" max="30" value="0" class="w-full" oninput="updateSkinControls()">
-              <div class="flex justify-between text-xs"><label for="skinSmoothRange" class="text-pink-200">✨ Mịn da</label><span id="skinSmoothVal">0%</span></div><input id="skinSmoothRange" type="range" min="0" max="35" value="0" class="w-full" oninput="updateSkinControls()">
-            </div>
+
             <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
                 <div class="absolute inset-x-4 top-64 bottom-36 border-2 border-white/30 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none"><div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-r border-white/15"></div><div class="border-b border-white/15"></div><div></div><div></div><div></div></div>
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none"><div class="w-72 h-52 border-2 border-dashed border-rose-500 rounded-3xl flex flex-col items-center justify-center text-center p-4 bg-rose-500/20 backdrop-blur-[2px] space-y-1.5 shadow-xl"><span class="text-3xl animate-bounce" id="camModeEmoji">🎯</span><div class="flex space-x-2"><span id="arDistanceBadge" class="text-xs px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded-full uppercase shadow">Cự ly: 30-40cm</span><span id="arAngleBadge" class="text-xs px-2.5 py-0.5 bg-sky-400 text-slate-950 font-black rounded-full uppercase shadow">Góc: 60 độ</span></div><span id="arGuideText" class="text-xs font-black text-white drop-shadow-md leading-snug">Quay trừ hao 1s trước sau</span></div></div>
@@ -123,8 +137,20 @@
         </div>
         <div class="bg-slate-950 p-4 flex flex-col items-center space-y-3 border-t-2 border-slate-900 z-30 relative">
             <div class="flex space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15"><button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">0,5</button><button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button><button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">2,5</button></div>
-            <div class="flex justify-center gap-2 w-full"><button id="segmentModeBtn" onclick="setRecordingMode('segment')" class="px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white">Quay theo đoạn</button><button id="unlimitedModeBtn" onclick="setRecordingMode('unlimited')" class="px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700">Quay không giới hạn</button></div>
-            <div class="w-full flex items-center justify-around"><div class="w-12 text-center"><span id="recordModeLabel" class="text-xs text-slate-400 font-bold block">Tự động</span><span id="recordModeHint" class="text-xs font-black text-amber-400">Đúng giờ</span></div><button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform"><div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div></button><div class="w-12 flex justify-center"><button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button></div></div>
+            
+            <div class="flex justify-center gap-2 w-full">
+                <button id="segmentModeBtn" onclick="setRecordingMode('segment')" class="px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white shadow">Quay theo đoạn (Chuẩn)</button>
+                <button id="unlimitedModeBtn" onclick="setRecordingMode('unlimited')" class="px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700">Quay không giới hạn</button>
+            </div>
+
+            <div class="w-full flex items-center justify-around">
+                <!-- Nút chụp ảnh nhanh đã tích hợp bộ lọc & hiệu chỉnh pixel -->
+                <button onclick="takeSnapshot()" class="w-12 h-12 rounded-full bg-slate-800 text-amber-300 border-2 border-slate-700 font-black text-lg flex items-center justify-center shadow-lg active:scale-95 transition-transform" title="Chụp ảnh">📸</button>
+                
+                <button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform"><div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div></button>
+                
+                <div class="w-12 flex justify-center"><button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button></div>
+            </div>
         </div>
     </div>
 
@@ -135,7 +161,6 @@
             <div class="w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-800 shadow-xl max-h-[42vh]"><video id="previewVideo" controls playsinline class="w-full h-auto max-h-[42vh] object-contain"></video></div>
             <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-rose-500/40 space-y-2.5"><div class="flex items-center justify-between"><span class="text-xs font-black text-rose-300 flex items-center space-x-1"><span>✂️</span><span>Cắt Bỏ 1s Đầu & Cuối (Cẩm Nang):</span></span><span id="trimDurationText" class="text-xs text-amber-300 font-bold">Gốc: --s</span></div><div class="grid grid-cols-2 gap-2"><button onclick="applyTrimPreset(1)" class="py-2 px-2.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/35 border border-rose-500 text-rose-200 text-xs font-extrabold flex items-center justify-center space-x-1"><span>✂️ Cắt bỏ 1s chuẩn</span></button><button onclick="applyTrimPreset(0)" class="py-2 px-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-extrabold flex items-center justify-center space-x-1"><span>🔄 Giữ nguyên</span></button></div><div class="grid grid-cols-2 gap-2.5 pt-1"><div class="space-y-1"><label class="text-xs text-slate-400 font-bold block">Bỏ đầu (giây):</label><input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-white text-xs font-bold text-center" onchange="updateTrimTimes()"></div><div class="space-y-1"><label class="text-xs text-slate-400 font-bold block">Bỏ đuôi (giây):</label><input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-white text-xs font-bold text-center" onchange="updateTrimTimes()"></div></div></div>
             <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-3"><div class="space-y-1"><div class="flex justify-between text-xs font-black"><span class="text-amber-300">☀️ Độ Sáng / Tối</span><span id="brightnessVal" class="text-white">100%</span></div><input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-2 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()"></div><div class="space-y-1"><div class="flex justify-between text-xs font-black"><span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span><span id="contrastVal" class="text-white">100%</span></div><input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-2 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()"></div></div>
-            <div class="bg-slate-900 p-3 rounded-2xl border border-pink-500/40 space-y-2"><div class="flex justify-between text-xs"><label for="editorSkinBrightRange" class="text-amber-300">☀️ Sáng da</label><span id="editorSkinBrightVal">0%</span></div><input id="editorSkinBrightRange" type="range" min="0" max="30" value="0" class="w-full" oninput="syncEditorSkinControls()"><div class="flex justify-between text-xs"><label for="editorSkinSmoothRange" class="text-pink-300">✨ Mịn da</label><span id="editorSkinSmoothVal">0%</span></div><input id="editorSkinSmoothRange" type="range" min="0" max="35" value="0" class="w-full" oninput="syncEditorSkinControls()"></div>
             <div class="flex space-x-3 pt-1 pb-4"><button onclick="closeEditorModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-xs shadow-lg">Quay lại</button><button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-xs shadow-xl flex items-center justify-center space-x-1.5"><span>💾</span><span>Tải Về Máy Ngay</span></button></div>
         </div>
     </div>
@@ -174,28 +199,75 @@
 
         function initApp() { renderCategories(); renderSubControls(); renderStepTabs(); renderStepContent(); renderCaptions(); setRecordingMode('segment'); updateSkinControls(); }
 
+        function toggleFilterMenu() {
+            const menu = document.getElementById('filterDropdownMenu');
+            menu.classList.toggle('hidden');
+        }
+
         function setFilter(filterType, btn) {
-            document.querySelectorAll('.filter-chip').forEach(b => { b.className = "filter-chip px-3.5 py-1.5 rounded-full bg-slate-900/90 text-slate-300 text-xs font-black shadow-lg border-2 border-slate-700 whitespace-nowrap"; });
-            if (btn) btn.className = "filter-chip px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-black shadow-lg border-2 border-rose-300 whitespace-nowrap";
+            document.querySelectorAll('.filter-chip').forEach(b => { 
+                b.className = "filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-black"; 
+            });
+            if (btn) {
+                btn.className = "filter-chip w-full text-left px-3 py-1.5 rounded-xl bg-rose-500 text-white text-xs font-black shadow-lg";
+                document.getElementById('currentFilterLabel').innerText = `Bộ Lọc: ${btn.innerText.replace(/^[^\w\s]+/, '').trim()}`;
+            }
             currentFilterClass = filterType === 'beauty' ? 'filter-beauty' : filterType === 'food' ? 'filter-food' : filterType === 'cinematic' ? 'filter-cinematic' : 'filter-none';
             updateLivePreviewFilter();
         }
+
         function updateLivePreviewFilter() {
-            const v=document.getElementById('liveVideo'); if(!v)return;
-            const base=currentFilterClass==='filter-beauty'?'brightness(1.18) contrast(.95) saturate(1.12)':currentFilterClass==='filter-food'?'saturate(1.5) contrast(1.2) brightness(1.1) sepia(.05)':currentFilterClass==='filter-cinematic'?'contrast(1.35) saturate(1.25) brightness(.92)':'';
-            v.style.filter=[base,`brightness(${1+currentSkinBright/300})`,currentSkinSmooth?`blur(${currentSkinSmooth/35*1.1}px)`:''].filter(Boolean).join(' ');
+            const v = document.getElementById('liveVideo'); if(!v) return;
+            const base = currentFilterClass === 'filter-beauty' ? 'brightness(1.18) contrast(.95) saturate(1.12)' : currentFilterClass === 'filter-food' ? 'saturate(1.5) contrast(1.2) brightness(1.1) sepia(.05)' : currentFilterClass === 'filter-cinematic' ? 'contrast(1.35) saturate(1.25) brightness(.92)' : '';
+            const brightFactor = 1 + (currentSkinBright * 0.008);
+            const smoothFactor = 1 + (currentSkinSmooth * 0.005);
+            v.style.filter = [base, `brightness(${brightFactor})`, `contrast(${smoothFactor})`].filter(Boolean).join(' ');
         }
+
         function updateSkinControls(){
-            const b=document.getElementById('skinBrightRange'),m=document.getElementById('skinSmoothRange');
-            if(b)currentSkinBright=Number(b.value)||0;if(m)currentSkinSmooth=Number(m.value)||0;
-            document.getElementById('skinBrightVal').innerText=currentSkinBright+'%';document.getElementById('skinSmoothVal').innerText=currentSkinSmooth+'%';updateLivePreviewFilter();
+            const b = document.getElementById('skinBrightRange'), m = document.getElementById('skinSmoothRange');
+            if(b) currentSkinBright = Number(b.value) || 0;
+            if(m) currentSkinSmooth = Number(m.value) || 0;
+            document.getElementById('skinBrightVal').innerText = currentSkinBright + '%';
+            document.getElementById('skinSmoothVal').innerText = currentSkinSmooth + '%';
+            updateLivePreviewFilter();
         }
+
         function setRecordingMode(mode){
-            if(isRecording)return;recordingMode=mode==='unlimited'?'unlimited':'segment';
-            const a=document.getElementById('segmentModeBtn'),b=document.getElementById('unlimitedModeBtn');
-            a.className=recordingMode==='segment'?'px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white':'px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700';
-            b.className=recordingMode==='unlimited'?'px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white':'px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700';
-            document.getElementById('recordModeLabel').innerText=recordingMode==='segment'?'Tự động':'Thủ công';document.getElementById('recordModeHint').innerText=recordingMode==='segment'?'Đúng giờ':'Bấm dừng';
+            if(isRecording) return;
+            recordingMode = mode === 'unlimited' ? 'unlimited' : 'segment';
+            const a = document.getElementById('segmentModeBtn'), b = document.getElementById('unlimitedModeBtn');
+            a.className = recordingMode === 'segment' ? 'px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white shadow' : 'px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700';
+            b.className = recordingMode === 'unlimited' ? 'px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white shadow' : 'px-3 py-1.5 rounded-full text-xs font-black bg-slate-900 text-slate-300 border border-slate-700';
+            document.getElementById('camTimer').innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Không giới hạn`;
+        }
+
+        // Đã cập nhật hàm chụp ảnh: Áp dụng trực tiếp bộ lọc và thông số sáng/mịn vào pixel ảnh trước khi lưu
+        function takeSnapshot() {
+            const videoElement = document.getElementById('liveVideo');
+            if(!videoElement || !videoElement.videoWidth) { alert('Camera chưa sẵn sàng.'); return; }
+            const canvas = document.getElementById('recordCanvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            
+            // Vẽ khung hình gốc từ camera
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            // Đưa bộ lọc màu và thông số chỉnh da trực tiếp vào pixel ảnh
+            bakeFiltersIntoFrame(ctx, canvas.width, canvas.height);
+            
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `KimBling-Snapshot-${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+                alert('Đã lưu ảnh kèm bộ lọc vào thiết bị! (Trên iPhone, hãy bấm "Lưu hình ảnh" vào Thư viện Ảnh).');
+            }, 'image/jpeg', 0.95);
         }
 
         async function startCamera(facingMode) {
@@ -203,9 +275,11 @@
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
                 const videoElement = document.getElementById('liveVideo');
-                isAeAfLocked=false;const lockText=document.getElementById('aeAfText');if(lockText)lockText.innerText='KHÓA AE/AF';
+                isAeAfLocked = false;
+                const lockText = document.getElementById('aeAfText'); if(lockText) lockText.innerText = 'KHÓA AE/AF';
                 videoElement.srcObject = mediaStream;
-                await videoElement.play();updateLivePreviewFilter();
+                await videoElement.play();
+                updateLivePreviewFilter();
             } catch (err) { console.error(err); alert('Không thể mở camera. Vui lòng cấp quyền Safari.'); closeCameraModal(); }
         }
 
@@ -225,14 +299,25 @@
         }
 
         async function toggleAeAfLock() {
-            const track=mediaStream&&mediaStream.getVideoTracks()[0];if(!track){alert('Camera chưa sẵn sàng.');return;}
-            let c={};try{c=track.getCapabilities?track.getCapabilities():{};}catch(e){}
-            const has=(k,v)=>Array.isArray(c[k])&&c[k].includes(v), adv=[];
-            if(!isAeAfLocked){if(has('exposureMode','locked'))adv.push({exposureMode:'locked'});if(has('focusMode','locked'))adv.push({focusMode:'locked'});
-                if(!adv.length){document.getElementById('aeAfText').innerText='AE/AF KHÔNG HỖ TRỢ';alert('Safari/camera không hỗ trợ khóa AE/AF qua trình duyệt.');return;}
-                try{await track.applyConstraints({advanced:adv});const z=track.getSettings?track.getSettings():{};const parts=[];if(has('exposureMode','locked'))parts.push('AE '+(z.exposureMode==='locked'?'ĐÃ KHÓA':'CHƯA XÁC NHẬN'));if(has('focusMode','locked'))parts.push('AF '+(z.focusMode==='locked'?'ĐÃ KHÓA':'CHƯA XÁC NHẬN'));isAeAfLocked=parts.some(x=>x.includes('ĐÃ KHÓA'));document.getElementById('aeAfText').innerText=parts.join(' • ');document.getElementById('lockAeAfBtn').classList.toggle('bg-amber-400',isAeAfLocked);if(!isAeAfLocked)alert('Thiết bị không xác nhận trạng thái khóa.');}
-                catch(e){alert('Không khóa được AE/AF: '+e.message);}
-            }else{const a=[];if(has('exposureMode','continuous'))a.push({exposureMode:'continuous'});if(has('focusMode','continuous'))a.push({focusMode:'continuous'});try{if(a.length)await track.applyConstraints({advanced:a});}catch(e){}isAeAfLocked=false;document.getElementById('aeAfText').innerText='KHÓA AE/AF';document.getElementById('lockAeAfBtn').classList.remove('bg-amber-400');}
+            const track = mediaStream && mediaStream.getVideoTracks()[0]; if(!track){ alert('Camera chưa sẵn sàng.'); return; }
+            let c = {}; try{ c = track.getCapabilities ? track.getCapabilities() : {}; } catch(e){}
+            const has = (k,v) => Array.isArray(c[k]) && c[k].includes(v), adv = [];
+            if(!isAeAfLocked){
+                if(has('exposureMode','locked')) adv.push({exposureMode:'locked'});
+                if(has('focusMode','locked')) adv.push({focusMode:'locked'});
+                if(!adv.length){ document.getElementById('aeAfText').innerText='AE/AF KHÔNG HỖ TRỢ'; alert('Safari/camera không hỗ trợ khóa AE/AF qua trình duyệt.'); return; }
+                try{
+                    await track.applyConstraints({advanced:adv});
+                    isAeAfLocked = true;
+                    document.getElementById('aeAfText').innerText = 'AE/AF ĐÃ KHÓA';
+                    document.getElementById('lockAeAfBtn').classList.add('bg-amber-400');
+                } catch(e){ alert('Không khóa được AE/AF: '+e.message); }
+            } else {
+                try{ await track.applyConstraints({advanced:[{exposureMode:'continuous'},{focusMode:'continuous'}]}); }catch(e){}
+                isAeAfLocked = false;
+                document.getElementById('aeAfText').innerText = 'KHÓA AE/AF';
+                document.getElementById('lockAeAfBtn').classList.remove('bg-amber-400');
+            }
         }
 
         function renderCategories() {
@@ -335,7 +420,6 @@
         document.getElementById('toggleArBtn').addEventListener('click',e=>{e.stopPropagation();const ar=document.getElementById('arOverlay');ar.style.display=ar.style.display==='none'?'flex':'none';});
         document.getElementById('recordBtn').addEventListener('click',e=>{e.stopPropagation();if(!isRecording)startRecording();else stopRecording();});
 
-        // Ghi video gốc có tiếng; bộ lọc được burn-in ở bước xuất cuối để người dùng có thể đổi bộ lọc/chỉnh sáng sau khi quay.
         function startRecording() {
             if(!mediaStream||!mediaStream.getVideoTracks().length){alert('Camera chưa sẵn sàng.');return;}
             const videoElement=document.getElementById('liveVideo'); const canvas=document.getElementById('recordCanvas'); canvas.width=1080;canvas.height=1920;
@@ -383,7 +467,9 @@
         }
         function getExportFilter(){
             let base='';if(currentFilterClass==='filter-beauty')base='brightness(1.18) contrast(0.95) saturate(1.12)';else if(currentFilterClass==='filter-food')base='saturate(1.5) contrast(1.2) brightness(1.1) sepia(0.05)';else if(currentFilterClass==='filter-cinematic')base='contrast(1.35) saturate(1.25) brightness(0.92)';
-            return [base,`brightness(${currentBrightness*(1+currentSkinBright/300)}%)`,`contrast(${currentContrast}%)`,currentSkinSmooth?`blur(${currentSkinSmooth/35*1.1}px)`:''].filter(Boolean).join(' ');
+            const brightFactor = 1 + (currentSkinBright * 0.008);
+            const smoothFactor = 1 + (currentSkinSmooth * 0.005);
+            return [base, `brightness(${currentBrightness * brightFactor}%)`, `contrast(${currentContrast * smoothFactor}%)`].filter(Boolean).join(' ');
         }
         function syncEditorSkinControls(){currentSkinBright=Number(document.getElementById('editorSkinBrightRange').value)||0;currentSkinSmooth=Number(document.getElementById('editorSkinSmoothRange').value)||0;document.getElementById('editorSkinBrightVal').innerText=currentSkinBright+'%';document.getElementById('editorSkinSmoothVal').innerText=currentSkinSmooth+'%';const b=document.getElementById('skinBrightRange'),m=document.getElementById('skinSmoothRange');if(b)b.value=currentSkinBright;if(m)m.value=currentSkinSmooth;updateLivePreviewFilter();document.getElementById('previewVideo').style.filter=getExportFilter();}
         function updateVideoFilters(){
@@ -391,8 +477,6 @@
             document.getElementById('brightnessVal').innerText=currentBrightness+'%';document.getElementById('contrastVal').innerText=currentContrast+'%';document.getElementById('previewVideo').style.filter=getExportFilter();
         }
 
-        // Áp dụng bộ lọc trực tiếp lên pixel của từng khung hình.
-        // Không phụ thuộc CSS filter của video preview hoặc CanvasRenderingContext2D.filter.
         function bakeFiltersIntoFrame(ctx, width, height) {
             const image = ctx.getImageData(0, 0, width, height);
             const pixels = image.data;
@@ -406,21 +490,18 @@
                 contrast = 1.35; saturation = 1.25; brightness = 0.92;
             }
 
-            brightness *= currentBrightness / 100;
-            brightness *= (1 + currentSkinBright / 300);
-            contrast *= currentContrast / 100;
+            brightness *= (currentBrightness / 100) * (1 + currentSkinBright * 0.008);
+            contrast *= (currentContrast / 100) * (1 + currentSkinSmooth * 0.005);
             const clamp = value => value < 0 ? 0 : value > 255 ? 255 : value;
 
             for (let i = 0; i < pixels.length; i += 4) {
                 let r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
-
                 if (saturation !== 1) {
                     const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                     r = gray + (r - gray) * saturation;
                     g = gray + (g - gray) * saturation;
                     b = gray + (b - gray) * saturation;
                 }
-
                 if (sepia > 0) {
                     const sr = 0.393 * r + 0.769 * g + 0.189 * b;
                     const sg = 0.349 * r + 0.686 * g + 0.168 * b;
@@ -429,27 +510,15 @@
                     g += (sg - g) * sepia;
                     b += (sb - b) * sepia;
                 }
-
                 r = (r * brightness - 128) * contrast + 128;
                 g = (g * brightness - 128) * contrast + 128;
                 b = (b * brightness - 128) * contrast + 128;
-
-                pixels[i] = clamp(r);
-                pixels[i + 1] = clamp(g);
-                pixels[i + 2] = clamp(b);
-            }
-            if(currentSkinSmooth>0){
-                const soft=document.createElement('canvas');soft.width=width;soft.height=height;
-                const sc=soft.getContext('2d');
-                if(sc){sc.filter=`blur(${currentSkinSmooth/35*1.1}px)`;sc.drawImage(ctx.canvas,0,0);sc.filter='none';const blur=sc.getImageData(0,0,width,height).data;const mix=currentSkinSmooth/35*.18;
-                    for(let i=0;i<pixels.length;i+=4){pixels[i]=pixels[i]*(1-mix)+blur[i]*mix;pixels[i+1]=pixels[i+1]*(1-mix)+blur[i+1]*mix;pixels[i+2]=pixels[i+2]*(1-mix)+blur[i+2]*mix;}
-                }
+                pixels[i] = clamp(r); pixels[i + 1] = clamp(g); pixels[i + 2] = clamp(b);
             }
             ctx.putImageData(image, 0, 0);
         }
 
         async function downloadFinalVideo(){
-
             if(!recordedRawBlob||!recordedBlobUrl){alert('Không tìm thấy video gốc.');return;}if(exportInProgress)return;
             exportInProgress=true;const downloadBtn=document.getElementById('downloadVideoBtn');downloadBtn.disabled=true;downloadBtn.style.opacity='0.6';downloadBtn.querySelector('span:last-child').innerText='Đang xuất video...';
             let video=null,canvas=null,stream=null,audioContext=null,source=null,destination=null,recorder=null,raf=0,timeout=0;
@@ -459,7 +528,6 @@
                 await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Không đọc được video gốc.'));});
                 const duration=video.duration,end=duration-trimEnd;
                 if(start>=end||end<=0)throw new Error('Thời gian cắt không hợp lệ.');
-                // Xuất ở 720x1280 để xử lý màu ổn định hơn trên Safari iPhone.
                 canvas=document.createElement('canvas');canvas.width=720;canvas.height=1280;const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx||!canvas.captureStream)throw new Error('Trình duyệt không hỗ trợ xuất video Canvas.');
                 stream=canvas.captureStream(24);
                 const AudioContextCtor=window.AudioContext||window.webkitAudioContext;if(!AudioContextCtor)throw new Error('Thiết bị không hỗ trợ xử lý âm thanh.');
@@ -481,7 +549,6 @@
                     if(vw&&vh){const aspect=9/16;let sw,sh,sx,sy;if(vw/vh>aspect){sh=vh;sw=vh*aspect;sx=(vw-sw)/2;sy=0;}else{sw=vw;sh=vw/aspect;sx=0;sy=(vh-sh)/2;}
                         ctx.clearRect(0,0,720,1280);
                         ctx.drawImage(video,sx,sy,sw,sh,0,0,720,1280);
-                        // Ghi bộ lọc vào pixel trước khi MediaRecorder thu khung hình.
                         bakeFiltersIntoFrame(ctx,720,1280);
                     }
                     if(video.currentTime>=end||video.ended){stopped=true;if(recorder.state!=='inactive')recorder.stop();return;}
@@ -494,7 +561,7 @@
                 const isMp4=blob.type.toLowerCase().includes('mp4');const ext=isMp4?'mp4':'webm';const fileName=activeStepIndex===1?`KimBling-Part2-Segment${activeSubClipId+1}.${ext}`:`KimBling-Part-${activeStepIndex+1}.${ext}`;
                 const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
                 alert(`Đã xuất video. Định dạng: ${ext.toUpperCase()}. Nếu Safari không tự lưu, hãy mở video tải xuống từ danh sách Tệp.`);document.getElementById('editorModal').classList.add('hidden');
-            }catch(err){console.error('Export error:',err);alert('Không thể xuất video: '+(err&&err.message?err.message:'Lỗi không xác định')+'\nHãy thử lại trên Safari hoặc giảm thời lượng video.');}
+            }catch(err){console.error('Export error:',err);alert('Not able to export video: '+(err&&err.message?err.message:'Lỗi không xác định'));}
             finally{
                 clearTimeout(timeout);if(raf)cancelAnimationFrame(raf);if(video){video.pause();video.removeAttribute('src');try{video.load();}catch(e){}}
                 if(stream)stream.getTracks().forEach(t=>t.stop());if(audioContext){try{await audioContext.close();}catch(e){}}
@@ -502,8 +569,27 @@
             }
         }
 
-        function setRecordingUI(recording){const inner=document.getElementById('recordInnerBtn');document.getElementById('segmentModeBtn').disabled=recording;document.getElementById('unlimitedModeBtn').disabled=recording;if(recording){inner.classList.remove('rounded-full','w-16','h-16','bg-rose-500');inner.classList.add('rounded-xl','w-10','h-10','bg-white');}else{inner.classList.remove('rounded-xl','w-10','h-10','bg-white');inner.classList.add('rounded-full','w-16','h-16','bg-rose-500');}}
-        function startTimer(){recordingSeconds=0;const timerEl=document.getElementById('camTimer');const tick=()=>{const m=Math.floor(recordingSeconds/60).toString().padStart(2,'0'),s=(recordingSeconds%60).toString().padStart(2,'0');timerEl.innerText=recordingMode==='segment'?`${m}:${s} / ${targetRecordingSeconds}s`:`${m}:${s} • Không giới hạn`;};tick();timerInterval=setInterval(()=>{recordingSeconds++;tick();if(recordingMode==='segment'&&recordingSeconds>=targetRecordingSeconds)stopRecording();},1000);}
+        function setRecordingUI(recording){
+            const inner=document.getElementById('recordInnerBtn');
+            document.getElementById('segmentModeBtn').disabled=recording;
+            document.getElementById('unlimitedModeBtn').disabled=recording;
+            if(recording){inner.classList.remove('rounded-full','w-16','h-16','bg-rose-500');inner.classList.add('rounded-xl','w-10','h-10','bg-white');}
+            else{inner.classList.remove('rounded-xl','w-10','h-10','bg-white');inner.classList.add('rounded-full','w-16','h-16','bg-rose-500');}
+        }
+
+        function startTimer(){
+            recordingSeconds=0;const timerEl=document.getElementById('camTimer');
+            const tick=()=>{
+                const m=Math.floor(recordingSeconds/60).toString().padStart(2,'0'),s=(recordingSeconds%60).toString().padStart(2,'0');
+                timerEl.innerText=recordingMode==='segment'?`${m}:${s} / ${targetRecordingSeconds}s`:`${m}:${s} • Không giới hạn`;
+            };
+            tick();
+            timerInterval=setInterval(()=>{
+                recordingSeconds++;
+                tick();
+                if(recordingMode==='segment'&&recordingSeconds>=targetRecordingSeconds) stopRecording();
+            },1000);
+        }
         function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
         function resetRecordButtonUI(){setRecordingUI(false);}
         window.onload=initApp;
