@@ -9,9 +9,10 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
-        .filter-food { filter: saturate(1.45) contrast(1.18) brightness(1.08) sepia(0.08); }
-        .filter-beauty { filter: brightness(1.15) contrast(0.95) saturate(1.12) blur(0.3px); }
-        .filter-cinematic { filter: contrast(1.3) saturate(1.25) brightness(0.95); }
+        /* Định nghĩa bộ lọc màu chuẩn đồ họa Web */
+        .filter-food { filter: saturate(1.5) contrast(1.2) brightness(1.1) sepia(0.05); }
+        .filter-beauty { filter: brightness(1.18) contrast(0.95) saturate(1.12); }
+        .filter-cinematic { filter: contrast(1.35) saturate(1.25) brightness(0.92); }
         .filter-none { filter: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -333,7 +334,6 @@
             }
         }
 
-        // Gọi trực tiếp ống kính vật lý chính xác theo chuẩn iPhone (0.5x, 1x, 2.5x)
         async function startCamera(facingMode, selectedZoom = 1.0) {
             try {
                 if (mediaStream) {
@@ -352,7 +352,6 @@
                     audio: true
                 };
 
-                // Xử lý chọn đúng thấu kính phần cứng vật lý cho 0.5x (Ultra Wide)
                 if (selectedZoom === 0.5 && videoDevices.length > 1) {
                     let wideCamera = videoDevices.find(d => 
                         d.label.toLowerCase().includes('ultra') || 
@@ -374,7 +373,6 @@
                 videoElement.play();
 
             } catch (err) {
-                console.log("Lỗi gọi ống kính phần cứng riêng lẻ, dùng mặc định:", err);
                 try {
                     mediaStream = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: facingMode },
@@ -853,6 +851,7 @@
             else stopRecording();
         });
 
+        // 🔥 CƠ CHẾ GHI HÌNH BURN-IN MÀU SẮC TRỰC TIẾP QUA CANVAS PIXEL
         function startRecording() {
             recordedChunks = [];
             const videoElement = document.getElementById('liveVideo');
@@ -878,12 +877,13 @@
                 ctx.save();
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+                // Ép trực tiếp thông số màu sắc bộ lọc vào từng khung hình xuất ra file
                 if (currentFilterClass === 'filter-beauty') {
-                    ctx.filter = 'brightness(1.15) contrast(0.95) saturate(1.12)';
+                    ctx.filter = 'brightness(1.18) contrast(0.95) saturate(1.12)';
                 } else if (currentFilterClass === 'filter-food') {
-                    ctx.filter = 'saturate(1.45) contrast(1.18) brightness(1.08)';
+                    ctx.filter = 'saturate(1.5) contrast(1.2) brightness(1.1)';
                 } else if (currentFilterClass === 'filter-cinematic') {
-                    ctx.filter = 'contrast(1.3) saturate(1.25) brightness(0.95)';
+                    ctx.filter = 'contrast(1.35) saturate(1.25) brightness(0.92)';
                 } else {
                     ctx.filter = 'none';
                 }
