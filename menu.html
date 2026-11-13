@@ -24,6 +24,164 @@
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let aiChatHistory = []; // Lưu lịch sử trò chuyện để AI nhớ ngữ cảnh
+
+// Hàm Bật/Tắt thu âm khi bấm vào nút Micro
+async function toggleVoiceRecording() {
+    const btn = document.getElementById('aiVoiceBtn');
+    const statusText = document.getElementById('aiStatusText');
+
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/mp4' }); // Tối ưu cho Safari iPhone
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mp4' });
+                await sendAudioToAiBackend(audioBlob);
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            btn.style.background = '#28a745'; // Đổi sang màu xanh báo hiệu đang nghe
+            btn.style.transform = 'scale(1.1)';
+            statusText.style.display = 'block';
+            statusText.innerText = "Đang nghe... (Bấm lần nữa để gửi)";
+        } catch (err) {
+            alert("Không thể truy cập Microphone. Vui lòng kiểm tra quyền cấp phép trên trình duyệt!");
+            console.error(err);
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        btn.style.background = 'linear-gradient(135deg, #ff1744, #d50000)';
+        btn.style.transform = 'scale(1)';
+        statusText.style.display = 'none';
+    }
+}
+
+// Chuyển file ghi âm thành Base64 và gửi lên Google Apps Script
+async function sendAudioToAiBackend(blob) {
+    const statusText = document.getElementById('aiStatusText');
+    statusText.style.display = 'block';
+    statusText.innerText = "AI đang xử lý...";
+
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = async function () {
+        const base64Audio = reader.result.split(',')[1];
+        
+        // Thêm tin nhắn của khách vào khung chat hiển thị
+        appendMessageToAiBox("🎤 [Đã gửi tin nhắn thoại]", "user");
+
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                body: JSON.stringify({
+                    type: 'ai_chat',
+                    audio: base64Audio,
+                    mimeType: 'audio/mp4',
+                    history: aiChatHistory
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                handleAiReply(result.reply, result.isOrdered);
+            } else {
+                alert("Lỗi AI: " + result.error);
+            }
+        } catch (e) {
+            alert("Lỗi kết nối tới trợ lý AI.");
+        } finally {
+            statusText.style.display = 'none';
+        }
+    };
+}
+
+// Xử lý gửi tin nhắn dạng chữ (cho khách thích gõ thay vì nói)
+async function sendAiTextMessage() {
+    const input = document.getElementById('aiTextInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    appendMessageToAiBox(text, "user");
+
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({
+                type: 'ai_chat',
+                text: text,
+                history: aiChatHistory
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            handleAiReply(result.reply, result.isOrdered);
+        }
+    } catch (e) {
+        alert("Lỗi kết nối tới trợ lý AI.");
+    }
+}
+
+// Xử lý phản hồi từ AI: Đọc to câu trả lời (Text-to-Speech) và lưu lịch sử
+function handleAiReply(replyText, isOrdered) {
+    appendMessageToAiBox(replyText, "model");
+
+    // Cập nhật lịch sử hội thoại
+    aiChatHistory.push({ role: "user", text: "[Khách vừa tương tác]" });
+    aiChatHistory.push({ role: "model", text: replyText });
+
+    // Dùng giọng đọc trình duyệt (Text-to-Speech) để AI cất giọng nói chuyện với khách
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(replyText);
+        utterance.lang = 'vi-VN';
+        utterance.rate = 1.0; // Tốc độ đọc
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Nếu AI thông báo đã chốt đơn thành công -> Tự động cập nhật giao diện giỏ hàng / load lại đơn
+    if (isOrdered) {
+        alert("🎉 Đơn hàng của bạn đã được trợ lý AI chốt và gửi về quán thành công!");
+        cart = []; // Xóa giỏ hàng local
+        renderCartBar();
+    }
+}
+
+// Thêm tin nhắn vào khung chat giao diện
+function appendMessageToAiBox(text, sender) {
+    const box = document.getElementById('aiMessageHistory');
+    const isUser = sender === 'user';
+    box.innerHTML += `
+        <div style="background: ${isUser ? '#e1f5fe' : '#e3f2fd'}; padding: 8px 12px; border-radius: 8px; align-self: ${isUser ? 'flex-end' : 'flex-start'}; max-width: 85%;">
+            ${text}
+        </div>
+    `;
+    box.scrollTop = box.scrollHeight;
+
+    // Tự động mở khung chat khi có tương tác để khách dễ theo dõi
+    document.getElementById('aiChatModal').style.display = 'flex';
+}
+
+function closeAiChatModal() {
+    document.getElementById('aiChatModal').style.display = 'none';
+}
+
+
     // Hàm pháo hoa được sinh ra trực tiếp bên trong popup thông báo
     function triggerOrderFireworksInsidePopup(popupElement) {
         try {
@@ -4492,6 +4650,33 @@ function toggleMediaView(itemId) {
       <iframe id="kbIframe" src=""></iframe>
     </div>
   </div>
+</div>
+
+<!-- NÚT NỔI NÓI CHUYỆN RẢNH TAY (VOICE AI) -->
+<div id="aiVoiceContainer" style="position: fixed; right: 16px; bottom: 155px; z-index: 86; display: flex; flex-direction: column; align-items: center;">
+    <button id="aiVoiceBtn" onclick="toggleVoiceRecording()" title="Nói chuyện với trợ lý AI" style="background: linear-gradient(135deg, #ff1744, #d50000); color: white; width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 23, 68, 0.6); transition: transform 0.2s;">
+        🎙️
+    </button>
+    <div id="aiStatusText" style="font-size: 10px; background: rgba(0,0,0,0.75); color: #fff; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: none; white-space: nowrap;">Đang nghe...</div>
+</div>
+
+<!-- KHUNG HIỂN THỊ HỘI THOẠI VỚI AI (TÙY CHỌN) -->
+<div id="aiChatModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 350; justify-content: center; align-items: center; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 420px; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; max-height: 80vh; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px;">
+            <h3 style="font-size: 15px; color: #d32f2f;">🤖 Trợ Lý AI Chốt Đơn</h3>
+            <button onclick="closeAiChatModal()" style="border: none; background: none; font-size: 18px; cursor: pointer;">✕</button>
+        </div>
+        <div id="aiMessageHistory" style="flex: 1; overflow-y: auto; max-height: 300px; padding: 8px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px; font-size: 13px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="background: #e3f2fd; padding: 8px 12px; border-radius: 8px; align-self: flex-start; max-width: 85%;">
+                Dạ em là trợ lý của Kim Bling. Anh/chị muốn đặt món gì ạ? Cứ nói hoặc nhắn cho em nhé! ❤️
+            </div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <input type="text" id="aiTextInput" placeholder="Nhắn tin với AI..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;" onkeyup="if(event.key==='Enter') sendAiTextMessage()">
+            <button onclick="sendAiTextMessage()" style="background: #2196F3; color: white; border: none; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">Gửi</button>
+        </div>
+    </div>
 </div>
 
 </body>
