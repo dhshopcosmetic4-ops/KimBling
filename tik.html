@@ -105,11 +105,8 @@
             <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
             
-            <!-- Nút Khóa AE/AF -->
-            <div class="absolute top-24 inset-x-0 z-30 flex justify-center pointer-events-auto"><button id="lockAeAfBtn" onclick="toggleAeAfLock()" class="px-4 py-1.5 rounded-full bg-slate-900/90 text-amber-400 text-xs font-black shadow-lg border-2 border-amber-500/60 flex items-center space-x-1.5 active:scale-95 transition-all"><span>🔒</span><span id="aeAfText">KHÓA AE/AF</span></button></div>
-            
             <!-- Nút Menu Bộ Lọc Gọn Gàng -->
-            <div class="absolute top-36 left-4 z-30 pointer-events-auto">
+            <div class="absolute top-24 left-4 z-30 pointer-events-auto">
                 <button onclick="toggleFilterMenu()" class="px-4 py-2 rounded-2xl bg-slate-900/90 border-2 border-slate-700 text-rose-300 text-xs font-black shadow-lg flex items-center space-x-1.5 active:scale-95 transition-all">
                     <span>🎨</span><span id="currentFilterLabel">Bộ Lọc: Mịn Da</span>
                 </button>
@@ -136,21 +133,21 @@
             </div>
         </div>
 
-        <!-- Cụm điều khiển dưới đã được làm TRONG SUỐT (glassmorphism) để nhìn trọn khung camera -->
-        <div class="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur-md p-4 flex flex-col items-center space-y-3 border-t border-white/10 z-30">
-            <div class="flex space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15"><button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">0,5</button><button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button><button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">2,5</button></div>
+        <!-- Cụm điều khiển dưới: Cực kỳ trong suốt (bg-black/25) để nhìn trọn viền camera -->
+        <div class="absolute bottom-0 inset-x-0 bg-black/25 backdrop-blur-sm p-4 flex flex-col items-center space-y-3 border-t border-white/10 z-30">
+            <div class="flex space-x-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15"><button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">0,5</button><button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button><button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full text-xs font-black text-slate-300 hover:text-white transition-all">2,5</button></div>
             
             <div class="flex justify-center gap-2 w-full">
                 <button id="segmentModeBtn" onclick="setRecordingMode('segment')" class="px-3 py-1.5 rounded-full text-xs font-black bg-rose-600 text-white shadow">Quay theo đoạn (Chuẩn)</button>
-                <button id="unlimitedModeBtn" onclick="setRecordingMode('unlimited')" class="px-3 py-1.5 rounded-full text-xs font-black bg-slate-900/80 text-slate-300 border border-slate-700">Quay không giới hạn</button>
+                <button id="unlimitedModeBtn" onclick="setRecordingMode('unlimited')" class="px-3 py-1.5 rounded-full text-xs font-black bg-slate-900/60 text-slate-300 border border-slate-700">Quay không giới hạn</button>
             </div>
 
             <div class="w-full flex items-center justify-around">
-                <button onclick="takeSnapshot()" class="w-12 h-12 rounded-full bg-slate-900/80 text-amber-300 border-2 border-slate-700 font-black text-lg flex items-center justify-center shadow-lg active:scale-95 transition-transform" title="Chụp ảnh">📸</button>
+                <button onclick="takeSnapshot()" class="w-12 h-12 rounded-full bg-slate-900/70 text-amber-300 border-2 border-slate-700 font-black text-lg flex items-center justify-center shadow-lg active:scale-95 transition-transform" title="Chụp ảnh">📸</button>
                 
                 <button id="recordBtn" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 shadow-2xl active:scale-95 transition-transform"><div id="recordInnerBtn" class="w-16 h-16 bg-rose-500 rounded-full transition-all duration-300"></div></button>
                 
-                <div class="w-12 flex justify-center"><button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900/80 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button></div>
+                <div class="w-12 flex justify-center"><button id="toggleArBtn" class="w-11 h-11 rounded-full bg-slate-900/70 text-slate-200 border-2 border-slate-700 text-sm font-black flex items-center justify-center shadow-lg">AR</button></div>
             </div>
         </div>
     </div>
@@ -188,7 +185,6 @@
         let recordedRawBlob = null;
         let videoDuration = 0;
         let currentZoom = 1.0;
-        let isAeAfLocked = false;
         let currentBrightness = 100;
         let currentContrast = 100;
         let currentSkinBright = 0;
@@ -243,13 +239,19 @@
             document.getElementById('camTimer').innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Không giới hạn`;
         }
 
+        // Chụp ảnh nhanh: Tự động scale độ phân giải cao 2x chống vỡ nét, áp dụng trọn vẹn bộ lọc & tự lưu ngay
         function takeSnapshot() {
             const videoElement = document.getElementById('liveVideo');
             if(!videoElement || !videoElement.videoWidth) { alert('Camera chưa sẵn sàng.'); return; }
+            
             const canvas = document.getElementById('recordCanvas');
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
+            const scaleFactor = 2.0; // Nhân đôi độ phân giải giúp ảnh siêu nét, không vỡ khi zoom
+            canvas.width = (videoElement.videoWidth || 1280) * scaleFactor;
+            canvas.height = (videoElement.videoHeight || 720) * scaleFactor;
+            
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             
             ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
             bakeFiltersIntoFrame(ctx, canvas.width, canvas.height);
@@ -258,13 +260,12 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `KimBling-Snapshot-${Date.now()}.jpg`;
+                a.download = `KimBling-ProShot-${Date.now()}.jpg`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
                 setTimeout(() => URL.revokeObjectURL(url), 10000);
-                alert('Đã lưu ảnh kèm bộ lọc vào thiết bị! (Trên iPhone, hãy bấm "Lưu hình ảnh" vào Thư viện Ảnh).');
-            }, 'image/jpeg', 0.95);
+            }, 'image/jpeg', 0.98);
         }
 
         async function startCamera(facingMode) {
@@ -272,8 +273,6 @@
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
                 const videoElement = document.getElementById('liveVideo');
-                isAeAfLocked = false;
-                const lockText = document.getElementById('aeAfText'); if(lockText) lockText.innerText = 'KHÓA AE/AF';
                 videoElement.srcObject = mediaStream;
                 await videoElement.play();
                 updateLivePreviewFilter();
@@ -292,28 +291,6 @@
                     if (capabilities.zoom) track.applyConstraints({ advanced: [{ zoom }] }).catch(err => console.log("Thiết bị giới hạn mức zoom này:", err));
                     else { const videoEl = document.getElementById('liveVideo'); videoEl.style.transform = zoom === 0.5 ? 'scale(0.85)' : zoom === 2.5 ? 'scale(2.0)' : 'scale(1.0)'; }
                 }
-            }
-        }
-
-        async function toggleAeAfLock() {
-            const track = mediaStream && mediaStream.getVideoTracks()[0]; if(!track){ alert('Camera chưa sẵn sàng.'); return; }
-            let c = {}; try{ c = track.getCapabilities ? track.getCapabilities() : {}; } catch(e){}
-            const has = (k,v) => Array.isArray(c[k]) && c[k].includes(v), adv = [];
-            if(!isAeAfLocked){
-                if(has('exposureMode','locked')) adv.push({exposureMode:'locked'});
-                if(has('focusMode','locked')) adv.push({focusMode:'locked'});
-                if(!adv.length){ document.getElementById('aeAfText').innerText='AE/AF KHÔNG HỖ TRỢ'; alert('Safari/camera không hỗ trợ khóa AE/AF qua trình duyệt.'); return; }
-                try{
-                    await track.applyConstraints({advanced:adv});
-                    isAeAfLocked = true;
-                    document.getElementById('aeAfText').innerText = 'AE/AF ĐÃ KHÓA';
-                    document.getElementById('lockAeAfBtn').classList.add('bg-amber-400');
-                } catch(e){ alert('Không khóa được AE/AF: '+e.message); }
-            } else {
-                try{ await track.applyConstraints({advanced:[{exposureMode:'continuous'},{focusMode:'continuous'}]}); }catch(e){}
-                isAeAfLocked = false;
-                document.getElementById('aeAfText').innerText = 'KHÓA AE/AF';
-                document.getElementById('lockAeAfBtn').classList.remove('bg-amber-400');
             }
         }
 
@@ -588,7 +565,6 @@
             },1000);
         }
         function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
-        function resetRecordButtonUI(){setRecordingUI(false);}
         window.onload=initApp;
 </script>
 </body>
