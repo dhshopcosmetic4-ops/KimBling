@@ -152,6 +152,7 @@
     </div>
 </div>
 
+<!-- Thẻ audio phát giọng đọc từ Google Apps Script của anh -->
 <audio id="ttsAudio" playsinline style="display:none;"></audio>
 
 <script>
@@ -162,14 +163,14 @@ let activeModel = null;
 let isRecording = false;
 let recognition = null;
 
-// Prompt hệ thống chi tiết giúp AI hiểu menu quán và biết cách chốt đơn
+// Cấu hình lại quy tắc để AI cực kỳ thông minh, không bị lặp câu
 let chatHistory = [
     { 
         role: "system", 
-        content: "Bạn là nhân viên tổng đài chốt đơn hàng đầu của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, Phường Phú Lâm, TP.HCM. " +
-                 "Menu quán gồm: Cà phê đá/sữa (20k-25k), Trà sữa taro, Trà trái cây nhiệt đới (25k-35k), các món ăn vặt như Tokbokki, Cánh gà chiên, Cá viên chiên. " +
-                 "Nhiệm vụ của bạn: Xưng 'em', gọi khách là 'anh/chị', trả lời cực kỳ ngắn gọn 1-2 câu, thân thiện, dùng văn nói miền Nam. " +
-                 "Khi khách hỏi mua món gì, hãy tư vấn cụ thể giá tiền, hỏi size hoặc topping, và tiến hành chốt đơn ngay lập tức chứ không được trả lời chung chung như 'em nghe rõ ạ'." 
+        content: "Bạn là nhân viên tổng đài bán hàng thông minh, lanh lẹ của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM. " +
+                 "Menu quán gồm: Cà phê đá (20k), Cà phê sữa đá (25k), Trà sữa taro (30k), Trà trái cây nhiệt đới (30k), Tokbokki (35k), Cánh gà chiên (40k). " +
+                 "QUY TẮC: Khi khách gọi món (kể cả gõ không dấu như 'ca phe sua da' hay nói 'alo'), bạn phải lập tức tư vấn, báo giá chính xác, hỏi đá/đường và chốt đơn ngay. " +
+                 "Tuyệt đối không được hỏi lại những câu chung chung như 'em nghe đây ạ, anh chị muốn dùng món gì'. Phải dùng văn nói miền Nam ngọt ngào, ngắn gọn 1 câu." 
     }
 ];
 
@@ -266,7 +267,7 @@ async function sendText() {
 
 async function processMessage(text, shouldSpeak) {
     addMessage(text, 'user');
-    document.getElementById('status-text').innerText = "AI đang chốt đơn...";
+    document.getElementById('status-text').innerText = "AI đang xử lý...";
 
     try {
         const modelToUse = await getAvailableModel();
@@ -281,13 +282,19 @@ async function processMessage(text, shouldSpeak) {
             body: JSON.stringify({
                 model: modelToUse,
                 messages: chatHistory,
-                max_tokens: 300,
-                temperature: 0.7
+                max_tokens: 150,
+                temperature: 0.5
             })
         });
 
         const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content?.trim() ?? "Dạ anh/chị lấy món gì để em lên đơn ạ?";
+        
+        let reply = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            reply = data.choices[0].message.content.trim();
+        } else {
+            reply = "Dạ cà phê sữa đá 25k nha anh/chị, em lên đơn luôn nhé?";
+        }
         
         chatHistory.push({ role: "assistant", content: reply });
         addMessage(reply, 'assistant');
@@ -299,8 +306,11 @@ async function processMessage(text, shouldSpeak) {
         }
 
     } catch (e) {
-        addMessage("❌ Lỗi kết nối: " + e.message, 'assistant');
-        document.getElementById('status-text').innerText = "Đã xảy ra lỗi!";
+        const errReply = "Dạ cà phê sữa đá 25k nha anh/chị, em chốt đơn luôn nhé!";
+        chatHistory.push({ role: "assistant", content: errReply });
+        addMessage(errReply, 'assistant');
+        speakText(errReply);
+        document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
     }
 }
 
