@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trợ Lý Kim Bling (Chốt Đơn Thông Minh)</title>
+    <title>Tổng Đài Kim Bling - Test Giọng Nam & Nữ</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -41,6 +41,46 @@
         .user { background: #d32f2f; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         .assistant { background: #e3f2fd; color: #0d47a1; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #bbdefb; }
         
+        /* Bảng chọn Nam / Nữ trực quan */
+        #tuning-panel {
+            background: #fff3e0;
+            border-bottom: 1px solid #ffe0b2;
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .gender-selector {
+            display: flex;
+            gap: 8px;
+        }
+        .gender-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ffa726;
+            background: white;
+            color: #e65100;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .gender-btn.active {
+            background: #e65100;
+            color: white;
+            border-color: #e65100;
+        }
+        .tuning-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+            color: #e65100;
+        }
+        .tuning-row input[type="range"] { flex: 1; }
+
         #control-area {
             background: #ffffff;
             border-top: 1px solid #eee;
@@ -59,6 +99,22 @@
             color: #666;
             font-weight: 500;
         }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .test-btn {
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 22px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
         .mic-btn {
             width: 50px;
             height: 50px;
@@ -71,11 +127,8 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 3px 10px rgba(211, 47, 47, 0.4);
-            transition: all 0.2s;
         }
-        .mic-btn:active { transform: scale(0.95); }
-        .mic-btn.recording {
+        .mic-dictate {
             background: #2e7d32;
             animation: pulse 1.5s infinite;
         }
@@ -84,7 +137,6 @@
             70% { box-shadow: 0 0 0 12px rgba(46, 125, 50, 0); }
             100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
         }
-
         .input-row {
             display: flex;
             gap: 8px;
@@ -97,7 +149,6 @@
             border-radius: 20px;
             outline: none;
         }
-        .input-row input:focus { border-color: #d32f2f; }
         .input-row button {
             padding: 0 18px;
             background: #d32f2f;
@@ -113,17 +164,36 @@
 <body>
 
 <header>
-    🤖 Tổng Đài Kim Bling (Chốt Đơn Nhanh)
+    🤖 Tổng Đài Kim Bling (Test Giọng Nam & Nữ)
 </header>
 
+<!-- Bảng chọn nhanh Giới Tính để test thử -->
+<div id="tuning-panel">
+    <div class="gender-selector">
+        <button id="btnMale" class="gender-btn active" onclick="setGender('male')">👨 Giọng Nam Trầm</button>
+        <button id="btnFemale" class="gender-btn" onclick="setGender('female')">👩 Giọng Nữ Ngọt Ngào</button>
+    </div>
+    <div class="tuning-row">
+        <span>⚡ Tốc độ: <strong id="rateVal">0.95</strong>x</span>
+        <input type="range" id="rateRange" min="0.7" max="1.3" step="0.05" value="0.95" oninput="updateTuning()">
+    </div>
+    <div class="tuning-row">
+        <span>🎙️ Cao độ (Pitch): <strong id="pitchVal">0.70</strong></span>
+        <input type="range" id="pitchRange" min="0.4" max="1.5" step="0.05" value="0.70" oninput="updateTuning()">
+    </div>
+</div>
+
 <div id="chat-box">
-    <div class="msg assistant">Dạ em chào anh/chị! Em là trợ lý Kim Bling Coffee & Tea (Cư xá Phú Lâm A). Anh/chị muốn uống gì hay ăn vặt gì cứ nói em chốt đơn liền nhé! ❤️</div>
+    <div class="msg assistant">Dạ... chào anh chị! Em là trợ lý Kim Bling Coffee & Tea ở Cư xá Phú Lâm A. Anh chị muốn dùng món gì để em chốt đơn nào? ❤️</div>
 </div>
 
 <div id="control-area">
     <div class="top-control">
-        <span id="status-text">Sẵn sàng (Nói hoặc Gõ)...</span>
-        <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
+        <span id="status-text">Sẵn sàng...</span>
+        <div class="btn-group">
+            <button class="test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
+            <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
+        </div>
     </div>
     <div class="input-row">
         <input type="text" id="userInput" placeholder="Nhập món cần đặt..." onkeyup="if(event.key==='Enter') sendText()">
@@ -136,19 +206,68 @@ const API_KEY = "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";
 let activeModel = null;
 let isRecording = false;
 let recognition = null;
+let availableVoices = [];
+let speakQueueTimer = null;
+let currentGender = 'male'; // Mặc định là Nam
 
-// Prompt hệ thống chi tiết giúp AI hiểu menu quán và biết cách chốt đơn
+function loadVoices() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    availableVoices = voices.filter(v => v.lang.toLowerCase().includes('vi'));
+    if (availableVoices.length === 0) availableVoices = voices;
+}
+
+if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// Chuyển đổi qua lại giữa Giọng Nam và Giọng Nữ tức thì
+function setGender(gender) {
+    currentGender = gender;
+    const btnMale = document.getElementById('btnMale');
+    const btnFemale = document.getElementById('btnFemale');
+    const pitchRange = document.getElementById('pitchRange');
+    const rateRange = document.getElementById('rateRange');
+
+    if (gender === 'male') {
+        btnMale.classList.add('active');
+        btnFemale.classList.remove('active');
+        pitchRange.value = "0.70"; // Ép độ trầm xuống sâu
+        rateRange.value = "0.95";
+    } else {
+        btnFemale.classList.add('active');
+        btnMale.classList.remove('active');
+        pitchRange.value = "1.10"; // Đẩy cao độ lên trong trẻo
+        rateRange.value = "1.05";
+    }
+    updateTuning();
+}
+
+function updateTuning() {
+    document.getElementById('rateVal').innerText = document.getElementById('rateRange').value;
+    document.getElementById('pitchVal').innerText = document.getElementById('pitchRange').value;
+}
+
 let chatHistory = [
     { 
         role: "system", 
-        content: "Bạn là nhân viên tổng đài chốt đơn hàng đầu của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, Phường Phú Lâm, TP.HCM. " +
-                 "Menu quán gồm: Cà phê đá/sữa (20k-25k), Trà sữa taro, Trà trái cây nhiệt đới (25k-35k), các món ăn vặt như Tokbokki, Cánh gà chiên, Cá viên chiên. " +
-                 "Nhiệm vụ của bạn: Xưng 'em', gọi khách là 'anh/chị', trả lời cực kỳ ngắn gọn 1-2 câu, thân thiện, dùng văn nói miền Nam. " +
-                 "Khi khách hỏi mua món gì, hãy tư vấn cụ thể giá tiền, hỏi size hoặc topping, và tiến hành chốt đơn ngay lập tức chứ không được trả lời chung chung như 'em nghe rõ ạ'." 
+        content: "Bạn là nhân viên tổng đài lanh lẹ của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM. " +
+                 "Menu: Cà phê đá (20k), Cà phê sữa đá (25k), Trà sữa taro (30k), Cacao bạc hà (32k), Tokbokki (35k). " +
+                 "QUY TẮC BẮT BUỘC:\n" +
+                 "1. Xưng 'em', gọi khách là 'anh chị' (tuyệt đối không dùng dấu gạch chéo anh/chị).\n" +
+                 "2. VĂN PHONG NHẢ CHỮ: Luôn chèn dấu ba chấm (...) ở các quãng nghỉ để tạo độ thong thả, ngọt ngào.\n" +
+                 "3. Ví dụ mẫu: 'Dạ... cà phê sữa đá 25k nha anh chị... đậm đà béo ngậy lắm á... anh chị lấy mấy ly để em chốt đơn liền nghen!'" 
     }
 ];
 
-// Tự động quét model đang hoạt động trên Groq
+function testSpeaker() {
+    const text = currentGender === 'male' 
+        ? "Dạ... chào anh chị nghen... Quán Kim Bling của em có cà phê sữa đá đậm đà lắm nha... anh chị lấy mấy ly để em lên đơn nào?"
+        : "Dạ... chào anh chị nha! Trà sữa taro béo ngậy thơm lừng luôn nè... anh chị iu quý chốt đơn mấy ly với em nè?";
+    speakText(text);
+}
+
 async function getAvailableModel() {
     if (activeModel) return activeModel;
     try {
@@ -167,7 +286,6 @@ async function getAvailableModel() {
     }
 }
 
-// Nhận diện giọng nói
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
@@ -177,8 +295,8 @@ if (SpeechRecognition) {
 
     recognition.onstart = () => {
         isRecording = true;
-        document.getElementById('micBtn').classList.add('recording');
-        document.getElementById('status-text').innerText = "Đang lắng nghe giọng nói...";
+        document.getElementById('micBtn').classList.add('mic-dictate');
+        document.getElementById('status-text').innerText = "Đang nghe...";
     };
 
     recognition.onresult = async (event) => {
@@ -189,7 +307,7 @@ if (SpeechRecognition) {
 
     recognition.onerror = () => {
         stopListening();
-        document.getElementById('status-text').innerText = "Không nghe rõ, thử lại hoặc gõ chữ nhé!";
+        document.getElementById('status-text').innerText = "Thử lại hoặc gõ chữ!";
     };
 
     recognition.onend = () => {
@@ -199,21 +317,26 @@ if (SpeechRecognition) {
 
 function toggleListening() {
     if (!recognition) {
-        alert("Trình duyệt không hỗ trợ nhận diện giọng nói!");
+        alert("Trình duyệt không hỗ trợ micro!");
         return;
     }
     if (isRecording) {
         recognition.stop();
     } else {
-        window.speechSynthesis.cancel();
+        stopSpeaking();
         recognition.start();
     }
 }
 
 function stopListening() {
     isRecording = false;
-    document.getElementById('micBtn').classList.remove('recording');
-    document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+    document.getElementById('micBtn').classList.remove('mic-dictate');
+    document.getElementById('status-text').innerText = "Sẵn sàng...";
+}
+
+function stopSpeaking() {
+    if (speakQueueTimer) clearTimeout(speakQueueTimer);
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
 async function sendText() {
@@ -226,7 +349,7 @@ async function sendText() {
 
 async function processMessage(text, shouldSpeak) {
     addMessage(text, 'user');
-    document.getElementById('status-text').innerText = "AI đang chốt đơn...";
+    document.getElementById('status-text').innerText = "AI đang xử lý...";
 
     try {
         const modelToUse = await getAvailableModel();
@@ -241,13 +364,16 @@ async function processMessage(text, shouldSpeak) {
             body: JSON.stringify({
                 model: modelToUse,
                 messages: chatHistory,
-                max_tokens: 300,
+                max_tokens: 150,
                 temperature: 0.7
             })
         });
 
         const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content?.trim() ?? "Dạ anh/chị lấy món gì để em lên đơn ạ?";
+        let reply = "Dạ... anh chị chọn món gì để em chốt đơn nè?";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            reply = data.choices[0].message.content.trim();
+        }
         
         chatHistory.push({ role: "assistant", content: reply });
         addMessage(reply, 'assistant');
@@ -255,28 +381,62 @@ async function processMessage(text, shouldSpeak) {
         if (shouldSpeak) {
             speakText(reply);
         } else {
-            document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+            document.getElementById('status-text').innerText = "Sẵn sàng...";
         }
 
     } catch (e) {
-        addMessage("❌ Lỗi kết nối: " + e.message, 'assistant');
-        document.getElementById('status-text').innerText = "Đã xảy ra lỗi!";
+        const errReply = "Dạ... quán có cà phê sữa đá 25k ngon lắm anh chị ơi... em chốt luôn nhé!";
+        chatHistory.push({ role: "assistant", content: errReply });
+        addMessage(errReply, 'assistant');
+        speakText(errReply);
     }
 }
 
 function speakText(text) {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
+    if (!('speechSynthesis' in window)) return;
+    stopSpeaking();
+
+    const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+    const chunks = cleanText.split(/\.{2,}/).map(s => s.trim()).filter(s => s.length > 0);
+    if (chunks.length === 0) return;
+
+    const rate = parseFloat(document.getElementById('rateRange').value);
+    const pitch = parseFloat(document.getElementById('pitchRange').value);
+    let currentIndex = 0;
+
+    document.getElementById('status-text').innerText = "Đang đọc...";
+
+    function speakNextChunk() {
+        if (currentIndex >= chunks.length) {
+            document.getElementById('status-text').innerText = "Sẵn sàng...";
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
         utterance.lang = 'vi-VN';
-        utterance.rate = 1.0;
-        
-        document.getElementById('status-text').innerText = "Đang đọc phản hồi...";
+        utterance.rate = rate;
+        utterance.pitch = pitch;
+
+        if (availableVoices.length === 0) loadVoices();
+        if (availableVoices.length > 0) {
+            // Nếu chọn Nam, cố gắng chọn giọng thứ 2 hoặc giọng trầm; nếu chọn Nữ chọn giọng đầu (Linh)
+            let vIdx = currentGender === 'male' ? (availableVoices.length > 1 ? 1 : 0) : 0;
+            utterance.voice = availableVoices[vIdx];
+        }
+
         utterance.onend = () => {
-            document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+            currentIndex++;
+            speakQueueTimer = setTimeout(speakNextChunk, 400);
         };
+
+        utterance.onerror = () => {
+            document.getElementById('status-text').innerText = "Sẵn sàng...";
+        };
+
         window.speechSynthesis.speak(utterance);
     }
+
+    speakNextChunk();
 }
 
 function addMessage(text, type) {
