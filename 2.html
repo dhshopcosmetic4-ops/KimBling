@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tổng Đài Kim Bling (Google TTS Audio)</title>
+    <title>Trợ Lý Kim Bling (Chốt Đơn Thông Minh)</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -55,33 +55,48 @@
             justify-content: space-between;
         }
         #status-text {
-            font-size: 13px;
+            font-size: 14px;
             color: #666;
             font-weight: 500;
         }
         .btn-group {
             display: flex;
             gap: 8px;
+            align-items: center;
         }
-        .action-btn {
-            height: 48px;
-            padding: 0 16px;
-            border-radius: 24px;
-            border: none;
+        .test-btn {
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 22px;
+            background: #1976d2;
             color: white;
+            border: none;
+            font-size: 14px;
             font-weight: bold;
-            font-size: 15px;
             cursor: pointer;
+            box-shadow: 0 3px 10px rgba(25, 118, 210, 0.3);
+        }
+        .test-btn:active { transform: scale(0.95); }
+        .mic-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(211, 47, 47, 0.4);
+            transition: all 0.2s;
         }
-        .mic-btn { background: #d32f2f; width: 50px; height: 50px; border-radius: 50%; padding: 0; font-size: 22px; }
-        .speaker-test-btn { background: #1976d2; }
-        .mic-btn.recording { background: #2e7d32; animation: pulse 1.5s infinite; }
-
+        .mic-btn:active { transform: scale(0.95); }
+        .mic-btn.recording {
+            background: #2e7d32;
+            animation: pulse 1.5s infinite;
+        }
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); }
             70% { box-shadow: 0 0 0 12px rgba(46, 125, 50, 0); }
@@ -116,52 +131,53 @@
 <body>
 
 <header>
-    🤖 Tổng Đài Kim Bling (Audio Thật)
+    🤖 Tổng Đài Kim Bling (Chốt Đơn Nhanh)
 </header>
 
 <div id="chat-box">
-    <div class="msg assistant">Dạ em chào anh/chị! Hệ thống đã kết nối âm thanh chuẩn Google. Anh/chị bấm nút "🔊 Nghe Thử" hoặc nói micro nhé! ❤️</div>
+    <div class="msg assistant">Dạ em chào anh/chị! Em là trợ lý Kim Bling Coffee & Tea (Cư xá Phú Lâm A). Anh/chị muốn uống gì hay ăn vặt gì cứ nói em chốt đơn liền nhé! ❤️</div>
 </div>
 
 <div id="control-area">
     <div class="top-control">
-        <span id="status-text">Sẵn sàng...</span>
+        <span id="status-text">Sẵn sàng (Nói hoặc Gõ)...</span>
         <div class="btn-group">
-            <button class="action-btn speaker-test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
-            <button id="micBtn" class="action-btn mic-btn" onclick="toggleListening()">🎤</button>
+            <button class="test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
+            <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
         </div>
     </div>
     <div class="input-row">
-        <input type="text" id="userInput" placeholder="Nhập tin nhắn..." onkeyup="if(event.key==='Enter') sendText()">
+        <input type="text" id="userInput" placeholder="Nhập món cần đặt..." onkeyup="if(event.key==='Enter') sendText()">
         <button onclick="sendText()">Gửi</button>
     </div>
 </div>
 
-<!-- Thẻ audio ẩn dùng để phát file mp3 từ Google Apps Script -->
-<audio id="ttsAudio" style="display:none;"></audio>
+<audio id="ttsAudio" playsinline style="display:none;"></audio>
 
 <script>
 const API_KEY = "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";
-// Link Google Apps Script Web App của anh
 const TTS_BASE_URL = "https://script.google.com/macros/s/AKfycbzYGIdfZo3muTn5xddMWgGMVZUlwjDr8fPyPCnvPYSjaEGlnaMHJo5it5z4bj4Rdvc6_Q/exec";
 
 let activeModel = null;
 let isRecording = false;
 let recognition = null;
 
+// Prompt hệ thống chi tiết giúp AI hiểu menu quán và biết cách chốt đơn
 let chatHistory = [
     { 
         role: "system", 
-        content: "Bạn là nhân viên tư vấn bán hàng của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM. " +
-                 "Menu gồm Cà phê đá/sữa (20k-25k), Trà sữa taro, Trà trái cây (25k-35k), Tokbokki, Cánh gà chiên. " +
-                 "Xưng 'em', gọi khách là 'anh/chị', trả lời ngắn gọn 1-2 câu, văn nói miền Nam ngọt ngào, chốt đơn nhanh." 
+        content: "Bạn là nhân viên tổng đài chốt đơn hàng đầu của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, Phường Phú Lâm, TP.HCM. " +
+                 "Menu quán gồm: Cà phê đá/sữa (20k-25k), Trà sữa taro, Trà trái cây nhiệt đới (25k-35k), các món ăn vặt như Tokbokki, Cánh gà chiên, Cá viên chiên. " +
+                 "Nhiệm vụ của bạn: Xưng 'em', gọi khách là 'anh/chị', trả lời cực kỳ ngắn gọn 1-2 câu, thân thiện, dùng văn nói miền Nam. " +
+                 "Khi khách hỏi mua món gì, hãy tư vấn cụ thể giá tiền, hỏi size hoặc topping, và tiến hành chốt đơn ngay lập tức chứ không được trả lời chung chung như 'em nghe rõ ạ'." 
     }
 ];
 
 function testSpeaker() {
-    playVoice("Dạ em chào anh/chị, em là tổng đài viên của quán Kim Bling đây ạ. Anh/chị muốn dùng món gì nè?");
+    speakText("Dạ em chào anh/chị, em là tổng đài viên của quán Kim Bling đây ạ. Anh/chị muốn dùng món gì nè?");
 }
 
+// Tự động quét model đang hoạt động trên Groq
 async function getAvailableModel() {
     if (activeModel) return activeModel;
     try {
@@ -191,14 +207,13 @@ if (SpeechRecognition) {
     recognition.onstart = () => {
         isRecording = true;
         document.getElementById('micBtn').classList.add('recording');
-        document.getElementById('status-text').innerText = "Đang nghe anh/chị nói...";
+        document.getElementById('status-text').innerText = "Đang lắng nghe giọng nói...";
     };
 
     recognition.onresult = async (event) => {
         const speechText = event.results[0][0].transcript;
         stopListening();
-        addMessage(speechText, 'user');
-        await processMessageWithText(speechText);
+        await processMessage(speechText, true);
     };
 
     recognition.onerror = () => {
@@ -219,6 +234,7 @@ function toggleListening() {
     if (isRecording) {
         recognition.stop();
     } else {
+        stopAllAudio();
         recognition.start();
     }
 }
@@ -226,7 +242,18 @@ function toggleListening() {
 function stopListening() {
     isRecording = false;
     document.getElementById('micBtn').classList.remove('recording');
-    document.getElementById('status-text').innerText = "Sẵn sàng...";
+    document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+}
+
+function stopAllAudio() {
+    const audio = document.getElementById('ttsAudio');
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+    }
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+    }
 }
 
 async function sendText() {
@@ -234,13 +261,12 @@ async function sendText() {
     const text = inputField.value.trim();
     if (!text) return;
     inputField.value = '';
-    
-    addMessage(text, 'user');
-    await processMessageWithText(text);
+    await processMessage(text, true);
 }
 
-async function processMessageWithText(text) {
-    document.getElementById('status-text').innerText = "AI đang xử lý...";
+async function processMessage(text, shouldSpeak) {
+    addMessage(text, 'user');
+    document.getElementById('status-text').innerText = "AI đang chốt đơn...";
 
     try {
         const modelToUse = await getAvailableModel();
@@ -261,13 +287,16 @@ async function processMessageWithText(text) {
         });
 
         const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content?.trim() ?? "Dạ em nghe rõ ạ.";
+        const reply = data.choices?.[0]?.message?.content?.trim() ?? "Dạ anh/chị lấy món gì để em lên đơn ạ?";
         
         chatHistory.push({ role: "assistant", content: reply });
         addMessage(reply, 'assistant');
         
-        // Phát âm thanh qua Google Apps Script Web App
-        playVoice(reply);
+        if (shouldSpeak) {
+            speakText(reply);
+        } else {
+            document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+        }
 
     } catch (e) {
         addMessage("❌ Lỗi kết nối: " + e.message, 'assistant');
@@ -275,22 +304,39 @@ async function processMessageWithText(text) {
     }
 }
 
-// Hàm gọi Google Apps Script để phát audio mượt mà
-function playVoice(text) {
+function speakText(text) {
+    stopAllAudio();
     const audio = document.getElementById('ttsAudio');
-    const encodedText = encodeURIComponent(text);
-    audio.src = `${TTS_BASE_URL}?q=${encodedText}`;
-    
-    document.getElementById('status-text').innerText = "Đang phát giọng đọc...";
-    
-    audio.play().then(() => {
-        audio.onended = () => {
-            document.getElementById('status-text').innerText = "Sẵn sàng...";
-        };
-    }).catch(err => {
-        console.error("Lỗi phát audio:", err);
-        document.getElementById('status-text').innerText = "Sẵn sàng...";
+    const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+    audio.src = `${TTS_BASE_URL}?q=${encodeURIComponent(cleanText)}`;
+    document.getElementById('status-text').innerText = "Đang đọc phản hồi...";
+
+    audio.onended = () => {
+        document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+    };
+
+    audio.onerror = () => {
+        fallbackSpeak(cleanText);
+    };
+
+    audio.play().catch(() => {
+        fallbackSpeak(cleanText);
     });
+}
+
+function fallbackSpeak(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'vi-VN';
+        utterance.rate = 1.0;
+        utterance.onend = () => {
+            document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+        };
+        window.speechSynthesis.speak(utterance);
+    } else {
+        document.getElementById('status-text').innerText = "Sẵn sàng (Nói hoặc Gõ)...";
+    }
 }
 
 function addMessage(text, type) {
