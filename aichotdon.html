@@ -4,798 +4,1230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</title>
+<title>KIM BLING AI - Trợ lý tư vấn</title>
 
 <style>
-* { box-sizing: border-box; }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;width:100%;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px!important;background:#f5f6f8;color:#222}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+*{font-size:16px!important}
+button,input{font-family:inherit}
+button{cursor:pointer}
+header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0}
+.header-title{font-weight:800;color:white}
+.header-subtitle{margin-top:5px;color:#ffe4e4}
+#statusBar{background:white;padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;color:#666}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#999;flex-shrink:0}
+.status-dot.online{background:#2e7d32}
+.status-dot.error{background:#d32f2f}
+#statusText{flex:1}
+#mainContent{width:100%;max-width:850px;margin:0 auto;padding:14px;flex:1}
+.welcome-card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.welcome-title{font-weight:800;color:#b71c1c;margin-bottom:8px}
+.welcome-text{color:#555;line-height:1.5}
+.quick-title{font-weight:800;margin:18px 0 10px}
+.quick-list{display:flex;flex-wrap:wrap;gap:8px}
+.quick-btn{border:1px solid #efb4b4;background:white;color:#b71c1c;padding:9px 13px;border-radius:22px;font-weight:600}
+.quick-btn:active{background:#ffebee}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 12px;font-weight:800}
+#productCount{color:#777;font-weight:400}
+#productGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.product-card{min-width:0;background:white;border:1px solid #eee;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.04)}
+.product-image-wrap{width:100%;aspect-ratio:1/1;background:#f2f2f2;overflow:hidden;position:relative}
+.product-image{width:100%;height:100%;object-fit:cover;display:block}
+.sold-out{position:absolute;inset:0;background:rgba(0,0,0,.55);color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
+.product-info{padding:11px}
+.product-name{font-weight:800;line-height:1.4;min-height:42px;overflow-wrap:anywhere}
+.product-category{color:#888;margin-top:4px}
+.product-price{color:#d32f2f;font-weight:800;margin-top:7px}
+.product-actions{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.product-actions button{width:100%;border:0;border-radius:9px;padding:10px 7px;font-weight:700}
+.consult-btn{color:#b71c1c;background:#ffebee}
+.buy-btn{color:white;background:#d32f2f}
+.product-actions button:disabled{opacity:.45;cursor:not-allowed}
+#chatSection{margin-top:22px;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px}
+.chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
+#chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:150px;max-height:430px;overflow-y:auto;background:#fff}
+.chat-message{max-width:88%;padding:12px 14px;border-radius:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-message.assistant{align-self:flex-start;color:#333;background:#f1f3f5;border-bottom-left-radius:4px}
+.chat-message.user{align-self:flex-end;color:white;background:#d32f2f;border-bottom-right-radius:4px}
+.message-tools{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.message-tools button{border:1px solid #ddd;background:white;color:#555;padding:7px 10px;border-radius:18px}
+#chatInputArea{border-top:1px solid #eee;padding:12px;background:white}
+#chatInputRow{display:flex;align-items:center;gap:8px}
+#userInput{min-width:0;flex:1;height:46px;padding:0 14px;border:1px solid #ddd;border-radius:24px;outline:none;background:white;color:#222}
+#userInput:focus{border-color:#d32f2f}
+.action-button{min-width:46px;height:46px;border:0;border-radius:50%;color:white;background:#d32f2f;display:flex;align-items:center;justify-content:center;font-weight:700}
+#sendBtn{border-radius:24px;padding:0 17px;min-width:65px}
+#micBtn{background:#2e7d32}
+#micBtn.listening{animation:pulse 1.3s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,50,.5)}70%{box-shadow:0 0 0 11px rgba(46,125,50,0)}100%{box-shadow:0 0 0 0 rgba(46,125,50,0)}}
+.voice-tools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.voice-tools button{border:1px solid #ddd;background:#fafafa;color:#444;padding:9px 12px;border-radius:20px}
+.voice-tools button:active{background:#eee}
+.loading{color:#888;font-style:italic}
+.empty-state{grid-column:1/-1;text-align:center;padding:25px 12px;color:#888;background:white;border-radius:12px}
+footer{padding:18px 12px;text-align:center;color:#888}
+.scroll-control{position:fixed;right:14px;z-index:9999;width:46px;height:46px;border:none;border-radius:50%;background:#d32f2f;color:white;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:23px!important;font-weight:bold}
+#scrollTopBtn{bottom:125px}
+#scrollBottomBtn{bottom:68px}
+.scroll-control:active{transform:scale(.92)}
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f0f2f5;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-}
-
-header {
-    background: #d32f2f;
-    color: white;
-    padding: 1rem;
-    text-align: center;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-#chat-box {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: #fafafa;
-}
-
-.msg {
-    max-width: 85%;
-    padding: 12px 16px;
-    border-radius: 16px;
-    line-height: 1.5;
-    font-size: 16px;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-.user {
-    background: #d32f2f;
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px;
-}
-
-.assistant {
-    background: #e3f2fd;
-    color: #0d47a1;
-    align-self: flex-start;
-    border-bottom-left-radius: 4px;
-    border: 1px solid #bbdefb;
-}
-
-.order-card {
-    width: 94%;
-    align-self: center;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 14px;
-    padding: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07);
-}
-
-.order-card h3 {
-    margin: 0 0 10px;
-    color: #c62828;
-    font-size: 17px;
-}
-
-.order-detail {
-    font-size: 14px;
-    line-height: 1.7;
-    white-space: pre-wrap;
-    color: #333;
-}
-
-.order-total {
-    border-top: 1px solid #eee;
-    padding-top: 10px;
-    margin-top: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #c62828;
-}
-
-.order-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.order-actions button {
-    flex: 1;
-    min-height: 44px;
-    border: none;
-    border-radius: 9px;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.confirm-order-btn {
-    background: #2e7d32;
-    color: white;
-}
-
-.cancel-order-btn {
-    background: #eeeeee;
-    color: #333;
-}
-
-.order-actions button:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-}
-
-#control-area {
-    background: #fff;
-    border-top: 1px solid #eee;
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.top-control {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-#status-text {
-    font-size: 13px;
-    color: #2e7d32;
-    font-weight: bold;
-    flex: 1;
-}
-
-.btn-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.test-btn {
-    height: 40px;
-    padding: 0 12px;
-    border-radius: 20px;
-    background: #1976d2;
-    color: white;
-    border: none;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.mic-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.mic-dictate {
-    background: #2e7d32;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(46,125,50,.6); }
-    70% { box-shadow: 0 0 0 12px rgba(46,125,50,0); }
-    100% { box-shadow: 0 0 0 0 rgba(46,125,50,0); }
-}
-
-.input-row {
-    display: flex;
-    gap: 8px;
-}
-
-.input-row input {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 16px;
-    font-size: 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 20px;
-    outline: none;
-    background: #fff;
-}
-
-.input-row button {
-    padding: 0 18px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.input-row button:disabled {
-    opacity: .55;
-    cursor: not-allowed;
+/* GEMINI LIVE */
+#livePanel{margin:12px 0 0;padding:12px;border:1px solid #e6c5c5;border-radius:13px;background:#fffafa}
+#liveStatus{font-size:14px!important;color:#666;line-height:1.5;margin-bottom:9px}
+#liveStatus.active{color:#2e7d32;font-weight:700}
+#liveButtons{display:flex;gap:8px;flex-wrap:wrap}
+#liveStartBtn,#liveStopBtn{border:0;border-radius:22px;padding:11px 14px;font-weight:800}
+#liveStartBtn{background:#7b1fa2;color:white}
+#liveStopBtn{background:#555;color:white}
+#liveStopBtn:disabled{opacity:.4}
+.live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
+@media(max-width:360px){
+ #mainContent{padding:10px}
+ #productGrid{gap:8px}
+ .product-info{padding:8px}
+ .product-actions button{padding:9px 4px}
 }
 </style>
 </head>
 
 <body>
 
-<header>🤖 Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</header>
+<header>
+ <div class="header-title">🤖 KIM BLING AI</div>
+ <div class="header-subtitle">Trợ lý tư vấn Kim Bling Coffee & Tea</div>
+</header>
 
-<div id="chat-box">
-    <div class="msg assistant">
-        Dạ chào anh chị. Em là trợ lý tư vấn của Kim Bling Coffee & Tea.
-        Anh chị cần tư vấn món nước hay cần hỗ trợ đặt hàng ạ?
-    </div>
+<div id="statusBar">
+ <span id="statusDot" class="status-dot"></span>
+ <span id="statusText">Đang kết nối Google Sheets...</span>
 </div>
 
-<div id="control-area">
-    <div class="top-control">
-        <span id="status-text">Đang kết nối máy chủ AI...</span>
-        <div class="btn-group">
-            <button class="test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
-            <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
-        </div>
-    </div>
+<main id="mainContent">
 
-    <div class="input-row">
-        <input
-            type="text"
-            id="userInput"
-            placeholder="Nhập nội dung cần tư vấn..."
-            autocomplete="off"
-            onkeydown="if(event.key==='Enter') sendText()"
-        >
-        <button id="sendBtn" onclick="sendText()">Gửi</button>
-    </div>
-</div>
+ <section class="welcome-card">
+  <div class="welcome-title">❤️ Xin chào anh chị!</div>
+  <div class="welcome-text">
+   Em là Kim, trợ lý tư vấn của Kim Bling Coffee & Tea.
+   Anh chị có thể hỏi em về món uống, đồ ăn vặt, giá tiền
+   hoặc nhờ em tư vấn món phù hợp nha!
+  </div>
 
-<audio id="audioPlayer" style="display:none;"></audio>
+  <div class="quick-title">Anh chị muốn tìm món gì?</div>
+  <div class="quick-list">
+   <button class="quick-btn" onclick="quickAsk('Tư vấn cho anh chị các món trà sữa nhé')">🧋 Trà sữa</button>
+   <button class="quick-btn" onclick="quickAsk('Tư vấn các món matcha của quán')">🍵 Matcha</button>
+   <button class="quick-btn" onclick="quickAsk('Quán có những món cà phê nào?')">☕ Cà phê</button>
+   <button class="quick-btn" onclick="quickAsk('Giới thiệu các món ăn vặt của quán')">🍟 Ăn vặt</button>
+   <button class="quick-btn" onclick="quickAsk('Tư vấn các món yogurt nhé')">🥤 Yogurt</button>
+  </div>
+ </section>
+
+ <div class="section-heading">
+  <span>🛍️ Thực đơn Kim Bling</span>
+  <span id="productCount">Đang tải...</span>
+ </div>
+
+ <div id="productGrid">
+  <div class="empty-state">Đang tải thực đơn từ Google Sheets...</div>
+ </div>
+
+ <section id="chatSection">
+  <div class="chat-heading">💬 Trò chuyện với Kim</div>
+
+  <div id="chatMessages">
+   <div class="chat-message assistant">
+    Dạ em chào anh chị! Em là Kim đây ạ. Anh chị muốn uống món gì hôm nay, để em tư vấn nha ❤️
+   </div>
+  </div>
+
+  <div id="chatInputArea">
+   <div id="chatInputRow">
+    <input id="userInput" type="text" placeholder="Nhập câu hỏi của anh chị..." autocomplete="off">
+    <button id="micBtn" class="action-button" onclick="toggleListening()" title="Nói để nhập câu hỏi">🎤</button>
+    <button id="sendBtn" class="action-button" onclick="sendMessage()">Gửi</button>
+   </div>
+
+   <div class="voice-tools">
+    <button onclick="testSpeaker()">🔊 Nghe thử giọng Kim</button>
+    <button onclick="stopSpeaking()">⏹ Dừng đọc</button>
+   </div>
+
+   <div id="livePanel">
+    <div id="liveStatus">🎙️ Gemini Live chưa bật. Anh chị có thể trò chuyện trực tiếp bằng giọng nói.</div>
+    <div id="liveButtons">
+     <button id="liveStartBtn" onclick="startGeminiLive()">🎙️ TRÒ CHUYỆN LIVE VỚI KIM</button>
+     <button id="liveStopBtn" onclick="stopGeminiLive()" disabled>⏹ KẾT THÚC LIVE</button>
+    </div>
+    <div class="live-hint">Khi bật Live, hãy cho phép Safari sử dụng micro. Anh chị có thể nói tự nhiên, Kim sẽ nghe và trả lời bằng giọng nói.</div>
+   </div>
+  </div>
+ </section>
+</main>
+
+<footer>KIM BLING COFFEE & TEA ❤️</footer>
+
+<audio id="audioPlayer" preload="auto" playsinline></audio>
+
+<button id="scrollTopBtn" class="scroll-control" onclick="scrollToTop()" title="Lên đầu trang">⬆</button>
+<button id="scrollBottomBtn" class="scroll-control" onclick="scrollToBottom()" title="Xuống cuối trang">⬇</button>
 
 <script>
-/************************************************************
- * KIM BLING AI - ORDER CLIENT
- * VERSION 3.0
- ************************************************************/
+/* =====================================================
+   KIM BLING AI - FRONTEND
+   Compatible: Ma.gs v4.1
+   Groq + Gemini Live
+===================================================== */
 
-const GOOGLE_SCRIPT_URL =
-"https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
+const MENU_URL = "menu.html";
 
-const SESSION_KEY = "KIM_BLING_AI_SESSION";
-
-let sessionId = null;
-let isRecording = false;
+let catalogProducts = [];
+let displayedProducts = [];
+let selectedProduct = null;
 let isSending = false;
-let isConfirmingOrder = false;
+
+/* Google TTS */
+let speechQueue = [];
+let isSpeaking = false;
+let currentSpeechText = "";
+let speechGeneration = 0;
+
+/* Web Speech API */
 let recognition = null;
-let currentDraftId = null;
+let isListening = false;
 
-/* ==================== SERVER ==================== */
+/* Gemini Live */
+let liveSocket = null;
+let liveStream = null;
+let liveAudioContext = null;
+let liveProcessor = null;
+let liveSource = null;
+let liveIsActive = false;
+let liveIsReady = false;
+let livePlaybackNextTime = 0;
+let livePlaybackSources = [];
+let liveOutputBuffers = [];
+let liveOutputText = "";
+let liveInputText = "";
+let liveStarting = false;
+let liveSessionGeneration = 0;
 
-async function callAIServer(payload) {
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=UTF-8"
-        },
-        body: JSON.stringify(payload)
-    });
+/* =====================================================
+   API
+===================================================== */
 
-    if (!response.ok) {
-        throw new Error("Máy chủ HTTP " + response.status);
+async function callAPI(payload) {
+ const response = await fetch(API_URL,{
+  method:"POST",
+  headers:{"Content-Type":"text/plain;charset=utf-8"},
+  body:JSON.stringify(payload)
+ });
+
+ if(!response.ok) throw new Error("Không kết nối được máy chủ. HTTP "+response.status);
+
+ const result = await response.json();
+ if(!result) throw new Error("Máy chủ không trả về dữ liệu.");
+ return result;
+}
+
+function setStatus(message,type="normal"){
+ const text=document.getElementById("statusText");
+ const dot=document.getElementById("statusDot");
+ text.textContent=message;
+ dot.className="status-dot";
+ if(type==="online") dot.classList.add("online");
+ if(type==="error") dot.classList.add("error");
+}
+
+function setLiveStatus(message,active=false){
+ const el=document.getElementById("liveStatus");
+ el.textContent=message;
+ el.classList.toggle("active",!!active);
+}
+
+/* =====================================================
+   TẢI THỰC ĐƠN
+===================================================== */
+
+async function loadCatalog(){
+ setStatus("Đang tải thực đơn từ Google Sheets...");
+ try{
+  const data=await callAPI({action:"get_catalog"});
+  if(data.success===false) throw new Error(data.message||"Không tải được thực đơn.");
+
+  let products=data.products||data.menu||[];
+  if(typeof products==="string"){
+   try{products=JSON.parse(products)}catch(e){products=[]}
+  }
+  if(!Array.isArray(products)) products=[];
+
+  catalogProducts=products.filter(item=>item&&item.name);
+  renderProducts(catalogProducts);
+  setStatus("Đã kết nối Google Sheets - "+catalogProducts.length+" sản phẩm","online");
+ }catch(error){
+  console.error("Lỗi tải thực đơn:",error);
+  setStatus("Không tải được thực đơn từ Google Sheets","error");
+  document.getElementById("productGrid").innerHTML='<div class="empty-state">Không thể tải thực đơn. Anh chị vui lòng thử tải lại trang.</div>';
+  document.getElementById("productCount").textContent="Lỗi tải";
+ }
+}
+
+function formatPrice(price){
+ if(price===undefined||price===null||price==="") return "Liên hệ";
+ const number=Number(String(price).replace(/[^\d.-]/g,""));
+ if(!Number.isFinite(number)) return String(price);
+ return number.toLocaleString("vi-VN")+"đ";
+}
+
+function isProductSoldOut(product){
+ const value=product.isSoldOut;
+ return value===true||value===1||value==="1"||value==="true"||value==="TRUE";
+}
+
+function createProductCard(product,index,consultCallback){
+ const card=document.createElement("article");
+ card.className="product-card";
+
+ const imageWrap=document.createElement("div");
+ imageWrap.className="product-image-wrap";
+
+ const image=document.createElement("img");
+ image.className="product-image";
+ image.alt=product.name||"Sản phẩm Kim Bling";
+ image.loading="lazy";
+
+ const imageUrl=product.imageUrl||product.image||product.img||"";
+ if(imageUrl){
+  image.src=imageUrl;
+  image.onerror=function(){this.style.display="none"};
+ }else image.style.display="none";
+
+ imageWrap.appendChild(image);
+
+ const soldOut=isProductSoldOut(product);
+ if(soldOut){
+  const overlay=document.createElement("div");
+  overlay.className="sold-out";
+  overlay.textContent="TẠM HẾT";
+  imageWrap.appendChild(overlay);
+ }
+
+ const info=document.createElement("div");
+ info.className="product-info";
+
+ const name=document.createElement("div");
+ name.className="product-name";
+ name.textContent=product.name;
+
+ const category=document.createElement("div");
+ category.className="product-category";
+ category.textContent=product.category||"Kim Bling";
+
+ const price=document.createElement("div");
+ price.className="product-price";
+ price.textContent=formatPrice(product.price);
+
+ const actions=document.createElement("div");
+ actions.className="product-actions";
+
+ const consult=document.createElement("button");
+ consult.className="consult-btn";
+ consult.textContent="💬 TƯ VẤN MÓN NÀY";
+ consult.addEventListener("click",consultCallback);
+
+ const buy=document.createElement("button");
+ buy.className="buy-btn";
+ buy.textContent=soldOut?"TẠM HẾT MÓN":"🛒 MUA NGAY";
+ buy.disabled=soldOut;
+ buy.addEventListener("click",()=>goToMenu(product));
+
+ actions.appendChild(consult);
+ actions.appendChild(buy);
+
+ info.appendChild(name);
+ info.appendChild(category);
+ info.appendChild(price);
+ info.appendChild(actions);
+
+ card.appendChild(imageWrap);
+ card.appendChild(info);
+ return card;
+}
+
+function renderProducts(products){
+ const grid=document.getElementById("productGrid");
+ const count=document.getElementById("productCount");
+ displayedProducts=products||[];
+ count.textContent=displayedProducts.length+" món";
+
+ if(!displayedProducts.length){
+  grid.innerHTML='<div class="empty-state">Hiện chưa có sản phẩm trong thực đơn.</div>';
+  return;
+ }
+
+ grid.innerHTML="";
+ displayedProducts.forEach((product,index)=>{
+  grid.appendChild(createProductCard(product,index,()=>consultProduct(index)));
+ });
+}
+
+/* =====================================================
+   TƯ VẤN MÓN - CHUYỂN THẲNG ĐẾN KHUNG CHAT
+===================================================== */
+
+function consultProduct(index){
+ const product=displayedProducts[index];
+ if(!product) return;
+
+ selectedProduct={
+  id:product.id||"",
+  name:product.name||"",
+  price:product.price||0,
+  category:product.category||"",
+  isSoldOut:!!product.isSoldOut
+ };
+
+ const question=
+  "Em hãy tư vấn chi tiết cho anh chị về món "+
+  product.name+
+  ", giá "+formatPrice(product.price)+
+  ". Hãy giới thiệu đúng thông tin món trong thực đơn.";
+
+ const chatSection=document.getElementById("chatSection");
+ chatSection.scrollIntoView({behavior:"smooth",block:"start"});
+
+ document.getElementById("userInput").value=question;
+
+ /* Gửi sau khi cuộn bắt đầu để khung chat hiện ra */
+ setTimeout(()=>{
+  sendMessage();
+ },250);
+}
+
+function goToMenu(product){
+ window.location.href=MENU_URL;
+}
+
+function quickAsk(question){
+ document.getElementById("userInput").value=question;
+ document.getElementById("chatSection").scrollIntoView({behavior:"smooth",block:"start"});
+ setTimeout(()=>sendMessage(),250);
+}
+
+/* =====================================================
+   HIỂN THỊ TIN NHẮN
+===================================================== */
+
+function addMessage(text,type,withVoice=false){
+ const chat=document.getElementById("chatMessages");
+ const message=document.createElement("div");
+ message.className="chat-message "+type;
+
+ const content=document.createElement("div");
+ content.textContent=text;
+ message.appendChild(content);
+
+ if(type==="assistant"&&withVoice){
+  const tools=document.createElement("div");
+  tools.className="message-tools";
+
+  const replayButton=document.createElement("button");
+  replayButton.textContent="🔊 Nghe lại";
+  replayButton.addEventListener("click",()=>speakText(text));
+
+  const stopButton=document.createElement("button");
+  stopButton.textContent="⏹ Dừng";
+  stopButton.addEventListener("click",stopSpeaking);
+
+  tools.appendChild(replayButton);
+  tools.appendChild(stopButton);
+  message.appendChild(tools);
+ }
+
+ chat.appendChild(message);
+ chat.scrollTop=chat.scrollHeight;
+ return message;
+}
+
+/* =====================================================
+   GROQ
+===================================================== */
+
+async function sendMessage(){
+ if(isSending||liveIsActive) return;
+ const input=document.getElementById("userInput");
+ const question=input.value.trim();
+ if(!question) return;
+ input.value="";
+ await processMessage(question);
+}
+
+async function processMessage(question){
+ if(isSending||liveIsActive) return;
+
+ isSending=true;
+ addMessage(question,"user");
+
+ const loadingMessage=addMessage("Kim đang suy nghĩ một chút nha anh chị...","assistant");
+ loadingMessage.classList.add("loading");
+
+ setStatus("AI đang tư vấn...");
+ const sendButton=document.getElementById("sendBtn");
+ sendButton.disabled=true;
+
+ try{
+  const payload={action:"advisor_chat",message:question};
+
+  if(selectedProduct) payload.selectedProduct=selectedProduct;
+
+  const result=await callAPI(payload);
+  loadingMessage.remove();
+
+  if(result.success===false) throw new Error(result.message||result.error||"AI chưa thể trả lời.");
+
+  const reply=result.reply||result.message||"Dạ anh chị chờ em một chút nha!";
+  addMessage(reply,"assistant",true);
+  setStatus("Kim đã trả lời xong","online");
+
+  speakText(reply);
+
+  if(Array.isArray(result.products)&&result.products.length>0){
+   renderSuggestedProducts(result.products);
+  }else if(Array.isArray(result.productIds)&&result.productIds.length>0){
+   const suggested=catalogProducts.filter(product=>
+    result.productIds.some(id=>String(id)===String(product.id))
+   );
+   if(suggested.length>0) renderSuggestedProducts(suggested);
+  }
+
+  selectedProduct=null;
+
+ }catch(error){
+  console.error("Lỗi tư vấn:",error);
+  if(loadingMessage.parentNode) loadingMessage.remove();
+
+  const errorText="Dạ hệ thống đang hơi chậm, anh chị nhắn lại giúp em nhé!";
+  addMessage(errorText,"assistant",true);
+  speakText(errorText);
+  setStatus("AI gặp lỗi kết nối","error");
+
+ }finally{
+  isSending=false;
+  sendButton.disabled=false;
+ }
+}
+
+function renderSuggestedProducts(products){
+ if(!Array.isArray(products)||!products.length) return;
+
+ const validProducts=products.filter(item=>item&&item.name).map(item=>{
+  const existing=catalogProducts.find(p=>
+   (item.id&&String(p.id)===String(item.id))||
+   (p.name&&p.name===item.name)
+  );
+  return existing||item;
+ });
+
+ if(!validProducts.length) return;
+
+ const heading=document.createElement("div");
+ heading.className="section-heading";
+ heading.id="suggestedHeading";
+ heading.textContent="✨ Món Kim gợi ý cho anh chị";
+
+ const grid=document.createElement("div");
+ grid.id="suggestedProductGrid";
+ grid.style.display="grid";
+ grid.style.gridTemplateColumns="repeat(2,minmax(0,1fr))";
+ grid.style.gap="12px";
+
+ validProducts.forEach(product=>{
+  const card=createProductCard(product,0,()=>{
+   selectedProduct=product;
+   document.getElementById("userInput").value="Tư vấn thêm cho anh chị về món "+product.name;
+   document.getElementById("chatSection").scrollIntoView({behavior:"smooth",block:"start"});
+   setTimeout(()=>sendMessage(),250);
+  });
+  grid.appendChild(card);
+ });
+
+ const oldHeading=document.getElementById("suggestedHeading");
+ const oldGrid=document.getElementById("suggestedProductGrid");
+ if(oldHeading) oldHeading.remove();
+ if(oldGrid) oldGrid.remove();
+
+ const chatSection=document.getElementById("chatSection");
+ chatSection.parentNode.insertBefore(heading,chatSection);
+ chatSection.parentNode.insertBefore(grid,chatSection);
+}
+
+/* =====================================================
+   GOOGLE TRANSLATE TTS
+===================================================== */
+
+function cleanTextForSpeech(text){
+ let result=String(text||"");
+ result=result.replace(/https?:\/\/\S+/g,"");
+
+ result=result.replace(
+  /(\d{1,3}(?:\.\d{3})+|\d{4,})\s*(?:đồng|đ)(?!\w)/gi,
+  function(match,number){
+   const value=Number(number.replace(/\./g,""));
+   if(!Number.isFinite(value)) return match;
+   return (value/1000)+"k";
+  }
+ );
+
+ result=result
+  .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,"")
+  .replace(/\s+/g," ")
+  .trim();
+
+ return result;
+}
+
+function splitSpeechText(text,maxLength=180){
+ const clean=cleanTextForSpeech(text);
+ if(!clean) return [];
+
+ const sentences=clean.match(/[^.!?]+[.!?]?/g)||[clean];
+ const chunks=[];
+ let current="";
+
+ sentences.forEach(sentence=>{
+  sentence=sentence.trim();
+  if(!sentence) return;
+
+  if((current+" "+sentence).trim().length<=maxLength){
+   current=(current+" "+sentence).trim();
+  }else{
+   if(current) chunks.push(current);
+
+   while(sentence.length>maxLength){
+    let cut=sentence.lastIndexOf(" ",maxLength);
+    if(cut<50) cut=maxLength;
+    chunks.push(sentence.slice(0,cut).trim());
+    sentence=sentence.slice(cut).trim();
+   }
+   current=sentence;
+  }
+ });
+
+ if(current) chunks.push(current);
+ return chunks;
+}
+
+function speakText(text){
+ if(liveIsActive) return;
+
+ stopSpeaking();
+ const generation=speechGeneration;
+ currentSpeechText=text;
+ speechQueue=splitSpeechText(text);
+
+ if(!speechQueue.length){
+  setStatus("Sẵn sàng","online");
+  return;
+ }
+
+ isSpeaking=true;
+ playNextSpeechChunk(generation);
+}
+
+async function playNextSpeechChunk(generation){
+ if(generation!==speechGeneration) return;
+
+ if(!speechQueue.length){
+  isSpeaking=false;
+  setStatus("Sẵn sàng","online");
+  return;
+ }
+
+ const text=speechQueue.shift();
+ const audio=document.getElementById("audioPlayer");
+ setStatus("🔊 Kim đang đọc câu trả lời...");
+
+ audio.src="https://translate.google.com/translate_tts?ie=UTF-8&q="+
+  encodeURIComponent(text)+"&tl=vi&client=tw-ob";
+
+ audio.playbackRate=1.5;
+ audio.onended=()=>{
+  if(generation!==speechGeneration) return;
+  playNextSpeechChunk(generation);
+ };
+ audio.onerror=()=>{
+  if(generation!==speechGeneration) return;
+  isSpeaking=false;
+  speechQueue=[];
+  setStatus("Không phát được giọng đọc. Anh chị thử bấm nghe lại nhé.","error");
+ };
+
+ try{
+  await audio.play();
+ }catch(error){
+  if(generation!==speechGeneration) return;
+  isSpeaking=false;
+  setStatus("Safari cần anh chị chạm nút nghe để phát âm thanh.","error");
+ }
+}
+
+function stopSpeaking(){
+ speechGeneration++;
+ speechQueue=[];
+ isSpeaking=false;
+
+ const audio=document.getElementById("audioPlayer");
+ if(audio){
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+ }
+}
+
+function testSpeaker(){
+ speakText("Dạ hihi, Kim Bling Coffee and Tea xin kính chào anh chị. Em là Kim, trợ lý tư vấn của quán. Anh chị muốn uống món gì hôm nay để em tư vấn nha!");
+}
+
+/* =====================================================
+   WEB SPEECH API - MICRO CŨ
+===================================================== */
+
+function setupSpeechRecognition(){
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition){recognition=null;return;}
+
+ recognition=new SpeechRecognition();
+ recognition.lang="vi-VN";
+ recognition.interimResults=false;
+ recognition.maxAlternatives=1;
+
+ recognition.onstart=()=>{
+  isListening=true;
+  document.getElementById("micBtn").classList.add("listening");
+  setStatus("🎤 Kim đang nghe anh chị...");
+ };
+
+ recognition.onresult=event=>{
+  const text=event.results[0][0].transcript;
+  document.getElementById("userInput").value=text;
+  stopListening();
+  processMessage(text);
+ };
+
+ recognition.onerror=event=>{
+  console.error("Lỗi micro:",event.error);
+  stopListening();
+  setStatus("Micro gặp lỗi. Anh chị thử nhập câu hỏi bằng chữ nhé.","error");
+ };
+
+ recognition.onend=()=>stopListening();
+}
+
+function toggleListening(){
+ if(liveIsActive){
+  alert("Anh chị đang dùng Gemini Live rồi ạ. Hãy nói trực tiếp, không cần bấm micro này.");
+  return;
+ }
+
+ if(!recognition){
+  alert("Trình duyệt này không hỗ trợ nhận diện giọng nói. Anh chị có thể nhập câu hỏi bằng chữ nhé.");
+  return;
+ }
+
+ if(isListening){
+  recognition.stop();
+  return;
+ }
+
+ try{recognition.start()}
+ catch(error){
+  console.error(error);
+  setStatus("Không mở được micro. Anh chị thử lại nhé.","error");
+ }
+}
+
+function stopListening(){
+ isListening=false;
+ const mic=document.getElementById("micBtn");
+ if(mic) mic.classList.remove("listening");
+}
+
+/* =====================================================
+   GEMINI LIVE - TOKEN TỪ MA.GS
+===================================================== */
+
+function base64FromBytes(bytes){
+ let binary="";
+ const chunkSize=0x8000;
+
+ for(let i=0;i<bytes.length;i+=chunkSize){
+  binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunkSize));
+ }
+ return btoa(binary);
+}
+
+function base64ToBytes(base64){
+ const binary=atob(base64);
+ const bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+ return bytes;
+}
+
+function floatTo16BitPCM(float32){
+ const buffer=new ArrayBuffer(float32.length*2);
+ const view=new DataView(buffer);
+
+ for(let i=0;i<float32.length;i++){
+  let sample=Math.max(-1,Math.min(1,float32[i]));
+  view.setInt16(i*2,sample<0?sample*0x8000:sample*0x7FFF,true);
+ }
+ return new Uint8Array(buffer);
+}
+
+function resampleTo16k(input,sourceRate){
+ if(sourceRate===16000) return input;
+
+ const ratio=sourceRate/16000;
+ const newLength=Math.round(input.length/ratio);
+ const output=new Float32Array(newLength);
+
+ for(let i=0;i<newLength;i++){
+  const start=Math.floor(i*ratio);
+  const end=Math.min(Math.floor((i+1)*ratio),input.length);
+  let sum=0,count=0;
+
+  for(let j=start;j<end;j++){
+   sum+=input[j];
+   count++;
+  }
+  output[i]=count?sum/count:0;
+ }
+ return output;
+}
+
+async function startGeminiLive(){
+ if(liveIsActive||liveStarting) return;
+
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+  alert("Trình duyệt chưa hỗ trợ micro hoặc trang chưa chạy bằng HTTPS.");
+  return;
+ }
+
+ liveStarting=true;
+ const startBtn=document.getElementById("liveStartBtn");
+ const stopBtn=document.getElementById("liveStopBtn");
+ startBtn.disabled=true;
+
+ setLiveStatus("Đang xin quyền sử dụng micro...");
+ setStatus("Đang khởi động Gemini Live...");
+
+ try{
+  /* Dừng chế độ âm thanh cũ */
+  stopSpeaking();
+
+  if(recognition&&isListening){
+   try{recognition.stop()}catch(e){}
+  }
+  stopListening();
+
+  const tokenResult=await callAPI({action:"create_live_token"});
+
+  if(!tokenResult||tokenResult.success===false||!tokenResult.token){
+   throw new Error(tokenResult&&tokenResult.error?tokenResult.error:"Không nhận được Gemini Live token.");
+  }
+
+  const token=tokenResult.token;
+  const model=tokenResult.model||"gemini-3.8-live";
+
+  /* Xin quyền micro sau thao tác bấm nút */
+  liveStream=await navigator.mediaDevices.getUserMedia({
+   audio:{
+    channelCount:1,
+    echoCancellation:true,
+    noiseSuppression:true,
+    autoGainControl:true
+   },
+   video:false
+  });
+
+  const generation=++liveSessionGeneration;
+
+  /*
+   * Ma.gs dùng v1alpha/auth_tokens.
+   * Vì vậy dùng endpoint v1alpha constrained.
+   */
+  const wsUrl=
+   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained"+
+   "?access_token="+encodeURIComponent(token);
+
+  liveSocket=new WebSocket(wsUrl);
+
+  liveSocket.onopen=()=>{
+   if(generation!==liveSessionGeneration) return;
+
+   const setup={
+    setup:{
+     model:"models/"+model,
+     generationConfig:{
+      responseModalities:["AUDIO"]
+     },
+     inputAudioTranscription:{},
+     outputAudioTranscription:{},
+     sessionResumption:{}
     }
+   };
 
-    const result = await response.json();
+   liveSocket.send(JSON.stringify(setup));
+   setLiveStatus("Đã kết nối máy chủ. Đang thiết lập phiên trò chuyện...");
+  };
 
-    if (!result.success) {
-        throw new Error(result.error || "Máy chủ xử lý thất bại.");
+  liveSocket.onmessage=event=>{
+   if(generation!==liveSessionGeneration) return;
+
+   let data;
+   try{data=JSON.parse(event.data)}
+   catch(error){
+    console.error("Gemini Live trả dữ liệu không đọc được:",error);
+    return;
+   }
+
+   handleGeminiLiveMessage(data);
+  };
+
+  liveSocket.onerror=error=>{
+   console.error("Gemini Live WebSocket error:",error);
+   setLiveStatus("Kết nối Gemini Live gặp lỗi. Anh chị thử kết thúc và kết nối lại nhé.");
+   setStatus("Gemini Live gặp lỗi kết nối","error");
+  };
+
+  liveSocket.onclose=event=>{
+   console.log("Gemini Live đóng:",event.code,event.reason);
+
+   if(generation!==liveSessionGeneration) return;
+
+   if(liveIsActive){
+    cleanupGeminiLive(false);
+    setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại.");
+    setStatus("Đã ngắt Gemini Live","normal");
+   }
+  };
+
+ }catch(error){
+  console.error("Không khởi động được Gemini Live:",error);
+  cleanupGeminiLive(false);
+
+  setLiveStatus("Không khởi động được Gemini Live: "+(error.message||error));
+  setStatus("Gemini Live không khởi động được","error");
+
+  alert("Không khởi động được Gemini Live:\n"+(error.message||error));
+ }finally{
+  liveStarting=false;
+  startBtn.disabled=false;
+  stopBtn.disabled=!liveIsActive;
+ }
+}
+
+/* =====================================================
+   XỬ LÝ PHẢN HỒI GEMINI LIVE
+===================================================== */
+
+function handleGeminiLiveMessage(data){
+ if(data.setupComplete){
+  liveIsReady=true;
+  liveIsActive=true;
+
+  document.getElementById("liveStartBtn").disabled=true;
+  document.getElementById("liveStopBtn").disabled=false;
+
+  setLiveStatus("🟢 Gemini Live đang hoạt động. Anh chị có thể nói chuyện với Kim ngay bây giờ.",true);
+  setStatus("🎙️ Kim đang lắng nghe anh chị","online");
+
+  startLiveMicrophone();
+  return;
+ }
+
+ if(data.error){
+  console.error("Gemini Live báo lỗi:",data.error);
+  setLiveStatus("Gemini báo lỗi: "+(data.error.message||JSON.stringify(data.error)));
+  return;
+ }
+
+ const serverContent=data.serverContent;
+ if(!serverContent) return;
+
+ if(serverContent.interrupted){
+  stopLivePlayback();
+ }
+
+ if(serverContent.inputTranscription&&serverContent.inputTranscription.text){
+  liveInputText+=serverContent.inputTranscription.text;
+  updateLiveTranscript("user",liveInputText);
+ }
+
+ if(serverContent.outputTranscription&&serverContent.outputTranscription.text){
+  liveOutputText+=serverContent.outputTranscription.text;
+  updateLiveTranscript("assistant",liveOutputText);
+ }
+
+ const parts=serverContent.modelTurn&&serverContent.modelTurn.parts
+  ?serverContent.modelTurn.parts:[ ];
+
+ parts.forEach(part=>{
+  if(part.inlineData&&part.inlineData.data){
+   queueGeminiAudio(part.inlineData.data);
+  }
+
+  if(part.text){
+   liveOutputText+=part.text;
+   updateLiveTranscript("assistant",liveOutputText);
+  }
+ });
+
+ if(serverContent.turnComplete){
+  liveInputText="";
+  liveOutputText="";
+ }
+}
+
+function updateLiveTranscript(role,text){
+ if(!text||!text.trim()) return;
+
+ const chat=document.getElementById("chatMessages");
+ const id=role==="user"?"liveUserTranscript":"liveAssistantTranscript";
+
+ let message=document.getElementById(id);
+
+ if(!message){
+  message=document.createElement("div");
+  message.id=id;
+  message.className="chat-message "+(role==="user"?"user":"assistant");
+  chat.appendChild(message);
+ }
+
+ message.textContent=(role==="user"?"🎤 Anh/chị: ":"🎙️ Kim: ")+text;
+ chat.scrollTop=chat.scrollHeight;
+}
+
+/* =====================================================
+   MICRO GEMINI LIVE - PCM 16KHz
+===================================================== */
+
+async function startLiveMicrophone(){
+ if(!liveStream||!liveSocket||liveSocket.readyState!==WebSocket.OPEN) return;
+
+ try{
+  liveAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+
+  if(liveAudioContext.state==="suspended"){
+   await liveAudioContext.resume();
+  }
+
+  liveSource=liveAudioContext.createMediaStreamSource(liveStream);
+
+  /* ScriptProcessor tương thích rộng với Safari iOS */
+  liveProcessor=liveAudioContext.createScriptProcessor(4096,1,1);
+
+  liveProcessor.onaudioprocess=event=>{
+   if(!liveIsActive||!liveIsReady||!liveSocket||liveSocket.readyState!==WebSocket.OPEN) return;
+
+   const input=event.inputBuffer.getChannelData(0);
+   const resampled=resampleTo16k(input,liveAudioContext.sampleRate);
+   const pcm=floatTo16BitPCM(resampled);
+   const base64=base64FromBytes(pcm);
+
+   liveSocket.send(JSON.stringify({
+    realtimeInput:{
+     audio:{
+      data:base64,
+      mimeType:"audio/pcm;rate=16000"
+     }
     }
+   }));
+  };
 
-    return result;
+  liveSource.connect(liveProcessor);
+
+  /*
+   * Kết nối processor vào destination để iOS Safari
+   * tiếp tục gọi onaudioprocess. Gain bằng 0 để không vọng tiếng.
+   */
+  const muteGain=liveAudioContext.createGain();
+  muteGain.gain.value=0;
+
+  liveProcessor.connect(muteGain);
+  muteGain.connect(liveAudioContext.destination);
+
+  setLiveStatus("🟢 Kim đang nghe. Anh chị cứ nói tự nhiên nhé.",true);
+
+ }catch(error){
+  console.error("Lỗi khởi tạo micro Live:",error);
+  setLiveStatus("Không mở được micro Live: "+error.message);
+  stopGeminiLive();
+ }
 }
 
-/* ==================== SESSION ==================== */
+/* =====================================================
+   PHÁT ÂM THANH GEMINI - PCM 24KHz
+===================================================== */
 
-async function initAISession() {
-    const status = document.getElementById("status-text");
+function queueGeminiAudio(base64){
+ if(!liveAudioContext) return;
 
-    try {
-        const savedSession = sessionStorage.getItem(SESSION_KEY);
+ try{
+  const bytes=base64ToBytes(base64);
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  const sampleCount=Math.floor(bytes.byteLength/2);
+  const audioBuffer=liveAudioContext.createBuffer(1,sampleCount,24000);
+  const channel=audioBuffer.getChannelData(0);
 
-        if (savedSession) {
-            try {
-                const history = await callAIServer({
-                    action: "get_history",
-                    sessionId: savedSession
-                });
+  for(let i=0;i<sampleCount;i++){
+   channel[i]=view.getInt16(i*2,true)/32768;
+  }
 
-                sessionId = savedSession;
+  liveOutputBuffers.push(audioBuffer);
+  scheduleLivePlayback();
 
-                if (history.messages && history.messages.length) {
-                    restoreHistory(history.messages);
-                }
+ }catch(error){
+  console.error("Lỗi giải mã âm thanh Gemini:",error);
+ }
+}
 
-                status.innerText = "Đã kết nối - Phiên hội thoại sẵn sàng.";
-                return true;
+function scheduleLivePlayback(){
+ if(!liveAudioContext||!liveOutputBuffers.length) return;
 
-            } catch (historyError) {
-                console.warn("Phiên cũ không còn hợp lệ:", historyError);
-                sessionStorage.removeItem(SESSION_KEY);
-                sessionId = null;
-            }
-        }
+ const now=liveAudioContext.currentTime;
 
-        const result = await callAIServer({
-            action: "create_session"
-        });
+ if(livePlaybackNextTime<now) livePlaybackNextTime=now+0.04;
 
-        if (!result.sessionId) {
-            throw new Error("Máy chủ không trả về SessionID.");
-        }
+ while(liveOutputBuffers.length){
+  const buffer=liveOutputBuffers.shift();
+  const source=liveAudioContext.createBufferSource();
 
-        sessionId = result.sessionId;
-        sessionStorage.setItem(SESSION_KEY, sessionId);
+  source.buffer=buffer;
+  source.connect(liveAudioContext.destination);
 
-        status.innerText = "Đã kết nối - Phiên hội thoại sẵn sàng.";
-        return true;
+  const startAt=Math.max(livePlaybackNextTime,liveAudioContext.currentTime+0.01);
+  source.start(startAt);
 
-    } catch (error) {
-        console.error("Lỗi tạo phiên:", error);
-        sessionId = null;
-        status.innerText = "Không kết nối được máy chủ AI.";
-        return false;
+  livePlaybackNextTime=startAt+buffer.duration;
+  livePlaybackSources.push(source);
+
+  source.onended=()=>{
+   livePlaybackSources=livePlaybackSources.filter(item=>item!==source);
+   try{source.disconnect()}catch(e){}
+  };
+ }
+}
+
+function stopLivePlayback(){
+ liveOutputBuffers=[];
+
+ livePlaybackSources.forEach(source=>{
+  try{source.stop()}catch(e){}
+  try{source.disconnect()}catch(e){}
+ });
+
+ livePlaybackSources=[];
+ livePlaybackNextTime=0;
+}
+
+/* =====================================================
+   KẾT THÚC GEMINI LIVE
+===================================================== */
+
+function cleanupGeminiLive(closeSocket=true){
+ liveIsActive=false;
+ liveIsReady=false;
+ liveStarting=false;
+
+ if(liveProcessor){
+  try{liveProcessor.disconnect()}catch(e){}
+  liveProcessor.onaudioprocess=null;
+  liveProcessor=null;
+ }
+
+ if(liveSource){
+  try{liveSource.disconnect()}catch(e){}
+  liveSource=null;
+ }
+
+ if(liveStream){
+  liveStream.getTracks().forEach(track=>{
+   try{track.stop()}catch(e){}
+  });
+  liveStream=null;
+ }
+
+ stopLivePlayback();
+
+ if(liveAudioContext){
+  try{liveAudioContext.close()}catch(e){}
+  liveAudioContext=null;
+ }
+
+ if(liveSocket){
+  const socket=liveSocket;
+  liveSocket=null;
+
+  if(closeSocket){
+   try{
+    if(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING){
+     socket.close(1000,"User ended session");
     }
+   }catch(e){}
+  }
+ }
+
+ document.getElementById("liveStartBtn").disabled=false;
+ document.getElementById("liveStopBtn").disabled=true;
 }
 
-function restoreHistory(messages) {
-    const chatBox = document.getElementById("chat-box");
-    chatBox.innerHTML = "";
+function stopGeminiLive(){
+ liveSessionGeneration++;
+ cleanupGeminiLive(true);
 
-    messages.forEach(function(item) {
-        if (item.role !== "user" && item.role !== "assistant") return;
-        addMessage(item.content, item.role === "user" ? "user" : "assistant");
-    });
+ setLiveStatus("Gemini Live đã tắt. Anh chị có thể tiếp tục nhắn tin với Kim bằng Groq.");
+ setStatus("Đã quay lại chế độ tư vấn Groq","online");
 }
 
-async function initializeAI() {
-    const connected = await initAISession();
+/* =====================================================
+   SCROLL
+===================================================== */
 
-    if (connected) {
-        addMessage(
-            "Dạ tổng đài Kim Bling đã sẵn sàng. Anh chị cần em tư vấn món hay đặt hàng ạ?",
-            "assistant"
-        );
-    } else {
-        addMessage(
-            "Dạ hiện tại em chưa kết nối được máy chủ. Anh chị vui lòng tải lại trang giúp em ạ.",
-            "assistant"
-        );
-    }
+function scrollToTop(){
+ window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ==================== GỬI TIN NHẮN ==================== */
-
-async function sendText() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-
-    if (!text || isSending || isConfirmingOrder) return;
-
-    input.value = "";
-    await processMessage(text, true);
+function scrollToBottom(){
+ window.scrollTo({top:document.documentElement.scrollHeight,behavior:"smooth"});
 }
 
-async function processMessage(text, shouldSpeak) {
-    if (!text || isSending || isConfirmingOrder) return;
-
-    isSending = true;
-
-    const sendBtn = document.getElementById("sendBtn");
-    const status = document.getElementById("status-text");
-
-    sendBtn.disabled = true;
-
-    addMessage(text, "user");
-    status.innerText = "Đang xử lý yêu cầu...";
-
-    try {
-        if (!sessionId) {
-            const connected = await initAISession();
-            if (!connected) throw new Error("Chưa kết nối được máy chủ AI.");
-        }
-
-        const result = await callAIServer({
-            action: "chat",
-            sessionId: sessionId,
-            message: text
-        });
-
-        if (!result.reply) {
-            throw new Error("Máy chủ không trả về câu trả lời.");
-        }
-
-        addMessage(result.reply, "assistant");
-
-        if (result.orderDraft && result.orderDraft.draftId) {
-            currentDraftId = result.orderDraft.draftId;
-            showOrderConfirmation(result.orderDraft);
-        }
-
-        status.innerText = "Tổng đài sẵn sàng.";
-
-        if (shouldSpeak) speakText(result.reply);
-
-    } catch (error) {
-        console.error("AI CHAT ERROR:", error);
-
-        const errReply =
-            "Dạ hệ thống đang gặp sự cố kết nối. Anh chị vui lòng thử gửi lại giúp em ạ.";
-
-        addMessage(errReply, "assistant");
-        status.innerText = "Lỗi: " + error.message;
-
-        if (shouldSpeak) speakText(errReply);
-
-    } finally {
-        isSending = false;
-        sendBtn.disabled = false;
-    }
-}
-
-/* ==================== ĐỊNH DẠNG ==================== */
-
-function formatMoney(value) {
-    return Number(value || 0).toLocaleString("vi-VN") + "đ";
-}
-
-function addMessage(text, type) {
-    const chatBox = document.getElementById("chat-box");
-    const div = document.createElement("div");
-
-    div.className = "msg " + type;
-    div.textContent = text;
-
-    chatBox.appendChild(div);
-    scrollChat();
-}
-
-function scrollChat() {
-    const chatBox = document.getElementById("chat-box");
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-/* ==================== ĐƠN CHỜ XÁC NHẬN ==================== */
-
-function showOrderConfirmation(draft) {
-    const order = draft.order;
-
-    if (!order || !Array.isArray(order.items)) {
-        addMessage(
-            "Dạ chưa thể hiển thị bản xác nhận đơn. Anh chị vui lòng thử lại ạ.",
-            "assistant"
-        );
-        return;
-    }
-
-    const oldCard = document.getElementById("pending-order-card");
-    if (oldCard) oldCard.remove();
-
-    const card = document.createElement("div");
-    card.className = "order-card";
-    card.id = "pending-order-card";
-
-    const title = document.createElement("h3");
-    title.textContent = "🧾 XÁC NHẬN ĐƠN HÀNG";
-    card.appendChild(title);
-
-    const detail = document.createElement("div");
-    detail.className = "order-detail";
-
-    const lines = [];
-
-    lines.push("Khách hàng: " + (order.customerName || ""));
-    lines.push("Điện thoại: " + (order.phone || ""));
-    lines.push(
-        "Nhận hàng: " +
-        (order.fulfillment === "pickup" ? "Tại quán" : "Giao hàng")
-    );
-
-    if (order.fulfillment !== "pickup") {
-        lines.push("Địa chỉ: " + (order.address || ""));
-    }
-
-    lines.push("Thanh toán: " + (order.payment || ""));
-    lines.push("");
-    lines.push("CHI TIẾT:");
-
-    order.items.forEach(function(item) {
-        lines.push(
-            item.name + " x" + item.quantity +
-            " — " + formatMoney(item.lineTotal)
-        );
-
-        if (item.toppings && item.toppings.length) {
-            item.toppings.forEach(function(topping) {
-                lines.push(
-                    "  + " + topping.name +
-                    " (" + formatMoney(topping.price) + ")"
-                );
-            });
-        }
-
-        if (item.note) {
-            lines.push("  Ghi chú: " + item.note);
-        }
-    });
-
-    if (order.upsize) {
-        lines.push("");
-        lines.push("Phụ thu upsize: " + formatMoney(order.upsizeFee));
-    }
-
-    if (order.note) {
-        lines.push("");
-        lines.push("Ghi chú đơn hàng: " + order.note);
-    }
-
-    detail.textContent = lines.join("\n");
-    card.appendChild(detail);
-
-    const total = document.createElement("div");
-    total.className = "order-total";
-    total.textContent = "Tổng cộng: " + formatMoney(order.total);
-    card.appendChild(total);
-
-    const actions = document.createElement("div");
-    actions.className = "order-actions";
-
-    const confirmBtn = document.createElement("button");
-    confirmBtn.className = "confirm-order-btn";
-    confirmBtn.textContent = "✅ Xác nhận đặt hàng";
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.className = "cancel-order-btn";
-    cancelBtn.textContent = "Chỉnh sửa đơn";
-
-    confirmBtn.onclick = function() {
-        confirmOrder(confirmBtn, cancelBtn);
-    };
-
-    cancelBtn.onclick = function() {
-        cancelOrderDraft(card);
-    };
-
-    actions.appendChild(confirmBtn);
-    actions.appendChild(cancelBtn);
-    card.appendChild(actions);
-
-    document.getElementById("chat-box").appendChild(card);
-    scrollChat();
-}
-
-/* ==================== KHÁCH XÁC NHẬN ==================== */
-
-async function confirmOrder(confirmBtn, cancelBtn) {
-    if (!currentDraftId || isConfirmingOrder) return;
-
-    isConfirmingOrder = true;
-    confirmBtn.disabled = true;
-    cancelBtn.disabled = true;
-
-    document.getElementById("status-text").innerText =
-        "Đang lưu đơn hàng...";
-
-    try {
-        const result = await callAIServer({
-            action: "confirm_order",
-            sessionId: sessionId,
-            draftId: currentDraftId
-        });
-
-        if (!result.saved || !result.orderId) {
-            throw new Error("Máy chủ chưa xác nhận lưu đơn hàng.");
-        }
-
-        const card = document.getElementById("pending-order-card");
-        if (card) card.remove();
-
-        currentDraftId = null;
-
-        const successMessage =
-            "🎉 ĐẶT HÀNG THÀNH CÔNG!\n" +
-            "Mã đơn: " + result.orderId + "\n" +
-            "Tổng tiền: " + formatMoney(result.total) + "\n\n" +
-            "Kim Bling đã nhận được đơn hàng của anh chị. " +
-            "Cảm ơn anh chị đã ủng hộ ạ.";
-
-        addMessage(successMessage, "assistant");
-
-        document.getElementById("status-text").innerText =
-            "Đã lưu đơn hàng thành công.";
-
-        speakText(successMessage);
-
-        if (result.telegram && result.telegram.success === false) {
-            addMessage(
-                "Lưu ý: Đơn đã được lưu vào hệ thống nhưng thông báo Telegram có thể chưa gửi được. Chủ quán vui lòng kiểm tra tab AI_ORDERS.",
-                "assistant"
-            );
-        }
-
-    } catch (error) {
-        console.error("CONFIRM ORDER ERROR:", error);
-
-        confirmBtn.disabled = false;
-        cancelBtn.disabled = false;
-
-        document.getElementById("status-text").innerText =
-            "Chưa xác nhận được đơn: " + error.message;
-
-        addMessage(
-            "Dạ hệ thống chưa xác nhận được đơn hàng. Anh chị vui lòng thử bấm xác nhận lại giúp em ạ.",
-            "assistant"
-        );
-
-    } finally {
-        isConfirmingOrder = false;
-    }
-}
-
-/* ==================== KHÁCH CHỈNH SỬA ==================== */
-
-async function cancelOrderDraft(card) {
-    if (!currentDraftId || isConfirmingOrder) return;
-
-    const oldDraftId = currentDraftId;
-
-    try {
-        await callAIServer({
-            action: "cancel_order_draft",
-            sessionId: sessionId,
-            draftId: oldDraftId
-        });
-    } catch (error) {
-        console.error("CANCEL DRAFT ERROR:", error);
-        addMessage(
-            "Dạ chưa thể cập nhật trạng thái đơn chờ. Anh chị vui lòng thử lại.",
-            "assistant"
-        );
-        return;
-    }
-
-    currentDraftId = null;
-
-    if (card) card.remove();
-
-    addMessage(
-        "Dạ được ạ. Anh chị gửi nội dung muốn thay đổi. Em sẽ hỗ trợ lên lại đơn nhé.",
-        "assistant"
-    );
-}
-
-/* ==================== GIỌNG ĐỌC ==================== */
-
-function speakText(text) {
-    const status = document.getElementById("status-text");
-
-    const cleanText = String(text).replace(
-        /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
-        ""
-    );
-
-    const audioPlayer = document.getElementById("audioPlayer");
-
-    audioPlayer.pause();
-    audioPlayer.src =
-        "https://translate.google.com/translate_tts?ie=UTF-8&q=" +
-        encodeURIComponent(cleanText) +
-        "&tl=vi&client=tw-ob";
-
-    audioPlayer.playbackRate = 1.25;
-
-    audioPlayer.onended = function() {
-        status.innerText = "Tổng đài sẵn sàng.";
-    };
-
-    audioPlayer.play().catch(function(error) {
-        console.warn("Không phát được giọng đọc:", error);
-        status.innerText = "Tổng đài sẵn sàng.";
-    });
-
-    status.innerText = "Đang phát giọng đọc...";
-}
-
-function testSpeaker() {
-    speakText(
-        "Hệ thống tổng đài Kim Bling đã sẵn sàng tiếp nhận yêu cầu của anh chị."
-    );
-}
-
-/* ==================== NHẬN DIỆN GIỌNG NÓI ==================== */
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-
-    recognition.lang = "vi-VN";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = function() {
-        isRecording = true;
-
-        document.getElementById("micBtn")
-            .classList.add("mic-dictate");
-
-        document.getElementById("status-text")
-            .innerText = "Đang nghe anh chị...";
-    };
-
-    recognition.onresult = async function(event) {
-        const speechText = event.results[0][0].transcript;
-
-        stopListening();
-
-        const input = document.getElementById("userInput");
-        input.value = speechText;
-
-        await processMessage(speechText, true);
-    };
-
-    recognition.onerror = function(event) {
-        console.error("MIC ERROR:", event.error);
-        stopListening();
-
-        document.getElementById("status-text")
-            .innerText = "Không nhận được giọng nói. Anh chị thử lại nhé.";
-    };
-
-    recognition.onend = function() {
-        stopListening();
-    };
-}
-
-function toggleListening() {
-    if (!recognition) {
-        alert("Trình duyệt hiện tại không hỗ trợ nhận diện giọng nói.");
-        return;
-    }
-
-    if (isRecording) {
-        recognition.stop();
-    } else {
-        try {
-            recognition.start();
-        } catch (error) {
-            console.error(error);
-        }
-    }
-}
-
-function stopListening() {
-    isRecording = false;
-
-    document.getElementById("micBtn")
-        .classList.remove("mic-dictate");
-}
-
-/* ==================== KHỞI ĐỘNG ==================== */
-
-window.addEventListener("DOMContentLoaded", initializeAI);
-
+/* =====================================================
+   ENTER ĐỂ GỬI
+===================================================== */
+
+document.getElementById("userInput").addEventListener("keydown",event=>{
+ if(event.key==="Enter"){
+  event.preventDefault();
+  sendMessage();
+ }
+});
+
+/* =====================================================
+   KHỞI ĐỘNG
+===================================================== */
+
+window.addEventListener("DOMContentLoaded",async()=>{
+ setupSpeechRecognition();
+ await loadCatalog();
+});
+
+window.addEventListener("pagehide",()=>{
+ if(liveIsActive||liveSocket) stopGeminiLive();
+});
 </script>
+
 </body>
 </html>
