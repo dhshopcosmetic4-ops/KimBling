@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Quản Lý Telegram Nhân Viên — KimBling</title>
+
+<style>
+:root {
+  --primary:#0088cc;
+  --bg:#0f172a;
+  --card-bg:#1e293b;
+  --text:#f8fafc;
+  --subtext:#94a3b8;
+  --border:#334155;
+}
+* {
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+body {
+  background:var(--bg);
+  color:var(--text);
+  padding:16px;
+  font-size:16px;
+  display:flex;
+  justify-content:center;
+}
+.container {width:100%;max-width:500px;}
+.header {
+  text-align:center;
+  margin-bottom:20px;
+  padding-bottom:12px;
+  border-bottom:2px solid var(--border);
+}
+.header h2 {color:#38bdf8;font-size:22px;margin-bottom:4px;}
+.card {
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+.card-title {
+  font-size:18px;
+  font-weight:bold;
+  color:#f59e0b;
+  margin-bottom:14px;
+}
+.form-group {margin-bottom:14px;}
+.form-group label {
+  display:block;
+  font-size:14px;
+  font-weight:bold;
+  color:var(--subtext);
+  margin-bottom:6px;
+}
+.form-control {
+  width:100%;
+  padding:12px;
+  background:#0f172a;
+  border:1px solid #475569;
+  color:#fff;
+  border-radius:8px;
+  font-size:16px;
+  outline:none;
+}
+.form-control:focus {border-color:#38bdf8;}
+.checkbox-label {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#4ade80;
+  font-weight:bold;
+  font-size:15px;
+  cursor:pointer;
+  margin-top:6px;
+}
+.checkbox-label input {
+  width:20px;
+  height:20px;
+  accent-color:#22c55e;
+}
+.btn {
+  width:100%;
+  border:none;
+  padding:13px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  color:#fff;
+  margin-top:8px;
+}
+.btn-submit {background:#22c55e;}
+.btn-cancel {background:#475569;}
+.btn:disabled {opacity:.5;cursor:not-allowed;}
+.staff-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  background:#0f172a;
+  border-radius:10px;
+  margin-bottom:8px;
+  border:1px solid var(--border);
+}
+.staff-info {
+  font-size:14px;
+  line-height:1.6;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.badge-on {color:#22c55e;font-weight:bold;font-size:13px;}
+.badge-off {color:#ef4444;font-weight:bold;font-size:13px;}
+.staff-actions {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex-shrink:0;
+}
+.btn-edit,.btn-toggle {
+  border:none;
+  padding:7px 10px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+  color:#fff;
+  cursor:pointer;
+}
+.btn-edit {background:#0284c7;}
+.btn-toggle {background:#475569;}
+.notice {
+  font-size:13px;
+  color:#94a3b8;
+  line-height:1.6;
+  margin-top:12px;
+}
+#statusMessage {
+  display:none;
+  padding:11px;
+  border-radius:8px;
+  margin-bottom:14px;
+  font-size:14px;
+  line-height:1.5;
+}
+.status-ok {display:block!important;background:#064e3b;color:#a7f3d0;}
+.status-error {display:block!important;background:#7f1d1d;color:#fecaca;}
+.status-info {display:block!important;background:#1e3a8a;color:#bfdbfe;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="header">
+    <h2>📲 QUẢN LÝ TELEGRAM NHÂN VIÊN</h2>
+    <span style="color:#94a3b8;font-size:14px;">
+      Đăng ký người nhận thông báo đơn hàng AI Kim Bling
+    </span>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="formTitle">➕ Thêm nhân viên nhận đơn</div>
+
+    <div id="statusMessage"></div>
+
+    <div class="form-group">
+      <label>Tên nhân viên:</label>
+      <input type="text" id="nv_name" class="form-control"
+        placeholder="VD: Nam Bếp 1, Linh Thu Ngân...">
+    </div>
+
+    <div class="form-group">
+      <label>Số điện thoại:</label>
+      <input type="tel" id="nv_phone" class="form-control"
+        placeholder="VD: 0901234567">
+    </div>
+
+    <div class="form-group">
+      <label>Chat ID Telegram:</label>
+      <input type="text" id="nv_chatid" class="form-control"
+        placeholder="Nhập dãy số Chat ID Telegram">
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="nv_active" checked>
+        Bật nhận thông báo đơn hàng mới
+      </label>
+    </div>
+
+    <button class="btn btn-submit" id="saveButton" type="button">
+      💾 Lưu nhân viên
+    </button>
+
+    <button class="btn btn-cancel" id="cancelButton"
+      type="button" style="display:none;">
+      Hủy chỉnh sửa
+    </button>
+
+    <div class="notice">
+      Khi cập nhật nhân viên, hệ thống sẽ sử dụng Chat ID cũ để xác định
+      bản ghi cần sửa, kể cả khi bạn thay đổi Chat ID.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:#cbd5e1;">
+      📋 Danh sách nhân viên nhận đơn
+    </div>
+
+    <div id="staffListContainer"
+      style="text-align:center;color:#94a3b8;padding:15px;">
+      Đang tải danh sách...
+    </div>
+
+    <button class="btn" id="refreshButton"
+      style="background:#0284c7;" type="button">
+      🔄 Tải lại danh sách
+    </button>
+  </div>
+
+  <div class="card"
+    style="border-color:#0284c7;background:#0b1329;">
+    <div class="card-title" style="color:#38bdf8;font-size:16px;">
+      📖 Hướng dẫn lấy Chat ID
+    </div>
+    <div style="font-size:14px;color:#cbd5e1;line-height:1.7;">
+      <ol style="padding-left:20px;">
+        <li>Mở Telegram.</li>
+        <li>Tìm <b>@userinfobot</b>.</li>
+        <li>Bấm Start để lấy ID của tài khoản.</li>
+        <li>Nhập tên, số điện thoại và Chat ID vào biểu mẫu.</li>
+        <li>Nhân viên cần mở bot Telegram của cửa hàng và bấm Start trước khi nhận tin nhắn riêng.</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const KIMBLING_API_URL =
+"https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
+
+let editingOriginalChatId = "";
+let staffCache = [];
+
+const $ = id => document.getElementById(id);
+
+window.addEventListener("DOMContentLoaded", () => {
+  $("saveButton").addEventListener("click", saveStaffToSheets);
+  $("cancelButton").addEventListener("click", resetForm);
+  $("refreshButton").addEventListener("click", loadStaffList);
+
+  loadStaffList();
+});
+
+function showStatus(message, type = "info") {
+  const el = $("statusMessage");
+  el.textContent = message;
+  el.className = "status-" + type;
+}
+
+async function postAPI(payload) {
+  const response = await fetch(KIMBLING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=UTF-8"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error("Máy chủ phản hồi HTTP " + response.status);
+  }
+
+  return await response.json();
+}
+
+async function saveStaffToSheets() {
+  const name = $("nv_name").value.trim();
+  const phone = $("nv_phone").value.trim();
+  const chatId = $("nv_chatid").value.trim();
+  const active = $("nv_active").checked;
+
+  if (!name || !phone || !chatId) {
+    showStatus("Vui lòng nhập đầy đủ tên, số điện thoại và Chat ID.", "error");
+    return;
+  }
+
+  if (!/^-?\d+$/.test(chatId)) {
+    showStatus("Chat ID phải là dãy số hợp lệ.", "error");
+    return;
+  }
+
+  const button = $("saveButton");
+  button.disabled = true;
+  button.textContent = "⏳ Đang lưu...";
+
+  try {
+    const data = await postAPI({
+      type: "saveStaffTelegram",
+      name,
+      phone,
+      chatId,
+      active,
+      originalChatId: editingOriginalChatId || ""
+    });
+
+    if (!data.success) {
+      throw new Error(data.message || "Máy chủ không lưu được dữ liệu.");
+    }
+
+    showStatus(data.message || "Đã lưu nhân viên thành công!", "ok");
+    resetForm(false);
+    await loadStaffList();
+
+  } catch (error) {
+    showStatus("Lỗi lưu nhân viên: " + error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = editingOriginalChatId
+      ? "💾 Cập nhật nhân viên"
+      : "💾 Lưu nhân viên";
+  }
+}
+
+async function loadStaffList() {
+  const container = $("staffListContainer");
+  container.textContent = "Đang tải danh sách...";
+
+  try {
+    const url = KIMBLING_API_URL +
+      "?type=getStaffTelegramList&rand=" + Date.now();
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("HTTP " + response.status);
+
+    const data = await response.json();
+
+    if (!data.success || !Array.isArray(data.staff)) {
+      throw new Error(data.message || "Dữ liệu danh sách không hợp lệ.");
+    }
+
+    staffCache = data.staff;
+    renderStaffList();
+
+  } catch (error) {
+    container.textContent = "Lỗi tải danh sách: " + error.message;
+  }
+}
+
+function renderStaffList() {
+  const container = $("staffListContainer");
+  container.replaceChildren();
+
+  if (!staffCache.length) {
+    container.textContent = "Chưa có nhân viên nào trên hệ thống.";
+    return;
+  }
+
+  staffCache.forEach((staff, index) => {
+    const item = document.createElement("div");
+    item.className = "staff-item";
+
+    const info = document.createElement("div");
+    info.className = "staff-info";
+
+    const name = document.createElement("div");
+    name.style.fontWeight = "bold";
+    name.style.color = "#f8fafc";
+    name.textContent = staff.name + " (" + staff.phone + ")";
+
+    const chat = document.createElement("div");
+    chat.style.color = "#94a3b8";
+    chat.style.fontSize = "13px";
+    chat.textContent = "Chat ID: " + staff.chatId;
+
+    const status = document.createElement("div");
+    status.className = staff.active ? "badge-on" : "badge-off";
+    status.textContent = staff.active
+      ? "🟢 Đang BẬT nhận đơn"
+      : "🔴 Đang TẮT nhận đơn";
+
+    info.append(name, chat, status);
+
+    const actions = document.createElement("div");
+    actions.className = "staff-actions";
+
+    const editButton = document.createElement("button");
+    editButton.className = "btn-edit";
+    editButton.textContent = "✏️ Sửa";
+    editButton.addEventListener("click", () => editStaff(index));
+
+    const toggleButton = document.createElement("button");
+    toggleButton.className = "btn-toggle";
+    toggleButton.textContent = staff.active ? "Tắt nhận" : "Bật nhận";
+    toggleButton.addEventListener("click", () => toggleStaff(index));
+
+    actions.append(editButton, toggleButton);
+    item.append(info, actions);
+    container.appendChild(item);
+  });
+}
+
+function editStaff(index) {
+  const staff = staffCache[index];
+  if (!staff) return;
+
+  $("nv_name").value = staff.name || "";
+  $("nv_phone").value = staff.phone || "";
+  $("nv_chatid").value = staff.chatId || "";
+  $("nv_active").checked = !!staff.active;
+
+  editingOriginalChatId = String(staff.chatId || "");
+
+  $("formTitle").textContent = "✏️ Chỉnh sửa nhân viên";
+  $("saveButton").textContent = "💾 Cập nhật nhân viên";
+  $("cancelButton").style.display = "block";
+
+  showStatus(
+    "Đang chỉnh sửa: " + staff.name +
+    ". Lưu để cập nhật bản ghi hiện tại.",
+    "info"
+  );
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function toggleStaff(index) {
+  const staff = staffCache[index];
+  if (!staff) return;
+
+  const newStatus = !staff.active;
+
+  if (!confirm(
+    "Bạn muốn " + (newStatus ? "BẬT" : "TẮT") +
+    " nhận thông báo cho " + staff.name + "?"
+  )) return;
+
+  try {
+    const data = await postAPI({
+      type: "saveStaffTelegram",
+      name: staff.name,
+      phone: staff.phone,
+      chatId: staff.chatId,
+      originalChatId: staff.chatId,
+      active: newStatus
+    });
+
+    if (!data.success) {
+      throw new Error(data.message || "Không cập nhật được trạng thái.");
+    }
+
+    showStatus(data.message || "Đã cập nhật trạng thái.", "ok");
+    await loadStaffList();
+
+  } catch (error) {
+    showStatus("Lỗi cập nhật: " + error.message, "error");
+  }
+}
+
+function resetForm(clearMessage = true) {
+  $("nv_name").value = "";
+  $("nv_phone").value = "";
+  $("nv_chatid").value = "";
+  $("nv_active").checked = true;
+
+  editingOriginalChatId = "";
+
+  $("formTitle").textContent = "➕ Thêm nhân viên nhận đơn";
+  $("saveButton").textContent = "💾 Lưu nhân viên";
+  $("cancelButton").style.display = "none";
+
+  if (clearMessage) {
+    $("statusMessage").style.display = "none";
+    $("statusMessage").textContent = "";
+  }
+}
+</script>
+
+</body>
+</html>

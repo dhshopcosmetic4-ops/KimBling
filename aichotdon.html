@@ -1,361 +1,801 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0; padding: 0;
-            background: #f0f2f5;
-            display: flex; flex-direction: column;
-            height: 100vh; height: 100dvh;
-        }
-        header {
-            background: #d32f2f;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        #chat-box {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #fafafa;
-        }
-        .msg {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 16px;
-            line-height: 1.5;
-            font-size: 16px;
-            word-wrap: break-word;
-        }
-        .user { background: #d32f2f; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .assistant { background: #e3f2fd; color: #0d47a1; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #bbdefb; }
-        
-        #control-area {
-            background: #ffffff;
-            border-top: 1px solid #eee;
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .top-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        #status-text {
-            font-size: 13px;
-            color: #2e7d32;
-            font-weight: bold;
-        }
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .test-btn {
-            height: 40px;
-            padding: 0 12px;
-            border-radius: 20px;
-            background: #1976d2;
-            color: white;
-            border: none;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .mic-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #d32f2f;
-            color: white;
-            border: none;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .mic-dictate {
-            background: #2e7d32;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); }
-            70% { box-shadow: 0 0 0 12px rgba(46, 125, 50, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
-        }
-        .input-row {
-            display: flex;
-            gap: 8px;
-        }
-        .input-row input {
-            flex: 1;
-            padding: 10px 16px;
-            font-size: 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 20px;
-            outline: none;
-            background: #fff;
-        }
-        .input-row button {
-            padding: 0 18px;
-            background: #d32f2f;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+}
+
+header {
+    background: #d32f2f;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fafafa;
+}
+
+.msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    line-height: 1.5;
+    font-size: 16px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.user {
+    background: #d32f2f;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.assistant {
+    background: #e3f2fd;
+    color: #0d47a1;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    border: 1px solid #bbdefb;
+}
+
+.order-card {
+    width: 94%;
+    align-self: center;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+}
+
+.order-card h3 {
+    margin: 0 0 10px;
+    color: #c62828;
+    font-size: 17px;
+}
+
+.order-detail {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: #333;
+}
+
+.order-total {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #c62828;
+}
+
+.order-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.order-actions button {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-radius: 9px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.confirm-order-btn {
+    background: #2e7d32;
+    color: white;
+}
+
+.cancel-order-btn {
+    background: #eeeeee;
+    color: #333;
+}
+
+.order-actions button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+#control-area {
+    background: #fff;
+    border-top: 1px solid #eee;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.top-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#status-text {
+    font-size: 13px;
+    color: #2e7d32;
+    font-weight: bold;
+    flex: 1;
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.test-btn {
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 20px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.mic-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mic-dictate {
+    background: #2e7d32;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(46,125,50,.6); }
+    70% { box-shadow: 0 0 0 12px rgba(46,125,50,0); }
+    100% { box-shadow: 0 0 0 0 rgba(46,125,50,0); }
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.input-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 16px;
+    font-size: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    outline: none;
+    background: #fff;
+}
+
+.input-row button {
+    padding: 0 18px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.input-row button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+</style>
 </head>
+
 <body>
 
-<header>
-    🤖 Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn
-</header>
+<header>🤖 Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</header>
 
 <div id="chat-box">
-    <div class="msg assistant">Dạ chào anh chị. Tôi là tổng đài viên của Kim Bling Coffee & Tea (M9 Cư xá Phú Lâm A). Anh chị cần tra cứu thực đơn hoặc đặt món nào, xin vui lòng cho biết chi tiết.</div>
+    <div class="msg assistant">
+        Dạ chào anh chị. Em là trợ lý tư vấn của Kim Bling Coffee & Tea.
+        Anh chị cần tư vấn món nước hay cần hỗ trợ đặt hàng ạ?
+    </div>
 </div>
 
 <div id="control-area">
     <div class="top-control">
-        <span id="status-text">Hệ thống chuyên môn sẵn sàng.</span>
+        <span id="status-text">Đang kết nối máy chủ AI...</span>
         <div class="btn-group">
             <button class="test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
             <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
         </div>
     </div>
+
     <div class="input-row">
-        <input type="text" id="userInput" placeholder="Nhập tên món hoặc yêu cầu đặt hàng..." onkeyup="if(event.key==='Enter') sendText()">
-        <button onclick="sendText()">Gửi</button>
+        <input
+            type="text"
+            id="userInput"
+            placeholder="Nhập nội dung cần tư vấn..."
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter') sendText()"
+        >
+        <button id="sendBtn" onclick="sendText()">Gửi</button>
     </div>
 </div>
 
 <audio id="audioPlayer" style="display:none;"></audio>
 
 <script>
-const API_KEY = "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";
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
+/************************************************************
+ * KIM BLING AI - ORDER CLIENT
+ * VERSION 3.0
+ ************************************************************/
 
-let activeModel = null;
+const GOOGLE_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
+
+const SESSION_KEY = "KIM_BLING_AI_SESSION";
+
+let sessionId = null;
 let isRecording = false;
+let isSending = false;
+let isConfirmingOrder = false;
 let recognition = null;
-let globalMenuArray = []; 
-let fullMenuText = "";
+let currentDraftId = null;
 
-async function initMenuSync() {
+/* ==================== SERVER ==================== */
+
+async function callAIServer(payload) {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain;charset=UTF-8"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw new Error("Máy chủ HTTP " + response.status);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+        throw new Error(result.error || "Máy chủ xử lý thất bại.");
+    }
+
+    return result;
+}
+
+/* ==================== SESSION ==================== */
+
+async function initAISession() {
+    const status = document.getElementById("status-text");
+
     try {
-        let res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
-        let data = await res.json();
-        if (data) {
-            let menuArray = data.menu || data;
-            if (typeof menuArray === 'string') {
-                try { menuArray = JSON.parse(menuArray); } catch(e){}
-            }
-            if (Array.isArray(menuArray) && menuArray.length > 0) {
-                globalMenuArray = menuArray;
-                fullMenuText = menuArray.map(item => `- ${item.name}: ${item.price ? item.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'} (${item.category || 'Món'})`).join("\n");
-                document.getElementById('status-text').innerText = "Đã đồng bộ dữ liệu POS_Data thành công.";
+        const savedSession = sessionStorage.getItem(SESSION_KEY);
+
+        if (savedSession) {
+            try {
+                const history = await callAIServer({
+                    action: "get_history",
+                    sessionId: savedSession
+                });
+
+                sessionId = savedSession;
+
+                if (history.messages && history.messages.length) {
+                    restoreHistory(history.messages);
+                }
+
+                status.innerText = "Đã kết nối - Phiên hội thoại sẵn sàng.";
+                return true;
+
+            } catch (historyError) {
+                console.warn("Phiên cũ không còn hợp lệ:", historyError);
+                sessionStorage.removeItem(SESSION_KEY);
+                sessionId = null;
             }
         }
-    } catch (e) {
-        console.error("Lỗi đồng bộ menu:", e);
+
+        const result = await callAIServer({
+            action: "create_session"
+        });
+
+        if (!result.sessionId) {
+            throw new Error("Máy chủ không trả về SessionID.");
+        }
+
+        sessionId = result.sessionId;
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+
+        status.innerText = "Đã kết nối - Phiên hội thoại sẵn sàng.";
+        return true;
+
+    } catch (error) {
+        console.error("Lỗi tạo phiên:", error);
+        sessionId = null;
+        status.innerText = "Không kết nối được máy chủ AI.";
+        return false;
     }
 }
 
-function speakText(text) {
-    document.getElementById('status-text').innerText = "Đang phát giọng đọc...";
-    const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-    const encodedText = encodeURIComponent(cleanText);
-    const audioPlayer = document.getElementById('audioPlayer');
-    
-    audioPlayer.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=vi&client=tw-ob`;
-    audioPlayer.playbackRate = 1.35;
-    
-    audioPlayer.play().then(() => {
-        document.getElementById('status-text').innerText = "Sẵn sàng...";
-    }).catch(e => {
-        document.getElementById('status-text').innerText = "Sẵn sàng...";
+function restoreHistory(messages) {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.innerHTML = "";
+
+    messages.forEach(function(item) {
+        if (item.role !== "user" && item.role !== "assistant") return;
+        addMessage(item.content, item.role === "user" ? "user" : "assistant");
+    });
+}
+
+async function initializeAI() {
+    const connected = await initAISession();
+
+    if (connected) {
+        addMessage(
+            "Dạ tổng đài Kim Bling đã sẵn sàng. Anh chị cần em tư vấn món hay đặt hàng ạ?",
+            "assistant"
+        );
+    } else {
+        addMessage(
+            "Dạ hiện tại em chưa kết nối được máy chủ. Anh chị vui lòng tải lại trang giúp em ạ.",
+            "assistant"
+        );
+    }
+}
+
+/* ==================== GỬI TIN NHẮN ==================== */
+
+async function sendText() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+
+    if (!text || isSending || isConfirmingOrder) return;
+
+    input.value = "";
+    await processMessage(text, true);
+}
+
+async function processMessage(text, shouldSpeak) {
+    if (!text || isSending || isConfirmingOrder) return;
+
+    isSending = true;
+
+    const sendBtn = document.getElementById("sendBtn");
+    const status = document.getElementById("status-text");
+
+    sendBtn.disabled = true;
+
+    addMessage(text, "user");
+    status.innerText = "Đang xử lý yêu cầu...";
+
+    try {
+        if (!sessionId) {
+            const connected = await initAISession();
+            if (!connected) throw new Error("Chưa kết nối được máy chủ AI.");
+        }
+
+        const result = await callAIServer({
+            action: "chat",
+            sessionId: sessionId,
+            message: text
+        });
+
+        if (!result.reply) {
+            throw new Error("Máy chủ không trả về câu trả lời.");
+        }
+
+        addMessage(result.reply, "assistant");
+
+        if (result.orderDraft && result.orderDraft.draftId) {
+            currentDraftId = result.orderDraft.draftId;
+            showOrderConfirmation(result.orderDraft);
+        }
+
+        status.innerText = "Tổng đài sẵn sàng.";
+
+        if (shouldSpeak) speakText(result.reply);
+
+    } catch (error) {
+        console.error("AI CHAT ERROR:", error);
+
+        const errReply =
+            "Dạ hệ thống đang gặp sự cố kết nối. Anh chị vui lòng thử gửi lại giúp em ạ.";
+
+        addMessage(errReply, "assistant");
+        status.innerText = "Lỗi: " + error.message;
+
+        if (shouldSpeak) speakText(errReply);
+
+    } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+    }
+}
+
+/* ==================== ĐỊNH DẠNG ==================== */
+
+function formatMoney(value) {
+    return Number(value || 0).toLocaleString("vi-VN") + "đ";
+}
+
+function addMessage(text, type) {
+    const chatBox = document.getElementById("chat-box");
+    const div = document.createElement("div");
+
+    div.className = "msg " + type;
+    div.textContent = text;
+
+    chatBox.appendChild(div);
+    scrollChat();
+}
+
+function scrollChat() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+/* ==================== ĐƠN CHỜ XÁC NHẬN ==================== */
+
+function showOrderConfirmation(draft) {
+    const order = draft.order;
+
+    if (!order || !Array.isArray(order.items)) {
+        addMessage(
+            "Dạ chưa thể hiển thị bản xác nhận đơn. Anh chị vui lòng thử lại ạ.",
+            "assistant"
+        );
+        return;
+    }
+
+    const oldCard = document.getElementById("pending-order-card");
+    if (oldCard) oldCard.remove();
+
+    const card = document.createElement("div");
+    card.className = "order-card";
+    card.id = "pending-order-card";
+
+    const title = document.createElement("h3");
+    title.textContent = "🧾 XÁC NHẬN ĐƠN HÀNG";
+    card.appendChild(title);
+
+    const detail = document.createElement("div");
+    detail.className = "order-detail";
+
+    const lines = [];
+
+    lines.push("Khách hàng: " + (order.customerName || ""));
+    lines.push("Điện thoại: " + (order.phone || ""));
+    lines.push(
+        "Nhận hàng: " +
+        (order.fulfillment === "pickup" ? "Tại quán" : "Giao hàng")
+    );
+
+    if (order.fulfillment !== "pickup") {
+        lines.push("Địa chỉ: " + (order.address || ""));
+    }
+
+    lines.push("Thanh toán: " + (order.payment || ""));
+    lines.push("");
+    lines.push("CHI TIẾT:");
+
+    order.items.forEach(function(item) {
+        lines.push(
+            item.name + " x" + item.quantity +
+            " — " + formatMoney(item.lineTotal)
+        );
+
+        if (item.toppings && item.toppings.length) {
+            item.toppings.forEach(function(topping) {
+                lines.push(
+                    "  + " + topping.name +
+                    " (" + formatMoney(topping.price) + ")"
+                );
+            });
+        }
+
+        if (item.note) {
+            lines.push("  Ghi chú: " + item.note);
+        }
     });
 
-    audioPlayer.onended = () => {
-        document.getElementById('status-text').innerText = "Sẵn sàng...";
+    if (order.upsize) {
+        lines.push("");
+        lines.push("Phụ thu upsize: " + formatMoney(order.upsizeFee));
+    }
+
+    if (order.note) {
+        lines.push("");
+        lines.push("Ghi chú đơn hàng: " + order.note);
+    }
+
+    detail.textContent = lines.join("\n");
+    card.appendChild(detail);
+
+    const total = document.createElement("div");
+    total.className = "order-total";
+    total.textContent = "Tổng cộng: " + formatMoney(order.total);
+    card.appendChild(total);
+
+    const actions = document.createElement("div");
+    actions.className = "order-actions";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.className = "confirm-order-btn";
+    confirmBtn.textContent = "✅ Xác nhận đặt hàng";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "cancel-order-btn";
+    cancelBtn.textContent = "Chỉnh sửa đơn";
+
+    confirmBtn.onclick = function() {
+        confirmOrder(confirmBtn, cancelBtn);
     };
+
+    cancelBtn.onclick = function() {
+        cancelOrderDraft(card);
+    };
+
+    actions.appendChild(confirmBtn);
+    actions.appendChild(cancelBtn);
+    card.appendChild(actions);
+
+    document.getElementById("chat-box").appendChild(card);
+    scrollChat();
+}
+
+/* ==================== KHÁCH XÁC NHẬN ==================== */
+
+async function confirmOrder(confirmBtn, cancelBtn) {
+    if (!currentDraftId || isConfirmingOrder) return;
+
+    isConfirmingOrder = true;
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    document.getElementById("status-text").innerText =
+        "Đang lưu đơn hàng...";
+
+    try {
+        const result = await callAIServer({
+            action: "confirm_order",
+            sessionId: sessionId,
+            draftId: currentDraftId
+        });
+
+        if (!result.saved || !result.orderId) {
+            throw new Error("Máy chủ chưa xác nhận lưu đơn hàng.");
+        }
+
+        const card = document.getElementById("pending-order-card");
+        if (card) card.remove();
+
+        currentDraftId = null;
+
+        const successMessage =
+            "🎉 ĐẶT HÀNG THÀNH CÔNG!\n" +
+            "Mã đơn: " + result.orderId + "\n" +
+            "Tổng tiền: " + formatMoney(result.total) + "\n\n" +
+            "Kim Bling đã nhận được đơn hàng của anh chị. " +
+            "Cảm ơn anh chị đã ủng hộ ạ.";
+
+        addMessage(successMessage, "assistant");
+
+        document.getElementById("status-text").innerText =
+            "Đã lưu đơn hàng thành công.";
+
+        speakText(successMessage);
+
+        if (result.telegram && result.telegram.success === false) {
+            addMessage(
+                "Lưu ý: Đơn đã được lưu vào hệ thống nhưng thông báo Telegram có thể chưa gửi được. Chủ quán vui lòng kiểm tra tab AI_ORDERS.",
+                "assistant"
+            );
+        }
+
+    } catch (error) {
+        console.error("CONFIRM ORDER ERROR:", error);
+
+        confirmBtn.disabled = false;
+        cancelBtn.disabled = false;
+
+        document.getElementById("status-text").innerText =
+            "Chưa xác nhận được đơn: " + error.message;
+
+        addMessage(
+            "Dạ hệ thống chưa xác nhận được đơn hàng. Anh chị vui lòng thử bấm xác nhận lại giúp em ạ.",
+            "assistant"
+        );
+
+    } finally {
+        isConfirmingOrder = false;
+    }
+}
+
+/* ==================== KHÁCH CHỈNH SỬA ==================== */
+
+async function cancelOrderDraft(card) {
+    if (!currentDraftId || isConfirmingOrder) return;
+
+    const oldDraftId = currentDraftId;
+
+    try {
+        await callAIServer({
+            action: "cancel_order_draft",
+            sessionId: sessionId,
+            draftId: oldDraftId
+        });
+    } catch (error) {
+        console.error("CANCEL DRAFT ERROR:", error);
+        addMessage(
+            "Dạ chưa thể cập nhật trạng thái đơn chờ. Anh chị vui lòng thử lại.",
+            "assistant"
+        );
+        return;
+    }
+
+    currentDraftId = null;
+
+    if (card) card.remove();
+
+    addMessage(
+        "Dạ được ạ. Anh chị gửi nội dung muốn thay đổi. Em sẽ hỗ trợ lên lại đơn nhé.",
+        "assistant"
+    );
+}
+
+/* ==================== GIỌNG ĐỌC ==================== */
+
+function speakText(text) {
+    const status = document.getElementById("status-text");
+
+    const cleanText = String(text).replace(
+        /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
+        ""
+    );
+
+    const audioPlayer = document.getElementById("audioPlayer");
+
+    audioPlayer.pause();
+    audioPlayer.src =
+        "https://translate.google.com/translate_tts?ie=UTF-8&q=" +
+        encodeURIComponent(cleanText) +
+        "&tl=vi&client=tw-ob";
+
+    audioPlayer.playbackRate = 1.25;
+
+    audioPlayer.onended = function() {
+        status.innerText = "Tổng đài sẵn sàng.";
+    };
+
+    audioPlayer.play().catch(function(error) {
+        console.warn("Không phát được giọng đọc:", error);
+        status.innerText = "Tổng đài sẵn sàng.";
+    });
+
+    status.innerText = "Đang phát giọng đọc...";
 }
 
 function testSpeaker() {
-    speakText("Hệ thống tổng đài Kim Bling đã sẵn sàng tiếp nhận đơn hàng.");
+    speakText(
+        "Hệ thống tổng đài Kim Bling đã sẵn sàng tiếp nhận yêu cầu của anh chị."
+    );
 }
 
-async function getAvailableModel() {
-    if (activeModel) return activeModel;
-    try {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-            headers: { "Authorization": `Bearer ${API_KEY}` }
-        });
-        const data = await res.json();
-        if (data && data.data) {
-            const chatModels = data.data.map(m => m.id).filter(id => !id.includes("whisper") && !id.includes("guard"));
-            activeModel = chatModels.find(id => id.includes("llama-3.1-8b-instant")) || chatModels[0];
-        }
-        if (!activeModel) activeModel = "llama-3.1-8b-instant";
-        return activeModel;
-    } catch (e) {
-        return "llama-3.1-8b-instant";
-    }
-}
+/* ==================== NHẬN DIỆN GIỌNG NÓI ==================== */
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = 'vi-VN';
+
+    recognition.lang = "vi-VN";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    recognition.onstart = () => {
+    recognition.onstart = function() {
         isRecording = true;
-        document.getElementById('micBtn').classList.add('mic-dictate');
-        document.getElementById('status-text').innerText = "Đang nghe...";
+
+        document.getElementById("micBtn")
+            .classList.add("mic-dictate");
+
+        document.getElementById("status-text")
+            .innerText = "Đang nghe anh chị...";
     };
 
-    recognition.onresult = async (event) => {
+    recognition.onresult = async function(event) {
         const speechText = event.results[0][0].transcript;
+
         stopListening();
+
+        const input = document.getElementById("userInput");
+        input.value = speechText;
+
         await processMessage(speechText, true);
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = function(event) {
+        console.error("MIC ERROR:", event.error);
         stopListening();
-        document.getElementById('status-text').innerText = "Thử lại hoặc gõ chữ!";
+
+        document.getElementById("status-text")
+            .innerText = "Không nhận được giọng nói. Anh chị thử lại nhé.";
     };
 
-    recognition.onend = () => {
+    recognition.onend = function() {
         stopListening();
     };
 }
 
 function toggleListening() {
     if (!recognition) {
-        alert("Trình duyệt không hỗ trợ micro!");
+        alert("Trình duyệt hiện tại không hỗ trợ nhận diện giọng nói.");
         return;
     }
+
     if (isRecording) {
         recognition.stop();
     } else {
-        recognition.start();
+        try {
+            recognition.start();
+        } catch (error) {
+            console.error(error);
+        }
     }
 }
 
 function stopListening() {
     isRecording = false;
-    document.getElementById('micBtn').classList.remove('mic-dictate');
-    document.getElementById('status-text').innerText = "Sẵn sàng...";
+
+    document.getElementById("micBtn")
+        .classList.remove("mic-dictate");
 }
 
-async function sendText() {
-    const inputField = document.getElementById('userInput');
-    const text = inputField.value.trim();
-    if (!text) return;
-    inputField.value = '';
-    await processMessage(text, true);
-}
+/* ==================== KHỞI ĐỘNG ==================== */
 
-let chatHistory = [];
+window.addEventListener("DOMContentLoaded", initializeAI);
 
-async function processMessage(text, shouldSpeak) {
-    addMessage(text, 'user');
-    document.getElementById('status-text').innerText = "Đang xử lý dữ liệu đơn hàng...";
-
-    try {
-        const modelToUse = await getAvailableModel();
-        
-        let professionalSystemPrompt = `Bạn là nhân viên tổng đài chuyên nghiệp của hệ thống F&B 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM.
-
-THỰC ĐƠN ĐỒ UỐNG VÀ ĐỒ ĂN VẶT TỪ HỆ THỐNG GOOGLE SHEETS:
-` + (fullMenuText || "Đang cập nhật thực đơn...") + `
-
-QUY TẮC NGHIỆP VỤ BẮT BUỘC:
-1. XƯNG HÔ & TÁC phong: Xưng 'em', gọi khách là 'anh chị'. Tác phong lịch sự, chuẩn mực, ngắn gọn, đi thẳng vào trọng tâm chuyên môn. Tuyệt đối không dùng từ lóng, không dùng từ 'hihi', không cười cợt hoặc đùa giỡn.
-2. TRA CỨU & BÁO GIÁ CHÍNH XÁC: Khi khách hỏi bất kỳ món nào (có dấu hoặc không dấu), phải đối chiếu trực tiếp với thực đơn phía trên để cung cấp chính xác tên món và mức giá niêm yết.
-3. QUY TRÌNH CHỐT ĐƠN: Khi khách xác nhận mua món, yêu cầu cung cấp ngay số lượng, số điện thoại và địa chỉ nhận hàng để lên đơn.
-4. TÍNH CHÍNH XÁC CAO: Không tự bịa đặt món hoặc giá tiền không có trong hệ thống. Trả lời súc tích từ 1 đến 2 câu.`;
-
-        let messagesToSend = [
-            { role: "system", content: professionalSystemPrompt },
-            ...chatHistory,
-            { role: "user", content: text }
-        ];
-
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`
-            },
-            body: JSON.stringify({
-                model: modelToUse,
-                messages: messagesToSend,
-                max_tokens: 200,
-                temperature: 0.1
-            })
-        });
-
-        const data = await response.json();
-        let reply = "Dạ, anh chị vui lòng cho em biết tên món cần đặt để em kiểm tra kho và báo giá ạ.";
-        if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-            reply = data.choices[0].message.content.trim();
-        }
-        
-        chatHistory.push({ role: "user", content: text });
-        chatHistory.push({ role: "assistant", content: reply });
-        
-        if (chatHistory.length > 10) {
-            chatHistory = chatHistory.slice(chatHistory.length - 10);
-        }
-
-        addMessage(reply, 'assistant');
-        
-        if (shouldSpeak) {
-            speakText(reply);
-        } else {
-            document.getElementById('status-text').innerText = "Sẵn sàng...";
-        }
-
-    } catch (e) {
-        console.error(e);
-        const errReply = "Dạ hệ thống đang gián đoạn kết nối, anh chị vui lòng nhắn lại giúp em ạ.";
-        addMessage(errReply, 'assistant');
-        speakText(errReply);
-    }
-}
-
-function addMessage(text, type) {
-    const chatBox = document.getElementById('chat-box');
-    const div = document.createElement('div');
-    div.className = `msg ${type}`;
-    div.textContent = text;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-window.addEventListener('DOMContentLoaded', initMenuSync);
 </script>
-
 </body>
 </html>
