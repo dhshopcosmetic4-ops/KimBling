@@ -22,7 +22,6 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14
 #statusText{flex:1}
 #mainContent{width:100%;max-width:850px;margin:0 auto;padding:14px;flex:1}
 
-/* CHAT SECTION ON TOP */
 #chatSection{margin-top:0;margin-bottom:16px;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
 #chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:430px;overflow-y:auto;background:#fff}
@@ -49,7 +48,6 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14
 .voice-tools button:active{background:#eee}
 .loading{color:#888;font-style:italic}
 
-/* GEMINI LIVE */
 #livePanel{margin:12px 0 0;padding:12px;border:1px solid #e6c5c5;border-radius:13px;background:#fffafa}
 #liveStatus{font-size:14px!important;color:#666;line-height:1.5;margin-bottom:9px}
 #liveStatus.active{color:#2e7d32;font-weight:700}
@@ -60,16 +58,22 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14
 #liveStopBtn:disabled{opacity:.4}
 .live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
 
-/* WELCOME & QUICK ASK */
 .welcome-card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .welcome-title{font-weight:800;color:#b71c1c;margin-bottom:8px}
 .welcome-text{color:#555;line-height:1.5}
-.quick-title{font-weight:800;margin:16px 0 10px}
-.quick-list{display:flex;flex-wrap:wrap;gap:8px}
-.quick-btn{border:1px solid #efb4b4;background:white;color:#b71c1c;padding:9px 13px;border-radius:22px;font-weight:600}
-.quick-btn:active{background:#ffebee}
+.search-filter-wrap{position:relative;margin:12px 0 10px}
+#menuSearchInput{width:100%;height:42px;padding:0 38px 0 14px;border:1px solid #ddd;border-radius:22px;background:#fafafa;color:#222;outline:none}
+#menuSearchInput:focus{border-color:#d32f2f;background:#fff}
+#menuSearchClear{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:0;border-radius:50%;background:#ddd;color:#444;font-size:13px!important;font-weight:700;align-items:center;justify-content:center}
+.category-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+.cat-btn{background:#fff;color:#444;border:1px solid #e0e0e0;padding:9px 5px;border-radius:10px;font-size:13px!important;font-weight:700;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cat-btn.active{background:#2196F3;color:#fff;border-color:#2196F3;box-shadow:0 2px 6px rgba(33,150,243,.3)}
+.btn-fav-highlight{background:linear-gradient(135deg,#fff3e0,#ffe0b2)!important;color:#e65100!important;border:1.5px solid #ff9800!important;position:relative}
+.btn-fav-highlight.active{background:linear-gradient(135deg,#ff9800,#f57c00)!important;color:#fff!important;border-color:#e65100!important}
+.btn-fav-highlight::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;background:#ff1744;border-radius:50%;border:1px solid #fff}
+.category-ask-btn{display:none;width:100%;margin-top:10px;border:1px solid #efb4b4;background:#ffebee;color:#b71c1c;padding:10px 12px;border-radius:12px;font-weight:700;font-size:14px!important}
+.category-ask-btn:active{background:#ffcdd2}
 
-/* CATALOG & TOPPING */
 .section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 12px;font-weight:800}
 #productCount,#toppingCount{color:#777;font-weight:400}
 #productGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -108,7 +112,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
  .product-actions button{padding:9px 4px}
 }
 </style>
-</head>
+<script src="/_aistudio-iframe.js?v=1f94f900"></script></head>
 
 <body>
 
@@ -124,7 +128,6 @@ footer{padding:18px 12px;text-align:center;color:#888}
 
 <main id="mainContent">
 
- <!-- MỤC TRÒ CHUYỆN VỚI KIM ĐƯA LÊN ĐẦU TRANG -->
  <section id="chatSection">
   <div class="chat-heading">💬 Trò chuyện với Kim</div>
 
@@ -166,26 +169,33 @@ footer{padding:18px 12px;text-align:center;color:#888}
  </section>
 
  <section class="welcome-card">
-  <div class="welcome-title">❤️ Xin chào anh chị!</div>
+  <div class="welcome-title">❤️ Danh mục thực đơn &amp; Tìm món nhanh</div>
   <div class="welcome-text">
-   Em là Kim, trợ lý tư vấn của Kim Bling Coffee & Tea.
-   Anh chị có thể hỏi em về món uống, đồ ăn vặt, topping, giá tiền
-   hoặc nhờ em tư vấn món phù hợp nha!
+   Anh chị chọn danh mục hoặc gõ tên món bên dưới để xem nhanh, bấm <strong>💬 Tư vấn món này</strong> hoặc nhờ Kim gợi ý cả nhóm món nhé!
   </div>
 
-  <div class="quick-title">Anh chị muốn tìm món gì?</div>
-  <div class="quick-list">
-   <button class="quick-btn" onclick="quickAsk('Tư vấn cho anh chị các món trà sữa nhé')">🧋 Trà sữa</button>
-   <button class="quick-btn" onclick="quickAsk('Tư vấn các món matcha của quán')">🍵 Matcha</button>
-   <button class="quick-btn" onclick="quickAsk('Quán có những món cà phê nào?')">☕ Cà phê</button>
-   <button class="quick-btn" onclick="quickAsk('Giới thiệu các món ăn vặt của quán')">🍟 Ăn vặt</button>
-   <button class="quick-btn" onclick="quickAsk('Tư vấn các món yogurt nhé')">🥤 Yogurt</button>
-   <button class="quick-btn" onclick="quickAsk('Quán có những loại topping nào cho nước uống và đồ ăn vặt vậy em?')">🍡 Topping</button>
+  <div class="search-filter-wrap">
+   <input id="menuSearchInput" type="text" placeholder="🔍 Tìm nhanh tên món (vd: trà sữa, matcha, chân gà...)" oninput="handleMenuSearch()" autocomplete="off">
+   <button id="menuSearchClear" type="button" onclick="clearMenuSearch()">✕</button>
   </div>
+
+  <div class="category-tabs">
+   <button class="cat-btn active" data-cat="All" onclick="filterCategory('All', this)">📋 Tất cả</button>
+   <button class="cat-btn btn-fav-highlight" data-cat="Favorite" onclick="filterCategory('Favorite', this)">🔥 Món Mới 🔥</button>
+   <button class="cat-btn" data-cat="Coffee" onclick="filterCategory('Coffee', this)">☕ Cà Phê</button>
+   <button class="cat-btn" data-cat="Tea" onclick="filterCategory('Tea', this)">🍵 Trà</button>
+   <button class="cat-btn" data-cat="MilkTea" onclick="filterCategory('MilkTea', this)">🧋 Trà Sữa</button>
+   <button class="cat-btn" data-cat="Soda" onclick="filterCategory('Soda', this)">🥤 Soda</button>
+   <button class="cat-btn" data-cat="Yogurt" onclick="filterCategory('Yogurt', this)">🥛 Sữa Chua</button>
+   <button class="cat-btn" data-cat="Food" onclick="filterCategory('Food', this)">🍢 Ăn Vặt</button>
+   <button class="cat-btn" data-cat="Topping" onclick="filterCategory('Topping', this)">🧋 Topping</button>
+  </div>
+
+  <button id="categoryAskBtn" class="category-ask-btn" type="button" onclick="askCurrentCategory()"></button>
  </section>
 
- <div class="section-heading">
-  <span>🛍️ Thực đơn Kim Bling</span>
+ <div class="section-heading" id="productSectionHeading">
+  <span id="productSectionTitle">🛍️ Thực đơn Kim Bling</span>
   <span id="productCount">Đang tải...</span>
  </div>
 
@@ -210,12 +220,6 @@ footer{padding:18px 12px;text-align:center;color:#888}
 <button id="scrollBottomBtn" class="scroll-control" onclick="scrollToBottom()" title="Xuống cuối trang">⬇</button>
 
 <script>
-/* =====================================================
-   KIM BLING AI - FRONTEND
-   Compatible: Ma.gs v4.2 (Groq + Gemini TTS + Gemini Live)
-   Hỗ trợ chạy độc lập hoặc Popup TikTok trong menu.html
-===================================================== */
-
 const API_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
 const MENU_URL = "menu.html";
 const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
@@ -224,10 +228,10 @@ let catalogProducts = [];
 let displayedProducts = [];
 let drinkToppingsList = [];
 let snackToppingsList = [];
+let currentCategory = "All";
 let selectedProduct = null;
 let isSending = false;
 
-/* Audio & TTS */
 let speechQueue = [];
 let isSpeaking = false;
 let currentSpeechText = "";
@@ -235,11 +239,9 @@ let speechGeneration = 0;
 let audioUnlocked = false;
 let currentBlobUrl = "";
 
-/* Web Speech API */
 let recognition = null;
 let isListening = false;
 
-/* Gemini Live */
 let liveSocket = null;
 let liveStream = null;
 let liveAudioContext = null;
@@ -255,19 +257,13 @@ let liveInputText = "";
 let liveStarting = false;
 let liveSessionGeneration = 0;
 
-/* =====================================================
-   API & TIỆN ÍCH
-===================================================== */
-
 async function callAPI(payload) {
  const response = await fetch(API_URL, {
   method: "POST",
   headers: { "Content-Type": "text/plain;charset=utf-8" },
   body: JSON.stringify(payload)
  });
-
  if (!response.ok) throw new Error("Không kết nối được máy chủ. HTTP " + response.status);
-
  const result = await response.json();
  if (!result) throw new Error("Máy chủ không trả về dữ liệu.");
  return result;
@@ -297,9 +293,7 @@ function getSelectedVoice() {
 }
 
 function saveVoicePreference() {
- try {
-  localStorage.setItem("kb_ai_voice_v2", getSelectedVoice());
- } catch (e) {}
+ try { localStorage.setItem("kb_ai_voice_v2", getSelectedVoice()); } catch (e) {}
 }
 
 function restoreVoicePreference() {
@@ -312,12 +306,10 @@ function restoreVoicePreference() {
  } catch (e) {}
 }
 
-/* Mở khóa Audio trên Safari iOS ngay trong cú chạm đầu tiên */
 function unlockAudioPlayer() {
  if (audioUnlocked) return;
  const audio = document.getElementById("audioPlayer");
  if (!audio) return;
-
  try {
   audio.muted = true;
   audio.src = SILENT_WAV;
@@ -328,37 +320,26 @@ function unlockAudioPlayer() {
     audio.currentTime = 0;
     audio.muted = false;
     audioUnlocked = true;
-   }).catch(() => {
-    audio.muted = false;
-   });
+   }).catch(() => { audio.muted = false; });
   }
- } catch (e) {
-  audio.muted = false;
- }
+ } catch (e) { audio.muted = false; }
 }
-
-/* =====================================================
-   TẢI THỰC ĐƠN & TOPPING
-===================================================== */
 
 async function loadCatalog() {
  setStatus("Đang tải thực đơn từ Google Sheets...");
  try {
   const data = await callAPI({ action: "get_catalog" });
   if (data.success === false) throw new Error(data.message || "Không tải được thực đơn.");
-
   let products = data.products || data.menu || [];
   if (typeof products === "string") {
    try { products = JSON.parse(products); } catch (e) { products = []; }
   }
   if (!Array.isArray(products)) products = [];
-
   catalogProducts = products.filter(item => item && item.name);
-  renderProducts(catalogProducts);
-
   drinkToppingsList = Array.isArray(data.drinkToppings) ? data.drinkToppings : [];
   snackToppingsList = Array.isArray(data.snackToppings) ? data.snackToppings : [];
-  renderToppings(drinkToppingsList, snackToppingsList);
+
+  applyCatalogFilters();
 
   const totalToppings = drinkToppingsList.length + snackToppingsList.length;
   setStatus(
@@ -458,6 +439,161 @@ function createProductCard(product, index, consultCallback) {
  return card;
 }
 
+const CATEGORY_LABELS = {
+ All: "Tất cả thực đơn",
+ Favorite: "Món Mới / Nổi bật",
+ Coffee: "Cà Phê",
+ Tea: "Trà",
+ MilkTea: "Trà Sữa",
+ Soda: "Soda",
+ Yogurt: "Sữa Chua",
+ Food: "Ăn Vặt",
+ Topping: "Topping & Gia vị thêm"
+};
+
+function removeDiacritics(str) {
+ return String(str || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/đ/g, "d")
+  .replace(/Đ/g, "D")
+  .toLowerCase()
+  .trim();
+}
+
+function getCategoryType(itemName, assignedCat) {
+ const n = removeDiacritics(itemName || "");
+ if (n.includes("chan ga") || n.includes("lap xuong") || n.includes("sua sot thai") || n.includes("ca vien") || n.includes("tokbokki") || n.includes("banh trang") || n.includes("com chien") || n.includes("goi kho bo") || n.includes("mi ") || n.includes("sua sot") || n.includes("an vat")) {
+  return "Food";
+ }
+ if (n.includes("sua chua") || n.includes("yogurt")) return "Yogurt";
+ if (n.includes("soda")) return "Soda";
+ if (n.includes("ca phe") || n.includes("bac siu") || n.includes("cacao") || n.includes("espresso") || n.includes("cafe")) return "Coffee";
+ if (n.includes("tra sua") || n.includes("sua")) return "MilkTea";
+ if (n.includes("tra") || n.includes("matcha")) return "Tea";
+
+ const catRaw = removeDiacritics(assignedCat || "");
+ if (catRaw.includes("food") || catRaw.includes("an vat")) return "Food";
+ if (catRaw.includes("yogurt") || catRaw.includes("sua chua")) return "Yogurt";
+ if (catRaw.includes("soda")) return "Soda";
+ if (catRaw.includes("coffee") || catRaw.includes("ca phe")) return "Coffee";
+ if (catRaw.includes("tea") && !catRaw.includes("milk")) return "Tea";
+ return "MilkTea";
+}
+
+function filterCategory(cat, btn) {
+ currentCategory = cat || "All";
+ document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+ if (btn) {
+  btn.classList.add("active");
+ } else {
+  const target = document.querySelector('.cat-btn[data-cat="' + currentCategory + '"]');
+  if (target) target.classList.add("active");
+ }
+ applyCatalogFilters();
+}
+
+function handleMenuSearch() {
+ const input = document.getElementById("menuSearchInput");
+ const clearBtn = document.getElementById("menuSearchClear");
+ const hasVal = input && input.value.trim().length > 0;
+ if (clearBtn) clearBtn.style.display = hasVal ? "flex" : "none";
+ if (hasVal && currentCategory !== "All") {
+  currentCategory = "All";
+  document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+  const allBtn = document.querySelector('.cat-btn[data-cat="All"]');
+  if (allBtn) allBtn.classList.add("active");
+ }
+ applyCatalogFilters();
+}
+
+function clearMenuSearch() {
+ const input = document.getElementById("menuSearchInput");
+ const clearBtn = document.getElementById("menuSearchClear");
+ if (input) input.value = "";
+ if (clearBtn) clearBtn.style.display = "none";
+ applyCatalogFilters();
+}
+
+function askCurrentCategory() {
+ unlockAudioPlayer();
+ const label = CATEGORY_LABELS[currentCategory] || "thực đơn";
+ if (currentCategory === "Topping") {
+  quickAsk("Quán có những loại topping nào cho nước uống và đồ ăn vặt vậy em? Tư vấn giúp anh chị nha.");
+  return;
+ }
+ if (currentCategory === "Favorite") {
+  quickAsk("Giới thiệu cho anh chị các món mới hoặc bán chạy nhất của quán nhé!");
+  return;
+ }
+ quickAsk("Em tư vấn giúp anh chị các món trong nhóm " + label + " của quán nhé!");
+}
+
+function applyCatalogFilters() {
+ const searchEl = document.getElementById("menuSearchInput");
+ const kw = removeDiacritics(searchEl ? searchEl.value : "");
+
+ const prodHeading = document.getElementById("productSectionHeading");
+ const prodTitle = document.getElementById("productSectionTitle");
+ const prodGrid = document.getElementById("productGrid");
+ const askBtn = document.getElementById("categoryAskBtn");
+
+ if (askBtn) {
+  if (currentCategory !== "All" && !kw) {
+   askBtn.style.display = "block";
+   askBtn.textContent = "💬 Nhờ Kim tư vấn nhóm " + (CATEGORY_LABELS[currentCategory] || currentCategory);
+  } else {
+   askBtn.style.display = "none";
+  }
+ }
+
+ if (currentCategory === "Topping" && !kw) {
+  if (prodHeading) prodHeading.style.display = "none";
+  if (prodGrid) prodGrid.style.display = "none";
+  renderToppings(drinkToppingsList, snackToppingsList, "");
+  return;
+ }
+
+ if (prodHeading) prodHeading.style.display = "flex";
+ if (prodGrid) prodGrid.style.display = "grid";
+ if (prodTitle) {
+  prodTitle.textContent = currentCategory === "All"
+   ? "🛍️ Thực đơn Kim Bling"
+   : ("🛍️ " + (CATEGORY_LABELS[currentCategory] || "Thực đơn Kim Bling"));
+ }
+
+ let filtered = [];
+ if (currentCategory === "Favorite" && !kw) {
+  const explicitFav = catalogProducts.filter(item =>
+   item.isFavorite === true || item.category === "Favorite"
+  );
+  filtered = explicitFav.length > 0 ? explicitFav : catalogProducts.slice(0, 10);
+ } else {
+  filtered = catalogProducts.filter(item => {
+   const matchKw = !kw || removeDiacritics(item.name).includes(kw) || removeDiacritics(item.category || "").includes(kw);
+   if (!matchKw) return false;
+   if (currentCategory === "Favorite") {
+    return item.isFavorite === true || item.category === "Favorite";
+   }
+   if (currentCategory !== "All") {
+    return getCategoryType(item.name, item.category) === currentCategory;
+   }
+   return true;
+  });
+ }
+
+ renderProducts(filtered);
+
+ if (currentCategory === "All" || kw) {
+  renderToppings(drinkToppingsList, snackToppingsList, kw);
+ } else {
+  const tHeading = document.getElementById("toppingHeading");
+  const tGrid = document.getElementById("toppingGrid");
+  if (tHeading) tHeading.style.display = "none";
+  if (tGrid) tGrid.innerHTML = "";
+ }
+}
+
 function renderProducts(products) {
  const grid = document.getElementById("productGrid");
  const count = document.getElementById("productCount");
@@ -465,7 +601,7 @@ function renderProducts(products) {
  count.textContent = displayedProducts.length + " món";
 
  if (!displayedProducts.length) {
-  grid.innerHTML = '<div class="empty-state">Hiện chưa có sản phẩm trong thực đơn.</div>';
+  grid.innerHTML = '<div class="empty-state">Không tìm thấy món phù hợp trong danh mục này.</div>';
   return;
  }
 
@@ -475,7 +611,7 @@ function renderProducts(products) {
  });
 }
 
-function renderToppings(drinkList, snackList) {
+function renderToppings(drinkList, snackList, kw = "") {
  const heading = document.getElementById("toppingHeading");
  const count = document.getElementById("toppingCount");
  const grid = document.getElementById("toppingGrid");
@@ -484,7 +620,7 @@ function renderToppings(drinkList, snackList) {
  const allToppings = []
   .concat((drinkList || []).map(t => ({ ...t, groupLabel: "🧋 Topping Trà / Trà sữa" })))
   .concat((snackList || []).map(t => ({ ...t, groupLabel: "🍟 Gia vị / Ăn vặt thêm" })))
-  .filter(t => t && t.name);
+  .filter(t => t && t.name && (!kw || removeDiacritics(t.name).includes(kw)));
 
  if (!allToppings.length) {
   heading.style.display = "none";
@@ -531,10 +667,6 @@ function renderToppings(drinkList, snackList) {
  });
 }
 
-/* =====================================================
-   TƯ VẤN MÓN & ĐIỀU HƯỚNG MUA NGAY (POPUP HOẶC ĐỘC LẬP)
-===================================================== */
-
 function consultProduct(index) {
  unlockAudioPlayer();
  const product = displayedProducts[index];
@@ -554,14 +686,9 @@ function consultProduct(index) {
   ", giá " + formatPrice(product.price) +
   ". Hãy giới thiệu đúng thông tin món và topping phù hợp trong thực đơn.";
 
- const chatSection = document.getElementById("chatSection");
- chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
-
+ document.getElementById("chatSection").scrollIntoView({ behavior: "smooth", block: "start" });
  document.getElementById("userInput").value = question;
-
- setTimeout(() => {
-  sendMessage();
- }, 220);
+ setTimeout(() => sendMessage(), 220);
 }
 
 function goToMenu(product) {
@@ -570,7 +697,6 @@ function goToMenu(product) {
 
  const dishName = (product && product.name) ? String(product.name).trim() : "";
 
- // Nếu aichotdon.html đang chạy trong popup của menu.html -> gửi lệnh ra mở popup TikTok món
  if (window.parent && window.parent !== window) {
   window.parent.postMessage({
    type: "OPEN_DISH_FROM_AI",
@@ -579,7 +705,6 @@ function goToMenu(product) {
   return;
  }
 
- // Nếu người dùng mở trực tiếp aichotdon.html
  if (dishName) {
   window.location.href = MENU_URL + "?tiktok=" + encodeURIComponent(dishName);
  } else {
@@ -594,7 +719,6 @@ function quickAsk(question) {
  setTimeout(() => sendMessage(), 220);
 }
 
-/* Tìm tên món khớp trong nội dung câu trả lời nếu người dùng hỏi tự do */
 function findMentionedProduct(replyText, resultObj) {
  if (resultObj && Array.isArray(resultObj.products) && resultObj.products.length > 0) {
   const first = resultObj.products[0];
@@ -610,14 +734,9 @@ function findMentionedProduct(replyText, resultObj) {
  const cleanReply = String(replyText || "").toLowerCase();
  if (!cleanReply || !catalogProducts.length) return null;
 
- // Ưu tiên khớp tên dài trước để tránh nhầm tên ngắn nằm trong tên dài
  const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
  return sorted.find(p => p.name && cleanReply.includes(p.name.toLowerCase())) || null;
 }
-
-/* =====================================================
-   HIỂN THỊ TIN NHẮN (CÓ NÚT NGHE LẠI, DỪNG & MUA NGAY)
-===================================================== */
 
 function addMessage(text, type, options = {}) {
  const withVoice = !!options.withVoice;
@@ -667,10 +786,6 @@ function addMessage(text, type, options = {}) {
  chat.scrollTop = chat.scrollHeight;
  return message;
 }
-
-/* =====================================================
-   GROQ + GEMINI TTS
-===================================================== */
 
 async function sendMessage() {
  if (isSending || liveIsActive) return;
@@ -742,10 +857,16 @@ async function processMessage(question) {
   console.error("Lỗi tư vấn:", error);
   if (loadingMessage.parentNode) loadingMessage.remove();
 
-  const errorText = "Dạ hệ thống đang hơi chậm, anh chị nhắn lại giúp em nhé!";
+  const rawErr = (error && error.message) ? String(error.message) : "Lỗi kết nối máy chủ";
+  const isRateLimit = /429|rate|limit|quota|tokens|too many/i.test(rawErr);
+
+  const errorText = isRateLimit
+   ? "Dạ hiện có nhiều anh chị đang hỏi cùng lúc nên Kim hơi quá tải một chút, anh chị chờ vài giây rồi bấm gửi lại giúp em nha!"
+   : "Dạ hệ thống đang hơi chậm, anh chị nhắn lại giúp em nhé!";
+
   addMessage(errorText, "assistant", { withVoice: true, product: selectedProduct });
   speakText(errorText);
-  setStatus("AI gặp lỗi kết nối", "error");
+  setStatus("Lỗi AI: " + rawErr.slice(0, 120), "error");
 
  } finally {
   isSending = false;
@@ -753,14 +874,9 @@ async function processMessage(question) {
  }
 }
 
-/* =====================================================
-   PHÁT ÂM THANH (GEMINI TTS WAV + FALLBACK SAFARI AN TOÀN)
-===================================================== */
-
 function cleanTextForSpeech(text) {
  let result = String(text || "");
  result = result.replace(/https?:\/\/\S+/g, "");
-
  result = result.replace(
   /(\d{1,3}(?:\.\d{3})+|\d{4,})\s*(?:đồng|đ)(?!\w)/gi,
   function(match, number) {
@@ -769,19 +885,16 @@ function cleanTextForSpeech(text) {
    return (value / 1000) + " nghìn";
   }
  );
-
  result = result
   .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
   .replace(/\s+/g, " ")
   .trim();
-
  return result;
 }
 
 function splitSpeechText(text, maxLength = 180) {
  const clean = cleanTextForSpeech(text);
  if (!clean) return [];
-
  const sentences = clean.match(/[^.!?]+[.!?]?/g) || [clean];
  const chunks = [];
  let current = "";
@@ -789,12 +902,10 @@ function splitSpeechText(text, maxLength = 180) {
  sentences.forEach(sentence => {
   sentence = sentence.trim();
   if (!sentence) return;
-
   if ((current + " " + sentence).trim().length <= maxLength) {
    current = (current + " " + sentence).trim();
   } else {
    if (current) chunks.push(current);
-
    while (sentence.length > maxLength) {
     let cut = sentence.lastIndexOf(" ", maxLength);
     if (cut < 50) cut = maxLength;
@@ -901,7 +1012,6 @@ function speakViaGoogleOrNative(text, generation) {
 
 async function playNextGoogleChunk(generation) {
  if (generation !== speechGeneration) return;
-
  if (!speechQueue.length) {
   isSpeaking = false;
   setStatus("Sẵn sàng", "online");
@@ -1003,10 +1113,6 @@ function testSpeaker() {
  speakText("Dạ em chào anh chị. Em là Kim, trợ lý tư vấn của Kim Bling Coffee and Tea. Anh chị muốn uống món gì hôm nay để em tư vấn nha.");
 }
 
-/* =====================================================
-   WEB SPEECH API - MICRO NHẬP CÂU HỎI
-===================================================== */
-
 function setupSpeechRecognition() {
  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
  if (!SpeechRecognition) { recognition = null; return; }
@@ -1044,17 +1150,14 @@ function toggleListening() {
   alert("Anh chị đang dùng Gemini Live rồi ạ. Hãy nói trực tiếp, không cần bấm micro này.");
   return;
  }
-
  if (!recognition) {
   alert("Trình duyệt này không hỗ trợ nhận diện giọng nói. Anh chị có thể nhập câu hỏi bằng chữ nhé.");
   return;
  }
-
  if (isListening) {
   recognition.stop();
   return;
  }
-
  try { recognition.start(); } catch (error) {
   console.error(error);
   setStatus("Không mở được micro. Anh chị thử lại nhé.", "error");
@@ -1067,14 +1170,9 @@ function stopListening() {
  if (mic) mic.classList.remove("listening");
 }
 
-/* =====================================================
-   GEMINI LIVE - TOKEN TỪ MA.GS (MƯỢT TRÊN SAFARI & CHROME)
-===================================================== */
-
 function base64FromBytes(bytes) {
  let binary = "";
  const chunkSize = 0x8000;
-
  for (let i = 0; i < bytes.length; i += chunkSize) {
   binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
  }
@@ -1091,7 +1189,6 @@ function base64ToBytes(base64) {
 function floatTo16BitPCM(float32) {
  const buffer = new ArrayBuffer(float32.length * 2);
  const view = new DataView(buffer);
-
  for (let i = 0; i < float32.length; i++) {
   let sample = Math.max(-1, Math.min(1, float32[i]));
   view.setInt16(i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
@@ -1101,20 +1198,14 @@ function floatTo16BitPCM(float32) {
 
 function resampleTo16k(input, sourceRate) {
  if (sourceRate === 16000) return input;
-
  const ratio = sourceRate / 16000;
  const newLength = Math.round(input.length / ratio);
  const output = new Float32Array(newLength);
-
  for (let i = 0; i < newLength; i++) {
   const start = Math.floor(i * ratio);
   const end = Math.min(Math.floor((i + 1) * ratio), input.length);
   let sum = 0, count = 0;
-
-  for (let j = start; j < end; j++) {
-   sum += input[j];
-   count++;
-  }
+  for (let j = start; j < end; j++) { sum += input[j]; count++; }
   output[i] = count ? sum / count : 0;
  }
  return output;
@@ -1122,7 +1213,6 @@ function resampleTo16k(input, sourceRate) {
 
 async function startGeminiLive() {
  if (liveIsActive || liveStarting) return;
-
  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
   alert("Trình duyệt chưa hỗ trợ micro hoặc trang chưa chạy bằng HTTPS.");
   return;
@@ -1138,23 +1228,16 @@ async function startGeminiLive() {
 
  try {
   stopSpeaking();
-
   if (recognition && isListening) {
    try { recognition.stop(); } catch (e) {}
   }
   stopListening();
 
-  // Tạo và resume AudioContext NGAY TRONG CÚ CHẠM của user để Safari iOS không chặn loa
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!liveAudioContext) {
-   liveAudioContext = new AudioCtx();
-  }
-  if (liveAudioContext.state === "suspended") {
-   await liveAudioContext.resume();
-  }
+  if (!liveAudioContext) liveAudioContext = new AudioCtx();
+  if (liveAudioContext.state === "suspended") await liveAudioContext.resume();
 
   const tokenResult = await callAPI({ action: "create_live_token" });
-
   if (!tokenResult || tokenResult.success === false || !tokenResult.token) {
    throw new Error(tokenResult && tokenResult.error ? tokenResult.error : "Không nhận được Gemini Live token.");
   }
@@ -1163,17 +1246,11 @@ async function startGeminiLive() {
   const model = tokenResult.model || "gemini-3.8-live";
 
   liveStream = await navigator.mediaDevices.getUserMedia({
-   audio: {
-    channelCount: 1,
-    echoCancellation: true,
-    noiseSuppression: true,
-    autoGainControl: true
-   },
+   audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
    video: false
   });
 
   const generation = ++liveSessionGeneration;
-
   const wsUrl =
    "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained" +
    "?access_token=" + encodeURIComponent(token);
@@ -1182,47 +1259,34 @@ async function startGeminiLive() {
 
   liveSocket.onopen = () => {
    if (generation !== liveSessionGeneration) return;
-
-   const setup = {
+   liveSocket.send(JSON.stringify({
     setup: {
      model: "models/" + model,
-     generationConfig: {
-      responseModalities: ["AUDIO"]
-     },
+     generationConfig: { responseModalities: ["AUDIO"] },
      inputAudioTranscription: {},
      outputAudioTranscription: {}
     }
-   };
-
-   liveSocket.send(JSON.stringify(setup));
+   }));
    setLiveStatus("Đã kết nối máy chủ. Đang thiết lập phiên trò chuyện...");
   };
 
   liveSocket.onmessage = async event => {
    if (generation !== liveSessionGeneration) return;
-
    let rawText = "";
    try {
-    if (typeof event.data === "string") {
-     rawText = event.data;
-    } else if (event.data instanceof Blob) {
-     rawText = await event.data.text();
-    } else if (event.data instanceof ArrayBuffer) {
-     rawText = new TextDecoder().decode(event.data);
-    }
+    if (typeof event.data === "string") rawText = event.data;
+    else if (event.data instanceof Blob) rawText = await event.data.text();
+    else if (event.data instanceof ArrayBuffer) rawText = new TextDecoder().decode(event.data);
    } catch (e) {
     console.error("Không đọc được frame dữ liệu Live:", e);
     return;
    }
-
    if (!rawText) return;
-
    let data;
    try { data = JSON.parse(rawText); } catch (error) {
     console.error("Gemini Live trả dữ liệu không đọc được:", error);
     return;
    }
-
    handleGeminiLiveMessage(data);
   };
 
@@ -1234,23 +1298,18 @@ async function startGeminiLive() {
 
   liveSocket.onclose = event => {
    console.log("Gemini Live đóng:", event.code, event.reason);
-
    if (generation !== liveSessionGeneration) return;
-
    if (liveIsActive) {
     cleanupGeminiLive(false);
     setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại.");
     setStatus("Đã ngắt Gemini Live", "normal");
    }
   };
-
  } catch (error) {
   console.error("Không khởi động được Gemini Live:", error);
   cleanupGeminiLive(false);
-
   setLiveStatus("Không khởi động được Gemini Live: " + (error.message || error));
   setStatus("Gemini Live không khởi động được", "error");
-
   alert("Không khởi động được Gemini Live:\n" + (error.message || error));
  } finally {
   liveStarting = false;
@@ -1263,17 +1322,13 @@ function handleGeminiLiveMessage(data) {
  if (data.setupComplete) {
   liveIsReady = true;
   liveIsActive = true;
-
   document.getElementById("liveStartBtn").disabled = true;
   document.getElementById("liveStopBtn").disabled = false;
-
   setLiveStatus("🟢 Gemini Live đang hoạt động. Anh chị có thể nói chuyện với Kim ngay bây giờ.", true);
   setStatus("🎙️ Kim đang lắng nghe anh chị", "online");
-
   startLiveMicrophone();
   return;
  }
-
  if (data.error) {
   console.error("Gemini Live báo lỗi:", data.error);
   setLiveStatus("Gemini báo lỗi: " + (data.error.message || JSON.stringify(data.error)));
@@ -1282,29 +1337,20 @@ function handleGeminiLiveMessage(data) {
 
  const serverContent = data.serverContent;
  if (!serverContent) return;
-
- if (serverContent.interrupted) {
-  stopLivePlayback();
- }
+ if (serverContent.interrupted) stopLivePlayback();
 
  if (serverContent.inputTranscription && serverContent.inputTranscription.text) {
   liveInputText += serverContent.inputTranscription.text;
   updateLiveTranscript("user", liveInputText);
  }
-
  if (serverContent.outputTranscription && serverContent.outputTranscription.text) {
   liveOutputText += serverContent.outputTranscription.text;
   updateLiveTranscript("assistant", liveOutputText);
  }
 
- const parts = serverContent.modelTurn && serverContent.modelTurn.parts
-  ? serverContent.modelTurn.parts : [];
-
+ const parts = serverContent.modelTurn && serverContent.modelTurn.parts ? serverContent.modelTurn.parts : [];
  parts.forEach(part => {
-  if (part.inlineData && part.inlineData.data) {
-   queueGeminiAudio(part.inlineData.data);
-  }
-
+  if (part.inlineData && part.inlineData.data) queueGeminiAudio(part.inlineData.data);
   if (part.text) {
    liveOutputText += part.text;
    updateLiveTranscript("assistant", liveOutputText);
@@ -1319,65 +1365,46 @@ function handleGeminiLiveMessage(data) {
 
 function updateLiveTranscript(role, text) {
  if (!text || !text.trim()) return;
-
  const chat = document.getElementById("chatMessages");
  const id = role === "user" ? "liveUserTranscript" : "liveAssistantTranscript";
-
  let message = document.getElementById(id);
-
  if (!message) {
   message = document.createElement("div");
   message.id = id;
   message.className = "chat-message " + (role === "user" ? "user" : "assistant");
   chat.appendChild(message);
  }
-
  message.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
  chat.scrollTop = chat.scrollHeight;
 }
 
 async function startLiveMicrophone() {
  if (!liveStream || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
-
  try {
-  if (!liveAudioContext) {
-   liveAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (liveAudioContext.state === "suspended") {
-   await liveAudioContext.resume();
-  }
+  if (!liveAudioContext) liveAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (liveAudioContext.state === "suspended") await liveAudioContext.resume();
 
   liveSource = liveAudioContext.createMediaStreamSource(liveStream);
   liveProcessor = liveAudioContext.createScriptProcessor(4096, 1, 1);
 
   liveProcessor.onaudioprocess = event => {
    if (!liveIsActive || !liveIsReady || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
-
    const input = event.inputBuffer.getChannelData(0);
    const resampled = resampleTo16k(input, liveAudioContext.sampleRate);
    const pcm = floatTo16BitPCM(resampled);
    const base64 = base64FromBytes(pcm);
-
    liveSocket.send(JSON.stringify({
-    realtimeInput: {
-     audio: {
-      data: base64,
-      mimeType: "audio/pcm;rate=16000"
-     }
-    }
+    realtimeInput: { audio: { data: base64, mimeType: "audio/pcm;rate=16000" } }
    }));
   };
 
   liveSource.connect(liveProcessor);
-
   const muteGain = liveAudioContext.createGain();
   muteGain.gain.value = 0;
-
   liveProcessor.connect(muteGain);
   muteGain.connect(liveAudioContext.destination);
 
   setLiveStatus("🟢 Kim đang nghe. Anh chị cứ nói tự nhiên nhé.", true);
-
  } catch (error) {
   console.error("Lỗi khởi tạo micro Live:", error);
   setLiveStatus("Không mở được micro Live: " + error.message);
@@ -1387,21 +1414,15 @@ async function startLiveMicrophone() {
 
 function queueGeminiAudio(base64) {
  if (!liveAudioContext) return;
-
  try {
   const bytes = base64ToBytes(base64);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const sampleCount = Math.floor(bytes.byteLength / 2);
   const audioBuffer = liveAudioContext.createBuffer(1, sampleCount, 24000);
   const channel = audioBuffer.getChannelData(0);
-
-  for (let i = 0; i < sampleCount; i++) {
-   channel[i] = view.getInt16(i * 2, true) / 32768;
-  }
-
+  for (let i = 0; i < sampleCount; i++) channel[i] = view.getInt16(i * 2, true) / 32768;
   liveOutputBuffers.push(audioBuffer);
   scheduleLivePlayback();
-
  } catch (error) {
   console.error("Lỗi giải mã âm thanh Gemini:", error);
  }
@@ -1409,23 +1430,17 @@ function queueGeminiAudio(base64) {
 
 function scheduleLivePlayback() {
  if (!liveAudioContext || !liveOutputBuffers.length) return;
-
  const now = liveAudioContext.currentTime;
  if (livePlaybackNextTime < now) livePlaybackNextTime = now + 0.04;
-
  while (liveOutputBuffers.length) {
   const buffer = liveOutputBuffers.shift();
   const source = liveAudioContext.createBufferSource();
-
   source.buffer = buffer;
   source.connect(liveAudioContext.destination);
-
   const startAt = Math.max(livePlaybackNextTime, liveAudioContext.currentTime + 0.01);
   source.start(startAt);
-
   livePlaybackNextTime = startAt + buffer.duration;
   livePlaybackSources.push(source);
-
   source.onended = () => {
    livePlaybackSources = livePlaybackSources.filter(item => item !== source);
    try { source.disconnect(); } catch (e) {}
@@ -1435,12 +1450,10 @@ function scheduleLivePlayback() {
 
 function stopLivePlayback() {
  liveOutputBuffers = [];
-
  livePlaybackSources.forEach(source => {
   try { source.stop(); } catch (e) {}
   try { source.disconnect(); } catch (e) {}
  });
-
  livePlaybackSources = [];
  livePlaybackNextTime = 0;
 }
@@ -1455,30 +1468,22 @@ function cleanupGeminiLive(closeSocket = true) {
   liveProcessor.onaudioprocess = null;
   liveProcessor = null;
  }
-
  if (liveSource) {
   try { liveSource.disconnect(); } catch (e) {}
   liveSource = null;
  }
-
  if (liveStream) {
-  liveStream.getTracks().forEach(track => {
-   try { track.stop(); } catch (e) {}
-  });
+  liveStream.getTracks().forEach(track => { try { track.stop(); } catch (e) {} });
   liveStream = null;
  }
-
  stopLivePlayback();
-
  if (liveAudioContext) {
   try { liveAudioContext.close(); } catch (e) {}
   liveAudioContext = null;
  }
-
  if (liveSocket) {
   const socket = liveSocket;
   liveSocket = null;
-
   if (closeSocket) {
    try {
     if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
@@ -1487,7 +1492,6 @@ function cleanupGeminiLive(closeSocket = true) {
    } catch (e) {}
   }
  }
-
  document.getElementById("liveStartBtn").disabled = false;
  document.getElementById("liveStopBtn").disabled = true;
 }
@@ -1495,27 +1499,16 @@ function cleanupGeminiLive(closeSocket = true) {
 function stopGeminiLive() {
  liveSessionGeneration++;
  cleanupGeminiLive(true);
-
  setLiveStatus("Gemini Live đã tắt. Anh chị có thể tiếp tục nhắn tin với Kim bằng Groq.");
  setStatus("Đã quay lại chế độ tư vấn Groq", "online");
 }
 
-/* =====================================================
-   LẮNG NGHE LỆNH TỪ POPUP MENU.HTML
-===================================================== */
-
 window.addEventListener("message", function(event) {
  if (event.data === "STOP_AI_AUDIO") {
   stopSpeaking();
-  if (liveIsActive || liveSocket) {
-   stopGeminiLive();
-  }
+  if (liveIsActive || liveSocket) stopGeminiLive();
  }
 });
-
-/* =====================================================
-   SCROLL & KHỞI ĐỘNG
-===================================================== */
 
 function scrollToTop() {
  window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1537,7 +1530,6 @@ window.addEventListener("DOMContentLoaded", async () => {
  setupSpeechRecognition();
  await loadCatalog();
 
- // Nếu được mở kèm ?dish=TênMón thì tự điền câu hỏi tư vấn món đó
  try {
   const params = new URLSearchParams(window.location.search);
   const dishParam = (params.get("dish") || "").trim();
