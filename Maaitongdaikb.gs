@@ -17,7 +17,8 @@
 const KB_CONFIG = {
   VERSION: "4.2",
 
-  MODEL: "llama-3.3-70b-versatile",
+  MODEL: "openai/gpt-oss-20b",
+  GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
   GROQ_URL: "https://api.groq.com/openai/v1/chat/completions",
 
   TTS_MODEL: "gemini-3.8-flash-lite-tts",
@@ -29,7 +30,7 @@ const KB_CONFIG = {
 
   SESSION_HOURS: 24,
   UPSIZE_FEE: 10000,
-  MAX_TOKENS: 500,
+  MAX_TOKENS: 350,
 
   SHEETS: {
     SESSIONS: "AI_SESSIONS",
@@ -604,41 +605,50 @@ function getGroqApiKey_() {
 }
 
 function callGroq_(messages) {
-  const response = UrlFetchApp.fetch(
-    KB_CONFIG.GROQ_URL,
-    {
-      method: "post",
-      contentType: "application/json",
-      headers: {
-        Authorization: "Bearer " + getGroqApiKey_()
-      },
-      payload: JSON.stringify({
-        model: KB_CONFIG.MODEL,
-        messages: messages,
-        max_completion_tokens: KB_CONFIG.MAX_TOKENS,
-        temperature: 0.35
-      }),
-      muteHttpExceptions: true
-    }
-  );
+  const models = Array.isArray(KB_CONFIG.GROQ_FALLBACK_MODELS) && KB_CONFIG.GROQ_FALLBACK_MODELS.length
+    ? KB_CONFIG.GROQ_FALLBACK_MODELS
+    : [KB_CONFIG.MODEL];
 
-  const code = response.getResponseCode();
-  const body = response.getContentText();
+  let lastErr = "Không gọi được Groq";
 
-  if (code < 200 || code >= 300) {
-    throw new Error(
-      "Groq HTTP " + code + ": " +
-      body.substring(0, 500)
+  for (let i = 0; i < models.length; i++) {
+    const modelName = models[i];
+    const response = UrlFetchApp.fetch(
+      KB_CONFIG.GROQ_URL,
+      {
+        method: "post",
+        contentType: "application/json",
+        headers: {
+          Authorization: "Bearer " + getGroqApiKey_()
+        },
+        payload: JSON.stringify({
+          model: modelName,
+          messages: messages,
+          max_completion_tokens: KB_CONFIG.MAX_TOKENS,
+          temperature: 0.35
+        }),
+        muteHttpExceptions: true
+      }
     );
+
+    const code = response.getResponseCode();
+    const body = response.getContentText();
+
+    if (code >= 200 && code < 300) {
+      const data = kbParseJson_(body, {});
+      const content = data.choices &&
+        data.choices[0] &&
+        data.choices[0].message
+        ? kbText_(data.choices[0].message.content)
+        : "";
+      if (content) return content;
+      lastErr = "Groq (" + modelName + ") trả về nội dung rỗng";
+    } else {
+      lastErr = "Groq (" + modelName + ") HTTP " + code + ": " + body.substring(0, 300);
+    }
   }
 
-  const data = JSON.parse(body);
-
-  return data.choices &&
-    data.choices[0] &&
-    data.choices[0].message
-    ? kbText_(data.choices[0].message.content)
-    : "";
+  throw new Error(lastErr);
 }
 
 function testGroqConnection() {
@@ -661,7 +671,7 @@ function testGroqConnection() {
 
 function kbCallGeminiFallback_(systemPrompt, userMessage) {
   const apiKey = getGeminiApiKey_();
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  const models = ["gemini-3.8-flash", "gemini-4-hydrogen", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
   let lastErr = "Không gọi được Gemini dự phòng";
 
   for (let i = 0; i < models.length; i++) {
@@ -671,7 +681,7 @@ function kbCallGeminiFallback_(systemPrompt, userMessage) {
     const payload = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.5, maxOutputTokens: 350 }
+      generationConfig: { temperature: 0.5, maxOutputTokens: KB_CONFIG.MAX_TOKENS }
     };
 
     const res = UrlFetchApp.fetch(url, {
@@ -687,10 +697,11 @@ function kbCallGeminiFallback_(systemPrompt, userMessage) {
     if (code >= 200 && code < 300 && json.candidates && json.candidates[0] &&
         json.candidates[0].content && json.candidates[0].content.parts &&
         json.candidates[0].content.parts[0]) {
-      return kbText_(json.candidates[0].content.parts[0].text);
+      const txt = kbText_(json.candidates[0].content.parts[0].text);
+      if (txt) return txt;
     }
 
-    lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini HTTP " + code);
+    lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini (" + models[i] + ") HTTP " + code);
   }
 
   throw new Error(lastErr);
@@ -812,7 +823,7 @@ function kbAdvisorChat_(data) {
     "Tuyệt đối KHÔNG bịa tên món, giá, khuyến mãi ngoài thực đơn.",
     "Nếu sản phẩm hết hàng phải báo rõ.",
     "Không tự tạo đơn, không xin SĐT/địa chỉ, không hướng dẫn thanh toán.",
-    "Trả lời ngắn gọn 2 đến 4 câu, dễ nghe khi đọc thành tiếng.",
+    "Nếu khách hỏi 1 món: tư vấn 2 đến 4 câu đầy đủ hương vị, giá và gợi ý 1-2 topping hợp. Nếu khách hỏi cả nhóm món: liệt kê gọn các món nổi bật kèm giá.",
     "",
     kbFormatCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []),
     "",
@@ -831,13 +842,21 @@ function kbAdvisorChat_(data) {
     if (!reply) throw new Error("Groq trả về rỗng");
   } catch (groqErr) {
     usedProvider = "gemini_fallback";
-    reply = kbCallGeminiFallback_(system, message);
+    try {
+      reply = kbCallGeminiFallback_(system, message);
+    } catch (geminiErr) {
+      throw new Error(
+        "Groq lỗi: " + (groqErr && groqErr.message ? groqErr.message : groqErr) +
+        " | Gemini lỗi: " + (geminiErr && geminiErr.message ? geminiErr.message : geminiErr)
+      );
+    }
   }
 
   let ttsAudioBase64 = "";
   let ttsMimeType = "audio/wav";
+  const ttsAttempted = !!data.withAudio;
 
-  if (data.withAudio) {
+  if (ttsAttempted) {
     try {
       const tts = kbTextToSpeech_(reply, kbText_(data.voiceName || "Charon"));
       if (tts && tts.success && tts.audioBase64) {
@@ -853,6 +872,7 @@ function kbAdvisorChat_(data) {
     success: true,
     reply: reply,
     provider: usedProvider,
+    ttsAttempted: ttsAttempted,
     ttsAudioBase64: ttsAudioBase64,
     ttsMimeType: ttsMimeType,
     products: matched,

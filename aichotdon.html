@@ -15,7 +15,7 @@ button{cursor:pointer}
 header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0}
 .header-title{font-weight:800;color:white}
 .header-subtitle{margin-top:4px;color:#ffe4e4}
-#statusBar{background:white;padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;color:#666}
+#statusBar{position:sticky;top:0;z-index:60;background:white;padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;color:#666;box-shadow:0 1px 4px rgba(0,0,0,.04)}
 .status-dot{width:9px;height:9px;border-radius:50%;background:#999;flex-shrink:0}
 .status-dot.online{background:#2e7d32}
 .status-dot.error{background:#d32f2f}
@@ -847,6 +847,10 @@ async function processMessage(question) {
 
   if (ttsBase64) {
    await playBase64Audio(ttsBase64, ttsMime, reply);
+  } else if (result.ttsAttempted) {
+   stopSpeaking();
+   currentSpeechText = reply;
+   speakViaGoogleOrNative(reply, speechGeneration);
   } else {
    await speakText(reply);
   }
