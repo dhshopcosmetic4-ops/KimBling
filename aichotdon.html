@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tổng Đài Kim Bling - Nhân Viên Kim</title>
+    <title>Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -57,7 +57,7 @@
         }
         #status-text {
             font-size: 13px;
-            color: #d32f2f;
+            color: #2e7d32;
             font-weight: bold;
         }
         .btn-group {
@@ -126,23 +126,23 @@
 <body>
 
 <header>
-    🤖 Tổng Đài Kim Bling - Nhân Viên Kim
+    🤖 Tổng Đài Kim Bling - Chuyên Gia Chốt Đơn
 </header>
 
 <div id="chat-box">
-    <div class="msg assistant">Dạ... chào anh chị! Em là Kim - nhân viên tổng đài của Kim Bling Coffee & Tea ở M9 Cư xá Phú Lâm A. Em đang kết nối lấy thực đơn từ Google Sheets, anh chị chờ xíu nhé! ❤️</div>
+    <div class="msg assistant">Dạ chào anh chị. Tôi là tổng đài viên của Kim Bling Coffee & Tea (M9 Cư xá Phú Lâm A). Anh chị cần tra cứu thực đơn hoặc đặt món nào, xin vui lòng cho biết chi tiết.</div>
 </div>
 
 <div id="control-area">
     <div class="top-control">
-        <span id="status-text">Đang kết nối Google Sheets...</span>
+        <span id="status-text">Hệ thống chuyên môn sẵn sàng.</span>
         <div class="btn-group">
             <button class="test-btn" onclick="testSpeaker()">🔊 Nghe Thử</button>
             <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎤</button>
         </div>
     </div>
     <div class="input-row">
-        <input type="text" id="userInput" placeholder="Nhập món cần hỏi/đặt..." onkeyup="if(event.key==='Enter') sendText()">
+        <input type="text" id="userInput" placeholder="Nhập tên món hoặc yêu cầu đặt hàng..." onkeyup="if(event.key==='Enter') sendText()">
         <button onclick="sendText()">Gửi</button>
     </div>
 </div>
@@ -156,38 +156,26 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0
 let activeModel = null;
 let isRecording = false;
 let recognition = null;
-let rawMenuData = ""; 
-
-// Biến lưu trữ menu tải từ Sheet
-let loadedMenuArray = [];
+let globalMenuArray = []; 
+let fullMenuText = "";
 
 async function initMenuSync() {
     try {
-        document.getElementById('status-text').innerText = "Đang tải menu từ POS_Data...";
-        
         let res = await fetch(GOOGLE_SCRIPT_URL + "?type=getMenu");
         let data = await res.json();
-        
         if (data) {
             let menuArray = data.menu || data;
             if (typeof menuArray === 'string') {
                 try { menuArray = JSON.parse(menuArray); } catch(e){}
             }
-            
             if (Array.isArray(menuArray) && menuArray.length > 0) {
-                loadedMenuArray = menuArray;
-                rawMenuData = menuArray.map(item => `- ${item.name}: ${item.price ? item.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'} (Danh mục: ${item.category || 'Khác'})`).join("\n");
-                
-                document.getElementById('status-text').style.color = "#2e7d32";
-                document.getElementById('status-text').innerText = "Đã tải xong menu từ Sheet! Sẵn sàng.";
-                
-                addMessage("Dạ em đã lấy xong toàn bộ thực đơn từ Google Sheets rồi anh chị ơi! Anh chị muốn hỏi món nào cứ báo em nha ❤️", "assistant");
+                globalMenuArray = menuArray;
+                fullMenuText = menuArray.map(item => `- ${item.name}: ${item.price ? item.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ'} (${item.category || 'Món'})`).join("\n");
+                document.getElementById('status-text').innerText = "Đã đồng bộ dữ liệu POS_Data thành công.";
             }
         }
     } catch (e) {
-        console.error("Lỗi tải menu:", e);
-        document.getElementById('status-text').style.color = "#d32f2f";
-        document.getElementById('status-text').innerText = "Lỗi kết nối Google Sheets!";
+        console.error("Lỗi đồng bộ menu:", e);
     }
 }
 
@@ -212,7 +200,7 @@ function speakText(text) {
 }
 
 function testSpeaker() {
-    speakText("Dạ hihi, tổng đài Kim Bling đã sẵn sàng chốt đơn!");
+    speakText("Hệ thống tổng đài Kim Bling đã sẵn sàng tiếp nhận đơn hàng.");
 }
 
 async function getAvailableModel() {
@@ -292,24 +280,24 @@ let chatHistory = [];
 
 async function processMessage(text, shouldSpeak) {
     addMessage(text, 'user');
-    document.getElementById('status-text').innerText = "AI đang xử lý...";
+    document.getElementById('status-text').innerText = "Đang xử lý dữ liệu đơn hàng...";
 
     try {
         const modelToUse = await getAvailableModel();
         
-        // Đưa trực tiếp menu động vào System Prompt mỗi lần gửi tin để đảm bảo AI đọc đúng 100%
-        let dynamicPrompt = `Bạn tên là Kim, nhân viên tổng đài của quán 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM.
-DƯỚI ĐÂY LÀ TOÀN BỘ DANH SÁCH THỰC ĐƠN ĐƯỢC TẢI TRỰC TIẾP TỪ GOOGLE SHEETS:
-` + (rawMenuData || "Đang tải menu...") + `
+        let professionalSystemPrompt = `Bạn là nhân viên tổng đài chuyên nghiệp của hệ thống F&B 'Kim Bling Coffee & Tea' tại M9 Cư xá Phú Lâm A, TP.HCM.
 
-QUY TẮC BẮT BUỘC:
-1. XƯNG HÔ: Gọi khách là 'anh chị', xưng 'em'. Ngọt ngào, lanh lẹ (văn nói miền Nam, có 'hihi'). Cấm dùng 'tôi', 'bạn'.
-2. KHI KHÁCH HỎI MÓN HOẶC HỎI GIÁ: Phải đối chiếu với danh sách thực đơn ở trên để đọc đúng tên món và giá tiền. Nếu khách hỏi chung chung như 'ăn vặt', hãy liệt kê vài món ăn vặt có trong danh sách.
-3. KHI KHÁCH HỎI MÓN KHÔNG CÓ TRONG THỰC ĐƠN: Báo là quán không có và gợi ý món khác.
-4. NGẮN GỌN: Trả lời từ 1-3 câu súc tích.`;
+THỰC ĐƠN ĐỒ UỐNG VÀ ĐỒ ĂN VẶT TỪ HỆ THỐNG GOOGLE SHEETS:
+` + (fullMenuText || "Đang cập nhật thực đơn...") + `
+
+QUY TẮC NGHIỆP VỤ BẮT BUỘC:
+1. XƯNG HÔ & TÁC phong: Xưng 'em', gọi khách là 'anh chị'. Tác phong lịch sự, chuẩn mực, ngắn gọn, đi thẳng vào trọng tâm chuyên môn. Tuyệt đối không dùng từ lóng, không dùng từ 'hihi', không cười cợt hoặc đùa giỡn.
+2. TRA CỨU & BÁO GIÁ CHÍNH XÁC: Khi khách hỏi bất kỳ món nào (có dấu hoặc không dấu), phải đối chiếu trực tiếp với thực đơn phía trên để cung cấp chính xác tên món và mức giá niêm yết.
+3. QUY TRÌNH CHỐT ĐƠN: Khi khách xác nhận mua món, yêu cầu cung cấp ngay số lượng, số điện thoại và địa chỉ nhận hàng để lên đơn.
+4. TÍNH CHÍNH XÁC CAO: Không tự bịa đặt món hoặc giá tiền không có trong hệ thống. Trả lời súc tích từ 1 đến 2 câu.`;
 
         let messagesToSend = [
-            { role: "system", content: dynamicPrompt },
+            { role: "system", content: professionalSystemPrompt },
             ...chatHistory,
             { role: "user", content: text }
         ];
@@ -323,13 +311,13 @@ QUY TẮC BẮT BUỘC:
             body: JSON.stringify({
                 model: modelToUse,
                 messages: messagesToSend,
-                max_tokens: 250,
-                temperature: 0.3
+                max_tokens: 200,
+                temperature: 0.1
             })
         });
 
         const data = await response.json();
-        let reply = "Dạ quán mình có nha anh chị ơi!";
+        let reply = "Dạ, anh chị vui lòng cho em biết tên món cần đặt để em kiểm tra kho và báo giá ạ.";
         if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
             reply = data.choices[0].message.content.trim();
         }
@@ -351,7 +339,7 @@ QUY TẮC BẮT BUỘC:
 
     } catch (e) {
         console.error(e);
-        const errReply = "Dạ mạng hơi chậm, anh chị nhắn lại giúp em nhé!";
+        const errReply = "Dạ hệ thống đang gián đoạn kết nối, anh chị vui lòng nhắn lại giúp em ạ.";
         addMessage(errReply, 'assistant');
         speakText(errReply);
     }
