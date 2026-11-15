@@ -736,7 +736,7 @@ function kbTextToSpeech_(text, voiceName, customStyle) {
     body = response.getContentText();
   }
 
-  // Nếu vẫn lỗi do speechMetadata, thử lại dạng chỉ dẫn trong text
+  // Nếu vẫn lỗi do speechMetadata, thử lại dạng mặc định
   if (code < 200 || code >= 300) {
     const fallbackPayload = {
       contents: [
@@ -852,22 +852,38 @@ function kbAdvisorChat_(data) {
       " | " + (p.isSoldOut ? "Hết hàng" : "Còn hàng");
   }).join("\n");
 
+  const drinkToppingsText = (catalog.drinkToppings || []).map(function(t) {
+    return "- " + kbItemName_(t) + ": +" +
+      kbItemPrice_(t).toLocaleString("vi-VN") + "đ" +
+      (kbItemSoldOut_(t) ? " (HẾT HÀNG)" : "");
+  }).join("\n");
+
+  const snackToppingsText = (catalog.snackToppings || []).map(function(t) {
+    return "- " + kbItemName_(t) + ": +" +
+      kbItemPrice_(t).toLocaleString("vi-VN") + "đ" +
+      (kbItemSoldOut_(t) ? " (HẾT HÀNG)" : "");
+  }).join("\n");
+
   const system = [
-    "Bạn là trợ lý tư vấn đồ uống và ăn vặt của KIM BLING COFFEE & TEA.",
+    "Bạn là Kim, nhân viên tư vấn đồ uống và ăn vặt của KIM BLING COFFEE & TEA.",
     "Luôn trả lời bằng tiếng Việt miền Nam tự nhiên, thân thiện, lễ phép.",
-    "Gọi khách là anh chị, không gọi là bạn.",
-    "Chỉ tư vấn sản phẩm có trong danh mục thực tế.",
-    "Không tự bịa tên món, giá, thành phần, topping, khuyến mãi.",
-    "Không chắc thông tin thì nói rõ chưa có dữ liệu.",
-    "Nếu khách hỏi giá, chỉ dùng giá trong danh mục.",
-    "Nếu sản phẩm hết hàng, phải thông báo rõ.",
-    "Không tự tạo đơn, không xin số điện thoại, không xin địa chỉ.",
-    "Không nói đã đặt hàng hoặc đã lưu đơn.",
-    "Không hướng dẫn khách thanh toán trong cuộc trò chuyện này.",
+    "LUÔN xưng là 'em' và gọi khách là 'anh chị'. Tuyệt đối KHÔNG xưng 'tôi', 'chúng tôi', 'mình' và KHÔNG gọi khách là 'bạn'.",
+    "Chỉ tư vấn món và topping có trong danh mục thực tế bên dưới.",
+    "Quán CÓ bán các topping chọn thêm theo đúng danh sách TOPPING ĐỒ UỐNG và TOPPING ĂN VẶT bên dưới (KHÔNG được nói 'không có topping' nếu danh sách có món).",
+    "Khi tư vấn món, nếu phù hợp hãy gợi ý thêm 1-2 topping kèm đúng giá trong danh sách.",
+    "Không tự bịa tên món, giá, thành phần, topping, khuyến mãi ngoài danh sách.",
+    "Nếu sản phẩm hoặc topping ghi HẾT HÀNG, phải thông báo rõ.",
+    "Không tự tạo đơn, không xin số điện thoại, không xin địa chỉ, không hướng dẫn thanh toán trong chat này.",
     "Mỗi câu trả lời khoảng 1 đến 3 câu, dễ nghe khi đọc thành tiếng.",
     "",
-    "DANH MỤC SẢN PHẨM:",
+    "DANH MỤC MÓN CHÍNH (POS_Data):",
     kbCatalogText_(catalog),
+    "",
+    "TOPPING ĐỒ UỐNG (POS_Data):",
+    drinkToppingsText || "(Chưa có dữ liệu topping nước)",
+    "",
+    "TOPPING ĂN VẶT (POS_Data):",
+    snackToppingsText || "(Chưa có dữ liệu topping ăn vặt)",
     "",
     "CÁC SẢN PHẨM PHÙ HỢP VỚI CÂU HỎI:",
     matchedText || "Chưa xác định được sản phẩm phù hợp.",
@@ -941,13 +957,13 @@ function kbBuildLiveSystemInstruction_() {
   }).join("\n");
 
   const drinkToppingsText = (catalog.drinkToppings || []).map(function(item) {
-    return "- " + kbItemName_(item) + ": " +
+    return "- " + kbItemName_(item) + ": +" +
       kbItemPrice_(item).toLocaleString("vi-VN") + "đ" +
       (kbItemSoldOut_(item) ? " (TẠM HẾT)" : "");
   }).join("\n");
 
   const snackToppingsText = (catalog.snackToppings || []).map(function(item) {
-    return "- " + kbItemName_(item) + ": " +
+    return "- " + kbItemName_(item) + ": +" +
       kbItemPrice_(item).toLocaleString("vi-VN") + "đ" +
       (kbItemSoldOut_(item) ? " (TẠM HẾT)" : "");
   }).join("\n");
@@ -1964,12 +1980,12 @@ function doPost(e) {
 
     switch (action) {
 
-      // API MỚI: LẤY DANH MỤC SẢN PHẨM
+      // API MỚI: LẤY DANH MỤC SẢN PHẨM + TOPPING
       case "get_catalog":
         result = kbGetCatalogAPI_();
         break;
 
-      // API MỚI: TƯ VẤN BẰNG GROQ (+ KÈM ÂM THANH GEMINI TTS NẾU CHỌN)
+      // API MỚI: TƯ VẤN BẰNG GROQ (+ KÈM ÂM THANH GEMINI TTS)
       case "advisor_chat":
         result = kbAdvisorChat_(data);
         break;

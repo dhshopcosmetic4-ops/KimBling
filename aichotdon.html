@@ -12,26 +12,67 @@ body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
 *{font-size:16px!important}
 button,input,select{font-family:inherit}
 button{cursor:pointer}
-header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0}
+header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0}
 .header-title{font-weight:800;color:white}
-.header-subtitle{margin-top:5px;color:#ffe4e4}
+.header-subtitle{margin-top:4px;color:#ffe4e4}
 #statusBar{background:white;padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px;color:#666}
 .status-dot{width:9px;height:9px;border-radius:50%;background:#999;flex-shrink:0}
 .status-dot.online{background:#2e7d32}
 .status-dot.error{background:#d32f2f}
 #statusText{flex:1}
 #mainContent{width:100%;max-width:850px;margin:0 auto;padding:14px;flex:1}
-.welcome-card{background:white;border-radius:16px;padding:16px;margin-top:16px;margin-bottom:14px;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+
+/* CHAT SECTION ON TOP */
+#chatSection{margin-top:0;margin-bottom:16px;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
+#chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:430px;overflow-y:auto;background:#fff}
+.chat-message{max-width:88%;padding:12px 14px;border-radius:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-message.assistant{align-self:flex-start;color:#333;background:#f1f3f5;border-bottom-left-radius:4px}
+.chat-message.user{align-self:flex-end;color:white;background:#d32f2f;border-bottom-right-radius:4px}
+.message-tools{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.message-tools button{border:1px solid #ddd;background:white;color:#444;padding:7px 11px;border-radius:18px;font-weight:600}
+.message-tools .buy-inline-btn{background:#d32f2f;color:#fff;border-color:#d32f2f;font-weight:700}
+.message-tools .buy-inline-btn:active{background:#b71c1c}
+#chatInputArea{border-top:1px solid #eee;padding:12px;background:white}
+#chatInputRow{display:flex;align-items:center;gap:8px}
+#userInput{min-width:0;flex:1;height:46px;padding:0 14px;border:1px solid #ddd;border-radius:24px;outline:none;background:white;color:#222}
+#userInput:focus{border-color:#d32f2f}
+.action-button{min-width:46px;height:46px;border:0;border-radius:50%;color:white;background:#d32f2f;display:flex;align-items:center;justify-content:center;font-weight:700}
+#sendBtn{border-radius:24px;padding:0 17px;min-width:65px}
+#micBtn{background:#2e7d32}
+#micBtn.listening{animation:pulse 1.3s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,50,.5)}70%{box-shadow:0 0 0 11px rgba(46,125,50,0)}100%{box-shadow:0 0 0 0 rgba(46,125,50,0)}}
+.voice-select-row{margin-top:10px;display:flex;gap:8px;align-items:center}
+#voiceSelect{flex:1;min-width:0;height:42px;padding:0 12px;border:1px solid #ddd;border-radius:20px;background:#fafafa;color:#333;font-weight:600;outline:none}
+.voice-tools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.voice-tools button{border:1px solid #ddd;background:#fafafa;color:#444;padding:9px 12px;border-radius:20px;font-weight:600}
+.voice-tools button:active{background:#eee}
+.loading{color:#888;font-style:italic}
+
+/* GEMINI LIVE */
+#livePanel{margin:12px 0 0;padding:12px;border:1px solid #e6c5c5;border-radius:13px;background:#fffafa}
+#liveStatus{font-size:14px!important;color:#666;line-height:1.5;margin-bottom:9px}
+#liveStatus.active{color:#2e7d32;font-weight:700}
+#liveButtons{display:flex;gap:8px;flex-wrap:wrap}
+#liveStartBtn,#liveStopBtn{border:0;border-radius:22px;padding:11px 14px;font-weight:800}
+#liveStartBtn{background:#7b1fa2;color:white}
+#liveStopBtn{background:#555;color:white}
+#liveStopBtn:disabled{opacity:.4}
+.live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
+
+/* WELCOME & QUICK ASK */
+.welcome-card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;border:1px solid #eee;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .welcome-title{font-weight:800;color:#b71c1c;margin-bottom:8px}
 .welcome-text{color:#555;line-height:1.5}
-.quick-title{font-weight:800;margin:18px 0 10px}
+.quick-title{font-weight:800;margin:16px 0 10px}
 .quick-list{display:flex;flex-wrap:wrap;gap:8px}
 .quick-btn{border:1px solid #efb4b4;background:white;color:#b71c1c;padding:9px 13px;border-radius:22px;font-weight:600}
 .quick-btn:active{background:#ffebee}
+
+/* CATALOG & TOPPING */
 .section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 12px;font-weight:800}
 #productCount,#toppingCount{color:#777;font-weight:400}
 #productGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-#toppingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .product-card{min-width:0;background:white;border:1px solid #eee;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.04)}
 .product-image-wrap{width:100%;aspect-ratio:1/1;background:#f2f2f2;overflow:hidden;position:relative}
 .product-image{width:100%;height:100%;object-fit:cover;display:block}
@@ -45,35 +86,14 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16
 .consult-btn{color:#b71c1c;background:#ffebee}
 .buy-btn{color:white;background:#d32f2f}
 .product-actions button:disabled{opacity:.45;cursor:not-allowed}
-.topping-card{min-width:0;background:white;border:1px solid #eee;border-radius:12px;padding:11px;box-shadow:0 2px 6px rgba(0,0,0,.04);display:flex;flex-direction:column;justify-content:space-between;gap:4px}
-.topping-card.is-sold-out{opacity:.55}
-.topping-name{font-weight:700;color:#222;line-height:1.35;overflow-wrap:anywhere}
-.topping-group{font-size:13px!important;color:#888}
-.topping-price{font-weight:800;color:#d32f2f;margin-top:2px}
-#chatSection{margin-top:0;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
-#chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:150px;max-height:430px;overflow-y:auto;background:#fff}
-.chat-message{max-width:88%;padding:12px 14px;border-radius:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
-.chat-message.assistant{align-self:flex-start;color:#333;background:#f1f3f5;border-bottom-left-radius:4px}
-.chat-message.user{align-self:flex-end;color:white;background:#d32f2f;border-bottom-right-radius:4px}
-.message-tools{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;align-items:center}
-.message-tools button{border:1px solid #ddd;background:white;color:#555;padding:7px 10px;border-radius:18px}
-.message-tools a.buy-inline-btn{border:1px solid #d32f2f;background:#d32f2f;color:white;padding:7px 12px;border-radius:18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
-.message-tools a.buy-inline-btn:active{opacity:.85}
-#chatInputArea{border-top:1px solid #eee;padding:12px;background:white}
-#chatInputRow{display:flex;align-items:center;gap:8px}
-#userInput{min-width:0;flex:1;height:46px;padding:0 14px;border:1px solid #ddd;border-radius:24px;outline:none;background:white;color:#222}
-#userInput:focus{border-color:#d32f2f}
-.action-button{min-width:46px;height:46px;border:0;border-radius:50%;color:white;background:#d32f2f;display:flex;align-items:center;justify-content:center;font-weight:700}
-#sendBtn{border-radius:24px;padding:0 17px;min-width:65px}
-#micBtn{background:#2e7d32}
-#micBtn.listening{animation:pulse 1.3s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,50,.5)}70%{box-shadow:0 0 0 11px rgba(46,125,50,0)}100%{box-shadow:0 0 0 0 rgba(46,125,50,0)}}
-.voice-tools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
-.voice-tools button,.voice-tools select{border:1px solid #ddd;background:#fafafa;color:#444;padding:9px 12px;border-radius:20px}
-.voice-tools button:active{background:#eee}
-#ttsVoiceSelect{max-width:100%}
-.loading{color:#888;font-style:italic}
+
+#toppingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.topping-card{background:white;border:1px solid #eee;border-radius:12px;padding:11px;box-shadow:0 2px 6px rgba(0,0,0,.03);display:flex;flex-direction:column;justify-content:space-between;gap:8px}
+.topping-name{font-weight:800;color:#222;line-height:1.35}
+.topping-group{color:#777}
+.topping-price{color:#d32f2f;font-weight:800}
+.topping-ask-btn{width:100%;border:0;border-radius:8px;padding:8px 6px;background:#ffebee;color:#b71c1c;font-weight:700}
+
 .empty-state{grid-column:1/-1;text-align:center;padding:25px 12px;color:#888;background:white;border-radius:12px}
 footer{padding:18px 12px;text-align:center;color:#888}
 .scroll-control{position:fixed;right:14px;z-index:9999;width:46px;height:46px;border:none;border-radius:50%;background:#d32f2f;color:white;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:23px!important;font-weight:bold}
@@ -81,16 +101,6 @@ footer{padding:18px 12px;text-align:center;color:#888}
 #scrollBottomBtn{bottom:68px}
 .scroll-control:active{transform:scale(.92)}
 
-/* GEMINI LIVE */
-#livePanel{margin:12px 0 0;padding:12px;border:1px solid #e6c5c5;border-radius:13px;background:#fffafa}
-#liveStatus{font-size:14px!important;color:#666;line-height:1.5;margin-bottom:9px}
-#liveStatus.active{color:#2e7d32;font-weight:700}
-#liveButtons{display:flex;gap:8px;flex-wrap:wrap}
-#liveStartBtn,#liveStopBtn{border:0;border-radius:22px;padding:11px 14px;font-weight:800}
-#liveStartBtn{background:#7b1fa2;color:white}
-#liveStopBtn{background:#555;color:white}
-#liveStopBtn:disabled{opacity:.4}
-.live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
 @media(max-width:360px){
  #mainContent{padding:10px}
  #productGrid,#toppingGrid{gap:8px}
@@ -114,13 +124,12 @@ footer{padding:18px 12px;text-align:center;color:#888}
 
 <main id="mainContent">
 
+ <!-- MỤC TRÒ CHUYỆN VỚI KIM ĐƯA LÊN ĐẦU TRANG -->
  <section id="chatSection">
   <div class="chat-heading">💬 Trò chuyện với Kim</div>
 
   <div id="chatMessages">
-   <div class="chat-message assistant">
-    Dạ em chào anh chị! Em là Kim đây ạ. Anh chị muốn uống món gì hôm nay, để em tư vấn nha ❤️
-   </div>
+   <div class="chat-message assistant">Dạ em chào anh chị! Em là Kim đây ạ. Anh chị muốn uống món gì hôm nay, để em tư vấn nha ❤️</div>
   </div>
 
   <div id="chatInputArea">
@@ -130,14 +139,17 @@ footer{padding:18px 12px;text-align:center;color:#888}
     <button id="sendBtn" class="action-button" onclick="sendMessage()">Gửi</button>
    </div>
 
-   <div class="voice-tools">
-    <select id="ttsVoiceSelect" onchange="onVoiceChange()" title="Chọn giọng đọc tư vấn">
+   <div class="voice-select-row">
+    <select id="voiceSelect" onchange="saveVoicePreference()" title="Chọn giọng đọc">
      <option value="Charon">🎙️ Nam miền Nam (Trầm ấm)</option>
-     <option value="Puck">🎙️ Nam miền Nam (Trẻ trung)</option>
-     <option value="Fenrir">🎙️ Nam miền Nam (Rõ nét)</option>
-     <option value="Kore">🎙️ Nữ miền Nam (Dịu dàng)</option>
-     <option value="google_translate">🌐 Google Translate (Nữ mặc định)</option>
+     <option value="Puck">🎙️ Nam miền Nam (Rõ nét)</option>
+     <option value="Fenrir">🎙️ Nam miền Nam (Mạnh mẽ)</option>
+     <option value="Kore">🎙️ Nữ miền Nam (Ngọt ngào)</option>
+     <option value="google_translate">🎙️ Giọng Google Phổ Thông</option>
     </select>
+   </div>
+
+   <div class="voice-tools">
     <button onclick="testSpeaker()">🔊 Nghe thử giọng đọc</button>
     <button onclick="stopSpeaking()">⏹ Dừng đọc</button>
    </div>
@@ -168,7 +180,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
    <button class="quick-btn" onclick="quickAsk('Quán có những món cà phê nào?')">☕ Cà phê</button>
    <button class="quick-btn" onclick="quickAsk('Giới thiệu các món ăn vặt của quán')">🍟 Ăn vặt</button>
    <button class="quick-btn" onclick="quickAsk('Tư vấn các món yogurt nhé')">🥤 Yogurt</button>
-   <button class="quick-btn" onclick="quickAsk('Quán có những loại topping nào và giá bao nhiêu?')">✨ Topping</button>
+   <button class="quick-btn" onclick="quickAsk('Quán có những loại topping nào cho nước uống và đồ ăn vặt vậy em?')">🍡 Topping</button>
   </div>
  </section>
 
@@ -181,18 +193,18 @@ footer{padding:18px 12px;text-align:center;color:#888}
   <div class="empty-state">Đang tải thực đơn từ Google Sheets...</div>
  </div>
 
- <div class="section-heading" id="toppingHeading" style="display:none">
-  <span>🧋 Topping chọn thêm</span>
-  <span id="toppingCount">0 món</span>
+ <div class="section-heading" id="toppingHeading" style="display:none;">
+  <span>🍡 Topping & Gia vị thêm</span>
+  <span id="toppingCount"></span>
  </div>
 
- <div id="toppingGrid" style="display:none"></div>
+ <div id="toppingGrid"></div>
 
 </main>
 
 <footer>KIM BLING COFFEE & TEA ❤️</footer>
 
-<audio id="audioPlayer" preload="auto" playsinline referrerpolicy="no-referrer"></audio>
+<audio id="audioPlayer" preload="auto" playsinline webkit-playsinline></audio>
 
 <button id="scrollTopBtn" class="scroll-control" onclick="scrollToTop()" title="Lên đầu trang">⬆</button>
 <button id="scrollBottomBtn" class="scroll-control" onclick="scrollToBottom()" title="Xuống cuối trang">⬇</button>
@@ -200,35 +212,28 @@ footer{padding:18px 12px;text-align:center;color:#888}
 <script>
 /* =====================================================
    KIM BLING AI - FRONTEND
-   Compatible: Ma.gs v4.2 + menu.html (?tiktok=...)
-   Groq + Gemini TTS + Gemini Live + POS_Data Toppings
+   Compatible: Ma.gs v4.2 (Groq + Gemini TTS + Gemini Live)
+   Hỗ trợ chạy độc lập hoặc Popup TikTok trong menu.html
 ===================================================== */
 
 const API_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
 const MENU_URL = "menu.html";
-const SILENT_WAV = "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==";
-
-const TTS_STYLES = {
- Charon: "Giọng nam miền Nam Việt Nam tự nhiên, trầm ấm, thân thiện, gần gũi như nhân viên quán cà phê đang tư vấn khách.",
- Puck: "Giọng nam miền Nam Việt Nam trẻ trung, vui vẻ, nhiệt tình, tự nhiên và rõ chữ.",
- Fenrir: "Giọng nam miền Nam Việt Nam rõ nét, chững chạc, lịch sự và dễ nghe.",
- Kore: "Giọng nữ miền Nam Việt Nam nhẹ nhàng, ngọt ngào, thân thiện và tự nhiên."
-};
+const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
 let catalogProducts = [];
-let catalogDrinkToppings = [];
-let catalogSnackToppings = [];
 let displayedProducts = [];
+let drinkToppingsList = [];
+let snackToppingsList = [];
 let selectedProduct = null;
 let isSending = false;
 
-/* TTS State */
+/* Audio & TTS */
 let speechQueue = [];
 let isSpeaking = false;
 let currentSpeechText = "";
 let speechGeneration = 0;
 let audioUnlocked = false;
-const ttsAudioCache = new Map();
+let currentBlobUrl = "";
 
 /* Web Speech API */
 let recognition = null;
@@ -249,68 +254,9 @@ let liveOutputText = "";
 let liveInputText = "";
 let liveStarting = false;
 let liveSessionGeneration = 0;
-let liveUserMsgEl = null;
-let liveAssistantMsgEl = null;
 
 /* =====================================================
-   MỞ KHÓA ÂM THANH SAFARI IOS
-===================================================== */
-
-function unlockAudioPlayer() {
- const audio = document.getElementById("audioPlayer");
- if (!audio) return;
-
- try {
-  if (!audioUnlocked) {
-   audio.muted = true;
-   audio.src = SILENT_WAV;
-   const playPromise = audio.play();
-   if (playPromise && typeof playPromise.then === "function") {
-    playPromise.then(() => {
-     audio.pause();
-     audio.currentTime = 0;
-     audio.muted = false;
-     audioUnlocked = true;
-    }).catch(() => {
-     audio.muted = false;
-    });
-   } else {
-    audio.muted = false;
-    audioUnlocked = true;
-   }
-  }
- } catch (e) {
-  audio.muted = false;
- }
-}
-
-function getSelectedVoice() {
- const sel = document.getElementById("ttsVoiceSelect");
- return sel ? sel.value : "Charon";
-}
-
-function getSelectedTtsStyle(voiceName) {
- return TTS_STYLES[voiceName] || TTS_STYLES.Charon;
-}
-
-function onVoiceChange() {
- const voice = getSelectedVoice();
- try { localStorage.setItem("kb_tts_voice", voice); } catch (e) {}
- ttsAudioCache.clear();
-}
-
-function restoreVoicePreference() {
- try {
-  const saved = localStorage.getItem("kb_tts_voice");
-  const sel = document.getElementById("ttsVoiceSelect");
-  if (saved && sel && Array.from(sel.options).some(o => o.value === saved)) {
-   sel.value = saved;
-  }
- } catch (e) {}
-}
-
-/* =====================================================
-   API & CHUẨN HÓA LINK MENU TIKTOK
+   API & TIỆN ÍCH
 ===================================================== */
 
 async function callAPI(payload) {
@@ -330,55 +276,69 @@ async function callAPI(payload) {
 function setStatus(message, type = "normal") {
  const text = document.getElementById("statusText");
  const dot = document.getElementById("statusDot");
- text.textContent = message;
- dot.className = "status-dot";
- if (type === "online") dot.classList.add("online");
- if (type === "error") dot.classList.add("error");
+ if (text) text.textContent = message;
+ if (dot) {
+  dot.className = "status-dot";
+  if (type === "online") dot.classList.add("online");
+  if (type === "error") dot.classList.add("error");
+ }
 }
 
 function setLiveStatus(message, active = false) {
  const el = document.getElementById("liveStatus");
+ if (!el) return;
  el.textContent = message;
  el.classList.toggle("active", !!active);
 }
 
-function normalizeVietnamese(str) {
- return String(str || "")
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .replace(/đ/g, "d")
-  .replace(/Đ/g, "D")
-  .toLowerCase()
-  .trim();
+function getSelectedVoice() {
+ const sel = document.getElementById("voiceSelect");
+ return sel ? sel.value : "Charon";
 }
 
-function buildMenuTiktokUrl(product) {
- const name = product && product.name ? String(product.name).trim() : "";
- if (!name) return MENU_URL;
- return MENU_URL + "?tiktok=" + encodeURIComponent(name);
+function saveVoicePreference() {
+ try {
+  localStorage.setItem("kb_ai_voice_v2", getSelectedVoice());
+ } catch (e) {}
 }
 
-function findBuyProductForReply(reply, resultProducts, currentSelected) {
- if (currentSelected && currentSelected.name) {
-  return currentSelected;
- }
+function restoreVoicePreference() {
+ try {
+  const saved = localStorage.getItem("kb_ai_voice_v2");
+  const sel = document.getElementById("voiceSelect");
+  if (saved && sel && Array.from(sel.options).some(o => o.value === saved)) {
+   sel.value = saved;
+  }
+ } catch (e) {}
+}
 
- const normReply = normalizeVietnamese(reply);
- if (normReply && catalogProducts.length) {
-  const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
-  const mentioned = sorted.find(p => p.name && normReply.includes(normalizeVietnamese(p.name)));
-  if (mentioned) return mentioned;
- }
+/* Mở khóa Audio trên Safari iOS ngay trong cú chạm đầu tiên */
+function unlockAudioPlayer() {
+ if (audioUnlocked) return;
+ const audio = document.getElementById("audioPlayer");
+ if (!audio) return;
 
- if (Array.isArray(resultProducts) && resultProducts.length > 0) {
-  return resultProducts.find(p => p && p.name && !isProductSoldOut(p)) || resultProducts[0];
+ try {
+  audio.muted = true;
+  audio.src = SILENT_WAV;
+  const p = audio.play();
+  if (p && typeof p.then === "function") {
+   p.then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = false;
+    audioUnlocked = true;
+   }).catch(() => {
+    audio.muted = false;
+   });
+  }
+ } catch (e) {
+  audio.muted = false;
  }
-
- return null;
 }
 
 /* =====================================================
-   TẢI THỰC ĐƠN & TOPPING TỪ POS_DATA
+   TẢI THỰC ĐƠN & TOPPING
 ===================================================== */
 
 async function loadCatalog() {
@@ -394,16 +354,16 @@ async function loadCatalog() {
   if (!Array.isArray(products)) products = [];
 
   catalogProducts = products.filter(item => item && item.name);
-  catalogDrinkToppings = Array.isArray(data.drinkToppings) ? data.drinkToppings.filter(item => item && item.name) : [];
-  catalogSnackToppings = Array.isArray(data.snackToppings) ? data.snackToppings.filter(item => item && item.name) : [];
-
   renderProducts(catalogProducts);
-  renderToppings(catalogDrinkToppings, catalogSnackToppings);
 
-  const totalToppings = catalogDrinkToppings.length + catalogSnackToppings.length;
+  drinkToppingsList = Array.isArray(data.drinkToppings) ? data.drinkToppings : [];
+  snackToppingsList = Array.isArray(data.snackToppings) ? data.snackToppings : [];
+  renderToppings(drinkToppingsList, snackToppingsList);
+
+  const totalToppings = drinkToppingsList.length + snackToppingsList.length;
   setStatus(
    "Đã kết nối Google Sheets - " + catalogProducts.length + " món" +
-   (totalToppings ? " & " + totalToppings + " topping" : ""),
+   (totalToppings > 0 ? (" & " + totalToppings + " topping") : ""),
    "online"
   );
  } catch (error) {
@@ -441,8 +401,10 @@ function createProductCard(product, index, consultCallback) {
  const imageUrl = product.imageUrl || product.image || product.img || "";
  if (imageUrl) {
   image.src = imageUrl;
-  image.onerror = function () { this.style.display = "none"; };
- } else image.style.display = "none";
+  image.onerror = function() { this.style.display = "none"; };
+ } else {
+  image.style.display = "none";
+ }
 
  imageWrap.appendChild(image);
 
@@ -515,51 +477,62 @@ function renderProducts(products) {
 
 function renderToppings(drinkList, snackList) {
  const heading = document.getElementById("toppingHeading");
- const grid = document.getElementById("toppingGrid");
  const count = document.getElementById("toppingCount");
+ const grid = document.getElementById("toppingGrid");
+ if (!heading || !grid) return;
 
- const allToppings = [
-  ...(drinkList || []).map(item => ({ item, groupLabel: "🥤 Topping nước" })),
-  ...(snackList || []).map(item => ({ item, groupLabel: "🍟 Topping ăn vặt" }))
- ];
+ const allToppings = []
+  .concat((drinkList || []).map(t => ({ ...t, groupLabel: "🧋 Topping Trà / Trà sữa" })))
+  .concat((snackList || []).map(t => ({ ...t, groupLabel: "🍟 Gia vị / Ăn vặt thêm" })))
+  .filter(t => t && t.name);
 
  if (!allToppings.length) {
   heading.style.display = "none";
-  grid.style.display = "none";
+  grid.innerHTML = "";
   return;
  }
 
  heading.style.display = "flex";
- grid.style.display = "grid";
  count.textContent = allToppings.length + " loại";
  grid.innerHTML = "";
 
- allToppings.forEach(({ item, groupLabel }) => {
-  const soldOut = isProductSoldOut(item);
+ allToppings.forEach(tp => {
   const card = document.createElement("div");
-  card.className = "topping-card" + (soldOut ? " is-sold-out" : "");
+  card.className = "topping-card";
 
+  const topWrap = document.createElement("div");
   const name = document.createElement("div");
   name.className = "topping-name";
-  name.textContent = item.name + (soldOut ? " (Tạm hết)" : "");
+  name.textContent = tp.name;
 
   const group = document.createElement("div");
   group.className = "topping-group";
-  group.textContent = groupLabel;
+  group.textContent = tp.groupLabel;
 
   const price = document.createElement("div");
   price.className = "topping-price";
-  price.textContent = Number(item.price) > 0 ? ("+" + formatPrice(item.price)) : "Miễn phí";
+  price.textContent = formatPrice(tp.price);
 
-  card.appendChild(name);
-  card.appendChild(group);
-  card.appendChild(price);
+  topWrap.appendChild(name);
+  topWrap.appendChild(group);
+  topWrap.appendChild(price);
+
+  const askBtn = document.createElement("button");
+  askBtn.className = "topping-ask-btn";
+  askBtn.textContent = "💬 Hỏi kết hợp món";
+  askBtn.addEventListener("click", () => {
+   unlockAudioPlayer();
+   quickAsk("Topping " + tp.name + " giá " + formatPrice(tp.price) + " hợp dùng chung với những món nào của quán vậy em?");
+  });
+
+  card.appendChild(topWrap);
+  card.appendChild(askBtn);
   grid.appendChild(card);
  });
 }
 
 /* =====================================================
-   TƯ VẤN MÓN & LINK THẲNG POPUP TIKTOK MENU.HTML
+   TƯ VẤN MÓN & ĐIỀU HƯỚNG MUA NGAY (POPUP HOẶC ĐỘC LẬP)
 ===================================================== */
 
 function consultProduct(index) {
@@ -588,53 +561,70 @@ function consultProduct(index) {
 
  setTimeout(() => {
   sendMessage();
- }, 250);
+ }, 220);
 }
 
 function goToMenu(product) {
- window.location.href = buildMenuTiktokUrl(product);
+ stopSpeaking();
+ if (liveIsActive) stopGeminiLive();
+
+ const dishName = (product && product.name) ? String(product.name).trim() : "";
+
+ // Nếu aichotdon.html đang chạy trong popup của menu.html -> gửi lệnh ra mở popup TikTok món
+ if (window.parent && window.parent !== window) {
+  window.parent.postMessage({
+   type: "OPEN_DISH_FROM_AI",
+   dishName: dishName
+  }, "*");
+  return;
+ }
+
+ // Nếu người dùng mở trực tiếp aichotdon.html
+ if (dishName) {
+  window.location.href = MENU_URL + "?tiktok=" + encodeURIComponent(dishName);
+ } else {
+  window.location.href = MENU_URL;
+ }
 }
 
 function quickAsk(question) {
  unlockAudioPlayer();
- selectedProduct = null;
  document.getElementById("userInput").value = question;
  document.getElementById("chatSection").scrollIntoView({ behavior: "smooth", block: "start" });
- setTimeout(() => sendMessage(), 250);
+ setTimeout(() => sendMessage(), 220);
+}
+
+/* Tìm tên món khớp trong nội dung câu trả lời nếu người dùng hỏi tự do */
+function findMentionedProduct(replyText, resultObj) {
+ if (resultObj && Array.isArray(resultObj.products) && resultObj.products.length > 0) {
+  const first = resultObj.products[0];
+  if (first && first.name) return first;
+ }
+ if (resultObj && Array.isArray(resultObj.productIds) && resultObj.productIds.length > 0) {
+  const firstId = String(resultObj.productIds[0]);
+  const foundById = catalogProducts.find(p => String(p.id) === firstId);
+  if (foundById) return foundById;
+ }
+ if (selectedProduct && selectedProduct.name) return selectedProduct;
+
+ const cleanReply = String(replyText || "").toLowerCase();
+ if (!cleanReply || !catalogProducts.length) return null;
+
+ // Ưu tiên khớp tên dài trước để tránh nhầm tên ngắn nằm trong tên dài
+ const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
+ return sorted.find(p => p.name && cleanReply.includes(p.name.toLowerCase())) || null;
 }
 
 /* =====================================================
-   HIỂN THỊ TIN NHẮN (+ NÚT MUA NGAY KẾ CHỮ DỪNG)
+   HIỂN THỊ TIN NHẮN (CÓ NÚT NGHE LẠI, DỪNG & MUA NGAY)
 ===================================================== */
 
-function createMessageTools(text, cachedAudio, buyProduct) {
- const tools = document.createElement("div");
- tools.className = "message-tools";
+function addMessage(text, type, options = {}) {
+ const withVoice = !!options.withVoice;
+ const product = options.product || null;
+ const audioBase64 = options.audioBase64 || "";
+ const audioMime = options.audioMime || "audio/wav";
 
- const replayButton = document.createElement("button");
- replayButton.textContent = "🔊 Nghe lại";
- replayButton.addEventListener("click", () => {
-  unlockAudioPlayer();
-  speakText(text, cachedAudio);
- });
-
- const stopButton = document.createElement("button");
- stopButton.textContent = "⏹ Dừng";
- stopButton.addEventListener("click", stopSpeaking);
-
- const buyLink = document.createElement("a");
- buyLink.className = "buy-inline-btn";
- buyLink.href = buildMenuTiktokUrl(buyProduct);
- buyLink.textContent = buyProduct ? "🛒 Mua ngay" : "🛒 Xem menu";
- buyLink.title = buyProduct ? ("Mở nhanh món " + buyProduct.name + " để đặt hàng") : "Mở trang menu";
-
- tools.appendChild(replayButton);
- tools.appendChild(stopButton);
- tools.appendChild(buyLink);
- return tools;
-}
-
-function addMessage(text, type, withVoice = false, cachedAudio = null, buyProduct = null) {
  const chat = document.getElementById("chatMessages");
  const message = document.createElement("div");
  message.className = "chat-message " + type;
@@ -644,7 +634,33 @@ function addMessage(text, type, withVoice = false, cachedAudio = null, buyProduc
  message.appendChild(content);
 
  if (type === "assistant" && withVoice) {
-  message.appendChild(createMessageTools(text, cachedAudio, buyProduct));
+  const tools = document.createElement("div");
+  tools.className = "message-tools";
+
+  const replayButton = document.createElement("button");
+  replayButton.textContent = "🔊 Nghe lại";
+  replayButton.addEventListener("click", () => {
+   unlockAudioPlayer();
+   if (audioBase64) {
+    playBase64Audio(audioBase64, audioMime, text);
+   } else {
+    speakText(text);
+   }
+  });
+
+  const stopButton = document.createElement("button");
+  stopButton.textContent = "⏹ Dừng";
+  stopButton.addEventListener("click", stopSpeaking);
+
+  const buyButton = document.createElement("button");
+  buyButton.className = "buy-inline-btn";
+  buyButton.textContent = "🛒 Mua ngay";
+  buyButton.addEventListener("click", () => goToMenu(product));
+
+  tools.appendChild(replayButton);
+  tools.appendChild(stopButton);
+  tools.appendChild(buyButton);
+  message.appendChild(tools);
  }
 
  chat.appendChild(message);
@@ -653,12 +669,12 @@ function addMessage(text, type, withVoice = false, cachedAudio = null, buyProduc
 }
 
 /* =====================================================
-   GROQ TƯ VẤN + GEMINI TTS
+   GROQ + GEMINI TTS
 ===================================================== */
 
 async function sendMessage() {
- unlockAudioPlayer();
  if (isSending || liveIsActive) return;
+ unlockAudioPlayer();
  const input = document.getElementById("userInput");
  const question = input.value.trim();
  if (!question) return;
@@ -668,9 +684,9 @@ async function sendMessage() {
 
 async function processMessage(question) {
  if (isSending || liveIsActive) return;
+ unlockAudioPlayer();
 
  isSending = true;
- const currentSelected = selectedProduct;
  addMessage(question, "user");
 
  const loadingMessage = addMessage("Kim đang suy nghĩ một chút nha anh chị...", "assistant");
@@ -680,39 +696,46 @@ async function processMessage(question) {
  const sendButton = document.getElementById("sendBtn");
  sendButton.disabled = true;
 
- const voiceName = getSelectedVoice();
+ const voiceChoice = getSelectedVoice();
+ const useGeminiTts = voiceChoice !== "google_translate";
 
  try {
   const payload = {
    action: "advisor_chat",
    message: question,
-   withAudio: voiceName !== "google_translate",
-   voiceName: voiceName,
-   ttsStyle: getSelectedTtsStyle(voiceName)
+   withAudio: useGeminiTts,
+   voiceName: useGeminiTts ? voiceChoice : "Charon"
   };
 
-  if (currentSelected) payload.selectedProduct = currentSelected;
+  if (selectedProduct) payload.selectedProduct = selectedProduct;
 
   const result = await callAPI(payload);
   loadingMessage.remove();
 
-  if (result.success === false) throw new Error(result.message || result.error || "AI chưa thể trả lời.");
-
-  const reply = result.reply || result.message || "Dạ anh chị chờ em một chút nha!";
-  const preloadedAudio = result.audioBase64
-   ? { audioBase64: result.audioBase64, mimeType: result.audioMimeType || "audio/wav" }
-   : null;
-
-  if (preloadedAudio) {
-   ttsAudioCache.set(voiceName + "|" + reply, preloadedAudio);
+  if (result.success === false) {
+   throw new Error(result.message || result.error || "AI chưa thể trả lời.");
   }
 
-  const buyProduct = findBuyProductForReply(reply, result.products, currentSelected);
+  const reply = result.reply || result.message || "Dạ anh chị chờ em một chút nha!";
+  const matchedProduct = findMentionedProduct(reply, result);
+  const ttsBase64 = result.ttsAudioBase64 || result.audioBase64 || "";
+  const ttsMime = result.ttsMimeType || "audio/wav";
 
-  addMessage(reply, "assistant", true, preloadedAudio, buyProduct);
+  addMessage(reply, "assistant", {
+   withVoice: true,
+   product: matchedProduct,
+   audioBase64: ttsBase64,
+   audioMime: ttsMime
+  });
+
   setStatus("Kim đã trả lời xong", "online");
 
-  speakText(reply, preloadedAudio);
+  if (ttsBase64) {
+   await playBase64Audio(ttsBase64, ttsMime, reply);
+  } else {
+   await speakText(reply);
+  }
+
   selectedProduct = null;
 
  } catch (error) {
@@ -720,7 +743,7 @@ async function processMessage(question) {
   if (loadingMessage.parentNode) loadingMessage.remove();
 
   const errorText = "Dạ hệ thống đang hơi chậm, anh chị nhắn lại giúp em nhé!";
-  addMessage(errorText, "assistant", true, null, currentSelected);
+  addMessage(errorText, "assistant", { withVoice: true, product: selectedProduct });
   speakText(errorText);
   setStatus("AI gặp lỗi kết nối", "error");
 
@@ -731,7 +754,7 @@ async function processMessage(question) {
 }
 
 /* =====================================================
-   PHÁT GIỌNG ĐỌC (GEMINI TTS NAM MIỀN NAM + FALLBACK)
+   PHÁT ÂM THANH (GEMINI TTS WAV + FALLBACK SAFARI AN TOÀN)
 ===================================================== */
 
 function cleanTextForSpeech(text) {
@@ -740,10 +763,10 @@ function cleanTextForSpeech(text) {
 
  result = result.replace(
   /(\d{1,3}(?:\.\d{3})+|\d{4,})\s*(?:đồng|đ)(?!\w)/gi,
-  function (match, number) {
+  function(match, number) {
    const value = Number(number.replace(/\./g, ""));
    if (!Number.isFinite(value)) return match;
-   return Math.round(value / 1000) + " ngàn đồng";
+   return (value / 1000) + " nghìn";
   }
  );
 
@@ -786,148 +809,97 @@ function splitSpeechText(text, maxLength = 180) {
  return chunks;
 }
 
-async function speakText(text, preloadedAudio = null) {
- if (liveIsActive) return;
-
+async function playBase64Audio(base64, mimeType = "audio/wav", fallbackText = "") {
  stopSpeaking();
  const generation = speechGeneration;
- currentSpeechText = text;
- const voiceName = getSelectedVoice();
-
- const clean = cleanTextForSpeech(text);
- if (!clean) {
-  setStatus("Sẵn sàng", "online");
+ const audio = document.getElementById("audioPlayer");
+ if (!audio || !base64) {
+  if (fallbackText) return speakViaGoogleOrNative(fallbackText, generation);
   return;
  }
 
- isSpeaking = true;
-
- if (voiceName !== "google_translate") {
-  try {
-   const cacheKey = voiceName + "|" + text;
-   let audioObj = preloadedAudio || ttsAudioCache.get(cacheKey);
-
-   if (!audioObj || !audioObj.audioBase64) {
-    setStatus("🔊 Đang tạo giọng đọc Google...");
-    const ttsRes = await callAPI({
-     action: "tts",
-     text: text,
-     voiceName: voiceName,
-     ttsStyle: getSelectedTtsStyle(voiceName)
-    });
-
-    if (generation !== speechGeneration) return;
-
-    if (ttsRes && ttsRes.success && ttsRes.audioBase64) {
-     audioObj = { audioBase64: ttsRes.audioBase64, mimeType: ttsRes.mimeType || "audio/wav" };
-     ttsAudioCache.set(cacheKey, audioObj);
-    }
-   }
-
-   if (audioObj && audioObj.audioBase64) {
-    const played = await playAudioDataUri(
-     "data:" + (audioObj.mimeType || "audio/wav") + ";base64," + audioObj.audioBase64,
-     generation,
-     1.0
-    );
-    if (played || generation !== speechGeneration) return;
-   }
-  } catch (err) {
-   console.warn("Gemini TTS fallback sang Google Translate TTS:", err);
+ try {
+  const bytes = base64ToBytes(base64);
+  const blob = new Blob([bytes], { type: mimeType || "audio/wav" });
+  if (currentBlobUrl) {
+   try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
   }
- }
+  currentBlobUrl = URL.createObjectURL(blob);
 
- if (generation !== speechGeneration) return;
+  isSpeaking = true;
+  setStatus("🔊 Kim đang đọc câu trả lời...", "online");
 
- speechQueue = splitSpeechText(text);
- if (!speechQueue.length) {
-  isSpeaking = false;
-  setStatus("Sẵn sàng", "online");
-  return;
- }
-
- playNextSpeechChunk(generation);
-}
-
-function playAudioDataUri(dataUri, generation, rate = 1.0) {
- return new Promise(resolve => {
-  if (generation !== speechGeneration) {
-   resolve(false);
-   return;
-  }
-
-  const audio = document.getElementById("audioPlayer");
-  setStatus("🔊 Kim đang đọc câu trả lời...");
-
-  audio.muted = false;
-  audio.playbackRate = rate;
-  audio.src = dataUri;
+  audio.src = currentBlobUrl;
+  audio.playbackRate = 1.05;
 
   audio.onended = () => {
    if (generation !== speechGeneration) return;
    isSpeaking = false;
    setStatus("Sẵn sàng", "online");
-   resolve(true);
   };
 
   audio.onerror = () => {
    if (generation !== speechGeneration) return;
-   resolve(false);
+   isSpeaking = false;
+   if (fallbackText) speakViaGoogleOrNative(fallbackText, generation);
   };
 
-  const p = audio.play();
-  if (p && typeof p.catch === "function") {
-   p.catch(() => {
-    if (generation !== speechGeneration) return;
-    isSpeaking = false;
-    setStatus("Safari cần anh chị chạm nút 🔊 Nghe lại để phát âm thanh.", "error");
-    resolve(true);
-   });
+  await audio.play();
+ } catch (error) {
+  console.warn("Safari/Trình duyệt chặn phát audio trực tiếp:", error);
+  if (generation !== speechGeneration) return;
+  isSpeaking = false;
+  if (fallbackText) {
+   speakWithSpeechSynthesis(fallbackText, generation, true);
+  } else {
+   setStatus("Anh chị chạm nút '🔊 Nghe lại' để phát âm thanh nhé.", "error");
   }
- });
-}
-
-function speakWithBrowserTTS(text, generation) {
- if (generation !== speechGeneration) return false;
- if (!("speechSynthesis" in window)) return false;
-
- try {
-  window.speechSynthesis.cancel();
-  const clean = cleanTextForSpeech(text);
-  if (!clean) return false;
-
-  const utter = new SpeechSynthesisUtterance(clean);
-  utter.lang = "vi-VN";
-  utter.rate = 1.05;
-
-  const voices = window.speechSynthesis.getVoices() || [];
-  const viVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("vi"));
-  if (viVoice) utter.voice = viVoice;
-
-  utter.onstart = () => {
-   if (generation === speechGeneration) setStatus("🔊 Kim đang đọc câu trả lời...");
-  };
-  utter.onend = () => {
-   if (generation === speechGeneration) {
-    isSpeaking = false;
-    setStatus("Sẵn sàng", "online");
-   }
-  };
-  utter.onerror = () => {
-   if (generation === speechGeneration) {
-    isSpeaking = false;
-    setStatus("Safari cần anh chị chạm nút 🔊 Nghe lại để phát âm thanh.", "error");
-   }
-  };
-
-  window.speechSynthesis.speak(utter);
-  return true;
- } catch (e) {
-  return false;
  }
 }
 
-async function playNextSpeechChunk(generation) {
+async function speakText(text) {
+ if (liveIsActive) return;
+
+ stopSpeaking();
+ const generation = speechGeneration;
+ currentSpeechText = text;
+
+ const voiceChoice = getSelectedVoice();
+ if (voiceChoice !== "google_translate") {
+  setStatus("🔊 Đang tạo giọng đọc tự nhiên...");
+  try {
+   const ttsRes = await callAPI({
+    action: "tts",
+    text: cleanTextForSpeech(text),
+    voiceName: voiceChoice
+   });
+
+   if (generation !== speechGeneration) return;
+
+   if (ttsRes && ttsRes.success && ttsRes.audioBase64) {
+    await playBase64Audio(ttsRes.audioBase64, ttsRes.mimeType || "audio/wav", text);
+    return;
+   }
+  } catch (e) {
+   console.warn("Gemini TTS không phản hồi, chuyển sang giọng dự phòng:", e);
+  }
+ }
+
+ if (generation !== speechGeneration) return;
+ speakViaGoogleOrNative(text, generation);
+}
+
+function speakViaGoogleOrNative(text, generation) {
+ speechQueue = splitSpeechText(text);
+ if (!speechQueue.length) {
+  setStatus("Sẵn sàng", "online");
+  return;
+ }
+ isSpeaking = true;
+ playNextGoogleChunk(generation);
+}
+
+async function playNextGoogleChunk(generation) {
  if (generation !== speechGeneration) return;
 
  if (!speechQueue.length) {
@@ -938,26 +910,20 @@ async function playNextSpeechChunk(generation) {
 
  const text = speechQueue.shift();
  const audio = document.getElementById("audioPlayer");
- setStatus("🔊 Kim đang đọc câu trả lời...");
+ setStatus("🔊 Kim đang đọc câu trả lời...", "online");
 
- audio.muted = false;
- audio.src =
-  "https://translate.google.com/translate_tts?ie=UTF-8&q=" +
-  encodeURIComponent(text) +
-  "&tl=vi&client=tw-ob";
+ audio.src = "https://translate.google.com/translate_tts?ie=UTF-8&q=" +
+  encodeURIComponent(text) + "&tl=vi&client=tw-ob";
 
- audio.playbackRate = 1.35;
+ audio.playbackRate = 1.25;
  audio.onended = () => {
   if (generation !== speechGeneration) return;
-  playNextSpeechChunk(generation);
+  playNextGoogleChunk(generation);
  };
  audio.onerror = () => {
   if (generation !== speechGeneration) return;
   speechQueue = [];
-  if (!speakWithBrowserTTS(currentSpeechText, generation)) {
-   isSpeaking = false;
-   setStatus("Không phát được giọng đọc. Anh chị thử bấm 🔊 Nghe lại nhé.", "error");
-  }
+  speakWithSpeechSynthesis(currentSpeechText || text, generation, false);
  };
 
  try {
@@ -965,10 +931,50 @@ async function playNextSpeechChunk(generation) {
  } catch (error) {
   if (generation !== speechGeneration) return;
   speechQueue = [];
-  if (!speakWithBrowserTTS(currentSpeechText, generation)) {
+  speakWithSpeechSynthesis(currentSpeechText || text, generation, true);
+ }
+}
+
+function speakWithSpeechSynthesis(text, generation, isSafariBlocked) {
+ const clean = cleanTextForSpeech(text);
+ if (!clean || !("speechSynthesis" in window)) {
+  isSpeaking = false;
+  setStatus(
+   isSafariBlocked
+    ? "Safari chặn phát tự động. Anh chị chạm nút '🔊 Nghe lại' để nghe nhé."
+    : "Không phát được giọng đọc.",
+   "error"
+  );
+  return;
+ }
+
+ try {
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = "vi-VN";
+  utter.rate = 1.05;
+
+  const voices = window.speechSynthesis.getVoices() || [];
+  const viVoice = voices.find(v => (v.lang || "").toLowerCase().startsWith("vi"));
+  if (viVoice) utter.voice = viVoice;
+
+  utter.onend = () => {
+   if (generation !== speechGeneration) return;
    isSpeaking = false;
-   setStatus("Safari cần anh chị chạm nút 🔊 Nghe lại để phát âm thanh.", "error");
-  }
+   setStatus("Sẵn sàng", "online");
+  };
+  utter.onerror = () => {
+   if (generation !== speechGeneration) return;
+   isSpeaking = false;
+   setStatus("Chạm '🔊 Nghe lại' nếu chưa nghe rõ nhé.", "error");
+  };
+
+  isSpeaking = true;
+  setStatus("🔊 Kim đang đọc câu trả lời...", "online");
+  window.speechSynthesis.speak(utter);
+ } catch (e) {
+  isSpeaking = false;
+  setStatus("Chạm nút '🔊 Nghe lại' để phát âm thanh nhé.", "error");
  }
 }
 
@@ -977,28 +983,28 @@ function stopSpeaking() {
  speechQueue = [];
  isSpeaking = false;
 
- if ("speechSynthesis" in window) {
-  try { window.speechSynthesis.cancel(); } catch (e) {}
- }
-
  const audio = document.getElementById("audioPlayer");
  if (audio) {
-  audio.onended = null;
-  audio.onerror = null;
   try {
+   audio.onended = null;
+   audio.onerror = null;
    audio.pause();
    audio.currentTime = 0;
   } catch (e) {}
+ }
+
+ if ("speechSynthesis" in window) {
+  try { window.speechSynthesis.cancel(); } catch (e) {}
  }
 }
 
 function testSpeaker() {
  unlockAudioPlayer();
- speakText("Dạ chào anh chị, Kim Bling Coffee and Tea xin kính chào quý khách. Anh chị muốn uống món gì hôm nay để em tư vấn nha!");
+ speakText("Dạ em chào anh chị. Em là Kim, trợ lý tư vấn của Kim Bling Coffee and Tea. Anh chị muốn uống món gì hôm nay để em tư vấn nha.");
 }
 
 /* =====================================================
-   WEB SPEECH API - MICRO CŨ
+   WEB SPEECH API - MICRO NHẬP CÂU HỎI
 ===================================================== */
 
 function setupSpeechRecognition() {
@@ -1017,7 +1023,6 @@ function setupSpeechRecognition() {
  };
 
  recognition.onresult = event => {
-  unlockAudioPlayer();
   const text = event.results[0][0].transcript;
   document.getElementById("userInput").value = text;
   stopListening();
@@ -1050,8 +1055,7 @@ function toggleListening() {
   return;
  }
 
- try { recognition.start(); }
- catch (error) {
+ try { recognition.start(); } catch (error) {
   console.error(error);
   setStatus("Không mở được micro. Anh chị thử lại nhé.", "error");
  }
@@ -1064,7 +1068,7 @@ function stopListening() {
 }
 
 /* =====================================================
-   GEMINI LIVE - TOKEN TỪ MA.GS
+   GEMINI LIVE - TOKEN TỪ MA.GS (MƯỢT TRÊN SAFARI & CHROME)
 ===================================================== */
 
 function base64FromBytes(bytes) {
@@ -1129,20 +1133,34 @@ async function startGeminiLive() {
  const stopBtn = document.getElementById("liveStopBtn");
  startBtn.disabled = true;
 
- setLiveStatus("Đang khởi tạo âm thanh và xin quyền micro...");
+ setLiveStatus("Đang khởi tạo âm thanh & xin quyền micro...");
  setStatus("Đang khởi động Gemini Live...");
 
  try {
   stopSpeaking();
+
   if (recognition && isListening) {
    try { recognition.stop(); } catch (e) {}
   }
   stopListening();
 
-  liveAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // Tạo và resume AudioContext NGAY TRONG CÚ CHẠM của user để Safari iOS không chặn loa
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!liveAudioContext) {
+   liveAudioContext = new AudioCtx();
+  }
   if (liveAudioContext.state === "suspended") {
    await liveAudioContext.resume();
   }
+
+  const tokenResult = await callAPI({ action: "create_live_token" });
+
+  if (!tokenResult || tokenResult.success === false || !tokenResult.token) {
+   throw new Error(tokenResult && tokenResult.error ? tokenResult.error : "Không nhận được Gemini Live token.");
+  }
+
+  const token = tokenResult.token;
+  const model = tokenResult.model || "gemini-3.8-live";
 
   liveStream = await navigator.mediaDevices.getUserMedia({
    audio: {
@@ -1154,15 +1172,6 @@ async function startGeminiLive() {
    video: false
   });
 
-  setLiveStatus("Đang kết nối máy chủ Kim Bling...");
-  const tokenResult = await callAPI({ action: "create_live_token" });
-
-  if (!tokenResult || tokenResult.success === false || !tokenResult.token) {
-   throw new Error(tokenResult && tokenResult.error ? tokenResult.error : "Không nhận được Gemini Live token.");
-  }
-
-  const token = tokenResult.token;
-  const model = tokenResult.model || "gemini-3.8-live";
   const generation = ++liveSessionGeneration;
 
   const wsUrl =
@@ -1181,8 +1190,7 @@ async function startGeminiLive() {
       responseModalities: ["AUDIO"]
      },
      inputAudioTranscription: {},
-     outputAudioTranscription: {},
-     sessionResumption: {}
+     outputAudioTranscription: {}
     }
    };
 
@@ -1201,16 +1209,21 @@ async function startGeminiLive() {
      rawText = await event.data.text();
     } else if (event.data instanceof ArrayBuffer) {
      rawText = new TextDecoder().decode(event.data);
-    } else {
-     rawText = String(event.data || "");
     }
-
-    if (!rawText) return;
-    const data = JSON.parse(rawText);
-    handleGeminiLiveMessage(data);
-   } catch (error) {
-    console.error("Gemini Live trả dữ liệu không đọc được:", error, rawText);
+   } catch (e) {
+    console.error("Không đọc được frame dữ liệu Live:", e);
+    return;
    }
+
+   if (!rawText) return;
+
+   let data;
+   try { data = JSON.parse(rawText); } catch (error) {
+    console.error("Gemini Live trả dữ liệu không đọc được:", error);
+    return;
+   }
+
+   handleGeminiLiveMessage(data);
   };
 
   liveSocket.onerror = error => {
@@ -1221,16 +1234,11 @@ async function startGeminiLive() {
 
   liveSocket.onclose = event => {
    console.log("Gemini Live đóng:", event.code, event.reason);
+
    if (generation !== liveSessionGeneration) return;
 
-   const wasReady = liveIsActive;
-   cleanupGeminiLive(false);
-
-   if (!wasReady) {
-    const reasonText = event.reason ? (" (" + event.reason + ")") : "";
-    setLiveStatus("Không thiết lập được phiên Live [Mã " + event.code + "]" + reasonText);
-    setStatus("Gemini Live đóng trước khi sẵn sàng", "error");
-   } else {
+   if (liveIsActive) {
+    cleanupGeminiLive(false);
     setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại.");
     setStatus("Đã ngắt Gemini Live", "normal");
    }
@@ -1251,18 +1259,10 @@ async function startGeminiLive() {
  }
 }
 
-/* =====================================================
-   XỬ LÝ PHẢN HỒI GEMINI LIVE
-===================================================== */
-
 function handleGeminiLiveMessage(data) {
  if (data.setupComplete) {
   liveIsReady = true;
   liveIsActive = true;
-  liveInputText = "";
-  liveOutputText = "";
-  liveUserMsgEl = null;
-  liveAssistantMsgEl = null;
 
   document.getElementById("liveStartBtn").disabled = true;
   document.getElementById("liveStopBtn").disabled = false;
@@ -1304,26 +1304,16 @@ function handleGeminiLiveMessage(data) {
   if (part.inlineData && part.inlineData.data) {
    queueGeminiAudio(part.inlineData.data);
   }
+
+  if (part.text) {
+   liveOutputText += part.text;
+   updateLiveTranscript("assistant", liveOutputText);
+  }
  });
 
  if (serverContent.turnComplete) {
-  if (liveAssistantMsgEl && liveOutputText) {
-   const mentionedProduct = findBuyProductForReply(liveOutputText, null, null);
-   if (mentionedProduct && !liveAssistantMsgEl.querySelector(".message-tools")) {
-    const tools = document.createElement("div");
-    tools.className = "message-tools";
-    const buyLink = document.createElement("a");
-    buyLink.className = "buy-inline-btn";
-    buyLink.href = buildMenuTiktokUrl(mentionedProduct);
-    buyLink.textContent = "🛒 Mua " + mentionedProduct.name;
-    tools.appendChild(buyLink);
-    liveAssistantMsgEl.appendChild(tools);
-   }
-  }
   liveInputText = "";
   liveOutputText = "";
-  liveUserMsgEl = null;
-  liveAssistantMsgEl = null;
  }
 }
 
@@ -1331,26 +1321,20 @@ function updateLiveTranscript(role, text) {
  if (!text || !text.trim()) return;
 
  const chat = document.getElementById("chatMessages");
- let message = role === "user" ? liveUserMsgEl : liveAssistantMsgEl;
+ const id = role === "user" ? "liveUserTranscript" : "liveAssistantTranscript";
+
+ let message = document.getElementById(id);
 
  if (!message) {
   message = document.createElement("div");
+  message.id = id;
   message.className = "chat-message " + (role === "user" ? "user" : "assistant");
-  const content = document.createElement("div");
-  message.appendChild(content);
   chat.appendChild(message);
-  if (role === "user") liveUserMsgEl = message;
-  else liveAssistantMsgEl = message;
  }
 
- const contentEl = message.firstElementChild || message;
- contentEl.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
+ message.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
  chat.scrollTop = chat.scrollHeight;
 }
-
-/* =====================================================
-   MICRO GEMINI LIVE - PCM 16KHz
-===================================================== */
 
 async function startLiveMicrophone() {
  if (!liveStream || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
@@ -1359,7 +1343,6 @@ async function startLiveMicrophone() {
   if (!liveAudioContext) {
    liveAudioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
-
   if (liveAudioContext.state === "suspended") {
    await liveAudioContext.resume();
   }
@@ -1402,18 +1385,10 @@ async function startLiveMicrophone() {
  }
 }
 
-/* =====================================================
-   PHÁT ÂM THANH GEMINI - PCM 24KHz
-===================================================== */
-
 function queueGeminiAudio(base64) {
  if (!liveAudioContext) return;
 
  try {
-  if (liveAudioContext.state === "suspended") {
-   liveAudioContext.resume().catch(() => {});
-  }
-
   const bytes = base64ToBytes(base64);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const sampleCount = Math.floor(bytes.byteLength / 2);
@@ -1470,16 +1445,10 @@ function stopLivePlayback() {
  livePlaybackNextTime = 0;
 }
 
-/* =====================================================
-   KẾT THÚC GEMINI LIVE
-===================================================== */
-
 function cleanupGeminiLive(closeSocket = true) {
  liveIsActive = false;
  liveIsReady = false;
  liveStarting = false;
- liveUserMsgEl = null;
- liveAssistantMsgEl = null;
 
  if (liveProcessor) {
   try { liveProcessor.disconnect(); } catch (e) {}
@@ -1532,7 +1501,20 @@ function stopGeminiLive() {
 }
 
 /* =====================================================
-   SCROLL & KHỞI TẠO
+   LẮNG NGHE LỆNH TỪ POPUP MENU.HTML
+===================================================== */
+
+window.addEventListener("message", function(event) {
+ if (event.data === "STOP_AI_AUDIO") {
+  stopSpeaking();
+  if (liveIsActive || liveSocket) {
+   stopGeminiLive();
+  }
+ }
+});
+
+/* =====================================================
+   SCROLL & KHỞI ĐỘNG
 ===================================================== */
 
 function scrollToTop() {
@@ -1540,23 +1522,45 @@ function scrollToTop() {
 }
 
 function scrollToBottom() {
- window.scrollTo({
-  top: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
-  behavior: "smooth"
- });
+ window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
 }
 
-document.getElementById("userInput").addEventListener("keydown", function (event) {
+document.getElementById("userInput").addEventListener("keydown", event => {
  if (event.key === "Enter") {
   event.preventDefault();
-  unlockAudioPlayer();
   sendMessage();
  }
 });
 
-restoreVoicePreference();
-setupSpeechRecognition();
-loadCatalog();
+window.addEventListener("DOMContentLoaded", async () => {
+ restoreVoicePreference();
+ setupSpeechRecognition();
+ await loadCatalog();
+
+ // Nếu được mở kèm ?dish=TênMón thì tự điền câu hỏi tư vấn món đó
+ try {
+  const params = new URLSearchParams(window.location.search);
+  const dishParam = (params.get("dish") || "").trim();
+  if (dishParam) {
+   const idx = displayedProducts.findIndex(p => p.name && p.name.toLowerCase() === dishParam.toLowerCase());
+   if (idx !== -1) {
+    selectedProduct = {
+     id: displayedProducts[idx].id || "",
+     name: displayedProducts[idx].name || "",
+     price: displayedProducts[idx].price || 0,
+     category: displayedProducts[idx].category || "",
+     isSoldOut: !!displayedProducts[idx].isSoldOut
+    };
+   }
+   document.getElementById("userInput").value = "Em tư vấn giúp anh chị về món " + dishParam + " nhé.";
+  }
+ } catch (e) {}
+});
+
+window.addEventListener("pagehide", () => {
+ stopSpeaking();
+ if (liveIsActive || liveSocket) stopGeminiLive();
+});
 </script>
 
 </body>
