@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -80,6 +79,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
 #liveButtons{display:flex;gap:8px;flex-wrap:wrap}
 #liveStartBtn,#liveStopBtn{border:0;border-radius:22px;padding:11px 14px;font-weight:800}
 #liveStartBtn{background:#7b1fa2;color:white}
+#liveStartBtn:disabled{opacity:.45}
 #liveStopBtn{background:#555;color:white}
 #liveStopBtn:disabled{opacity:.4}
 .live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
@@ -221,6 +221,7 @@ let liveSessionGeneration = 0;
 async function callAPI(payload) {
  const response = await fetch(API_URL,{
   method:"POST",
+  redirect:"follow",
   headers:{"Content-Type":"text/plain;charset=utf-8"},
   body:JSON.stringify(payload)
  });
@@ -400,7 +401,6 @@ function consultProduct(index){
 
  document.getElementById("userInput").value=question;
 
- /* Gửi sau khi cuộn bắt đầu để khung chat hiện ra */
  setTimeout(()=>{
   sendMessage();
  },250);
@@ -832,16 +832,13 @@ async function startGeminiLive(){
   }
   stopListening();
 
-  const tokenResult=await callAPI({action:"create_live_token"});
-
-  if(!tokenResult||tokenResult.success===false||!tokenResult.token){
-   throw new Error(tokenResult&&tokenResult.error?tokenResult.error:"Không nhận được Gemini Live token.");
+  /* Mở khóa AudioContext NGAY trong thao tác chạm nút (bắt buộc cho Safari iOS) */
+  liveAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+  if(liveAudioContext.state==="suspended"){
+   await liveAudioContext.resume();
   }
 
-  const token=tokenResult.token;
-  const model=tokenResult.model||"gemini-3.8-live";
-
-  /* Xin quyền micro sau thao tác bấm nút */
+  /* Xin quyền micro ngay trong thao tác bấm nút */
   liveStream=await navigator.mediaDevices.getUserMedia({
    audio:{
     channelCount:1,
@@ -852,12 +849,19 @@ async function startGeminiLive(){
    video:false
   });
 
+  setLiveStatus("Đang lấy phiên kết nối Gemini Live...");
+
+  const tokenResult=await callAPI({action:"create_live_token"});
+
+  if(!tokenResult||tokenResult.success===false||!tokenResult.token){
+   throw new Error(tokenResult&&tokenResult.error?tokenResult.error:"Không nhận được Gemini Live token.");
+  }
+
+  const token=tokenResult.token;
+  const model=tokenResult.model||"gemini-3.8-live";
+
   const generation=++liveSessionGeneration;
 
-  /*
-   * Ma.gs dùng v1alpha/auth_tokens.
-   * Vì vậy dùng endpoint v1alpha constrained.
-   */
   const wsUrl=
    "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained"+
    "?access_token="+encodeURIComponent(token);
@@ -883,12 +887,22 @@ async function startGeminiLive(){
    setLiveStatus("Đã kết nối máy chủ. Đang thiết lập phiên trò chuyện...");
   };
 
-  liveSocket.onmessage=event=>{
+  /* SỬA LỖI CHÍNH: Gemini Live trả frame nhị phân (Blob / ArrayBuffer) */
+  liveSocket.onmessage=async event=>{
    if(generation!==liveSessionGeneration) return;
 
    let data;
-   try{data=JSON.parse(event.data)}
-   catch(error){
+   try{
+    let rawText;
+    if(event.data instanceof Blob){
+     rawText=await event.data.text();
+    }else if(event.data instanceof ArrayBuffer){
+     rawText=new TextDecoder().decode(event.data);
+    }else{
+     rawText=event.data;
+    }
+    data=JSON.parse(rawText);
+   }catch(error){
     console.error("Gemini Live trả dữ liệu không đọc được:",error);
     return;
    }
@@ -898,17 +912,25 @@ async function startGeminiLive(){
 
   liveSocket.onerror=error=>{
    console.error("Gemini Live WebSocket error:",error);
-   setLiveStatus("Kết nối Gemini Live gặp lỗi. Anh chị thử kết thúc và kết nối lại nhé.");
+   if(generation!==liveSessionGeneration) return;
+   setLiveStatus("Kết nối Gemini Live gặp lỗi. Anh chị thử bấm lại nhé.");
    setStatus("Gemini Live gặp lỗi kết nối","error");
   };
 
+  /* SỬA LỖI ĐÓNG SỚM: luôn dọn dẹp và hiện mã đóng kể cả trước setupComplete */
   liveSocket.onclose=event=>{
    console.log("Gemini Live đóng:",event.code,event.reason);
 
    if(generation!==liveSessionGeneration) return;
 
-   if(liveIsActive){
-    cleanupGeminiLive(false);
+   const wasReady=liveIsReady;
+   cleanupGeminiLive(false);
+
+   if(!wasReady){
+    const reasonText=event.reason?(" ("+event.reason+")"):"";
+    setLiveStatus("Không thiết lập được phiên Live (mã "+event.code+")"+reasonText);
+    setStatus("Gemini Live đóng kết nối sớm","error");
+   }else{
     setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại.");
     setStatus("Đã ngắt Gemini Live","normal");
    }
@@ -924,8 +946,10 @@ async function startGeminiLive(){
   alert("Không khởi động được Gemini Live:\n"+(error.message||error));
  }finally{
   liveStarting=false;
-  startBtn.disabled=false;
-  stopBtn.disabled=!liveIsActive;
+  if(!liveIsActive){
+   startBtn.disabled=false;
+   stopBtn.disabled=true;
+  }
  }
 }
 
@@ -972,7 +996,7 @@ function handleGeminiLiveMessage(data){
  }
 
  const parts=serverContent.modelTurn&&serverContent.modelTurn.parts
-  ?serverContent.modelTurn.parts:[ ];
+  ?serverContent.modelTurn.parts:[];
 
  parts.forEach(part=>{
   if(part.inlineData&&part.inlineData.data){
@@ -986,6 +1010,8 @@ function handleGeminiLiveMessage(data){
  });
 
  if(serverContent.turnComplete){
+  finalizeLiveTranscript("user");
+  finalizeLiveTranscript("assistant");
   liveInputText="";
   liveOutputText="";
  }
@@ -1010,6 +1036,12 @@ function updateLiveTranscript(role,text){
  chat.scrollTop=chat.scrollHeight;
 }
 
+function finalizeLiveTranscript(role){
+ const id=role==="user"?"liveUserTranscript":"liveAssistantTranscript";
+ const message=document.getElementById(id);
+ if(message) message.removeAttribute("id");
+}
+
 /* =====================================================
    MICRO GEMINI LIVE - PCM 16KHz
 ===================================================== */
@@ -1018,7 +1050,9 @@ async function startLiveMicrophone(){
  if(!liveStream||!liveSocket||liveSocket.readyState!==WebSocket.OPEN) return;
 
  try{
-  liveAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+  if(!liveAudioContext){
+   liveAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+  }
 
   if(liveAudioContext.state==="suspended"){
    await liveAudioContext.resume();
@@ -1049,10 +1083,6 @@ async function startLiveMicrophone(){
 
   liveSource.connect(liveProcessor);
 
-  /*
-   * Kết nối processor vào destination để iOS Safari
-   * tiếp tục gọi onaudioprocess. Gain bằng 0 để không vọng tiếng.
-   */
   const muteGain=liveAudioContext.createGain();
   muteGain.gain.value=0;
 
@@ -1096,6 +1126,10 @@ function queueGeminiAudio(base64){
 
 function scheduleLivePlayback(){
  if(!liveAudioContext||!liveOutputBuffers.length) return;
+
+ if(liveAudioContext.state==="suspended"){
+  liveAudioContext.resume().catch(()=>{});
+ }
 
  const now=liveAudioContext.currentTime;
 
