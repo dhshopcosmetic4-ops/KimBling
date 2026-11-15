@@ -29,8 +29,9 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16
 .quick-btn{border:1px solid #efb4b4;background:white;color:#b71c1c;padding:9px 13px;border-radius:22px;font-weight:600}
 .quick-btn:active{background:#ffebee}
 .section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 12px;font-weight:800}
-#productCount{color:#777;font-weight:400}
+#productCount,#toppingCount{color:#777;font-weight:400}
 #productGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#toppingGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .product-card{min-width:0;background:white;border:1px solid #eee;border-radius:14px;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.04)}
 .product-image-wrap{width:100%;aspect-ratio:1/1;background:#f2f2f2;overflow:hidden;position:relative}
 .product-image{width:100%;height:100%;object-fit:cover;display:block}
@@ -44,14 +45,21 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:16
 .consult-btn{color:#b71c1c;background:#ffebee}
 .buy-btn{color:white;background:#d32f2f}
 .product-actions button:disabled{opacity:.45;cursor:not-allowed}
+.topping-card{min-width:0;background:white;border:1px solid #eee;border-radius:12px;padding:11px;box-shadow:0 2px 6px rgba(0,0,0,.04);display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.topping-card.is-sold-out{opacity:.55}
+.topping-name{font-weight:700;color:#222;line-height:1.35;overflow-wrap:anywhere}
+.topping-group{font-size:13px!important;color:#888}
+.topping-price{font-weight:800;color:#d32f2f;margin-top:2px}
 #chatSection{margin-top:0;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
 #chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:150px;max-height:430px;overflow-y:auto;background:#fff}
 .chat-message{max-width:88%;padding:12px 14px;border-radius:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 .chat-message.assistant{align-self:flex-start;color:#333;background:#f1f3f5;border-bottom-left-radius:4px}
 .chat-message.user{align-self:flex-end;color:white;background:#d32f2f;border-bottom-right-radius:4px}
-.message-tools{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.message-tools{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;align-items:center}
 .message-tools button{border:1px solid #ddd;background:white;color:#555;padding:7px 10px;border-radius:18px}
+.message-tools a.buy-inline-btn{border:1px solid #d32f2f;background:#d32f2f;color:white;padding:7px 12px;border-radius:18px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.message-tools a.buy-inline-btn:active{opacity:.85}
 #chatInputArea{border-top:1px solid #eee;padding:12px;background:white}
 #chatInputRow{display:flex;align-items:center;gap:8px}
 #userInput{min-width:0;flex:1;height:46px;padding:0 14px;border:1px solid #ddd;border-radius:24px;outline:none;background:white;color:#222}
@@ -85,7 +93,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
 .live-hint{font-size:13px!important;color:#888;margin-top:8px;line-height:1.4}
 @media(max-width:360px){
  #mainContent{padding:10px}
- #productGrid{gap:8px}
+ #productGrid,#toppingGrid{gap:8px}
  .product-info{padding:8px}
  .product-actions button{padding:9px 4px}
 }
@@ -149,7 +157,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
   <div class="welcome-title">❤️ Xin chào anh chị!</div>
   <div class="welcome-text">
    Em là Kim, trợ lý tư vấn của Kim Bling Coffee & Tea.
-   Anh chị có thể hỏi em về món uống, đồ ăn vặt, giá tiền
+   Anh chị có thể hỏi em về món uống, đồ ăn vặt, topping, giá tiền
    hoặc nhờ em tư vấn món phù hợp nha!
   </div>
 
@@ -160,6 +168,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
    <button class="quick-btn" onclick="quickAsk('Quán có những món cà phê nào?')">☕ Cà phê</button>
    <button class="quick-btn" onclick="quickAsk('Giới thiệu các món ăn vặt của quán')">🍟 Ăn vặt</button>
    <button class="quick-btn" onclick="quickAsk('Tư vấn các món yogurt nhé')">🥤 Yogurt</button>
+   <button class="quick-btn" onclick="quickAsk('Quán có những loại topping nào và giá bao nhiêu?')">✨ Topping</button>
   </div>
  </section>
 
@@ -171,6 +180,13 @@ footer{padding:18px 12px;text-align:center;color:#888}
  <div id="productGrid">
   <div class="empty-state">Đang tải thực đơn từ Google Sheets...</div>
  </div>
+
+ <div class="section-heading" id="toppingHeading" style="display:none">
+  <span>🧋 Topping chọn thêm</span>
+  <span id="toppingCount">0 món</span>
+ </div>
+
+ <div id="toppingGrid" style="display:none"></div>
 
 </main>
 
@@ -184,7 +200,8 @@ footer{padding:18px 12px;text-align:center;color:#888}
 <script>
 /* =====================================================
    KIM BLING AI - FRONTEND
-   Compatible: Ma.gs v4.1 + Gemini TTS + Gemini Live
+   Compatible: Ma.gs v4.2 + menu.html (?tiktok=...)
+   Groq + Gemini TTS + Gemini Live + POS_Data Toppings
 ===================================================== */
 
 const API_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
@@ -199,6 +216,8 @@ const TTS_STYLES = {
 };
 
 let catalogProducts = [];
+let catalogDrinkToppings = [];
+let catalogSnackToppings = [];
 let displayedProducts = [];
 let selectedProduct = null;
 let isSending = false;
@@ -291,7 +310,7 @@ function restoreVoicePreference() {
 }
 
 /* =====================================================
-   API
+   API & CHUẨN HÓA LINK MENU TIKTOK
 ===================================================== */
 
 async function callAPI(payload) {
@@ -323,8 +342,43 @@ function setLiveStatus(message, active = false) {
  el.classList.toggle("active", !!active);
 }
 
+function normalizeVietnamese(str) {
+ return String(str || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/đ/g, "d")
+  .replace(/Đ/g, "D")
+  .toLowerCase()
+  .trim();
+}
+
+function buildMenuTiktokUrl(product) {
+ const name = product && product.name ? String(product.name).trim() : "";
+ if (!name) return MENU_URL;
+ return MENU_URL + "?tiktok=" + encodeURIComponent(name);
+}
+
+function findBuyProductForReply(reply, resultProducts, currentSelected) {
+ if (currentSelected && currentSelected.name) {
+  return currentSelected;
+ }
+
+ const normReply = normalizeVietnamese(reply);
+ if (normReply && catalogProducts.length) {
+  const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
+  const mentioned = sorted.find(p => p.name && normReply.includes(normalizeVietnamese(p.name)));
+  if (mentioned) return mentioned;
+ }
+
+ if (Array.isArray(resultProducts) && resultProducts.length > 0) {
+  return resultProducts.find(p => p && p.name && !isProductSoldOut(p)) || resultProducts[0];
+ }
+
+ return null;
+}
+
 /* =====================================================
-   TẢI THỰC ĐƠN
+   TẢI THỰC ĐƠN & TOPPING TỪ POS_DATA
 ===================================================== */
 
 async function loadCatalog() {
@@ -340,8 +394,18 @@ async function loadCatalog() {
   if (!Array.isArray(products)) products = [];
 
   catalogProducts = products.filter(item => item && item.name);
+  catalogDrinkToppings = Array.isArray(data.drinkToppings) ? data.drinkToppings.filter(item => item && item.name) : [];
+  catalogSnackToppings = Array.isArray(data.snackToppings) ? data.snackToppings.filter(item => item && item.name) : [];
+
   renderProducts(catalogProducts);
-  setStatus("Đã kết nối Google Sheets - " + catalogProducts.length + " sản phẩm", "online");
+  renderToppings(catalogDrinkToppings, catalogSnackToppings);
+
+  const totalToppings = catalogDrinkToppings.length + catalogSnackToppings.length;
+  setStatus(
+   "Đã kết nối Google Sheets - " + catalogProducts.length + " món" +
+   (totalToppings ? " & " + totalToppings + " topping" : ""),
+   "online"
+  );
  } catch (error) {
   console.error("Lỗi tải thực đơn:", error);
   setStatus("Không tải được thực đơn từ Google Sheets", "error");
@@ -449,8 +513,53 @@ function renderProducts(products) {
  });
 }
 
+function renderToppings(drinkList, snackList) {
+ const heading = document.getElementById("toppingHeading");
+ const grid = document.getElementById("toppingGrid");
+ const count = document.getElementById("toppingCount");
+
+ const allToppings = [
+  ...(drinkList || []).map(item => ({ item, groupLabel: "🥤 Topping nước" })),
+  ...(snackList || []).map(item => ({ item, groupLabel: "🍟 Topping ăn vặt" }))
+ ];
+
+ if (!allToppings.length) {
+  heading.style.display = "none";
+  grid.style.display = "none";
+  return;
+ }
+
+ heading.style.display = "flex";
+ grid.style.display = "grid";
+ count.textContent = allToppings.length + " loại";
+ grid.innerHTML = "";
+
+ allToppings.forEach(({ item, groupLabel }) => {
+  const soldOut = isProductSoldOut(item);
+  const card = document.createElement("div");
+  card.className = "topping-card" + (soldOut ? " is-sold-out" : "");
+
+  const name = document.createElement("div");
+  name.className = "topping-name";
+  name.textContent = item.name + (soldOut ? " (Tạm hết)" : "");
+
+  const group = document.createElement("div");
+  group.className = "topping-group";
+  group.textContent = groupLabel;
+
+  const price = document.createElement("div");
+  price.className = "topping-price";
+  price.textContent = Number(item.price) > 0 ? ("+" + formatPrice(item.price)) : "Miễn phí";
+
+  card.appendChild(name);
+  card.appendChild(group);
+  card.appendChild(price);
+  grid.appendChild(card);
+ });
+}
+
 /* =====================================================
-   TƯ VẤN MÓN - CHUYỂN THẲNG ĐẾN KHUNG CHAT
+   TƯ VẤN MÓN & LINK THẲNG POPUP TIKTOK MENU.HTML
 ===================================================== */
 
 function consultProduct(index) {
@@ -470,7 +579,7 @@ function consultProduct(index) {
   "Em hãy tư vấn chi tiết cho anh chị về món " +
   product.name +
   ", giá " + formatPrice(product.price) +
-  ". Hãy giới thiệu đúng thông tin món trong thực đơn.";
+  ". Hãy giới thiệu đúng thông tin món và topping phù hợp trong thực đơn.";
 
  const chatSection = document.getElementById("chatSection");
  chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -483,21 +592,49 @@ function consultProduct(index) {
 }
 
 function goToMenu(product) {
- window.location.href = MENU_URL;
+ window.location.href = buildMenuTiktokUrl(product);
 }
 
 function quickAsk(question) {
  unlockAudioPlayer();
+ selectedProduct = null;
  document.getElementById("userInput").value = question;
  document.getElementById("chatSection").scrollIntoView({ behavior: "smooth", block: "start" });
  setTimeout(() => sendMessage(), 250);
 }
 
 /* =====================================================
-   HIỂN THỊ TIN NHẮN
+   HIỂN THỊ TIN NHẮN (+ NÚT MUA NGAY KẾ CHỮ DỪNG)
 ===================================================== */
 
-function addMessage(text, type, withVoice = false, cachedAudio = null) {
+function createMessageTools(text, cachedAudio, buyProduct) {
+ const tools = document.createElement("div");
+ tools.className = "message-tools";
+
+ const replayButton = document.createElement("button");
+ replayButton.textContent = "🔊 Nghe lại";
+ replayButton.addEventListener("click", () => {
+  unlockAudioPlayer();
+  speakText(text, cachedAudio);
+ });
+
+ const stopButton = document.createElement("button");
+ stopButton.textContent = "⏹ Dừng";
+ stopButton.addEventListener("click", stopSpeaking);
+
+ const buyLink = document.createElement("a");
+ buyLink.className = "buy-inline-btn";
+ buyLink.href = buildMenuTiktokUrl(buyProduct);
+ buyLink.textContent = buyProduct ? "🛒 Mua ngay" : "🛒 Xem menu";
+ buyLink.title = buyProduct ? ("Mở nhanh món " + buyProduct.name + " để đặt hàng") : "Mở trang menu";
+
+ tools.appendChild(replayButton);
+ tools.appendChild(stopButton);
+ tools.appendChild(buyLink);
+ return tools;
+}
+
+function addMessage(text, type, withVoice = false, cachedAudio = null, buyProduct = null) {
  const chat = document.getElementById("chatMessages");
  const message = document.createElement("div");
  message.className = "chat-message " + type;
@@ -507,23 +644,7 @@ function addMessage(text, type, withVoice = false, cachedAudio = null) {
  message.appendChild(content);
 
  if (type === "assistant" && withVoice) {
-  const tools = document.createElement("div");
-  tools.className = "message-tools";
-
-  const replayButton = document.createElement("button");
-  replayButton.textContent = "🔊 Nghe lại";
-  replayButton.addEventListener("click", () => {
-   unlockAudioPlayer();
-   speakText(text, cachedAudio);
-  });
-
-  const stopButton = document.createElement("button");
-  stopButton.textContent = "⏹ Dừng";
-  stopButton.addEventListener("click", stopSpeaking);
-
-  tools.appendChild(replayButton);
-  tools.appendChild(stopButton);
-  message.appendChild(tools);
+  message.appendChild(createMessageTools(text, cachedAudio, buyProduct));
  }
 
  chat.appendChild(message);
@@ -549,6 +670,7 @@ async function processMessage(question) {
  if (isSending || liveIsActive) return;
 
  isSending = true;
+ const currentSelected = selectedProduct;
  addMessage(question, "user");
 
  const loadingMessage = addMessage("Kim đang suy nghĩ một chút nha anh chị...", "assistant");
@@ -569,7 +691,7 @@ async function processMessage(question) {
    ttsStyle: getSelectedTtsStyle(voiceName)
   };
 
-  if (selectedProduct) payload.selectedProduct = selectedProduct;
+  if (currentSelected) payload.selectedProduct = currentSelected;
 
   const result = await callAPI(payload);
   loadingMessage.remove();
@@ -585,7 +707,9 @@ async function processMessage(question) {
    ttsAudioCache.set(voiceName + "|" + reply, preloadedAudio);
   }
 
-  addMessage(reply, "assistant", true, preloadedAudio);
+  const buyProduct = findBuyProductForReply(reply, result.products, currentSelected);
+
+  addMessage(reply, "assistant", true, preloadedAudio, buyProduct);
   setStatus("Kim đã trả lời xong", "online");
 
   speakText(reply, preloadedAudio);
@@ -596,7 +720,7 @@ async function processMessage(question) {
   if (loadingMessage.parentNode) loadingMessage.remove();
 
   const errorText = "Dạ hệ thống đang hơi chậm, anh chị nhắn lại giúp em nhé!";
-  addMessage(errorText, "assistant", true);
+  addMessage(errorText, "assistant", true, null, currentSelected);
   speakText(errorText);
   setStatus("AI gặp lỗi kết nối", "error");
 
@@ -678,7 +802,6 @@ async function speakText(text, preloadedAudio = null) {
 
  isSpeaking = true;
 
- // 1) Nếu dùng Gemini TTS (Nam miền Nam / Nữ miền Nam)
  if (voiceName !== "google_translate") {
   try {
    const cacheKey = voiceName + "|" + text;
@@ -716,7 +839,6 @@ async function speakText(text, preloadedAudio = null) {
 
  if (generation !== speechGeneration) return;
 
- // 2) Fallback sang Google Translate TTS
  speechQueue = splitSpeechText(text);
  if (!speechQueue.length) {
   isSpeaking = false;
@@ -759,7 +881,7 @@ function playAudioDataUri(dataUri, generation, rate = 1.0) {
     if (generation !== speechGeneration) return;
     isSpeaking = false;
     setStatus("Safari cần anh chị chạm nút 🔊 Nghe lại để phát âm thanh.", "error");
-    resolve(true); // Đã thử phát WAV trực tiếp nhưng Safari chặn autoplay -> giữ nguyên để user bấm Nghe lại
+    resolve(true);
    });
   }
  });
@@ -1017,7 +1139,6 @@ async function startGeminiLive() {
   }
   stopListening();
 
-  // Tạo & mở khóa AudioContext ngay trong thao tác bấm nút (bắt buộc cho iOS Safari)
   liveAudioContext = new (window.AudioContext || window.webkitAudioContext)();
   if (liveAudioContext.state === "suspended") {
    await liveAudioContext.resume();
@@ -1186,6 +1307,19 @@ function handleGeminiLiveMessage(data) {
  });
 
  if (serverContent.turnComplete) {
+  if (liveAssistantMsgEl && liveOutputText) {
+   const mentionedProduct = findBuyProductForReply(liveOutputText, null, null);
+   if (mentionedProduct && !liveAssistantMsgEl.querySelector(".message-tools")) {
+    const tools = document.createElement("div");
+    tools.className = "message-tools";
+    const buyLink = document.createElement("a");
+    buyLink.className = "buy-inline-btn";
+    buyLink.href = buildMenuTiktokUrl(mentionedProduct);
+    buyLink.textContent = "🛒 Mua " + mentionedProduct.name;
+    tools.appendChild(buyLink);
+    liveAssistantMsgEl.appendChild(tools);
+   }
+  }
   liveInputText = "";
   liveOutputText = "";
   liveUserMsgEl = null;
@@ -1202,12 +1336,15 @@ function updateLiveTranscript(role, text) {
  if (!message) {
   message = document.createElement("div");
   message.className = "chat-message " + (role === "user" ? "user" : "assistant");
+  const content = document.createElement("div");
+  message.appendChild(content);
   chat.appendChild(message);
   if (role === "user") liveUserMsgEl = message;
   else liveAssistantMsgEl = message;
  }
 
- message.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
+ const contentEl = message.firstElementChild || message;
+ contentEl.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
  chat.scrollTop = chat.scrollHeight;
 }
 
