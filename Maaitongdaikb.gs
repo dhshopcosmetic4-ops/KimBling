@@ -1,6 +1,6 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.1
- * Groq + Gemini Live + Google Sheets + POS_Data + Telegram
+ * KIM BLING AI SERVER - VERSION 4.2
+ * Groq + Gemini TTS + Gemini Live + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
@@ -14,7 +14,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.1",
+  VERSION: "4.2",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_URL: "https://api.groq.com/openai/v1/chat/completions",
@@ -22,6 +22,11 @@ const KB_CONFIG = {
   LIVE_MODEL: "gemini-3.8-live",
   GEMINI_TOKEN_URL:
     "https://generativelanguage.googleapis.com/v1alpha/auth_tokens",
+
+  TTS_MODEL: "gemini-3.8-flash-lite-tts",
+  TTS_VOICE: "Charon",
+  TTS_STYLE:
+    "Giọng nam miền Nam Việt Nam tự nhiên, ấm áp, thân thiện, gần gũi như nhân viên quán cà phê đang tư vấn khách, nhịp vừa phải, phát âm rõ ràng.",
 
   DB_ID: "16fLq_kqhacLzdMR-ccSaOgeqBfMqvUYQDdpiIx7H4gc",
 
@@ -634,9 +639,185 @@ function testGroqConnection() {
 }
 
 /* =========================================================
-   8. TƯ VẤN SẢN PHẨM MỚI - GROQ
+   8. GEMINI TTS + TƯ VẤN SẢN PHẨM MỚI (GROQ)
    Không tạo đơn, không lưu đơn, không gọi Telegram.
 ========================================================= */
+
+function kbCleanTextForTTS_(text) {
+  let result = String(text || "");
+  result = result.replace(/https?:\/\/\S+/g, "");
+
+  // Đổi 22.000đ -> 22 ngàn đồng để giọng nam miền Nam đọc tự nhiên
+  result = result.replace(
+    /(\d{1,3}(?:\.\d{3})+|\d{4,})\s*(?:đồng|đ)(?!\w)/gi,
+    function(match, number) {
+      const value = Number(String(number).replace(/\./g, ""));
+      if (!Number.isFinite(value)) return match;
+      const thousands = Math.round(value / 1000);
+      return thousands + " ngàn đồng";
+    }
+  );
+
+  result = result
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return result;
+}
+
+function kbCallGeminiTTS_(apiKey, apiVersion, model, payload) {
+  const url =
+    "https://generativelanguage.googleapis.com/" +
+    apiVersion +
+    "/models/" +
+    encodeURIComponent(model) +
+    ":generateContent";
+
+  return UrlFetchApp.fetch(url, {
+    method: "post",
+    contentType: "application/json",
+    headers: {
+      "x-goog-api-key": apiKey
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+}
+
+function kbTextToSpeech_(text, voiceName, customStyle) {
+  const cleanText = kbCleanTextForTTS_(text);
+  if (!cleanText) {
+    return {
+      success: false,
+      error: "Không có nội dung để đọc."
+    };
+  }
+
+  const apiKey = getGeminiApiKey_();
+  const model = KB_CONFIG.TTS_MODEL || "gemini-3.8-flash-lite-tts";
+  const selectedVoice = kbText_(voiceName) || KB_CONFIG.TTS_VOICE || "Charon";
+  const selectedStyle = kbText_(customStyle) || KB_CONFIG.TTS_STYLE;
+
+  const payload = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: cleanText,
+            speechMetadata: {
+              style: selectedStyle
+            }
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: selectedVoice
+          }
+        }
+      }
+    }
+  };
+
+  let response = kbCallGeminiTTS_(apiKey, "v1", model, payload);
+  let code = response.getResponseCode();
+  let body = response.getContentText();
+
+  // Nếu v1 từ chối speechMetadata hoặc model preview, tự thử lại với v1beta
+  if (code < 200 || code >= 300) {
+    response = kbCallGeminiTTS_(apiKey, "v1beta", model, payload);
+    code = response.getResponseCode();
+    body = response.getContentText();
+  }
+
+  // Nếu vẫn lỗi do speechMetadata, thử lại dạng chỉ dẫn trong text
+  if (code < 200 || code >= 300) {
+    const fallbackPayload = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: cleanText
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: selectedVoice
+            }
+          }
+        }
+      }
+    };
+
+    response = kbCallGeminiTTS_(apiKey, "v1", model, fallbackPayload);
+    code = response.getResponseCode();
+    body = response.getContentText();
+  }
+
+  if (code < 200 || code >= 300) {
+    throw new Error(
+      "Gemini TTS thất bại HTTP " + code + ": " + body.substring(0, 600)
+    );
+  }
+
+  const result = kbParseJson_(body, {});
+  const candidates = Array.isArray(result.candidates) ? result.candidates : [];
+  const parts =
+    candidates[0] &&
+    candidates[0].content &&
+    Array.isArray(candidates[0].content.parts)
+      ? candidates[0].content.parts
+      : [];
+
+  let audioPart = null;
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] && parts[i].inlineData && parts[i].inlineData.data) {
+      audioPart = parts[i].inlineData;
+      break;
+    }
+  }
+
+  if (!audioPart) {
+    throw new Error("Gemini TTS không trả về dữ liệu âm thanh.");
+  }
+
+  return {
+    success: true,
+    audioBase64: audioPart.data,
+    mimeType: audioPart.mimeType || "audio/wav",
+    voiceName: selectedVoice
+  };
+}
+
+function testGeminiTTS() {
+  const res = kbTextToSpeech_(
+    "Dạ chào anh chị, Kim Bling xin mời anh chị thử trà sữa trân châu đường đen hai mươi hai ngàn đồng ạ.",
+    "Charon"
+  );
+  Logger.log(
+    "TTS OK: " + res.success +
+    " | mimeType: " + res.mimeType +
+    " | base64 length: " + (res.audioBase64 ? res.audioBase64.length : 0)
+  );
+  return {
+    success: res.success,
+    mimeType: res.mimeType,
+    voiceName: res.voiceName,
+    base64Length: res.audioBase64 ? res.audioBase64.length : 0
+  };
+}
 
 function kbAdvisorChat_(data) {
   const message = kbText_(data.message);
@@ -673,9 +854,8 @@ function kbAdvisorChat_(data) {
 
   const system = [
     "Bạn là trợ lý tư vấn đồ uống và ăn vặt của KIM BLING COFFEE & TEA.",
-    "Luôn trả lời bằng tiếng Việt tự nhiên.",
+    "Luôn trả lời bằng tiếng Việt miền Nam tự nhiên, thân thiện, lễ phép.",
     "Gọi khách là anh chị, không gọi là bạn.",
-    "Giọng điệu thân thiện, lễ phép, tư vấn như nhân viên thật.",
     "Chỉ tư vấn sản phẩm có trong danh mục thực tế.",
     "Không tự bịa tên món, giá, thành phần, topping, khuyến mãi.",
     "Không chắc thông tin thì nói rõ chưa có dữ liệu.",
@@ -706,9 +886,26 @@ function kbAdvisorChat_(data) {
     }
   ]);
 
+  let audioBase64 = "";
+  let audioMimeType = "";
+
+  if (data.withAudio && data.voiceName !== "google_translate") {
+    try {
+      const tts = kbTextToSpeech_(reply, data.voiceName, data.ttsStyle);
+      if (tts && tts.success && tts.audioBase64) {
+        audioBase64 = tts.audioBase64;
+        audioMimeType = tts.mimeType || "audio/wav";
+      }
+    } catch (ttsErr) {
+      Logger.log("Lỗi TTS kèm tư vấn: " + ttsErr.message);
+    }
+  }
+
   return {
     success: true,
     reply: reply,
+    audioBase64: audioBase64,
+    audioMimeType: audioMimeType,
     products: matched,
     productIds: matched.map(function(p) {
       return p.id;
@@ -717,7 +914,7 @@ function kbAdvisorChat_(data) {
 }
 
 /* =========================================================
-   9. GEMINI LIVE - CẤP EPHEMERAL TOKEN
+   9. GEMINI LIVE - CẤP EPHEMERAL TOKEN (BÁM SÁT POS_DATA)
    API KEY THẬT CHỈ ĐƯỢC DÙNG TRÊN SERVER.
 ========================================================= */
 
@@ -733,9 +930,51 @@ function getGeminiApiKey_() {
   return key;
 }
 
+function kbBuildLiveSystemInstruction_() {
+  const catalog = getAIProductCatalog_();
+
+  const menuText = (catalog.menu || []).map(function(item) {
+    return "- " + kbItemName_(item) +
+      " | Giá: " + kbItemPrice_(item).toLocaleString("vi-VN") + "đ" +
+      " | Danh mục: " + kbItemCategory_(item, "Đồ uống") +
+      (kbItemSoldOut_(item) ? " | TẠM HẾT" : " | Còn món");
+  }).join("\n");
+
+  const drinkToppingsText = (catalog.drinkToppings || []).map(function(item) {
+    return "- " + kbItemName_(item) + ": " +
+      kbItemPrice_(item).toLocaleString("vi-VN") + "đ" +
+      (kbItemSoldOut_(item) ? " (TẠM HẾT)" : "");
+  }).join("\n");
+
+  const snackToppingsText = (catalog.snackToppings || []).map(function(item) {
+    return "- " + kbItemName_(item) + ": " +
+      kbItemPrice_(item).toLocaleString("vi-VN") + "đ" +
+      (kbItemSoldOut_(item) ? " (TẠM HẾT)" : "");
+  }).join("\n");
+
+  return [
+    "Bạn là Kim, trợ lý tư vấn giọng nói của quán KIM BLING COFFEE & TEA.",
+    "Luôn nói tiếng Việt miền Nam tự nhiên, ấm áp, lễ phép, xưng em và gọi khách là anh chị.",
+    "QUY TẮC BẮT BUỘC:",
+    "1. CHỈ được phép giới thiệu, gợi ý và báo giá những món, topping CÓ TRONG DANH SÁCH THỰC ĐƠN QUÁN bên dưới.",
+    "2. TUYỆT ĐỐI KHÔNG tự bịa tên món, giá tiền, thành phần, size hoặc khuyến mãi ngoài danh sách.",
+    "3. Nếu khách hỏi món không có trong danh sách, hãy lịch sự báo quán hiện chưa có món đó và gợi ý món tương tự đang còn trong thực đơn.",
+    "4. Nếu món đang đánh dấu TẠM HẾT, phải nói rõ cho anh chị biết là món đó đang tạm hết và gợi ý món khác đang còn.",
+    "5. Trả lời ngắn gọn 1 đến 3 câu mỗi lượt để khách nghe trực tiếp thật tự nhiên.",
+    "",
+    "THỰC ĐƠN CHÍNH THỨC CỦA QUÁN (POS_Data):",
+    menuText || "(Chưa có dữ liệu món)",
+    "",
+    "TOPPING ĐỒ UỐNG:",
+    drinkToppingsText || "(Không có)",
+    "",
+    "TOPPING ĂN VẶT:",
+    snackToppingsText || "(Không có)"
+  ].join("\n");
+}
+
 function kbCreateGeminiLiveToken_() {
   const apiKey = getGeminiApiKey_();
-
   const now = Date.now();
 
   const expireTime = new Date(
@@ -746,7 +985,8 @@ function kbCreateGeminiLiveToken_() {
     now + 60 * 1000
   ).toISOString();
 
-  // Cấu trúc REST API chuẩn theo Gemini API v1alpha/auth_tokens
+  const systemPrompt = kbBuildLiveSystemInstruction_();
+
   const payload = {
     uses: 1,
     expireTime: expireTime,
@@ -754,9 +994,15 @@ function kbCreateGeminiLiveToken_() {
 
     bidiGenerateContentSetup: {
       model: "models/" + KB_CONFIG.LIVE_MODEL,
-
       generationConfig: {
         responseModalities: ["AUDIO"]
+      },
+      systemInstruction: {
+        parts: [
+          {
+            text: systemPrompt
+          }
+        ]
       },
       inputAudioTranscription: {},
       outputAudioTranscription: {},
@@ -779,7 +1025,6 @@ function kbCreateGeminiLiveToken_() {
 
   const code = response.getResponseCode();
   const body = response.getContentText();
-
   const result = kbParseJson_(body, {});
 
   if (code < 200 || code >= 300) {
@@ -811,7 +1056,6 @@ function testGeminiLiveToken() {
 
   const result = kbCreateGeminiLiveToken_();
 
-  // Không ghi token bí mật vào Logger.
   Logger.log("CẤP TOKEN: THÀNH CÔNG");
   Logger.log("Model: " + result.model);
   Logger.log("Token tồn tại: " + !!result.token);
@@ -1725,9 +1969,14 @@ function doPost(e) {
         result = kbGetCatalogAPI_();
         break;
 
-      // API MỚI: TƯ VẤN BẰNG GROQ
+      // API MỚI: TƯ VẤN BẰNG GROQ (+ KÈM ÂM THANH GEMINI TTS NẾU CHỌN)
       case "advisor_chat":
         result = kbAdvisorChat_(data);
+        break;
+
+      // API MỚI: ĐỌC GIỌNG NÓI GEMINI TTS
+      case "tts":
+        result = kbTextToSpeech_(data.text, data.voiceName, data.ttsStyle);
         break;
 
       // API MỚI: CẤP TOKEN GEMINI LIVE
@@ -1839,11 +2088,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.1
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.2
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.1 ==========");
+  Logger.log("========== KIM BLING AI 4.2 ==========");
 
   const config = checkKimBlingConfig();
 
