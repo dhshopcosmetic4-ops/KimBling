@@ -277,6 +277,40 @@ function kbItemSoldOut_(item) {
     String(v) === "1";
 }
 
+function kbIsFoodItem_(name, category) {
+  const n = kbNorm_(name || "");
+  const c = kbNorm_(category || "");
+  if (c.includes("food") || c.includes("an vat") || c.includes("do an")) return true;
+  if (n.includes("chan ga") || n.includes("lap xuong") || n.includes("sua sot") ||
+      n.includes("ca vien") || n.includes("tokbokki") || n.includes("banh trang") ||
+      n.includes("com chien") || n.includes("goi kho bo") || n.includes("mi ") ||
+      n.includes("an vat") || n.includes("xuc xich") || n.includes("khoai tay") ||
+      n.includes("pho mai que") || n.includes("nem chua")) {
+    return true;
+  }
+  return false;
+}
+
+function kbCanUpsizeItem_(name, category) {
+  if (kbIsFoodItem_(name, category)) return false;
+  const n = kbNorm_(name || "");
+  if (!n) return false;
+  if (n.includes("ly 1 lit") || n.includes("1 lit") || n.includes("ly khong lo") ||
+      n.includes("khong lo") || n.includes("ly nho") || n.includes("650ml") ||
+      n.includes("650 ml")) {
+    return false;
+  }
+  if (/\b\d+\s*(ml|l|lit)\b/.test(n)) return false;
+  return true;
+}
+
+const KB_UPSIZE_RULE_TEXT =
+  "QUY ĐỊNH UPSIZE LY 1 LÍT (+10.000đ):\n" +
+  "- Đồ uống mà tên món KHÔNG ghi dung tích/trọng lượng là ly bình thường -> ĐƯỢC upsize lên ly 1 lít, cộng thêm 10.000đ.\n" +
+  "- Món thức ăn / đồ ăn vặt -> KHÔNG có upsize.\n" +
+  "- Thức uống mà tên món ghi \"ly 1 lít\" / \"1 lít\" hoặc \"ly 650ml\" / \"650ml\" (hoặc có ghi trọng lượng/dung tích) -> KHÔNG được upsize.\n" +
+  "- Khi tư vấn ly bình thường được phép upsize, hãy gợi ý khách có thể nâng lên ly 1 lít thêm 10.000đ; tuyệt đối KHÔNG mời upsize cho đồ ăn hoặc món có ghi 1 lít / 650ml.";
+
 function kbPublicProduct_(item, category) {
   return {
     id: kbItemId_(item),
@@ -314,6 +348,7 @@ function kbFindMenuItems_(message, catalog) {
       found.push({
         id: kbItemId_(item),
         name: name,
+        category: kbItemCategory_(item, ""),
         price: kbItemPrice_(item),
         quantity: qtyMatch
           ? Math.max(1, Number(qtyMatch[1]))
@@ -804,10 +839,12 @@ function kbAdvisorChat_(data) {
 
   let selectedText = "";
   if (selected) {
+    const canUpsizeSel = kbCanUpsizeItem_(selected.name, selected.category);
     selectedText = [
       "SẢN PHẨM KHÁCH ĐANG XEM:",
       "Tên: " + kbText_(selected.name) + " | Giá: " + kbMoney_(selected.price) + "đ | Danh mục: " + kbText_(selected.category) +
-      " | Hết hàng: " + (selected.isSoldOut ? "Có" : "Không")
+      " | Hết hàng: " + (selected.isSoldOut ? "Có" : "Không") +
+      " | Upsize lên ly 1 lít (+10.000đ): " + (canUpsizeSel ? "Được phép" : "Không được upsize (món ăn hoặc đã ghi dung tích/ly 1 lít/650ml)")
     ].join("\n");
   }
 
@@ -824,6 +861,7 @@ function kbAdvisorChat_(data) {
     "Nếu sản phẩm hết hàng phải báo rõ.",
     "Không tự tạo đơn, không xin SĐT/địa chỉ, không hướng dẫn thanh toán.",
     "Nếu khách hỏi 1 món: tư vấn 2 đến 4 câu đầy đủ hương vị, giá và gợi ý 1-2 topping hợp. Nếu khách hỏi cả nhóm món: liệt kê gọn các món nổi bật kèm giá.",
+    KB_UPSIZE_RULE_TEXT,
     "",
     kbFormatCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []),
     "",
@@ -912,6 +950,7 @@ function kbCreateGeminiLiveToken_() {
     "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
     "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
     "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
+    KB_UPSIZE_RULE_TEXT,
     "",
     compactMenu
   ].join("\n");
@@ -1480,7 +1519,7 @@ function kbQuestionForPhase_(state, catalog) {
       return "Dạ anh/chị cho em xin địa chỉ giao hàng nhé?";
 
     case "upsize":
-      return "Anh/chị có muốn nâng size ly lớn hơn không ạ? Phụ thu 10.000đ.";
+      return "Anh/chị có muốn upsize ly bình thường lên ly 1 lít không ạ? Phụ thu 10.000đ.";
 
     case "toppings":
       return "Anh/chị có muốn thêm topping không ạ? Nếu có, anh/chị cho em biết tên topping nhé. Nếu không, mình chọn Không ạ.";
@@ -1612,7 +1651,11 @@ function kbHandleOrderMessage_(session, message, catalog) {
     ) {
       state.fulfillment = "pickup";
       state.address = "Tại quán";
-      state.phase = "upsize";
+      const hasUpsizeItem = (state.items || []).some(function(it) {
+        return kbCanUpsizeItem_(it.name, it.category);
+      });
+      if (!hasUpsizeItem) state.upsize = false;
+      state.phase = hasUpsizeItem ? "upsize" : "toppings";
 
     } else if (
       n.includes("giao") ||
@@ -1638,7 +1681,11 @@ function kbHandleOrderMessage_(session, message, catalog) {
     }
 
     state.address = message.trim();
-    state.phase = "upsize";
+    const hasUpsizeItemAddr = (state.items || []).some(function(it) {
+      return kbCanUpsizeItem_(it.name, it.category);
+    });
+    if (!hasUpsizeItemAddr) state.upsize = false;
+    state.phase = hasUpsizeItemAddr ? "upsize" : "toppings";
 
   } else if (state.phase === "upsize") {
     if (kbIsYes_(message)) {
@@ -1737,6 +1784,7 @@ function kbGeneralAIReply_(sessionId, message, catalog) {
     "Nếu khách muốn đặt món, hướng dẫn họ nêu tên món và số lượng.",
     "Không tự tuyên bố đã tạo hoặc lưu đơn hàng.",
     "Mỗi câu trả lời nên ngắn, tối đa 2-3 câu.",
+    KB_UPSIZE_RULE_TEXT,
     "",
     "DANH MỤC ĐANG CÓ:",
     kbCatalogText_(catalog)
