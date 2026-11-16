@@ -23,7 +23,33 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14
 #mainContent{width:100%;max-width:850px;margin:0 auto;padding:14px;flex:1}
 
 #chatSection{margin-top:0;margin-bottom:16px;background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;scroll-margin-top:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-.chat-heading{padding:14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee}
+.chat-heading{padding:12px 14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.avatar-toggle-btn{border:1px solid #f0c2c2;background:#fff;color:#b71c1c;border-radius:14px;padding:4px 10px;font-size:12px!important;font-weight:700}
+
+.kim-avatar-stage{display:flex;align-items:center;gap:12px;padding:10px 14px;background:linear-gradient(135deg,#fff5f5 0%,#ffffff 65%,#fff8e1 100%);border-bottom:1px solid #f1e4e4}
+.kim-avatar-stage.collapsed{display:none}
+.kim-svg-wrap{width:92px;height:96px;flex-shrink:0;border-radius:16px;background:radial-gradient(circle at 50% 35%,#ffe8e8 0%,#ffd7d7 100%);border:1.5px solid #f6c8c8;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 2px 8px rgba(183,28,28,.08)}
+#kimSvg{width:90px;height:94px;display:block}
+#kimHeadGroup,#kimLeftArm,#kimRightArm,#kimBodyGroup{transform-box:fill-box;transition:transform .08s linear}
+#kimHeadGroup{transform-origin:50% 72%}
+#kimBodyGroup{transform-origin:50% 90%}
+#kimLeftArm{transform-origin:78% 18%}
+#kimRightArm{transform-origin:22% 18%}
+.kim-eye-lid{transform-origin:center;transform-box:fill-box;transition:transform .07s ease}
+.kim-avatar-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.kim-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kim-name{font-weight:800;color:#b71c1c;font-size:15px!important}
+.kim-role-tag{font-size:11px!important;font-weight:700;background:#ffebee;color:#c62828;padding:2px 7px;border-radius:10px;border:1px solid #ffcdd2}
+.kim-state-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px!important;font-weight:700;color:#444}
+.kim-state-badge.speaking{color:#c62828}
+.kim-state-badge.listening{color:#2e7d32}
+.kim-state-badge.thinking{color:#6a1b9a}
+.kim-wave-bars{display:flex;align-items:flex-end;gap:3px;height:18px;margin-top:2px}
+.kim-wave-bar{width:4px;height:4px;border-radius:3px;background:#e57373;transition:height .06s linear,background-color .15s ease}
+.kim-avatar-stage[data-state="speaking"] .kim-wave-bar{background:#d32f2f}
+.kim-avatar-stage[data-state="listening"] .kim-wave-bar{background:#2e7d32}
+.kim-avatar-stage[data-state="thinking"] .kim-wave-bar{background:#7b1fa2}
+
 #chatMessages{padding:14px;display:flex;flex-direction:column;gap:12px;min-height:160px;max-height:430px;overflow-y:auto;background:#fff}
 .chat-message{max-width:88%;padding:12px 14px;border-radius:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 .chat-message.assistant{align-self:flex-start;color:#333;background:#f1f3f5;border-bottom-left-radius:4px}
@@ -129,7 +155,99 @@ footer{padding:18px 12px;text-align:center;color:#888}
 <main id="mainContent">
 
  <section id="chatSection">
-  <div class="chat-heading">💬 Trò chuyện với Kim</div>
+  <div class="chat-heading">
+   <span>💬 Trò chuyện với Kim</span>
+   <button id="toggleAvatarBtn" class="avatar-toggle-btn" type="button" onclick="toggleKimAvatar()">Ẩn Bé Kim</button>
+  </div>
+
+  <div id="kimAvatarStage" class="kim-avatar-stage" data-state="idle">
+   <div class="kim-svg-wrap" aria-hidden="true">
+    <svg id="kimSvg" viewBox="0 0 120 126" xmlns="http://www.w3.org/2000/svg">
+     <!-- Back hair -->
+     <path d="M27 52 C22 76, 25 103, 35 112 L85 112 C95 103, 98 76, 93 52 C90 25, 76 14, 60 14 C44 14, 30 25, 27 52 Z" fill="#2c1d1b"/>
+     <!-- Cute side bun + red hair tie -->
+     <circle cx="91" cy="30" r="11" fill="#2c1d1b"/>
+     <circle cx="85" cy="33" r="4" fill="#d32f2f"/>
+
+     <!-- Body & Uniform -->
+     <g id="kimBodyGroup">
+      <!-- Left Arm (viewer left = character right) -->
+      <g id="kimLeftArm">
+       <path d="M36 86 Q21 93 20 79" fill="none" stroke="#ffd4bc" stroke-width="9.5" stroke-linecap="round"/>
+       <circle cx="19" cy="76" r="5.5" fill="#ffd4bc"/>
+      </g>
+      <!-- Right Arm (viewer right = character left) -->
+      <g id="kimRightArm">
+       <path d="M84 86 Q99 93 100 79" fill="none" stroke="#ffd4bc" stroke-width="9.5" stroke-linecap="round"/>
+       <circle cx="101" cy="76" r="5.5" fill="#ffd4bc"/>
+      </g>
+      <!-- Torso Red Polo -->
+      <path d="M35 84 C36 74, 46 71, 60 71 C74 71, 84 74, 85 84 L88 123 L32 123 Z" fill="#d32f2f"/>
+      <!-- White Collar -->
+      <path d="M49 71 L60 83 L71 71 Z" fill="#ffffff"/>
+      <!-- Cream Barista Apron -->
+      <path d="M41 87 L79 87 L82 123 L38 123 Z" fill="#fff8ef"/>
+      <rect x="46" y="101" width="28" height="15" rx="4" fill="#ffe5d0" stroke="#f0b79d" stroke-width="1"/>
+      <text x="60" y="96" text-anchor="middle" font-size="8" font-weight="800" fill="#b71c1c">KB</text>
+     </g>
+
+     <!-- Neck -->
+     <rect x="53" y="62" width="14" height="14" rx="6" fill="#f7c4a7"/>
+
+     <!-- Head Group -->
+     <g id="kimHeadGroup">
+      <!-- Ears -->
+      <circle cx="33" cy="50" r="5" fill="#f7c4a7"/>
+      <circle cx="87" cy="50" r="5" fill="#f7c4a7"/>
+      <!-- Face -->
+      <ellipse cx="60" cy="48" rx="25" ry="26" fill="#ffd9c2"/>
+      <!-- Blush cheeks -->
+      <ellipse cx="42" cy="54" rx="5.5" ry="3.2" fill="#ff9e9e" opacity="0.55"/>
+      <ellipse cx="78" cy="54" rx="5.5" ry="3.2" fill="#ff9e9e" opacity="0.55"/>
+      <!-- Eyebrows -->
+      <path id="kimBrowL" d="M42 37 Q47 34 52 37" fill="none" stroke="#3b231e" stroke-width="2" stroke-linecap="round"/>
+      <path id="kimBrowR" d="M68 37 Q73 34 78 37" fill="none" stroke="#3b231e" stroke-width="2" stroke-linecap="round"/>
+      <!-- Eyes -->
+      <g class="kim-eye-lid" id="kimEyeL">
+       <ellipse cx="47" cy="45" rx="4.2" ry="4.6" fill="#231614"/>
+       <circle cx="48.5" cy="43.5" r="1.4" fill="#ffffff"/>
+      </g>
+      <g class="kim-eye-lid" id="kimEyeR">
+       <ellipse cx="73" cy="45" rx="4.2" ry="4.6" fill="#231614"/>
+       <circle cx="74.5" cy="43.5" r="1.4" fill="#ffffff"/>
+      </g>
+      <!-- Nose -->
+      <path d="M59 49 Q60.5 52 59 53" fill="none" stroke="#e2a588" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- Animated Mouth -->
+      <g id="kimMouthGroup">
+       <ellipse id="kimMouthCavity" cx="60" cy="59.5" rx="6.5" ry="1.8" fill="#8b1e24"/>
+       <ellipse id="kimTongue" cx="60" cy="61" rx="4.2" ry="1.2" fill="#ff7d8d" opacity="0"/>
+       <path id="kimMouthSmile" d="M53 58.5 Q60 63.5 67 58.5" fill="none" stroke="#8b1e24" stroke-width="2.1" stroke-linecap="round"/>
+      </g>
+      <!-- Front bangs hair -->
+      <path d="M33 43 C35 23, 49 16, 61 17 C76 17, 86 27, 87 43 C82 33, 73 27, 64 31 C56 26, 44 29, 33 43 Z" fill="#2c1d1b"/>
+      <!-- Cute red headband -->
+      <path d="M34 33 Q60 20 86 33" fill="none" stroke="#e53935" stroke-width="3.2" stroke-linecap="round"/>
+     </g>
+    </svg>
+   </div>
+   <div class="kim-avatar-meta">
+    <div class="kim-name-row">
+     <span class="kim-name">Bé Kim</span>
+     <span class="kim-role-tag">Barista AI • Miền Nam</span>
+    </div>
+    <div id="kimStateBadge" class="kim-state-badge">😊 Sẵn sàng tư vấn</div>
+    <div class="kim-wave-bars" id="kimWaveBars" aria-hidden="true">
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+     <span class="kim-wave-bar"></span>
+    </div>
+   </div>
+  </div>
 
   <div id="chatMessages">
    <div class="chat-message assistant">Dạ em chào anh chị! Em là Kim đây ạ. Anh chị muốn uống món gì hôm nay, để em tư vấn nha ❤️</div>
@@ -242,11 +360,20 @@ let currentBlobUrl = "";
 let recognition = null;
 let isListening = false;
 
+let ttsAudioContext = null;
+let ttsGainNode = null;
+let ttsCompressor = null;
+let ttsAnalyser = null;
+let ttsBufferSource = null;
+
 let liveSocket = null;
 let liveStream = null;
 let liveAudioContext = null;
 let liveProcessor = null;
 let liveSource = null;
+let liveGainNode = null;
+let liveCompressor = null;
+let liveOutputAnalyser = null;
 let liveIsActive = false;
 let liveIsReady = false;
 let livePlaybackNextTime = 0;
@@ -256,6 +383,16 @@ let liveOutputText = "";
 let liveInputText = "";
 let liveStarting = false;
 let liveSessionGeneration = 0;
+let currentLiveUserEl = null;
+let currentLiveAssistantEl = null;
+let liveIdleTimer = null;
+const LIVE_IDLE_TIMEOUT_MS = 90000;
+
+let kimAnimFrame = null;
+let kimNextBlinkAt = 0;
+let kimIsBlinking = false;
+let kimStateOverride = "";
+let kimMouthSmoothed = 0;
 
 async function callAPI(payload) {
  const response = await fetch(API_URL, {
@@ -306,7 +443,33 @@ function restoreVoicePreference() {
  } catch (e) {}
 }
 
+function ensureTtsAudioChain() {
+ const AudioCtx = window.AudioContext || window.webkitAudioContext;
+ if (!AudioCtx) return null;
+ if (!ttsAudioContext || ttsAudioContext.state === "closed") {
+  ttsAudioContext = new AudioCtx();
+  ttsGainNode = ttsAudioContext.createGain();
+  ttsGainNode.gain.value = 2.5;
+  ttsCompressor = ttsAudioContext.createDynamicsCompressor();
+  ttsCompressor.threshold.value = -10;
+  ttsCompressor.knee.value = 18;
+  ttsCompressor.ratio.value = 8;
+  ttsCompressor.attack.value = 0.003;
+  ttsCompressor.release.value = 0.12;
+  ttsAnalyser = ttsAudioContext.createAnalyser();
+  ttsAnalyser.fftSize = 256;
+  ttsGainNode.connect(ttsCompressor);
+  ttsCompressor.connect(ttsAnalyser);
+  ttsAnalyser.connect(ttsAudioContext.destination);
+ }
+ if (ttsAudioContext.state === "suspended") {
+  ttsAudioContext.resume().catch(() => {});
+ }
+ return ttsAudioContext;
+}
+
 function unlockAudioPlayer() {
+ try { ensureTtsAudioChain(); } catch (e) {}
  if (audioUnlocked) return;
  const audio = document.getElementById("audioPlayer");
  if (!audio) return;
@@ -719,6 +882,30 @@ function quickAsk(question) {
  setTimeout(() => sendMessage(), 220);
 }
 
+function findAllMentionedProducts(replyText, limit = 3) {
+ const normReply = removeDiacritics(replyText || "");
+ if (!normReply || !catalogProducts.length) return [];
+
+ const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
+ const matched = [];
+ const seen = new Set();
+
+ for (const item of sorted) {
+  if (!item || !item.name) continue;
+  const normName = removeDiacritics(item.name);
+  if (normName.length < 3) continue;
+  if (normReply.includes(normName)) {
+   const key = normName;
+   if (!seen.has(key)) {
+    seen.add(key);
+    matched.push(item);
+    if (matched.length >= limit) break;
+   }
+  }
+ }
+ return matched;
+}
+
 function findMentionedProduct(replyText, resultObj) {
  if (resultObj && Array.isArray(resultObj.products) && resultObj.products.length > 0) {
   const first = resultObj.products[0];
@@ -731,11 +918,8 @@ function findMentionedProduct(replyText, resultObj) {
  }
  if (selectedProduct && selectedProduct.name) return selectedProduct;
 
- const cleanReply = String(replyText || "").toLowerCase();
- if (!cleanReply || !catalogProducts.length) return null;
-
- const sorted = [...catalogProducts].sort((a, b) => (b.name || "").length - (a.name || "").length);
- return sorted.find(p => p.name && cleanReply.includes(p.name.toLowerCase())) || null;
+ const matches = findAllMentionedProducts(replyText, 1);
+ return matches.length ? matches[0] : null;
 }
 
 function addMessage(text, type, options = {}) {
@@ -802,6 +986,7 @@ async function processMessage(question) {
  unlockAudioPlayer();
 
  isSending = true;
+ kimStateOverride = "thinking";
  addMessage(question, "user");
 
  const loadingMessage = addMessage("Kim đang suy nghĩ một chút nha anh chị...", "assistant");
@@ -836,6 +1021,7 @@ async function processMessage(question) {
   const ttsBase64 = result.ttsAudioBase64 || result.audioBase64 || "";
   const ttsMime = result.ttsMimeType || "audio/wav";
 
+  kimStateOverride = "";
   addMessage(reply, "assistant", {
    withVoice: true,
    product: matchedProduct,
@@ -859,6 +1045,7 @@ async function processMessage(question) {
 
  } catch (error) {
   console.error("Lỗi tư vấn:", error);
+  kimStateOverride = "";
   if (loadingMessage.parentNode) loadingMessage.remove();
 
   const rawErr = (error && error.message) ? String(error.message) : "Lỗi kết nối máy chủ";
@@ -873,6 +1060,7 @@ async function processMessage(question) {
   setStatus("Lỗi AI: " + rawErr.slice(0, 120), "error");
 
  } finally {
+  kimStateOverride = "";
   isSending = false;
   sendButton.disabled = false;
  }
@@ -927,14 +1115,52 @@ function splitSpeechText(text, maxLength = 180) {
 async function playBase64Audio(base64, mimeType = "audio/wav", fallbackText = "") {
  stopSpeaking();
  const generation = speechGeneration;
+ if (!base64) {
+  if (fallbackText) return speakViaGoogleOrNative(fallbackText, generation);
+  return;
+ }
+
+ const bytes = base64ToBytes(base64);
+
+ // Prefer Web Audio API decode so GainNode (2.5x) + Limiter matches Gemini Live loudness
+ try {
+  const ctx = ensureTtsAudioChain();
+  if (ctx && ttsGainNode) {
+   if (ctx.state === "suspended") await ctx.resume();
+   const arrayCopy = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+   const decoded = await ctx.decodeAudioData(arrayCopy);
+   if (generation !== speechGeneration) return;
+
+   const source = ctx.createBufferSource();
+   source.buffer = decoded;
+   source.playbackRate.value = 1.05;
+   source.connect(ttsGainNode);
+   ttsBufferSource = source;
+   isSpeaking = true;
+   setStatus("🔊 Kim đang đọc câu trả lời...", "online");
+
+   source.onended = () => {
+    if (ttsBufferSource === source) ttsBufferSource = null;
+    try { source.disconnect(); } catch (e) {}
+    if (generation !== speechGeneration) return;
+    isSpeaking = false;
+    setStatus("Sẵn sàng", "online");
+   };
+
+   source.start(0);
+   return;
+  }
+ } catch (webAudioErr) {
+  console.warn("Web Audio TTS fallback sang HTML audio:", webAudioErr);
+ }
+
  const audio = document.getElementById("audioPlayer");
- if (!audio || !base64) {
+ if (!audio) {
   if (fallbackText) return speakViaGoogleOrNative(fallbackText, generation);
   return;
  }
 
  try {
-  const bytes = base64ToBytes(base64);
   const blob = new Blob([bytes], { type: mimeType || "audio/wav" });
   if (currentBlobUrl) {
    try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
@@ -944,6 +1170,7 @@ async function playBase64Audio(base64, mimeType = "audio/wav", fallbackText = ""
   isSpeaking = true;
   setStatus("🔊 Kim đang đọc câu trả lời...", "online");
 
+  audio.volume = 1.0;
   audio.src = currentBlobUrl;
   audio.playbackRate = 1.05;
 
@@ -1026,10 +1253,11 @@ async function playNextGoogleChunk(generation) {
  const audio = document.getElementById("audioPlayer");
  setStatus("🔊 Kim đang đọc câu trả lời...", "online");
 
+ audio.volume = 1.0;
  audio.src = "https://translate.google.com/translate_tts?ie=UTF-8&q=" +
   encodeURIComponent(text) + "&tl=vi&client=tw-ob";
 
- audio.playbackRate = 1.25;
+ audio.playbackRate = 1.12;
  audio.onended = () => {
   if (generation !== speechGeneration) return;
   playNextGoogleChunk(generation);
@@ -1096,6 +1324,12 @@ function stopSpeaking() {
  speechGeneration++;
  speechQueue = [];
  isSpeaking = false;
+
+ if (ttsBufferSource) {
+  try { ttsBufferSource.onended = null; ttsBufferSource.stop(); } catch (e) {}
+  try { ttsBufferSource.disconnect(); } catch (e) {}
+  ttsBufferSource = null;
+ }
 
  const audio = document.getElementById("audioPlayer");
  if (audio) {
@@ -1241,6 +1475,20 @@ async function startGeminiLive() {
   if (!liveAudioContext) liveAudioContext = new AudioCtx();
   if (liveAudioContext.state === "suspended") await liveAudioContext.resume();
 
+  liveGainNode = liveAudioContext.createGain();
+  liveGainNode.gain.value = 1.45;
+  liveCompressor = liveAudioContext.createDynamicsCompressor();
+  liveCompressor.threshold.value = -10;
+  liveCompressor.knee.value = 18;
+  liveCompressor.ratio.value = 6;
+  liveCompressor.attack.value = 0.003;
+  liveCompressor.release.value = 0.12;
+  liveOutputAnalyser = liveAudioContext.createAnalyser();
+  liveOutputAnalyser.fftSize = 256;
+  liveGainNode.connect(liveCompressor);
+  liveCompressor.connect(liveOutputAnalyser);
+  liveOutputAnalyser.connect(liveAudioContext.destination);
+
   const tokenResult = await callAPI({ action: "create_live_token" });
   if (!tokenResult || tokenResult.success === false || !tokenResult.token) {
    throw new Error(tokenResult && tokenResult.error ? tokenResult.error : "Không nhận được Gemini Live token.");
@@ -1329,14 +1577,28 @@ async function startGeminiLive() {
  }
 }
 
+function resetLiveIdleTimer() {
+ if (liveIdleTimer) clearTimeout(liveIdleTimer);
+ if (!liveIsActive) return;
+ liveIdleTimer = setTimeout(() => {
+  if (!liveIsActive) return;
+  stopGeminiLive(true);
+ }, LIVE_IDLE_TIMEOUT_MS);
+}
+
 function handleGeminiLiveMessage(data) {
  if (data.setupComplete) {
   liveIsReady = true;
   liveIsActive = true;
+  currentLiveUserEl = null;
+  currentLiveAssistantEl = null;
+  liveInputText = "";
+  liveOutputText = "";
   document.getElementById("liveStartBtn").disabled = true;
   document.getElementById("liveStopBtn").disabled = false;
   setLiveStatus("🟢 Gemini Live đang hoạt động. Anh chị có thể nói chuyện với Kim ngay bây giờ.", true);
   setStatus("🎙️ Kim đang lắng nghe anh chị", "online");
+  resetLiveIdleTimer();
   startLiveMicrophone();
   return;
  }
@@ -1351,41 +1613,97 @@ function handleGeminiLiveMessage(data) {
  if (serverContent.interrupted) stopLivePlayback();
 
  if (serverContent.inputTranscription && serverContent.inputTranscription.text) {
+  resetLiveIdleTimer();
+  if (currentLiveAssistantEl && liveOutputText.trim()) {
+   refreshLiveBubbleBuyButtons(currentLiveAssistantEl, liveOutputText, true);
+   currentLiveAssistantEl = null;
+   liveOutputText = "";
+  }
   liveInputText += serverContent.inputTranscription.text;
   updateLiveTranscript("user", liveInputText);
  }
  if (serverContent.outputTranscription && serverContent.outputTranscription.text) {
+  resetLiveIdleTimer();
   liveOutputText += serverContent.outputTranscription.text;
   updateLiveTranscript("assistant", liveOutputText);
  }
 
  const parts = serverContent.modelTurn && serverContent.modelTurn.parts ? serverContent.modelTurn.parts : [];
  parts.forEach(part => {
-  if (part.inlineData && part.inlineData.data) queueGeminiAudio(part.inlineData.data);
+  if (part.inlineData && part.inlineData.data) {
+   resetLiveIdleTimer();
+   queueGeminiAudio(part.inlineData.data);
+  }
   if (part.text) {
+   resetLiveIdleTimer();
    liveOutputText += part.text;
    updateLiveTranscript("assistant", liveOutputText);
   }
  });
 
  if (serverContent.turnComplete) {
+  resetLiveIdleTimer();
+  if (currentLiveAssistantEl) {
+   refreshLiveBubbleBuyButtons(currentLiveAssistantEl, liveOutputText, true);
+  }
   liveInputText = "";
   liveOutputText = "";
+  currentLiveUserEl = null;
+  currentLiveAssistantEl = null;
+ }
+}
+
+function refreshLiveBubbleBuyButtons(messageEl, text, showFallbackIfNone = false) {
+ if (!messageEl) return;
+ let tools = messageEl.querySelector(".message-tools");
+ if (!tools) {
+  tools = document.createElement("div");
+  tools.className = "message-tools";
+  messageEl.appendChild(tools);
+ }
+
+ const matched = findAllMentionedProducts(text, 3);
+ const sig = matched.map(p => p.name).join("|") + "::" + (showFallbackIfNone ? "1" : "0");
+ if (tools.dataset.buySig === sig) return;
+ tools.dataset.buySig = sig;
+ tools.innerHTML = "";
+
+ if (matched.length > 0) {
+  matched.forEach(product => {
+   const buyBtn = document.createElement("button");
+   buyBtn.className = "buy-inline-btn";
+   buyBtn.textContent = "🛒 Mua ngay: " + product.name;
+   buyBtn.addEventListener("click", () => goToMenu(product));
+   tools.appendChild(buyBtn);
+  });
+ } else if (showFallbackIfNone) {
+  const buyBtn = document.createElement("button");
+  buyBtn.className = "buy-inline-btn";
+  buyBtn.textContent = "🛒 Mua ngay";
+  buyBtn.addEventListener("click", () => goToMenu(null));
+  tools.appendChild(buyBtn);
  }
 }
 
 function updateLiveTranscript(role, text) {
  if (!text || !text.trim()) return;
  const chat = document.getElementById("chatMessages");
- const id = role === "user" ? "liveUserTranscript" : "liveAssistantTranscript";
- let message = document.getElementById(id);
+ let message = role === "user" ? currentLiveUserEl : currentLiveAssistantEl;
  if (!message) {
   message = document.createElement("div");
-  message.id = id;
   message.className = "chat-message " + (role === "user" ? "user" : "assistant");
+  const body = document.createElement("div");
+  body.className = "live-text-body";
+  message.appendChild(body);
   chat.appendChild(message);
+  if (role === "user") currentLiveUserEl = message;
+  else currentLiveAssistantEl = message;
  }
- message.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
+ const body = message.querySelector(".live-text-body") || message;
+ body.textContent = (role === "user" ? "🎤 Anh/chị: " : "🎙️ Kim: ") + text;
+ if (role === "assistant") {
+  refreshLiveBubbleBuyButtons(message, text, false);
+ }
  chat.scrollTop = chat.scrollHeight;
 }
 
@@ -1443,11 +1761,12 @@ function scheduleLivePlayback() {
  if (!liveAudioContext || !liveOutputBuffers.length) return;
  const now = liveAudioContext.currentTime;
  if (livePlaybackNextTime < now) livePlaybackNextTime = now + 0.04;
+ const targetNode = liveGainNode || liveAudioContext.destination;
  while (liveOutputBuffers.length) {
   const buffer = liveOutputBuffers.shift();
   const source = liveAudioContext.createBufferSource();
   source.buffer = buffer;
-  source.connect(liveAudioContext.destination);
+  source.connect(targetNode);
   const startAt = Math.max(livePlaybackNextTime, liveAudioContext.currentTime + 0.01);
   source.start(startAt);
   livePlaybackNextTime = startAt + buffer.duration;
@@ -1470,9 +1789,12 @@ function stopLivePlayback() {
 }
 
 function cleanupGeminiLive(closeSocket = true) {
+ if (liveIdleTimer) { clearTimeout(liveIdleTimer); liveIdleTimer = null; }
  liveIsActive = false;
  liveIsReady = false;
  liveStarting = false;
+ currentLiveUserEl = null;
+ currentLiveAssistantEl = null;
 
  if (liveProcessor) {
   try { liveProcessor.disconnect(); } catch (e) {}
@@ -1488,6 +1810,9 @@ function cleanupGeminiLive(closeSocket = true) {
   liveStream = null;
  }
  stopLivePlayback();
+ if (liveGainNode) { try { liveGainNode.disconnect(); } catch (e) {} liveGainNode = null; }
+ if (liveCompressor) { try { liveCompressor.disconnect(); } catch (e) {} liveCompressor = null; }
+ if (liveOutputAnalyser) { try { liveOutputAnalyser.disconnect(); } catch (e) {} liveOutputAnalyser = null; }
  if (liveAudioContext) {
   try { liveAudioContext.close(); } catch (e) {}
   liveAudioContext = null;
@@ -1507,11 +1832,16 @@ function cleanupGeminiLive(closeSocket = true) {
  document.getElementById("liveStopBtn").disabled = true;
 }
 
-function stopGeminiLive() {
+function stopGeminiLive(isAutoIdle = false) {
  liveSessionGeneration++;
  cleanupGeminiLive(true);
- setLiveStatus("Gemini Live đã tắt. Anh chị có thể tiếp tục nhắn tin với Kim bằng Groq.");
- setStatus("Đã quay lại chế độ tư vấn Groq", "online");
+ if (isAutoIdle) {
+  setLiveStatus("⏱️ Đã tự ngắt Gemini Live sau 90 giây im lặng để tiết kiệm quota. Chạm nút tím nếu muốn nói tiếp nhé!");
+  setStatus("Đã tự tắt Live (tiết kiệm quota)", "online");
+ } else {
+  setLiveStatus("Gemini Live đã tắt. Anh chị có thể tiếp tục nhắn tin với Kim bằng Groq.");
+  setStatus("Đã quay lại chế độ tư vấn Groq", "online");
+ }
 }
 
 window.addEventListener("message", function(event) {
@@ -1536,9 +1866,174 @@ document.getElementById("userInput").addEventListener("keydown", event => {
  }
 });
 
+function toggleKimAvatar() {
+ const stage = document.getElementById("kimAvatarStage");
+ const btn = document.getElementById("toggleAvatarBtn");
+ if (!stage || !btn) return;
+ const collapsed = stage.classList.toggle("collapsed");
+ btn.textContent = collapsed ? "Hiện Bé Kim" : "Ẩn Bé Kim";
+}
+
+function measureAnalyserLevel(analyser) {
+ if (!analyser) return 0;
+ const buf = new Uint8Array(analyser.frequencyBinCount);
+ analyser.getByteTimeDomainData(buf);
+ let sumSq = 0;
+ for (let i = 0; i < buf.length; i++) {
+  const norm = (buf[i] - 128) / 128;
+  sumSq += norm * norm;
+ }
+ const rms = Math.sqrt(sumSq / buf.length);
+ return Math.min(1, rms * 4.2);
+}
+
+function startKimAnimationLoop() {
+ if (kimAnimFrame) cancelAnimationFrame(kimAnimFrame);
+ const stage = document.getElementById("kimAvatarStage");
+ const badge = document.getElementById("kimStateBadge");
+ const head = document.getElementById("kimHeadGroup");
+ const body = document.getElementById("kimBodyGroup");
+ const leftArm = document.getElementById("kimLeftArm");
+ const rightArm = document.getElementById("kimRightArm");
+ const eyeL = document.getElementById("kimEyeL");
+ const eyeR = document.getElementById("kimEyeR");
+ const mouthCavity = document.getElementById("kimMouthCavity");
+ const tongue = document.getElementById("kimTongue");
+ const mouthSmile = document.getElementById("kimMouthSmile");
+ const waveBars = Array.from(document.querySelectorAll("#kimWaveBars .kim-wave-bar"));
+
+ kimNextBlinkAt = performance.now() + 2600;
+
+ function frame(now) {
+  const t = now / 1000;
+  const liveAudioPlaying = !!(liveIsActive && liveOutputAnalyser && livePlaybackSources.length > 0);
+  const ttsAudioPlaying = !!(isSpeaking && ttsBufferSource && ttsAnalyser);
+  const fallbackSpeaking = !!(isSpeaking && !ttsBufferSource);
+
+  let rawLevel = 0;
+  let state = "idle";
+
+  if (liveAudioPlaying) {
+   rawLevel = measureAnalyserLevel(liveOutputAnalyser);
+   state = "speaking";
+  } else if (ttsAudioPlaying) {
+   rawLevel = measureAnalyserLevel(ttsAnalyser);
+   state = "speaking";
+  } else if (fallbackSpeaking) {
+   // Smooth syllabic mouth cadence when cross-origin HTML <audio> / speechSynthesis speaks
+   rawLevel = 0.25 + 0.55 * Math.abs(Math.sin(t * 11.2) * Math.cos(t * 4.7));
+   state = "speaking";
+  } else if (kimStateOverride === "thinking") {
+   state = "thinking";
+  } else if (isListening || liveIsActive) {
+   state = "listening";
+  }
+
+  kimMouthSmoothed = kimMouthSmoothed * 0.55 + rawLevel * 0.45;
+  const mouthOpen = state === "speaking" ? Math.min(1, kimMouthSmoothed) : 0;
+
+  if (stage && stage.dataset.state !== state) {
+   stage.dataset.state = state;
+   if (badge) {
+    badge.className = "kim-state-badge " + state;
+    if (state === "speaking") badge.textContent = "💬 Bé Kim đang tư vấn...";
+    else if (state === "listening") badge.textContent = "🎙️ Đang lắng nghe anh/chị...";
+    else if (state === "thinking") badge.textContent = "💭 Đang tìm món phù hợp...";
+    else badge.textContent = "😊 Sẵn sàng tư vấn";
+   }
+  }
+
+  // Natural blinking
+  if (!kimIsBlinking && now >= kimNextBlinkAt) {
+   kimIsBlinking = true;
+   setTimeout(() => {
+    kimIsBlinking = false;
+    kimNextBlinkAt = performance.now() + 2500 + Math.random() * 2500;
+   }, 130);
+  }
+  const eyeScaleY = kimIsBlinking ? 0.08 : 1;
+  if (eyeL) eyeL.style.transform = "scaleY(" + eyeScaleY + ")";
+  if (eyeR) eyeR.style.transform = "scaleY(" + eyeScaleY + ")";
+
+  // Mouth lip-sync
+  if (mouthCavity && tongue && mouthSmile) {
+   if (mouthOpen > 0.06) {
+    const ry = (1.6 + mouthOpen * 5.2).toFixed(2);
+    const rx = (5.2 + mouthOpen * 2.2).toFixed(2);
+    mouthCavity.setAttribute("ry", ry);
+    mouthCavity.setAttribute("rx", rx);
+    mouthCavity.style.opacity = "1";
+    tongue.style.opacity = mouthOpen > 0.32 ? "0.95" : "0.35";
+    mouthSmile.style.opacity = "0";
+   } else {
+    mouthCavity.style.opacity = "0";
+    tongue.style.opacity = "0";
+    mouthSmile.style.opacity = "1";
+   }
+  }
+
+  // Expressive head, body & arm movements
+  if (head && body && leftArm && rightArm) {
+   if (state === "speaking") {
+    const headTilt = Math.sin(t * 3.8) * (3 + mouthOpen * 4);
+    const headBob = Math.sin(t * 6.2) * (1.2 + mouthOpen * 2);
+    const lArmAngle = -14 + Math.sin(t * 5.4) * (12 + mouthOpen * 14);
+    const rArmAngle = 14 + Math.cos(t * 4.9) * (12 + mouthOpen * 14);
+    head.style.transform = "translateY(" + headBob.toFixed(1) + "px) rotate(" + headTilt.toFixed(1) + "deg)";
+    body.style.transform = "translateY(" + (Math.sin(t * 3.1) * 1.1).toFixed(1) + "px)";
+    leftArm.style.transform = "rotate(" + lArmAngle.toFixed(1) + "deg)";
+    rightArm.style.transform = "rotate(" + rArmAngle.toFixed(1) + "deg)";
+   } else if (state === "listening") {
+    const headTilt = 4 + Math.sin(t * 2.0) * 2.2;
+    head.style.transform = "rotate(" + headTilt.toFixed(1) + "deg)";
+    body.style.transform = "translateY(" + (Math.sin(t * 2.2) * 0.8).toFixed(1) + "px)";
+    leftArm.style.transform = "rotate(" + (-8 + Math.sin(t * 2.1) * 4).toFixed(1) + "deg)";
+    rightArm.style.transform = "rotate(" + (16 + Math.cos(t * 2.3) * 5).toFixed(1) + "deg)";
+   } else if (state === "thinking") {
+    head.style.transform = "rotate(" + (-5 + Math.sin(t * 2.6) * 2).toFixed(1) + "deg)";
+    body.style.transform = "translateY(0px)";
+    leftArm.style.transform = "rotate(-4deg)";
+    rightArm.style.transform = "rotate(26deg)";
+   } else {
+    // Gentle cheerful breathing & friendly wave idle
+    const breathe = Math.sin(t * 2.1) * 0.9;
+    const headSway = Math.sin(t * 1.3) * 2.2;
+    const wave = Math.sin(t * 2.4) * 6;
+    head.style.transform = "translateY(" + (breathe * 0.7).toFixed(1) + "px) rotate(" + headSway.toFixed(1) + "deg)";
+    body.style.transform = "translateY(" + breathe.toFixed(1) + "px)";
+    leftArm.style.transform = "rotate(" + (-4 + wave * 0.5).toFixed(1) + "deg)";
+    rightArm.style.transform = "rotate(" + (4 - wave).toFixed(1) + "deg)";
+   }
+  }
+
+  // Mini soundwave visualizer bars
+  if (waveBars.length) {
+   waveBars.forEach((bar, idx) => {
+    let h = 4;
+    if (state === "speaking") {
+     const mult = 0.5 + 0.5 * Math.sin(t * 12 + idx * 1.1);
+     h = 4 + (mouthOpen * 14 * (0.45 + mult * 0.75));
+    } else if (state === "listening") {
+     h = 5 + Math.abs(Math.sin(t * 4.5 + idx * 0.8)) * 6;
+    } else if (state === "thinking") {
+     h = 4 + Math.abs(Math.sin(t * 6 + idx * 0.9)) * 5;
+    } else {
+     h = 4 + Math.abs(Math.sin(t * 2 + idx * 0.6)) * 2;
+    }
+    bar.style.height = Math.min(18, Math.max(4, h)).toFixed(1) + "px";
+   });
+  }
+
+  kimAnimFrame = requestAnimationFrame(frame);
+ }
+
+ kimAnimFrame = requestAnimationFrame(frame);
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
  restoreVoicePreference();
  setupSpeechRecognition();
+ startKimAnimationLoop();
  await loadCatalog();
 
  try {
