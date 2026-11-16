@@ -1,14 +1,14 @@
 /* =========================================================
  * BEKIM.JS - Trợ lý giọng nói Gemini Live tích hợp trực tiếp vào menu.html
- * - Không khung chat
  * - Tư vấn chuẩn như aichotdon.html
- * - Điều khiển mở TikTok, lọc menu, thêm giỏ hàng, điền thông tin & đặt hàng
- * - Dùng chung Apps Script của aichotdon.html
+ * - Quy trình chọn món trực quan trên #optionsModal (Size/Đường/Đá/Topping)
+ * - Quy trình xác nhận đầy đủ trên #checkoutModal trước khi gửi đơn
+ * - Quản lý mọi mục khách hàng trên menu.html (trừ mục Admin hệ thống)
  * ========================================================= */
 (function () {
   const BEKIM_AI_URL =
     "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
-  const IDLE_TIMEOUT_MS = 90000;
+  const IDLE_TIMEOUT_MS = 120000;
 
   let socket = null;
   let stream = null;
@@ -24,8 +24,8 @@
   let idleTimer = null;
   let sessionGen = 0;
 
-  // Lưu tạm thông tin khách đọc qua giọng nói để không bị localStorage ghi đè khi mở checkout
   let voiceCustomerDraft = {};
+  let pendingOptionQty = 1;
 
   function ensureBekimUI() {
     if (!document.getElementById("bekimLiveStyles")) {
@@ -134,7 +134,7 @@
     idleTimer = setTimeout(() => {
       if (isActive) {
         stopBekimLive();
-        showToast("⏱️ Bé Kim đã tạm nghỉ sau 90 giây im lặng", 3000);
+        showToast("⏱️ Bé Kim đã tạm nghỉ sau 2 phút im lặng", 3000);
       }
     }, IDLE_TIMEOUT_MS);
   }
@@ -389,15 +389,45 @@
   }
 
   /* =========================================================
-     BỘ CÔNG CỤ BÉ KIM ĐIỀU KHIỂN MENU.HTML
+     TIỆN ÍCH QUẢN LÝ MỌI NGÓC NGÁCH MENU.HTML
   ========================================================= */
+  function isVisible(id) {
+    const el = document.getElementById(id);
+    if (!el) return false;
+    return el.classList.contains("active") || (el.style.display && el.style.display !== "none");
+  }
+
+  function closeAllCustomerPopups() {
+    if (typeof closeCommentsSheetDirect === "function") closeCommentsSheetDirect();
+    if (typeof closeTiktokModal === "function") closeTiktokModal();
+    if (typeof closeOptionsModal === "function") closeOptionsModal();
+    if (typeof closeCheckoutModal === "function") closeCheckoutModal();
+    if (typeof closeHistoryModal === "function") closeHistoryModal();
+    if (typeof toggleKbOrderPopup === "function") toggleKbOrderPopup(false);
+    if (typeof closeGamePopup === "function") closeGamePopup();
+    if (typeof closeWheelPopup === "function") closeWheelPopup();
+    if (typeof closeDinhViPopup === "function") closeDinhViPopup();
+    if (typeof closeBannerPopup === "function") closeBannerPopup();
+    if (typeof closeSuccessOrderPopup === "function") closeSuccessOrderPopup();
+
+    const contactEl = document.getElementById("contactModal");
+    if (contactEl) contactEl.style.display = "none";
+    const orderDetailEl = document.getElementById("orderDetailReviewModal");
+    if (orderDetailEl) orderDetailEl.remove();
+    const statusCheckEl = document.getElementById("statusCheckResultModal");
+    if (statusCheckEl) statusCheckEl.remove();
+    document.body.classList.remove("no-scroll");
+  }
+
   function findDish(query) {
     if (!Array.isArray(menu) || !menu.length) return null;
     const q = removeDiacritics(query || "").trim();
     if (!q) {
-      const tk = document.getElementById("tiktokModal");
-      if (tk && tk.style.display === "flex" && filteredMenu[currentTiktokIndex]) {
+      if (isVisible("tiktokModal") && filteredMenu[currentTiktokIndex]) {
         return filteredMenu[currentTiktokIndex];
+      }
+      if (isVisible("optionsModal") && selectedProduct) {
+        return selectedProduct;
       }
       return null;
     }
@@ -429,20 +459,88 @@
     return "Đá bình thường";
   }
 
+  function getOptionsModalSnapshot() {
+    if (!selectedProduct) return null;
+    const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === "Food";
+    const canUpsize = document.getElementById("sizeGroupContainer")?.style.display !== "none";
+    const size = (!isFood && canUpsize)
+      ? (document.querySelector('input[name="sizeOption"]:checked')?.value || "Bình thường")
+      : "Mặc định";
+    const sugar = !isFood
+      ? (document.querySelector('input[name="sugarOption"]:checked')?.value || "Đường bình thường")
+      : "";
+    const ice = !isFood
+      ? (document.querySelector('input[name="iceOption"]:checked')?.value || "Đá bình thường")
+      : "";
+
+    const selectedToppings = [];
+    for (const [tName, qty] of Object.entries(currentModalToppings || {})) {
+      if (qty > 0) selectedToppings.push({ name: tName, qty: qty });
+    }
+
+    const priceText = document.getElementById("modalDishPrice")?.innerText || formatDynamicPrice(selectedProduct.price);
+    return {
+      dishName: selectedProduct.name,
+      isFood: isFood,
+      canUpsize: canUpsize,
+      size: size,
+      sugar: sugar,
+      ice: ice,
+      selectedToppings: selectedToppings,
+      quantity: pendingOptionQty,
+      unitPriceText: priceText
+    };
+  }
+
+  function syncPaymentRadiosWithPriceMode(payMethod) {
+    const radioTienMat = document.querySelector('input[name="payMethod"][value="Tiền mặt"]');
+    const radioCK = document.querySelector('input[name="payMethod"][value="Chuyển khoản"]');
+    const radioDiamond = document.querySelector('input[name="payMethod"][value="Túi Kim Cương"]');
+    const pTienMat = radioTienMat ? radioTienMat.closest("label") : null;
+    const pCK = radioCK ? radioCK.closest("label") : null;
+    const pDiamond = radioDiamond ? radioDiamond.closest("label") : null;
+
+    if (payMethod === "Túi Kim Cương") {
+      if (currentPriceMode !== "DIAMOND" && typeof setPriceDisplayMode === "function") {
+        setPriceDisplayMode("DIAMOND");
+      }
+      if (pTienMat) pTienMat.style.display = "none";
+      if (pCK) pCK.style.display = "none";
+      if (pDiamond) pDiamond.style.display = "inline-block";
+      if (radioDiamond) radioDiamond.checked = true;
+    } else if (payMethod === "Tiền mặt" || payMethod === "Chuyển khoản") {
+      if (currentPriceMode === "DIAMOND" && typeof setPriceDisplayMode === "function") {
+        setPriceDisplayMode("K");
+      }
+      if (pTienMat) pTienMat.style.display = "inline-block";
+      if (pCK) pCK.style.display = "inline-block";
+      if (pDiamond) pDiamond.style.display = "none";
+      const targetRadio = payMethod === "Chuyển khoản" ? radioCK : radioTienMat;
+      if (targetRadio) targetRadio.checked = true;
+    }
+    if (typeof updateCartDisplay === "function") updateCartDisplay();
+  }
+
   function applyVoiceCustomerDraftToInputs() {
     if (voiceCustomerDraft.orderType) {
       const r = document.querySelector(`input[name="orderType"][value="${voiceCustomerDraft.orderType}"]`);
       if (r) { r.checked = true; toggleOrderTypeUI(); }
     }
-    if (voiceCustomerDraft.name) document.getElementById("customerName").value = voiceCustomerDraft.name;
-    if (voiceCustomerDraft.phone) document.getElementById("customerPhone").value = voiceCustomerDraft.phone;
-    if (voiceCustomerDraft.address && voiceCustomerDraft.orderType !== "Tự ra lấy") {
+    if (voiceCustomerDraft.name !== undefined) {
+      document.getElementById("customerName").value = voiceCustomerDraft.name;
+    }
+    if (voiceCustomerDraft.phone !== undefined) {
+      document.getElementById("customerPhone").value = voiceCustomerDraft.phone;
+    }
+    if (voiceCustomerDraft.address !== undefined && voiceCustomerDraft.orderType !== "Tự ra lấy") {
       document.getElementById("customerAddress").value = voiceCustomerDraft.address;
       autoCalculateShippingFromMenu();
     }
+    if (voiceCustomerDraft.note !== undefined) {
+      document.getElementById("customerNote").value = voiceCustomerDraft.note;
+    }
     if (voiceCustomerDraft.payMethod) {
-      const p = document.querySelector(`input[name="payMethod"][value="${voiceCustomerDraft.payMethod}"]`);
-      if (p) { p.checked = true; updatePaymentUI(); }
+      syncPaymentRadiosWithPriceMode(voiceCustomerDraft.payMethod);
     }
   }
 
@@ -454,244 +552,551 @@
     }
   }
 
+  function getCheckoutSnapshot() {
+    const foodTotal = calculateFoodSubtotal();
+    const shipFee = getShippingFee();
+    const discountCode = localStorage.getItem("kimbling_applied_discount_code") || "";
+    const discountValK = parseInt(localStorage.getItem("kimbling_applied_discount_value") || "0", 10) || 0;
+    const grandTotal = Math.max(0, foodTotal + shipFee - discountValK * 1000);
+
+    const orderType = document.querySelector('input[name="orderType"]:checked')?.value || "Giao hàng";
+    const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || "Tiền mặt";
+    const cName = document.getElementById("customerName")?.value.trim() || "";
+    const cPhone = document.getElementById("customerPhone")?.value.trim() || "";
+    const cAddr = document.getElementById("customerAddress")?.value.trim() || "";
+    const cNote = document.getElementById("customerNote")?.value.trim() || "";
+    const distText = document.getElementById("bgDistanceText")?.innerText || "";
+    const storeClosed = !!document.getElementById("btnSubmitOrder")?.disabled;
+
+    return {
+      cartCount: cart.reduce((s, i) => s + i.qty, 0),
+      items: cart.map((i) => ({
+        name: i.name,
+        qty: i.qty,
+        options: i.options,
+        lineTotalText: formatDynamicPrice(i.price * i.qty)
+      })),
+      priceMode: currentPriceMode,
+      foodSubtotalText: formatDynamicPrice(foodTotal),
+      shippingFeeText: shipFee === 0 ? "0đ (Freeship / Tự lấy)" : formatPrice(shipFee),
+      distanceText: distText,
+      discountCode: discountCode,
+      discountValueK: discountValK,
+      grandTotalText: currentPriceMode === "DIAMOND" || payMethod === "Túi Kim Cương"
+        ? formatDynamicPrice(grandTotal)
+        : formatPrice(grandTotal),
+      orderType: orderType,
+      customerName: cName,
+      customerPhone: cPhone,
+      customerAddress: cAddr,
+      customerNote: cNote,
+      payMethod: payMethod,
+      storeClosed: storeClosed,
+      missingFields: [
+        !cName ? "Tên người nhận" : "",
+        !cPhone ? "Số điện thoại" : "",
+        !cAddr ? "Địa chỉ giao hàng" : ""
+      ].filter(Boolean)
+    };
+  }
+
+  /* =========================================================
+     XỬ LÝ CÁC TOOL TỪ GEMINI LIVE
+  ========================================================= */
   async function handleMenuToolCall(name, args) {
     if (name === "close_popup") {
-      if (typeof closeTiktokModal === "function") closeTiktokModal();
-      if (typeof closeOptionsModal === "function") closeOptionsModal();
-      if (typeof closeCheckoutModal === "function") closeCheckoutModal();
-      return { ok: true };
+      closeAllCustomerPopups();
+      return { ok: true, message: "Đã đóng các popup và quay về menu." };
     }
 
-    if (name === "filter_menu") {
-      if (typeof closeTiktokModal === "function") closeTiktokModal();
-      if (typeof closeOptionsModal === "function") closeOptionsModal();
-      if (typeof closeCheckoutModal === "function") closeCheckoutModal();
+    if (name === "open_menu_section") {
+      const sec = args.section || "home_menu";
 
-      const searchInput = document.getElementById("searchInput");
-      const clearBtn = document.getElementById("searchClearBtn");
-      const kw = (args.keyword || "").trim();
-
-      if (searchInput) {
-        searchInput.value = kw;
-        if (clearBtn) clearBtn.style.display = kw ? "flex" : "none";
+      if (sec === "admin" || sec === "system") {
+        return { ok: false, error: "Mục cập nhật hệ thống không thuộc quyền thao tác của trợ lý." };
       }
 
-      if (!kw && args.category) {
-        const catBtn = document.querySelector(`.cat-btn[onclick*="'${args.category}'"]`);
-        if (catBtn) filterCategory(args.category, catBtn);
-        else {
-          currentCategory = args.category;
+      if (sec === "home_menu") {
+        closeAllCustomerPopups();
+        const searchInput = document.getElementById("searchInput");
+        const clearBtn = document.getElementById("searchClearBtn");
+        const kw = (args.keyword || "").trim();
+
+        if (searchInput) {
+          searchInput.value = kw;
+          if (clearBtn) clearBtn.style.display = kw ? "flex" : "none";
+        }
+
+        if (!kw && args.category) {
+          const catBtn = document.querySelector(`.cat-btn[onclick*="'${args.category}'"]`);
+          if (catBtn) filterCategory(args.category, catBtn);
+          else {
+            currentCategory = args.category;
+            renderMenu();
+          }
+        } else {
           renderMenu();
         }
-      } else {
-        renderMenu();
+        window.scrollTo({ top: 180, behavior: "smooth" });
+        return {
+          ok: true,
+          section: "home_menu",
+          category: currentCategory,
+          keyword: kw,
+          matchingDishes: filteredMenu.slice(0, 8).map((m) => `${m.name} (${formatDynamicPrice(m.price)}${m.isSoldOut ? ", HẾT" : ""})`)
+        };
       }
 
-      window.scrollTo({ top: 180, behavior: "smooth" });
+      if (sec === "tiktok") {
+        const dish = findDish(args.dishName);
+        if (!dish) return { ok: false, error: "Không tìm thấy món " + (args.dishName || "") };
+        closeAllCustomerPopups();
+
+        let idx = filteredMenu.findIndex((m) => m.id === dish.id);
+        if (idx === -1) {
+          filteredMenu = [...menu];
+          idx = filteredMenu.findIndex((m) => m.id === dish.id);
+        }
+        openTiktokModal(idx);
+        return {
+          ok: true,
+          section: "tiktok",
+          openedDish: dish.name,
+          priceText: formatDynamicPrice(dish.price),
+          canUpsize: canDishUpsize(dish),
+          isSoldOut: !!dish.isSoldOut
+        };
+      }
+
+      if (sec === "history") {
+        closeAllCustomerPopups();
+        openHistoryModal();
+        let historyData = [];
+        try { historyData = JSON.parse(localStorage.getItem("kimbling_order_history") || "[]"); } catch (e) {}
+        return {
+          ok: true,
+          section: "history",
+          recentOrdersCount: historyData.length,
+          recentOrders: historyData.slice(0, 3).map((o) => ({
+            time: o.time,
+            total: o.totalStr,
+            items: (o.items || []).map((i) => `${i.name} x${i.qty}`)
+          }))
+        };
+      }
+
+      if (sec === "order_lookup") {
+        closeAllCustomerPopups();
+        toggleKbOrderPopup(true);
+        return { ok: true, section: "order_lookup" };
+      }
+
+      if (sec === "lucky_gift") {
+        closeAllCustomerPopups();
+        openLuckyGiftPopup();
+        return { ok: true, section: "lucky_gift" };
+      }
+
+      if (sec === "lucky_wheel") {
+        closeAllCustomerPopups();
+        openWheelPopup();
+        return { ok: true, section: "lucky_wheel" };
+      }
+
+      if (sec === "shipping_map") {
+        closeAllCustomerPopups();
+        openDinhViPopup();
+        return { ok: true, section: "shipping_map" };
+      }
+
+      if (sec === "contact") {
+        closeAllCustomerPopups();
+        openContactModal();
+        return { ok: true, section: "contact", phone: "086.269.5.269" };
+      }
+
+      if (sec === "banner") {
+        closeAllCustomerPopups();
+        const b = document.getElementById("bannerPopupModal");
+        if (b) b.style.display = "flex";
+        return { ok: true, section: "banner" };
+      }
+
+      if (sec === "install_app") {
+        showInstallPrompt();
+        return { ok: true, section: "install_app" };
+      }
+
+      if (sec === "share") {
+        shareStoreWebsite();
+        return { ok: true, section: "share" };
+      }
+
+      if (sec === "scroll_top") {
+        scrollToTop();
+        return { ok: true, section: "scroll_top" };
+      }
+
+      return { ok: false, error: "Không hỗ trợ mở mục: " + sec };
+    }
+
+    if (name === "control_tiktok") {
+      if (!isVisible("tiktokModal")) {
+        return { ok: false, error: "Popup TikTok chưa mở. Hãy mở một món trước." };
+      }
+      const act = args.action;
+      if (act === "next") navigateTiktok(1);
+      else if (act === "prev") navigateTiktok(-1);
+      else if (act === "toggle_video") {
+        const cur = filteredMenu[currentTiktokIndex];
+        if (!cur || !cur.videoUrl) return { ok: false, error: "Món này không có video TikTok." };
+        toggleMediaView(cur.id);
+      } else if (act === "like") {
+        const heartBtn = document.getElementById("btnTiktokHeart");
+        if (heartBtn) toggleHeart(heartBtn);
+      } else if (act === "open_comments") {
+        openCommentsSheet();
+      } else if (act === "close_comments") {
+        closeCommentsSheetDirect();
+      }
+      const item = filteredMenu[currentTiktokIndex];
       return {
         ok: true,
-        category: currentCategory,
-        keyword: kw,
-        matchingDishes: filteredMenu.slice(0, 8).map((m) => `${m.name} (${formatPrice(m.price)}${m.isSoldOut ? ", HẾT" : ""})`)
+        action: act,
+        currentDish: item ? item.name : "",
+        priceText: item ? formatDynamicPrice(item.price) : "",
+        isSoldOut: item ? !!item.isSoldOut : false
       };
     }
 
-    if (name === "open_product_tiktok") {
-      const dish = findDish(args.dishName);
-      if (!dish) return { ok: false, error: "Không tìm thấy món " + (args.dishName || "") };
-      if (typeof closeOptionsModal === "function") closeOptionsModal();
-      if (typeof closeCheckoutModal === "function") closeCheckoutModal();
-
-      let idx = filteredMenu.findIndex((m) => m.id === dish.id);
-      if (idx === -1) {
-        filteredMenu = [...menu];
-        idx = filteredMenu.findIndex((m) => m.id === dish.id);
-      }
-      openTiktokModal(idx);
-      return {
-        ok: true,
-        openedDish: dish.name,
-        priceText: formatPrice(dish.price),
-        canUpsize: canDishUpsize(dish),
-        isSoldOut: !!dish.isSoldOut
-      };
-    }
-
-    if (name === "add_to_cart") {
+    if (name === "open_dish_options") {
       const dish = findDish(args.dishName);
       if (!dish) return { ok: false, error: "Không tìm thấy món " + (args.dishName || "") };
       if (dish.isSoldOut) return { ok: false, error: dish.name + " hiện đang tạm hết hàng." };
 
+      closeAllCustomerPopups();
+      pendingOptionQty = Math.max(1, parseInt(args.quantity || 1, 10) || 1);
+      openOptionsModal(dish.id);
+
       const isFood = getCategoryType(dish.name, dish.category) === "Food";
-      const canUpsize = canDishUpsize(dish);
-      const wantUpsize = !!(args.upsize && canUpsize);
-      const qty = Math.max(1, parseInt(args.quantity || 1, 10) || 1);
+      const avail = (isFood ? snackToppings : drinkToppings).map((t) => `${t.name} (+${formatDynamicPrice(t.price)})`);
+      return {
+        ok: true,
+        openedOptionsModal: true,
+        ...getOptionsModalSnapshot(),
+        availableToppings: avail
+      };
+    }
 
-      let unitPrice = dish.price + (wantUpsize ? 10000 : 0);
-      const availableToppings = isFood ? snackToppings : drinkToppings;
-      const addedToppings = [];
+    if (name === "update_dish_options") {
+      if (!isVisible("optionsModal") || !selectedProduct) {
+        if (args.dishName) {
+          const dish = findDish(args.dishName);
+          if (!dish) return { ok: false, error: "Không tìm thấy món " + args.dishName };
+          if (dish.isSoldOut) return { ok: false, error: dish.name + " hiện đang tạm hết hàng." };
+          closeAllCustomerPopups();
+          pendingOptionQty = 1;
+          openOptionsModal(dish.id);
+        } else {
+          return { ok: false, error: "Bảng chọn tùy chọn món chưa mở. Hãy gọi open_dish_options trước." };
+        }
+      }
 
+      const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === "Food";
+      const canUpsize = document.getElementById("sizeGroupContainer")?.style.display !== "none";
+      let upsizeRejectedReason = "";
+
+      if (typeof args.upsize === "boolean") {
+        if (args.upsize && !canUpsize) {
+          upsizeRejectedReason = "Món này không hỗ trợ upsize lên ly 1 lít.";
+        } else if (!isFood && canUpsize) {
+          const val = args.upsize ? "Upsize 1 Lít" : "Bình thường";
+          const radio = document.querySelector(`input[name="sizeOption"][value="${val}"]`);
+          if (radio) radio.checked = true;
+        }
+      }
+
+      if (!isFood && args.sugar) {
+        const sVal = normalizeSugar(args.sugar);
+        const sRadio = document.querySelector(`input[name="sugarOption"][value="${sVal}"]`);
+        if (sRadio) sRadio.checked = true;
+      }
+
+      if (!isFood && args.ice) {
+        const iVal = normalizeIce(args.ice);
+        const iRadio = document.querySelector(`input[name="iceOption"][value="${iVal}"]`);
+        if (iRadio) iRadio.checked = true;
+      }
+
+      const availableList = isFood ? snackToppings : drinkToppings;
+      if (args.resetToppings) {
+        availableList.forEach((t) => {
+          currentModalToppings[t.name] = 0;
+          const safeKey = t.name.replace(/[^a-zA-Z0-9]/g, "_");
+          const qtyEl = document.getElementById(`top-qty-${safeKey}`);
+          if (qtyEl) qtyEl.innerText = "0";
+        });
+      }
+
+      const unmatchedToppings = [];
       if (Array.isArray(args.toppings)) {
-        args.toppings.forEach((reqTop) => {
-          const matched = availableToppings.find(
-            (t) => removeDiacritics(t.name) === removeDiacritics(reqTop) || smartMatch(reqTop, t.name)
+        args.toppings.forEach((entry) => {
+          const topName = typeof entry === "string" ? entry : (entry && entry.name ? entry.name : "");
+          const topQty = typeof entry === "object" && entry && entry.qty !== undefined
+            ? Math.max(0, parseInt(entry.qty, 10) || 0)
+            : 1;
+          if (!topName) return;
+
+          const matched = availableList.find(
+            (t) => removeDiacritics(t.name) === removeDiacritics(topName) ||
+                   removeDiacritics(t.name).includes(removeDiacritics(topName)) ||
+                   smartMatch(topName, t.name)
           );
           if (matched) {
-            unitPrice += matched.price;
-            addedToppings.push(matched.name);
+            currentModalToppings[matched.name] = topQty;
+            const safeKey = matched.name.replace(/[^a-zA-Z0-9]/g, "_");
+            const qtyEl = document.getElementById(`top-qty-${safeKey}`);
+            if (qtyEl) qtyEl.innerText = String(topQty);
+          } else {
+            unmatchedToppings.push(topName);
           }
         });
       }
 
-      let opts = isFood
-        ? ""
-        : `${wantUpsize ? "Upsize 1 Lít" : "Bình thường"} | ${normalizeSugar(args.sugar)}, ${normalizeIce(args.ice)}`;
-      if (addedToppings.length) opts += (opts ? " | + " : "+ ") + addedToppings.join(", ");
-      if (!opts) opts = "Mặc định";
+      if (args.quantity !== undefined) {
+        pendingOptionQty = Math.max(1, parseInt(args.quantity, 10) || 1);
+      }
 
-      cart.push({
-        id: dish.id,
-        name: dish.name,
-        imageUrl: dish.imageUrl || "",
-        category: dish.category || "",
-        price: unitPrice,
-        options: opts,
-        qty: qty
-      });
-
-      renderCartBar();
-      const cm = document.getElementById("checkoutModal");
-      if (cm && cm.style.display === "flex") updateCartDisplay();
-
-      showToast(`🛒 Đã thêm ${qty} ${dish.name}`, 2500);
+      updateModalTotal();
 
       return {
         ok: true,
-        added: dish.name,
+        ...getOptionsModalSnapshot(),
+        upsizeRejectedReason: upsizeRejectedReason,
+        unmatchedToppings: unmatchedToppings
+      };
+    }
+
+    if (name === "confirm_add_options_to_cart") {
+      if (!isVisible("optionsModal") || !selectedProduct) {
+        return { ok: false, error: "Bảng tùy chọn món chưa mở. Hãy mở bảng tùy chọn món trước." };
+      }
+
+      const snap = getOptionsModalSnapshot();
+      const qty = Math.max(1, parseInt(args.quantity || pendingOptionQty || 1, 10) || 1);
+
+      confirmAddToCart();
+      if (cart.length > 0) {
+        cart[cart.length - 1].qty = qty;
+        renderCartBar();
+      }
+      pendingOptionQty = 1;
+
+      showToast(`🛒 Đã thêm ${qty} ${snap.dishName} vào giỏ`, 2500);
+
+      return {
+        ok: true,
+        addedDish: snap.dishName,
         quantity: qty,
-        upsizeApplied: wantUpsize,
-        upsizeRejectedReason: args.upsize && !canUpsize ? "Món này không hỗ trợ upsize 1 lít." : "",
-        toppingsAdded: addedToppings,
-        unitPriceText: formatPrice(unitPrice),
+        size: snap.size,
+        sugar: snap.sugar,
+        ice: snap.ice,
+        toppings: snap.selectedToppings,
         cartCount: cart.reduce((s, i) => s + i.qty, 0),
-        foodSubtotalText: formatPrice(calculateFoodSubtotal())
+        foodSubtotalText: formatDynamicPrice(calculateFoodSubtotal())
       };
     }
 
-    if (name === "get_cart_summary") {
-      return {
-        ok: true,
-        cartCount: cart.reduce((s, i) => s + i.qty, 0),
-        items: cart.map((i) => ({
-          name: i.name,
-          qty: i.qty,
-          options: i.options,
-          lineTotalText: formatPrice(i.price * i.qty)
-        })),
-        foodSubtotalText: formatPrice(calculateFoodSubtotal()),
-        shippingFeeText: formatPrice(getShippingFee())
-      };
-    }
+    if (name === "manage_cart") {
+      const act = args.action || "view";
 
-    if (name === "remove_from_cart") {
+      if (act === "view") {
+        return { ok: true, ...getCheckoutSnapshot() };
+      }
+
+      if (act === "remove_discount") {
+        removeDiscountCode();
+        return { ok: true, ...getCheckoutSnapshot() };
+      }
+
+      if (act === "reorder_last") {
+        let historyData = [];
+        try { historyData = JSON.parse(localStorage.getItem("kimbling_order_history") || "[]"); } catch (e) {}
+        if (!historyData.length || !historyData[0].items || !historyData[0].items.length) {
+          return { ok: false, error: "Chưa có đơn hàng cũ nào trên máy để đặt lại." };
+        }
+        historyData[0].items.forEach((oldItem) => {
+          cart.push({
+            id: oldItem.id || 0,
+            name: oldItem.name,
+            imageUrl: oldItem.imageUrl || "",
+            category: oldItem.category || "",
+            price: oldItem.price,
+            options: oldItem.options,
+            qty: oldItem.qty
+          });
+        });
+        renderCartBar();
+        closeHistoryModal();
+        showToast("🛒 Đã thêm lại món từ đơn gần nhất", 2500);
+        return { ok: true, ...getCheckoutSnapshot() };
+      }
+
       const q = removeDiacritics(args.dishName || "");
       const idx = cart.findIndex((i) => removeDiacritics(i.name).includes(q));
-      if (idx === -1) return { ok: false, error: "Không thấy món này trong giỏ hàng." };
-      const removed = cart.splice(idx, 1)[0];
-      renderCartBar();
-      const cm = document.getElementById("checkoutModal");
-      if (cm && cm.style.display === "flex") {
-        updateCartDisplay();
-        if (cart.length === 0) closeCheckoutModal();
+      if (idx === -1) return { ok: false, error: "Không tìm thấy món này trong giỏ hàng." };
+
+      if (act === "remove") {
+        const removed = cart.splice(idx, 1)[0];
+        renderCartBar();
+        if (isVisible("checkoutModal")) {
+          updateCartDisplay();
+          if (cart.length === 0) closeCheckoutModal();
+        }
+        return { ok: true, removed: removed.name, ...getCheckoutSnapshot() };
       }
-      return { ok: true, removed: removed.name, cartCount: cart.reduce((s, i) => s + i.qty, 0) };
+
+      if (act === "set_qty") {
+        const newQty = parseInt(args.quantity, 10);
+        if (!Number.isFinite(newQty) || newQty <= 0) {
+          cart.splice(idx, 1);
+        } else {
+          cart[idx].qty = newQty;
+        }
+        renderCartBar();
+        if (isVisible("checkoutModal")) {
+          updateCartDisplay();
+          if (cart.length === 0) closeCheckoutModal();
+        }
+        return { ok: true, ...getCheckoutSnapshot() };
+      }
+
+      return { ok: false, error: "Thao tác giỏ hàng không hợp lệ." };
     }
 
-    if (name === "set_customer_info") {
-      if (args.orderType) voiceCustomerDraft.orderType = args.orderType;
-      if (args.name) {
-        voiceCustomerDraft.name = args.name;
-        localStorage.setItem("kimbling_cust_name", args.name);
+    if (name === "set_price_and_diamond") {
+      if (args.priceMode === "K" || args.priceMode === "DIAMOND") {
+        setPriceDisplayMode(args.priceMode);
       }
-      if (args.phone) {
-        voiceCustomerDraft.phone = args.phone;
-        localStorage.setItem("kimbling_cust_phone", args.phone);
-      }
-      if (args.address) {
-        voiceCustomerDraft.address = args.address;
-        localStorage.setItem("kimbling_cust_addr", args.address);
-      }
-      if (args.payMethod) voiceCustomerDraft.payMethod = args.payMethod;
 
+      let balanceInfo = null;
+      const phone = (args.phoneForDiamond || document.getElementById("mainCustomerPhone")?.value || "").trim();
+      if (phone && phone.length >= 9) {
+        const phoneEl = document.getElementById("mainCustomerPhone");
+        if (phoneEl) phoneEl.value = phone;
+        localStorage.setItem("kimbling_cust_phone", phone);
+        localStorage.setItem("kb_customer_phone", phone);
+        try {
+          const data = await fetch(
+            `${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`
+          ).then((r) => r.json());
+          const bal = data && data.hatKim ? parseInt(data.hatKim, 10) : 0;
+          const dispEl = document.getElementById("mainDiamondDisplay");
+          if (dispEl) dispEl.innerText = bal.toLocaleString("vi-VN") + " 💎";
+          balanceInfo = { phone: phone, diamondBalance: bal };
+        } catch (e) {
+          balanceInfo = { phone: phone, error: "Không tra cứu được số dư lúc này." };
+        }
+      }
+
+      return {
+        ok: true,
+        priceMode: currentPriceMode,
+        diamondInfo: balanceInfo
+      };
+    }
+
+    if (name === "open_checkout") {
+      if (!cart.length) return { ok: false, error: "Giỏ hàng đang trống, chưa thể mở thanh toán." };
+      closeAllCustomerPopups();
+      openCheckoutModal();
       applyVoiceCustomerDraftToInputs();
-      return { ok: true, saved: voiceCustomerDraft };
-    }
-
-    if (name === "submit_order") {
-      if (!cart.length) return { ok: false, error: "Giỏ hàng đang trống, chưa thể đặt hàng." };
-      if (typeof closeTiktokModal === "function") closeTiktokModal();
-
-      const cm = document.getElementById("checkoutModal");
-      if (!cm || cm.style.display !== "flex") {
-        openCheckoutModal();
-        applyVoiceCustomerDraftToInputs();
-      }
-
-      const btnSubmit = document.getElementById("btnSubmitOrder");
-      if (btnSubmit && btnSubmit.disabled) {
-        return { ok: false, error: "Quán hiện đang tạm ngưng nhận đơn online." };
-      }
-
-      const cName = document.getElementById("customerName").value.trim();
-      const cPhone = document.getElementById("customerPhone").value.trim();
-      const cAddr = document.getElementById("customerAddress").value.trim();
-      const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || "Tiền mặt";
-
-      if (!cName || !cPhone || !cAddr) {
-        return {
-          ok: false,
-          openedCheckout: true,
-          missingFields: [
-            !cName ? "Tên người nhận" : "",
-            !cPhone ? "Số điện thoại" : "",
-            !cAddr ? "Địa chỉ giao hàng" : ""
-          ].filter(Boolean),
-          message: "Thiếu thông tin người nhận, hãy hỏi khách đọc bổ sung hoặc nhập trên màn hình."
-        };
-      }
-
-      if (payMethod === "Túi Kim Cương" && !isDiamondPinVerified) {
-        return {
-          ok: false,
-          openedCheckout: true,
-          needPin: true,
-          message: "Khách cần nhập mã PIN 4 số của Túi Kim Cương trực tiếp trên màn hình."
-        };
-      }
-
       await waitForShippingIfCalculating();
-
-      if (args.confirmSend) {
-        await processOrderSubmit();
-        const successModal = document.getElementById("orderSuccessModalOverlay");
-        return {
-          ok: !!successModal,
-          submitted: !!successModal,
-          message: successModal
-            ? "Đã gửi đơn hàng thành công lên quán!"
-            : "Chưa gửi được đơn, vui lòng kiểm tra lại thông tin trên màn hình."
-        };
-      }
 
       return {
         ok: true,
         openedCheckout: true,
-        readyToSubmit: true,
-        customerName: cName,
-        phone: cPhone,
-        address: cAddr,
-        foodSubtotalText: formatPrice(calculateFoodSubtotal()),
-        shippingFeeText: formatPrice(getShippingFee())
+        ...getCheckoutSnapshot()
+      };
+    }
+
+    if (name === "set_customer_info") {
+      if (args.orderType) voiceCustomerDraft.orderType = args.orderType;
+      if (args.name !== undefined) {
+        voiceCustomerDraft.name = args.name;
+        localStorage.setItem("kimbling_cust_name", args.name);
+      }
+      if (args.phone !== undefined) {
+        voiceCustomerDraft.phone = args.phone;
+        localStorage.setItem("kimbling_cust_phone", args.phone);
+      }
+      if (args.address !== undefined) {
+        voiceCustomerDraft.address = args.address;
+        localStorage.setItem("kimbling_cust_addr", args.address);
+      }
+      if (args.note !== undefined) voiceCustomerDraft.note = args.note;
+      if (args.payMethod) voiceCustomerDraft.payMethod = args.payMethod;
+
+      applyVoiceCustomerDraftToInputs();
+      await waitForShippingIfCalculating();
+
+      return { ok: true, ...getCheckoutSnapshot() };
+    }
+
+    if (name === "confirm_submit_order") {
+      if (!cart.length) return { ok: false, error: "Giỏ hàng đang trống, chưa thể đặt hàng." };
+
+      if (!isVisible("checkoutModal")) {
+        closeAllCustomerPopups();
+        openCheckoutModal();
+        applyVoiceCustomerDraftToInputs();
+        await waitForShippingIfCalculating();
+        return {
+          ok: false,
+          openedCheckout: true,
+          needReviewFirst: true,
+          ...getCheckoutSnapshot(),
+          message: "Đã mở mục thanh toán cho khách xem lại. Hãy đọc lại toàn bộ thông tin để khách xác nhận rồi mới gửi đơn."
+        };
+      }
+
+      const snap = getCheckoutSnapshot();
+      if (snap.storeClosed) {
+        return { ok: false, error: "Quán hiện đang tạm ngưng nhận đơn online." };
+      }
+
+      if (snap.missingFields.length > 0) {
+        return {
+          ok: false,
+          openedCheckout: true,
+          missingFields: snap.missingFields,
+          message: "Còn thiếu thông tin khách hàng, hãy hỏi khách đọc bổ sung."
+        };
+      }
+
+      if (snap.payMethod === "Túi Kim Cương" && !isDiamondPinVerified) {
+        return {
+          ok: false,
+          openedCheckout: true,
+          needPin: true,
+          message: "Khách cần tự nhập mã PIN 4 số của Túi Kim Cương trên màn hình."
+        };
+      }
+
+      await waitForShippingIfCalculating();
+      await processOrderSubmit();
+
+      const successModal = document.getElementById("orderSuccessModalOverlay");
+      if (successModal) {
+        voiceCustomerDraft.note = "";
+      }
+
+      return {
+        ok: !!successModal,
+        submitted: !!successModal,
+        message: successModal
+          ? "Đã gửi đặt hàng thành công lên quán!"
+          : "Chưa gửi được đơn, vui lòng kiểm tra lại thông tin trên màn hình."
       };
     }
 
@@ -700,5 +1105,4 @@
 
   window.toggleBekimLive = toggleBekimLive;
   window.stopBekimLive = stopBekimLive;
-  window.addEventListener("pagehide", stopBekimLive);
-})();
+  window.addEventListener("pagehide",
