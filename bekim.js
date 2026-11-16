@@ -1,14 +1,14 @@
 /* =========================================================
- * BEKIM.JS (v4.5 - Tối ưu tiết kiệm Quota Gemini Live)
- * - Gộp mở #optionsModal + tick sẵn lựa chọn trong 1 lượt toolCall
- * - Tự tắt mic & ngắt Live ngay sau khi Bé Kim xác nhận đặt đơn xong
- * - Tự nghỉ sau 45 giây im lặng
- * - Tư vấn chuẩn như aichotdon.html & quản lý mọi mục trên menu.html
+ * BEKIM.JS (v4.6 - Tối ưu tiết kiệm Quota Gemini Live)
+ * - Xem ảnh / chi tiết món -> mở popup TikTok (#tiktokModal)
+ * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn Upsize, Đá, Đường, Topping (#optionsModal)
+ * - Khách nói bye / tạm biệt -> ngưng hỗ trợ & tự đăng xuất Live
+ * - Tự tắt sau khi chốt đơn xong & tự nghỉ sau 45 giây im lặng
  * ========================================================= */
 (function () {
   const BEKIM_AI_URL =
     "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
-  const IDLE_TIMEOUT_MS = 45000; // Tự nghỉ sau 45 giây im lặng để tiết kiệm quota
+  const IDLE_TIMEOUT_MS = 45000;
 
   let socket = null;
   let stream = null;
@@ -26,6 +26,7 @@
 
   let autoShutdownPending = false;
   let autoShutdownTimer = null;
+  let autoShutdownMessage = "✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.";
 
   let voiceCustomerDraft = {};
   let pendingOptionQty = 1;
@@ -142,14 +143,15 @@
     }, IDLE_TIMEOUT_MS);
   }
 
-  function finishPostOrderShutdown() {
+  function finishAutoShutdown() {
     if (!autoShutdownPending || !isActive) return;
     setTimeout(() => {
       if (autoShutdownPending && isActive && playSources.length === 0) {
+        const msg = autoShutdownMessage;
         stopBekimLive();
-        showToast("✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.", 3000);
+        if (msg) showToast(msg, 3000);
       }
-    }, 600);
+    }, 500);
   }
 
   async function toggleBekimLive() {
@@ -169,6 +171,7 @@
 
     isStarting = true;
     autoShutdownPending = false;
+    autoShutdownMessage = "✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.";
     if (autoShutdownTimer) { clearTimeout(autoShutdownTimer); autoShutdownTimer = null; }
     const gen = ++sessionGen;
     setVisualState("connecting");
@@ -297,7 +300,7 @@
             }
           });
           if (sc.turnComplete && autoShutdownPending && playSources.length === 0) {
-            finishPostOrderShutdown();
+            finishAutoShutdown();
           }
         }
       };
@@ -420,7 +423,7 @@
       playSources = playSources.filter((s) => s !== src);
       if (isActive && playSources.length === 0) {
         if (autoShutdownPending) {
-          finishPostOrderShutdown();
+          finishAutoShutdown();
         } else {
           setVisualState("active", "🎙️ Bé Kim đang nghe", "#00c853");
           resetIdleTimer();
@@ -470,14 +473,15 @@
   function findDish(query) {
     if (!Array.isArray(menu) || !menu.length) return null;
     const q = removeDiacritics(query || "").trim();
-    if (!q) {
+    const isCurrentRef = !q || /^(mon nay|nay|mon do|do|no|san pham nay|ly nay|phan nay|cai nay)$/.test(q);
+    if (isCurrentRef) {
       if (isVisible("tiktokModal") && filteredMenu[currentTiktokIndex]) {
         return filteredMenu[currentTiktokIndex];
       }
       if (isVisible("optionsModal") && selectedProduct) {
         return selectedProduct;
       }
-      return null;
+      if (!q) return null;
     }
     let found = menu.find((m) => removeDiacritics(m.name) === q);
     if (!found) found = menu.find((m) => removeDiacritics(m.name).includes(q));
@@ -773,6 +777,24 @@
         : await handleMenuToolCall("open_checkout", {});
     }
 
+    if (name === "end_bekim_session") {
+      autoShutdownPending = true;
+      autoShutdownMessage = "👋 Tạm biệt! Bé Kim đã ngưng hỗ trợ.";
+      if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+      if (autoShutdownTimer) clearTimeout(autoShutdownTimer);
+      autoShutdownTimer = setTimeout(() => {
+        if (isActive) {
+          stopBekimLive();
+          showToast("👋 Tạm biệt! Bé Kim đã ngưng hỗ trợ.", 3000);
+        }
+      }, 6000);
+      return {
+        ok: true,
+        ending: true,
+        message: "Đã nhận lệnh ngưng hỗ trợ. Hãy chào tạm biệt khách ngắn gọn 1 câu."
+      };
+    }
+
     if (name === "close_popup") {
       closeAllCustomerPopups();
       return { ok: true };
@@ -947,7 +969,6 @@
       pendingOptionQty = Math.max(1, parseInt(args.quantity || 1, 10) || 1);
       openOptionsModal(dish.id);
 
-      // Gộp tick sẵn các lựa chọn nếu khách đã nói trước (tiết kiệm 1 lượt gọi tool!)
       const { upsizeRejectedReason, unmatchedToppings } = applyOptionsSelectionToModal(args);
 
       const isFood = getCategoryType(dish.name, dish.category) === "Food";
@@ -1197,7 +1218,7 @@
       const successModal = document.getElementById("orderSuccessModalOverlay");
       if (successModal) {
         voiceCustomerDraft.note = "";
-        // Ngừng truyền mic ngay và tự tắt Bé Kim sau khi nói xong câu xác nhận cuối
+        autoShutdownMessage = "✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.";
         autoShutdownPending = true;
         autoShutdownTimer = setTimeout(() => {
           if (isActive) {

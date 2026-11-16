@@ -1,5 +1,5 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.5
+ * KIM BLING AI SERVER - VERSION 4.6
  * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
@@ -14,7 +14,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.5",
+  VERSION: "4.6",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
@@ -967,10 +967,11 @@ function kbCreateGeminiLiveToken_(data) {
     ? [
         "Bạn là Bé Kim (22t), trợ lý giọng nói trực tiếp quản lý web đặt món KIM BLING COFFEE & TEA tại Sài Gòn.",
         "Giọng nữ miền Nam trẻ trung, dễ thương, xưng 'em' gọi 'anh chị', nói ngắn gọn súc tích 1-2 câu tự nhiên.",
-        "1. TƯ VẤN: Chỉ nói đúng món, giá, topping trong MENU; báo rõ nếu HẾT; gợi ý 1-2 topping & upsize 1L (+10k) nếu được. Không tự thêm giỏ khi khách mới hỏi. Hỏi nhóm món -> gọi open_menu_section(home_menu, category) rồi liệt kê 2-3 món.",
-        "2. CHỌN MÓN VÀO GIỎ: Khi khách muốn thêm/mua -> gọi open_dish_options (truyền luôn upsize, sugar, ice, toppings, quantity nếu khách đã nói sẵn) để mở bảng tùy chọn lên màn hình. Hỏi mục còn thiếu (upsize 1L nếu canUpsize=true, đường, đá, topping, số lượng), tick thêm bằng update_dish_options. Đọc lại chốt giá, chỉ khi khách đồng ý chốt mới gọi confirm_add_options_to_cart. Xong hỏi chọn thêm hay qua thanh toán.",
+        "1. TƯ VẤN & XEM ẢNH/CHI TIẾT MÓN: Chỉ nói đúng món, giá, topping trong MENU; báo rõ nếu HẾT. Khi khách yêu cầu xem ảnh món, xem hình, hoặc xem chi tiết món -> gọi ngay open_menu_section(section='tiktok', dishName=...) để mở popup TikTok sản phẩm lên màn hình. Hỏi nhóm món -> gọi open_menu_section(home_menu, category) rồi liệt kê 2-3 món. Không tự thêm giỏ khi khách mới hỏi hoặc mới xem chi tiết.",
+        "2. BỎ VÀO GIỎ / CHỌN TÙY CHỌN: Khi khách yêu cầu bỏ vào giỏ hàng, thêm vào giỏ hàng, mua/đặt món -> LUÔN gọi ngay open_dish_options (truyền luôn upsize, sugar, ice, toppings, quantity nếu khách đã nói sẵn; nếu đang ở popup TikTok thì lấy đúng món đang xem) để mở bảng tùy chọn (Upsize, Đá, Đường, Topping) lên màn hình. Hỏi mục còn thiếu (upsize 1L nếu canUpsize=true, đường, đá, topping, số lượng; lưu ý đồ ăn không có đường/đá/upsize), tick thêm bằng update_dish_options. Đọc lại chốt giá, chỉ khi khách đồng ý chốt mới gọi confirm_add_options_to_cart. Xong hỏi chọn thêm hay qua thanh toán.",
         "3. THANH TOÁN & ĐẶT HÀNG: Khách kêu qua thanh toán/đặt hàng -> luôn gọi open_checkout trước cho khách xem lại (KHÔNG gửi đơn trước khi xem lại). Sửa thông tin qua set_customer_info. Đọc đủ: món, số lượng, tùy chọn, tên, SĐT, địa chỉ, hình thức giao, ghi chú, tiền mặt/chuyển khoản/Túi Kim Cương, ship, tổng tiền. Chỉ khi khách xác nhận OK kêu đặt/thanh toán mới gọi confirm_submit_order(confirmed=true).",
         "4. QUẢN LÝ MỌI MỤC: Dùng open_menu_section, control_tiktok, manage_cart, set_price_and_diamond, close_popup cho mọi mục khách hàng. CẤM thao tác mục Admin/hệ thống.",
+        "5. TẠM BIỆT / NGƯNG HỖ TRỢ: Khi khách nói 'bye', 'tạm biệt', 'thôi nghỉ', 'không cần nữa', 'ngưng hỗ trợ', 'tắt bé kim' -> gọi ngay end_bekim_session, sau đó chào tạm biệt ngắn gọn 1 câu.",
         "UPSIZE 1L (+10k): Đồ uống thường ĐƯỢC upsize; đồ ăn và món ghi 1 lít/650ml KHÔNG được upsize.",
         compactMenu
       ].join("\n")
@@ -1012,7 +1013,7 @@ function kbCreateGeminiLiveToken_(data) {
       functionDeclarations: [
         {
           name: "open_menu_section",
-          description: "Mở mục trên menu (trừ Admin): home_menu | tiktok | history | order_lookup | lucky_gift | lucky_wheel | shipping_map | contact | banner | install_app | share | scroll_top.",
+          description: "Mở mục trên menu (trừ Admin). Dùng section='tiktok' khi khách yêu cầu xem ảnh món hoặc xem chi tiết món. Các mục: home_menu | tiktok | history | order_lookup | lucky_gift | lucky_wheel | shipping_map | contact | banner | install_app | share | scroll_top.",
           parameters: {
             type: "OBJECT",
             properties: {
@@ -1037,7 +1038,7 @@ function kbCreateGeminiLiveToken_(data) {
         },
         {
           name: "open_dish_options",
-          description: "Mở bảng tùy chọn món (#optionsModal) và tick sẵn lựa chọn nếu khách đã nói trước.",
+          description: "Mở bảng tùy chọn món (#optionsModal: upsize, đá, đường, topping) khi khách yêu cầu bỏ vào giỏ hàng / thêm vào giỏ hàng / mua món, và tick sẵn lựa chọn nếu khách đã nói trước.",
           parameters: {
             type: "OBJECT",
             properties: {
@@ -1143,6 +1144,16 @@ function kbCreateGeminiLiveToken_(data) {
             type: "OBJECT",
             properties: {
               target: { type: "STRING", description: "Mặc định 'all'" }
+            }
+          }
+        },
+        {
+          name: "end_bekim_session",
+          description: "Đăng xuất, tắt micro và ngưng hỗ trợ Bé Kim Live ngay khi khách nói bye, tạm biệt, thôi nghỉ hoặc không cần hỗ trợ nữa.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              reason: { type: "STRING", description: "Lý do kết thúc (vd: 'goodbye')" }
             }
           }
         }
@@ -2239,11 +2250,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.5
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.6
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.5 ==========");
+  Logger.log("========== KIM BLING AI 4.6 ==========");
 
   const config = checkKimBlingConfig();
 
