@@ -1,7 +1,6 @@
-
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.1
- * Groq + Gemini Live + Google Sheets + POS_Data + Telegram
+ * KIM BLING AI SERVER - VERSION 4.2
+ * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
@@ -935,8 +934,7 @@ function getGeminiApiKey_() {
   return key;
 }
 
-
-function kbCreateGeminiLiveToken_() {
+function kbCreateGeminiLiveToken_(data) {
   const apiKey = getGeminiApiKey_();
   const catalog = getAIProductCatalog_();
   const compactMenu = kbFormatCompactCatalog_(
@@ -945,43 +943,165 @@ function kbCreateGeminiLiveToken_() {
     catalog.snackToppings || []
   );
 
-  const liveInstruction = [
-    "Bạn là Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
-    "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
-    "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
-    "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
-    KB_UPSIZE_RULE_TEXT,
-    "",
-    compactMenu
-  ].join("\n");
+  const isMenuControl = data && data.mode === "menu_control";
+
+  const liveInstruction = isMenuControl
+    ? [
+        "Bạn là Bé Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
+        "PHONG CÁCH NÓI CHUYỆN: Luôn nói giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn, luôn xưng 'em' và gọi khách là 'anh chị', dùng tự nhiên các từ đệm nhẹ nhàng như 'dạ', 'nha', 'hen', 'ạ'. Nói ngắn gọn, tự nhiên như người thật, không đọc như robot.",
+        "BẠN ĐANG NẰM TRỰC TIẾP TRONG TRANG MENU ĐẶT HÀNG. Nhiệm vụ của bạn gồm 2 phần:",
+        "",
+        "1. TƯ VẤN CHUẨN NHƯ AICHOTDON:",
+        "- CHỈ tư vấn đúng món, giá, topping nước và topping ăn vặt có trong danh sách thực đơn bên dưới. Tuyệt đối KHÔNG bịa tên món, giá, khuyến mãi ngoài thực đơn.",
+        "- Nếu sản phẩm hết hàng (ghi HẾT) phải báo rõ cho khách.",
+        "- Nếu khách hỏi 1 món: tư vấn tự nhiên trong 2 đến 4 câu đầy đủ hương vị, giá tiền và gợi ý 1-2 topping hợp trong thực đơn; nhắc upsize ly 1 lít (+10.000đ) nếu món đó được phép.",
+        "- Nếu khách hỏi cả nhóm món (trà sữa, cà phê, trà, soda, sữa chua, ăn vặt, món mới): gọi filter_menu để hiện nhóm món đó lên màn hình cho khách xem, đồng thời liệt kê gọn 2-3 món nổi bật kèm giá.",
+        "- Khi khách mới hỏi tư vấn, KHÔNG tự ý gọi add_to_cart khi khách chưa đồng ý chọn.",
+        "",
+        "2. ĐIỀU KHIỂN MENU KHI KHÁCH RA LỆNH:",
+        "- Khách bảo 'tìm / mở / cho xem' 1 món -> gọi open_product_tiktok.",
+        "- Khách bảo 'thêm vào giỏ / lấy cho anh chị / chọn món này...' -> gọi add_to_cart.",
+        "- Khách hỏi trong giỏ có gì / tổng bao nhiêu -> gọi get_cart_summary.",
+        "- Khách bảo 'xóa / bỏ món' -> gọi remove_from_cart.",
+        "- Khách đọc tên, SĐT, địa chỉ, tự lấy/giao hàng, tiền mặt/chuyển khoản -> gọi set_customer_info.",
+        "- Khách bảo 'đặt hàng đi / chốt đơn / thanh toán' -> gọi submit_order (confirmSend: true).",
+        "- Khách bảo 'đóng lại / xem tiếp menu' -> gọi close_popup.",
+        KB_UPSIZE_RULE_TEXT,
+        "",
+        compactMenu
+      ].join("\n")
+    : [
+        "Bạn là Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
+        "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
+        "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
+        "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
+        KB_UPSIZE_RULE_TEXT,
+        "",
+        compactMenu
+      ].join("\n");
 
   const now = Date.now();
   const expireTime = new Date(now + 30 * 60 * 1000).toISOString();
   const newSessionExpireTime = new Date(now + 60 * 1000).toISOString();
+
+  const bidiSetup = {
+    model: "models/" + KB_CONFIG.LIVE_MODEL,
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: "Zephyr"
+          }
+        }
+      }
+    },
+    systemInstruction: {
+      parts: [{ text: liveInstruction }]
+    },
+    inputAudioTranscription: {},
+    outputAudioTranscription: {}
+  };
+
+  if (isMenuControl) {
+    bidiSetup.tools = [{
+      functionDeclarations: [
+        {
+          name: "filter_menu",
+          description: "Lọc danh mục hoặc tìm kiếm món ngay trên màn hình menu.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              category: { type: "STRING", description: "All | Favorite | Coffee | Tea | MilkTea | Soda | Yogurt | Food | Topping" },
+              keyword: { type: "STRING", description: "Từ khóa tìm kiếm món" }
+            }
+          }
+        },
+        {
+          name: "open_product_tiktok",
+          description: "Tìm món trên menu và mở popup TikTok chi tiết của món đó lên màn hình.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dishName: { type: "STRING", description: "Tên món cần mở" }
+            },
+            required: ["dishName"]
+          }
+        },
+        {
+          name: "add_to_cart",
+          description: "Thêm món vào giỏ hàng kèm tùy chọn số lượng, upsize 1 lít, đường, đá và topping.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dishName: { type: "STRING", description: "Tên món (bỏ trống nếu đang mở TikTok của món đó)" },
+              quantity: { type: "INTEGER", description: "Số lượng (mặc định 1)" },
+              upsize: { type: "BOOLEAN", description: "True nếu khách muốn upsize 1 lít (+10k)" },
+              sugar: { type: "STRING", description: "Đường bình thường | Ít đường | Không đường" },
+              ice: { type: "STRING", description: "Đá bình thường | Ít đá | Không đá" },
+              toppings: {
+                type: "ARRAY",
+                description: "Danh sách tên topping muốn thêm",
+                items: { type: "STRING" }
+              }
+            }
+          }
+        },
+        {
+          name: "get_cart_summary",
+          description: "Xem danh sách món và tổng tiền đang có trong giỏ hàng hiện tại.",
+          parameters: { type: "OBJECT", properties: {} }
+        },
+        {
+          name: "remove_from_cart",
+          description: "Xóa một món khỏi giỏ hàng theo tên món.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dishName: { type: "STRING", description: "Tên món cần xóa" }
+            },
+            required: ["dishName"]
+          }
+        },
+        {
+          name: "set_customer_info",
+          description: "Điền thông tin nhận hàng và hình thức thanh toán cho khách.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              name: { type: "STRING", description: "Tên người nhận" },
+              phone: { type: "STRING", description: "Số điện thoại" },
+              address: { type: "STRING", description: "Địa chỉ giao hàng" },
+              orderType: { type: "STRING", description: "Giao hàng hoặc Tự ra lấy" },
+              payMethod: { type: "STRING", description: "Tiền mặt hoặc Chuyển khoản" }
+            }
+          }
+        },
+        {
+          name: "submit_order",
+          description: "Mở bảng thanh toán hoặc bấm gửi đơn hàng ngay khi khách yêu cầu đặt hàng.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              confirmSend: { type: "BOOLEAN", description: "True nếu khách yêu cầu đặt hàng luôn" }
+            }
+          }
+        },
+        {
+          name: "close_popup",
+          description: "Đóng popup đang mở (TikTok, tùy chọn, giỏ hàng) để quay lại menu.",
+          parameters: { type: "OBJECT", properties: {} }
+        }
+      ]
+    }];
+  }
 
   // Cấu trúc chuẩn Gemini Live Ephemeral Token (v1alpha/auth_tokens)
   const payload = {
     uses: 1,
     expireTime: expireTime,
     newSessionExpireTime: newSessionExpireTime,
-    bidiGenerateContentSetup: {
-      model: "models/" + KB_CONFIG.LIVE_MODEL,
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: "Zephyr"
-            }
-          }
-        }
-      },
-      systemInstruction: {
-        parts: [{ text: liveInstruction }]
-      },
-      inputAudioTranscription: {},
-      outputAudioTranscription: {}
-    }
+    bidiGenerateContentSetup: bidiSetup
   };
 
   const response = UrlFetchApp.fetch(
@@ -1028,7 +1148,7 @@ function kbCreateGeminiLiveToken_() {
 function testGeminiLiveToken() {
   Logger.log("========== KIỂM TRA GEMINI LIVE ==========");
 
-  const result = kbCreateGeminiLiveToken_();
+  const result = kbCreateGeminiLiveToken_({ mode: "menu_control" });
 
   // Không ghi token bí mật vào Logger.
   Logger.log("CẤP TOKEN: THÀNH CÔNG");
@@ -1966,7 +2086,7 @@ function doPost(e) {
       // API MỚI: CẤP TOKEN GEMINI LIVE
       case "create_live_token":
       case "get_live_token":
-        result = kbCreateGeminiLiveToken_();
+        result = kbCreateGeminiLiveToken_(data);
         break;
 
       // CÁC ACTION CŨ
@@ -2072,11 +2192,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.1
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.2
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.1 ==========");
+  Logger.log("========== KIM BLING AI 4.2 ==========");
 
   const config = checkKimBlingConfig();
 
