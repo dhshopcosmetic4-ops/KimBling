@@ -1,5 +1,5 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.2
+ * KIM BLING AI SERVER - VERSION 4.5
  * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
@@ -14,7 +14,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.2",
+  VERSION: "4.5",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
@@ -382,6 +382,27 @@ function kbFormatCompactCatalog_(products, drinkToppings, snackToppings) {
     (stLines.length ? "\nGIA VỊ / TOPPING ĂN VẶT: " + stLines.join(", ") : "");
 }
 
+function kbFormatLivePriceK_(vnd) {
+  const n = kbMoney_(vnd);
+  if (n > 0 && n % 1000 === 0) return (n / 1000) + "k";
+  return n.toLocaleString("vi-VN") + "đ";
+}
+
+function kbFormatLiveCompactCatalog_(products, drinkToppings, snackToppings) {
+  const menuLines = (products || []).map(function(item) {
+    return kbItemName_(item) + "(" + kbFormatLivePriceK_(kbItemPrice_(item)) + (kbItemSoldOut_(item) ? ",HẾT" : "") + ")";
+  });
+  const dtLines = (drinkToppings || []).map(function(item) {
+    return kbItemName_(item) + "(" + kbFormatLivePriceK_(kbItemPrice_(item)) + ")";
+  });
+  const stLines = (snackToppings || []).map(function(item) {
+    return kbItemName_(item) + "(" + kbFormatLivePriceK_(kbItemPrice_(item)) + ")";
+  });
+  return "MENU: " + menuLines.join(", ") +
+    (dtLines.length ? "\nTOPPING NƯỚC: " + dtLines.join(", ") : "") +
+    (stLines.length ? "\nTOPPING ĂN VẶT: " + stLines.join(", ") : "");
+}
+
 function kbCatalogText_(catalog) {
   return kbFormatCompactCatalog_(
     catalog.menu || [],
@@ -700,7 +721,6 @@ function testGroqConnection() {
 
 /* =========================================================
    8. TƯ VẤN SẢN PHẨM MỚI - GROQ + DỰ PHÒNG GEMINI + GEMINI TTS
-   Không tạo đơn, không lưu đơn, không gọi Telegram.
 ========================================================= */
 
 function kbCallGeminiFallback_(systemPrompt, userMessage) {
@@ -849,7 +869,7 @@ function kbAdvisorChat_(data) {
 
   const matched = kbSearchProducts_(message, catalog);
   const matchedText = matched.map(function(p) {
-    return "- " + p.name + " (" + p.price.toLocaleString("vi-VN") + "đ" + (p.isSoldOut ? ", Hết hàng" : "") + ")";
+    return "- " + p.name + " (" + p.price.toLocaleString("vi-VN") + "đ" + (p.isSoldOut ? ", HẾT" : "") + ")";
   }).join("\n");
 
   const system = [
@@ -937,37 +957,21 @@ function getGeminiApiKey_() {
 function kbCreateGeminiLiveToken_(data) {
   const apiKey = getGeminiApiKey_();
   const catalog = getAIProductCatalog_();
-  const compactMenu = kbFormatCompactCatalog_(
-    catalog.menu || [],
-    catalog.drinkToppings || [],
-    catalog.snackToppings || []
-  );
-
   const isMenuControl = data && data.mode === "menu_control";
+
+  const compactMenu = isMenuControl
+    ? kbFormatLiveCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || [])
+    : kbFormatCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []);
 
   const liveInstruction = isMenuControl
     ? [
-        "Bạn là Bé Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
-        "PHONG CÁCH NÓI CHUYỆN: Luôn nói giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn, luôn xưng 'em' và gọi khách là 'anh chị', dùng tự nhiên các từ đệm nhẹ nhàng như 'dạ', 'nha', 'hen', 'ạ'. Nói ngắn gọn, tự nhiên như người thật, không đọc như robot.",
-        "BẠN ĐANG NẰM TRỰC TIẾP TRONG TRANG MENU ĐẶT HÀNG. Nhiệm vụ của bạn gồm 2 phần:",
-        "",
-        "1. TƯ VẤN CHUẨN NHƯ AICHOTDON:",
-        "- CHỈ tư vấn đúng món, giá, topping nước và topping ăn vặt có trong danh sách thực đơn bên dưới. Tuyệt đối KHÔNG bịa tên món, giá, khuyến mãi ngoài thực đơn.",
-        "- Nếu sản phẩm hết hàng (ghi HẾT) phải báo rõ cho khách.",
-        "- Nếu khách hỏi 1 món: tư vấn tự nhiên trong 2 đến 4 câu đầy đủ hương vị, giá tiền và gợi ý 1-2 topping hợp trong thực đơn; nhắc upsize ly 1 lít (+10.000đ) nếu món đó được phép.",
-        "- Nếu khách hỏi cả nhóm món (trà sữa, cà phê, trà, soda, sữa chua, ăn vặt, món mới): gọi filter_menu để hiện nhóm món đó lên màn hình cho khách xem, đồng thời liệt kê gọn 2-3 món nổi bật kèm giá.",
-        "- Khi khách mới hỏi tư vấn, KHÔNG tự ý gọi add_to_cart khi khách chưa đồng ý chọn.",
-        "",
-        "2. ĐIỀU KHIỂN MENU KHI KHÁCH RA LỆNH:",
-        "- Khách bảo 'tìm / mở / cho xem' 1 món -> gọi open_product_tiktok.",
-        "- Khách bảo 'thêm vào giỏ / lấy cho anh chị / chọn món này...' -> gọi add_to_cart.",
-        "- Khách hỏi trong giỏ có gì / tổng bao nhiêu -> gọi get_cart_summary.",
-        "- Khách bảo 'xóa / bỏ món' -> gọi remove_from_cart.",
-        "- Khách đọc tên, SĐT, địa chỉ, tự lấy/giao hàng, tiền mặt/chuyển khoản -> gọi set_customer_info.",
-        "- Khách bảo 'đặt hàng đi / chốt đơn / thanh toán' -> gọi submit_order (confirmSend: true).",
-        "- Khách bảo 'đóng lại / xem tiếp menu' -> gọi close_popup.",
-        KB_UPSIZE_RULE_TEXT,
-        "",
+        "Bạn là Bé Kim (22t), trợ lý giọng nói trực tiếp quản lý web đặt món KIM BLING COFFEE & TEA tại Sài Gòn.",
+        "Giọng nữ miền Nam trẻ trung, dễ thương, xưng 'em' gọi 'anh chị', nói ngắn gọn súc tích 1-2 câu tự nhiên.",
+        "1. TƯ VẤN: Chỉ nói đúng món, giá, topping trong MENU; báo rõ nếu HẾT; gợi ý 1-2 topping & upsize 1L (+10k) nếu được. Không tự thêm giỏ khi khách mới hỏi. Hỏi nhóm món -> gọi open_menu_section(home_menu, category) rồi liệt kê 2-3 món.",
+        "2. CHỌN MÓN VÀO GIỎ: Khi khách muốn thêm/mua -> gọi open_dish_options (truyền luôn upsize, sugar, ice, toppings, quantity nếu khách đã nói sẵn) để mở bảng tùy chọn lên màn hình. Hỏi mục còn thiếu (upsize 1L nếu canUpsize=true, đường, đá, topping, số lượng), tick thêm bằng update_dish_options. Đọc lại chốt giá, chỉ khi khách đồng ý chốt mới gọi confirm_add_options_to_cart. Xong hỏi chọn thêm hay qua thanh toán.",
+        "3. THANH TOÁN & ĐẶT HÀNG: Khách kêu qua thanh toán/đặt hàng -> luôn gọi open_checkout trước cho khách xem lại (KHÔNG gửi đơn trước khi xem lại). Sửa thông tin qua set_customer_info. Đọc đủ: món, số lượng, tùy chọn, tên, SĐT, địa chỉ, hình thức giao, ghi chú, tiền mặt/chuyển khoản/Túi Kim Cương, ship, tổng tiền. Chỉ khi khách xác nhận OK kêu đặt/thanh toán mới gọi confirm_submit_order(confirmed=true).",
+        "4. QUẢN LÝ MỌI MỤC: Dùng open_menu_section, control_tiktok, manage_cart, set_price_and_diamond, close_popup cho mọi mục khách hàng. CẤM thao tác mục Admin/hệ thống.",
+        "UPSIZE 1L (+10k): Đồ uống thường ĐƯỢC upsize; đồ ăn và món ghi 1 lít/650ml KHÔNG được upsize.",
         compactMenu
       ].join("\n")
     : [
@@ -1007,96 +1011,145 @@ function kbCreateGeminiLiveToken_(data) {
     bidiSetup.tools = [{
       functionDeclarations: [
         {
-          name: "filter_menu",
-          description: "Lọc danh mục hoặc tìm kiếm món ngay trên màn hình menu.",
+          name: "open_menu_section",
+          description: "Mở mục trên menu (trừ Admin): home_menu | tiktok | history | order_lookup | lucky_gift | lucky_wheel | shipping_map | contact | banner | install_app | share | scroll_top.",
           parameters: {
             type: "OBJECT",
             properties: {
-              category: { type: "STRING", description: "All | Favorite | Coffee | Tea | MilkTea | Soda | Yogurt | Food | Topping" },
-              keyword: { type: "STRING", description: "Từ khóa tìm kiếm món" }
-            }
-          }
-        },
-        {
-          name: "open_product_tiktok",
-          description: "Tìm món trên menu và mở popup TikTok chi tiết của món đó lên màn hình.",
-          parameters: {
-            type: "OBJECT",
-            properties: {
-              dishName: { type: "STRING", description: "Tên món cần mở" }
+              section: { type: "STRING", description: "home_menu|tiktok|history|order_lookup|lucky_gift|lucky_wheel|shipping_map|contact|banner|install_app|share|scroll_top" },
+              dishName: { type: "STRING", description: "Tên món (khi section=tiktok)" },
+              category: { type: "STRING", description: "All|Favorite|Coffee|Tea|MilkTea|Soda|Yogurt|Food|Topping" },
+              keyword: { type: "STRING", description: "Từ khóa tìm kiếm" }
             },
-            required: ["dishName"]
+            required: ["section"]
           }
         },
         {
-          name: "add_to_cart",
-          description: "Thêm món vào giỏ hàng kèm tùy chọn số lượng, upsize 1 lít, đường, đá và topping.",
+          name: "control_tiktok",
+          description: "Điều khiển popup TikTok đang mở.",
           parameters: {
             type: "OBJECT",
             properties: {
-              dishName: { type: "STRING", description: "Tên món (bỏ trống nếu đang mở TikTok của món đó)" },
+              action: { type: "STRING", description: "next|prev|toggle_video|like|open_comments|close_comments" }
+            },
+            required: ["action"]
+          }
+        },
+        {
+          name: "open_dish_options",
+          description: "Mở bảng tùy chọn món (#optionsModal) và tick sẵn lựa chọn nếu khách đã nói trước.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              dishName: { type: "STRING", description: "Tên món (bỏ trống nếu đang mở TikTok món đó)" },
               quantity: { type: "INTEGER", description: "Số lượng (mặc định 1)" },
-              upsize: { type: "BOOLEAN", description: "True nếu khách muốn upsize 1 lít (+10k)" },
-              sugar: { type: "STRING", description: "Đường bình thường | Ít đường | Không đường" },
-              ice: { type: "STRING", description: "Đá bình thường | Ít đá | Không đá" },
-              toppings: {
-                type: "ARRAY",
-                description: "Danh sách tên topping muốn thêm",
-                items: { type: "STRING" }
-              }
+              upsize: { type: "BOOLEAN", description: "True=Upsize 1L (+10k)" },
+              sugar: { type: "STRING", description: "Đường bình thường|Ít đường|Không đường" },
+              ice: { type: "STRING", description: "Đá bình thường|Ít đá|Không đá" },
+              toppings: { type: "ARRAY", description: "Tên topping (vd: ['Trân châu trắng','Thủy tinh đào x2'])", items: { type: "STRING" } }
             }
           }
         },
         {
-          name: "get_cart_summary",
-          description: "Xem danh sách món và tổng tiền đang có trong giỏ hàng hiện tại.",
-          parameters: { type: "OBJECT", properties: {} }
-        },
-        {
-          name: "remove_from_cart",
-          description: "Xóa một món khỏi giỏ hàng theo tên món.",
+          name: "update_dish_options",
+          description: "Cập nhật tick Size, Đường, Đá, Topping, Số lượng trên bảng tùy chọn đang mở.",
           parameters: {
             type: "OBJECT",
             properties: {
-              dishName: { type: "STRING", description: "Tên món cần xóa" }
+              dishName: { type: "STRING", description: "Tên món (nếu bảng chưa mở)" },
+              upsize: { type: "BOOLEAN", description: "True=Upsize 1L (+10k)" },
+              sugar: { type: "STRING", description: "Đường bình thường|Ít đường|Không đường" },
+              ice: { type: "STRING", description: "Đá bình thường|Ít đá|Không đá" },
+              resetToppings: { type: "BOOLEAN", description: "True nếu bỏ chọn hết topping cũ" },
+              toppings: { type: "ARRAY", description: "Tên topping cần tick", items: { type: "STRING" } },
+              quantity: { type: "INTEGER", description: "Số lượng" }
+            }
+          }
+        },
+        {
+          name: "confirm_add_options_to_cart",
+          description: "Bấm Thêm vào giỏ từ bảng tùy chọn sau khi khách đã chốt.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              quantity: { type: "INTEGER", description: "Số lượng chốt thêm (mặc định 1)" }
+            }
+          }
+        },
+        {
+          name: "manage_cart",
+          description: "Thao tác giỏ hàng.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              action: { type: "STRING", description: "view|remove|set_qty|reorder_last|remove_discount" },
+              dishName: { type: "STRING", description: "Tên món" },
+              quantity: { type: "INTEGER", description: "Số lượng mới" }
             },
-            required: ["dishName"]
+            required: ["action"]
+          }
+        },
+        {
+          name: "set_price_and_diamond",
+          description: "Đổi chế độ Tiền (K) / Túi Kim Cương (DIAMOND) hoặc xem số dư kim cương.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              priceMode: { type: "STRING", description: "K hoặc DIAMOND" },
+              phoneForDiamond: { type: "STRING", description: "SĐT kiểm tra số dư" }
+            }
+          }
+        },
+        {
+          name: "open_checkout",
+          description: "Mở bảng Giỏ hàng & Thanh toán để khách xem lại toàn bộ thông tin trước khi chốt.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              reason: { type: "STRING", description: "Mặc định 'review'" }
+            }
           }
         },
         {
           name: "set_customer_info",
-          description: "Điền thông tin nhận hàng và hình thức thanh toán cho khách.",
+          description: "Điền/sửa thông tin nhận hàng và hình thức thanh toán.",
           parameters: {
             type: "OBJECT",
             properties: {
               name: { type: "STRING", description: "Tên người nhận" },
-              phone: { type: "STRING", description: "Số điện thoại" },
-              address: { type: "STRING", description: "Địa chỉ giao hàng" },
-              orderType: { type: "STRING", description: "Giao hàng hoặc Tự ra lấy" },
-              payMethod: { type: "STRING", description: "Tiền mặt hoặc Chuyển khoản" }
+              phone: { type: "STRING", description: "SĐT" },
+              address: { type: "STRING", description: "Địa chỉ giao" },
+              orderType: { type: "STRING", description: "Giao hàng|Tự ra lấy" },
+              note: { type: "STRING", description: "Ghi chú cho quán" },
+              payMethod: { type: "STRING", description: "Tiền mặt|Chuyển khoản|Túi Kim Cương" }
             }
           }
         },
         {
-          name: "submit_order",
-          description: "Mở bảng thanh toán hoặc bấm gửi đơn hàng ngay khi khách yêu cầu đặt hàng.",
+          name: "confirm_submit_order",
+          description: "Gửi đơn chính thức CHỈ SAU KHI bảng thanh toán đã mở và khách xác nhận đồng ý hết.",
           parameters: {
             type: "OBJECT",
             properties: {
-              confirmSend: { type: "BOOLEAN", description: "True nếu khách yêu cầu đặt hàng luôn" }
-            }
+              confirmed: { type: "BOOLEAN", description: "True khi khách đã xem lại và chốt đặt hàng" }
+            },
+            required: ["confirmed"]
           }
         },
         {
           name: "close_popup",
-          description: "Đóng popup đang mở (TikTok, tùy chọn, giỏ hàng) để quay lại menu.",
-          parameters: { type: "OBJECT", properties: {} }
+          description: "Đóng tất cả popup quay về menu.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              target: { type: "STRING", description: "Mặc định 'all'" }
+            }
+          }
         }
       ]
     }];
   }
 
-  // Cấu trúc chuẩn Gemini Live Ephemeral Token (v1alpha/auth_tokens)
   const payload = {
     uses: 1,
     expireTime: expireTime,
@@ -1150,7 +1203,6 @@ function testGeminiLiveToken() {
 
   const result = kbCreateGeminiLiveToken_({ mode: "menu_control" });
 
-  // Không ghi token bí mật vào Logger.
   Logger.log("CẤP TOKEN: THÀNH CÔNG");
   Logger.log("Model: " + result.model);
   Logger.log("Token tồn tại: " + !!result.token);
@@ -2068,28 +2120,23 @@ function doPost(e) {
 
     switch (action) {
 
-      // API MỚI: LẤY DANH MỤC SẢN PHẨM
       case "get_catalog":
         result = kbGetCatalogAPI_();
         break;
 
-      // API MỚI: TƯ VẤN BẰNG GROQ
       case "advisor_chat":
         result = kbAdvisorChat_(data);
         break;
 
-      // API MỚI: ĐỌC GIỌNG NÓI GEMINI TTS
       case "tts":
         result = kbTextToSpeech_(data.text, kbText_(data.voiceName || "Charon"));
         break;
 
-      // API MỚI: CẤP TOKEN GEMINI LIVE
       case "create_live_token":
       case "get_live_token":
         result = kbCreateGeminiLiveToken_(data);
         break;
 
-      // CÁC ACTION CŨ
       case "create_session":
         kbEnsureSheets_();
         result = createAISession();
@@ -2192,11 +2239,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.2
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.5
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.2 ==========");
+  Logger.log("========== KIM BLING AI 4.5 ==========");
 
   const config = checkKimBlingConfig();
 
