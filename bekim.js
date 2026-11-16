@@ -1,14 +1,16 @@
 /* =========================================================
- * BEKIM.JS (v4.6 - Tối ưu tiết kiệm Quota Gemini Live)
+ * BEKIM.JS (v4.7 - Tối ưu tiết kiệm Quota + Dự phòng 3 Key Gemini Live)
  * - Xem ảnh / chi tiết món -> mở popup TikTok (#tiktokModal)
  * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn Upsize, Đá, Đường, Topping (#optionsModal)
  * - Khách nói bye / tạm biệt -> ngưng hỗ trợ & tự đăng xuất Live
- * - Tự tắt sau khi chốt đơn xong & tự nghỉ sau 45 giây im lặng
+ * - Tự tắt sau khi chốt đơn xong & tự nghỉ sau 25 giây im lặng
+ * - Tự động đổi lần lượt sang GEMINI_API_KEY_2, GEMINI_API_KEY_3 khi gặp lỗi quota
+ * - Nếu cả 3 key Gemini đều hết -> tự chuyển sang Bé Kim AI (Groq)
  * ========================================================= */
 (function () {
   const BEKIM_AI_URL =
     "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
-  const IDLE_TIMEOUT_MS = 45000;
+  const IDLE_TIMEOUT_MS = 25000; // Tự nghỉ sau 25 giây im lặng để tiết kiệm quota
 
   let socket = null;
   let stream = null;
@@ -30,6 +32,9 @@
 
   let voiceCustomerDraft = {};
   let pendingOptionQty = 1;
+
+  let activeKeyIndex = 0;
+  let hasBackupKey = false;
 
   function ensureBekimUI() {
     if (!document.getElementById("bekimLiveStyles")) {
@@ -138,7 +143,7 @@
     idleTimer = setTimeout(() => {
       if (isActive) {
         stopBekimLive();
-        showToast("⏱️ Bé Kim đã tạm nghỉ sau 45 giây im lặng", 3000);
+        showToast("⏱️ Bé Kim đã tạm nghỉ sau 25 giây im lặng", 3000);
       }
     }, IDLE_TIMEOUT_MS);
   }
@@ -154,20 +159,49 @@
     }, 500);
   }
 
+  function isQuotaOrKeyError(msg) {
+    return /quota|resource.?exhausted|rate.?limit|429|1008|exceeded|api.?key|permission/i.test(String(msg || ""));
+  }
+
+  function handleLiveQuotaFailure(errMsg) {
+    if (hasBackupKey && activeKeyIndex < 5) {
+      const nextIdx = activeKeyIndex + 1;
+      stopBekimLive();
+      showToast("🔄 Đang đổi sang API key dự phòng #" + (nextIdx + 1) + "...", 2500);
+      setTimeout(() => {
+        startBekimLive(nextIdx);
+      }, 300);
+      return true;
+    }
+    stopBekimLive();
+    if (typeof openAiChotDonPopup === "function") {
+      showToast("⚡ Bé Kim Live tạm hết lượt, chuyển sang Bé Kim AI...", 3000);
+      setTimeout(() => {
+        openAiChotDonPopup();
+      }, 400);
+      return true;
+    }
+    return false;
+  }
+
   async function toggleBekimLive() {
     if (isStarting) return;
     if (isActive) {
       stopBekimLive();
       return;
     }
-    await startBekimLive();
+    await startBekimLive(0);
   }
 
-  async function startBekimLive() {
+  async function startBekimLive(requestedKeyIndex) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert("Trình duyệt chưa hỗ trợ micro hoặc trang chưa chạy bằng HTTPS.");
       return;
     }
+
+    const reqIdx = typeof requestedKeyIndex === "number" ? requestedKeyIndex : 0;
+    hasBackupKey = false;
+    activeKeyIndex = reqIdx;
 
     isStarting = true;
     autoShutdownPending = false;
@@ -175,7 +209,7 @@
     if (autoShutdownTimer) { clearTimeout(autoShutdownTimer); autoShutdownTimer = null; }
     const gen = ++sessionGen;
     setVisualState("connecting");
-    showToast("⏳ Đang kích hoạt Bé Kim cho menu đặt hàng...");
+    showToast(reqIdx > 0 ? "🔄 Đang kết nối bằng key dự phòng #" + (reqIdx + 1) + "..." : "⏳ Đang kích hoạt Bé Kim cho menu đặt hàng...");
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -197,7 +231,7 @@
         fetch(BEKIM_AI_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "create_live_token", mode: "menu_control" })
+          body: JSON.stringify({ action: "create_live_token", mode: "menu_control", keyIndex: reqIdx })
         }).then((r) => r.json()),
         navigator.mediaDevices.getUserMedia({
           audio: {
@@ -218,6 +252,9 @@
       if (!tokenRes || tokenRes.success === false || !tokenRes.token) {
         throw new Error((tokenRes && tokenRes.error) || "Không nhận được token Gemini Live.");
       }
+
+      activeKeyIndex = typeof tokenRes.keyIndex === "number" ? tokenRes.keyIndex : reqIdx;
+      hasBackupKey = !!tokenRes.hasBackupKey;
 
       stream = micStream;
       const wsUrl =
@@ -247,6 +284,7 @@
         if (data.error) {
           const errMsg = data.error.message || JSON.stringify(data.error);
           console.error("Gemini Live error:", data.error);
+          if (isQuotaOrKeyError(errMsg) && handleLiveQuotaFailure(errMsg)) return;
           stopBekimLive();
           showToast("❌ Lỗi Gemini Live: " + errMsg, 6000);
           return;
@@ -317,6 +355,9 @@
         if (gen === sessionGen) {
           const code = ev && ev.code ? ev.code : 0;
           const reason = ev && ev.reason ? ev.reason : "";
+          if ((code === 1008 || isQuotaOrKeyError(reason)) && handleLiveQuotaFailure(reason || String(code))) {
+            return;
+          }
           stopBekimLive();
           if (code && code !== 1000 && code !== 1005) {
             showToast("⚠️ Bé Kim ngắt kết nối (" + code + "): " + (reason || "Kiểm tra bản deploy .gs"), 6000);
@@ -325,8 +366,10 @@
       };
     } catch (err) {
       console.error("Lỗi kích hoạt Bé Kim Live:", err);
+      const errMsg = err && err.message ? err.message : String(err);
+      if (isQuotaOrKeyError(errMsg) && handleLiveQuotaFailure(errMsg)) return;
       stopBekimLive();
-      alert("Không kích hoạt được Bé Kim Live: " + (err && err.message ? err.message : err));
+      alert("Không kích hoạt được Bé Kim Live: " + errMsg);
     }
   }
 

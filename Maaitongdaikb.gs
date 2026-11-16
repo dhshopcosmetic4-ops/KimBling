@@ -1,10 +1,12 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.6
+ * KIM BLING AI SERVER - VERSION 4.7
  * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
  * GEMINI_API_KEY
+ * GEMINI_API_KEY_2 (tùy chọn dự phòng)
+ * GEMINI_API_KEY_3 (tùy chọn dự phòng)
  * TELEGRAM_BOT_TOKEN
  * TELEGRAM_CHAT_ID
  * AI_DATABASE_ID
@@ -14,7 +16,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.6",
+  VERSION: "4.7",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
@@ -720,42 +722,45 @@ function testGroqConnection() {
 }
 
 /* =========================================================
-   8. TƯ VẤN SẢN PHẨM MỚI - GROQ + DỰ PHÒNG GEMINI + GEMINI TTS
+   8. TƯ VẤN SẢN PHẨM MỚI - GROQ + DỰ PHÒNG GEMINI (3 KEY) + GEMINI TTS
 ========================================================= */
 
 function kbCallGeminiFallback_(systemPrompt, userMessage) {
-  const apiKey = getGeminiApiKey_();
+  const keys = getGeminiApiKeys_();
   const models = ["gemini-3.8-flash", "gemini-4-hydrogen", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
   let lastErr = "Không gọi được Gemini dự phòng";
 
-  for (let i = 0; i < models.length; i++) {
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-      models[i] + ":generateContent?key=" + encodeURIComponent(apiKey);
+  for (let k = 0; k < keys.length; k++) {
+    for (let i = 0; i < models.length; i++) {
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+        models[i] + ":generateContent?key=" + encodeURIComponent(keys[k]);
 
-    const payload = {
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.5, maxOutputTokens: KB_CONFIG.MAX_TOKENS }
-    };
+      const payload = {
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: "user", parts: [{ text: userMessage }] }],
+        generationConfig: { temperature: 0.5, maxOutputTokens: KB_CONFIG.MAX_TOKENS }
+      };
 
-    const res = UrlFetchApp.fetch(url, {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    });
+      const res = UrlFetchApp.fetch(url, {
+        method: "post",
+        contentType: "application/json",
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      });
 
-    const code = res.getResponseCode();
-    const json = kbParseJson_(res.getContentText(), {});
+      const code = res.getResponseCode();
+      const json = kbParseJson_(res.getContentText(), {});
 
-    if (code >= 200 && code < 300 && json.candidates && json.candidates[0] &&
-        json.candidates[0].content && json.candidates[0].content.parts &&
-        json.candidates[0].content.parts[0]) {
-      const txt = kbText_(json.candidates[0].content.parts[0].text);
-      if (txt) return txt;
+      if (code >= 200 && code < 300 && json.candidates && json.candidates[0] &&
+          json.candidates[0].content && json.candidates[0].content.parts &&
+          json.candidates[0].content.parts[0]) {
+        const txt = kbText_(json.candidates[0].content.parts[0].text);
+        if (txt) return txt;
+      }
+
+      lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini (" + models[i] + ") HTTP " + code);
+      if (code === 429 || code === 403) break;
     }
-
-    lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini (" + models[i] + ") HTTP " + code);
   }
 
   throw new Error(lastErr);
@@ -776,7 +781,7 @@ function kbTextToSpeech_(text, voiceName) {
     return { success: false, error: "Không có nội dung để đọc." };
   }
 
-  const apiKey = getGeminiApiKey_();
+  const keys = getGeminiApiKeys_();
   const allowedVoices = ["Charon", "Puck", "Fenrir", "Kore", "Zephyr"];
   const selectedVoice = allowedVoices.indexOf(voiceName) !== -1 ? voiceName : "Charon";
   const isFemale = selectedVoice === "Kore" || selectedVoice === "Zephyr";
@@ -784,9 +789,6 @@ function kbTextToSpeech_(text, voiceName) {
   const styleInstruction = isFemale
     ? "Giọng nữ miền Nam Việt Nam ngọt ngào, thân thiện, tự nhiên như nhân viên quán cà phê đang tư vấn khách."
     : "Giọng nam miền Nam Việt Nam ấm áp, tự nhiên, rõ ràng, thân thiện như nhân viên quán cà phê đang tư vấn khách.";
-
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-    KB_CONFIG.TTS_MODEL + ":generateContent?key=" + encodeURIComponent(apiKey);
 
   const payload = {
     contents: [{
@@ -806,36 +808,45 @@ function kbTextToSpeech_(text, voiceName) {
     }
   };
 
-  const response = UrlFetchApp.fetch(url, {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+  let lastErr = "Gemini TTS lỗi";
+  for (let k = 0; k < keys.length; k++) {
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+      KB_CONFIG.TTS_MODEL + ":generateContent?key=" + encodeURIComponent(keys[k]);
 
-  const code = response.getResponseCode();
-  const body = response.getContentText();
-  const json = kbParseJson_(body, {});
+    const response = UrlFetchApp.fetch(url, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
 
-  if (code < 200 || code >= 300) {
-    throw new Error("Gemini TTS HTTP " + code + ": " + body.substring(0, 400));
+    const code = response.getResponseCode();
+    const body = response.getContentText();
+    const json = kbParseJson_(body, {});
+
+    if (code >= 200 && code < 300) {
+      const part = json.candidates && json.candidates[0] &&
+        json.candidates[0].content && json.candidates[0].content.parts &&
+        json.candidates[0].content.parts[0];
+
+      const inline = part && part.inlineData ? part.inlineData : null;
+      if (inline && inline.data) {
+        return {
+          success: true,
+          audioBase64: inline.data,
+          mimeType: inline.mimeType || "audio/wav",
+          voiceName: selectedVoice
+        };
+      }
+      lastErr = "Gemini TTS không trả về dữ liệu âm thanh.";
+      break;
+    }
+
+    lastErr = "Gemini TTS HTTP " + code + ": " + body.substring(0, 400);
+    if (code !== 429 && code !== 403) break;
   }
 
-  const part = json.candidates && json.candidates[0] &&
-    json.candidates[0].content && json.candidates[0].content.parts &&
-    json.candidates[0].content.parts[0];
-
-  const inline = part && part.inlineData ? part.inlineData : null;
-  if (!inline || !inline.data) {
-    throw new Error("Gemini TTS không trả về dữ liệu âm thanh.");
-  }
-
-  return {
-    success: true,
-    audioBase64: inline.data,
-    mimeType: inline.mimeType || "audio/wav",
-    voiceName: selectedVoice
-  };
+  throw new Error(lastErr);
 }
 
 function testGeminiTTS() {
@@ -938,24 +949,42 @@ function kbAdvisorChat_(data) {
 }
 
 /* =========================================================
-   9. GEMINI LIVE - CẤP EPHEMERAL TOKEN
+   9. GEMINI LIVE - CẤP EPHEMERAL TOKEN (DỰ PHÒNG 3 KEY)
    API KEY THẬT CHỈ ĐƯỢC DÙNG TRÊN SERVER.
 ========================================================= */
 
-function getGeminiApiKey_() {
-  const key = kbGetProperty_("GEMINI_API_KEY");
+function getGeminiApiKeys_() {
+  const p = PropertiesService.getScriptProperties();
+  const names = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"];
+  const keys = [];
 
-  if (!key) {
+  names.forEach(function(n) {
+    const val = kbText_(p.getProperty(n));
+    if (val && keys.indexOf(val) === -1) {
+      keys.push(val);
+    }
+  });
+
+  if (!keys.length) {
     throw new Error(
       "Thiếu GEMINI_API_KEY trong Script Properties."
     );
   }
 
-  return key;
+  return keys;
+}
+
+function getGeminiApiKey_() {
+  return getGeminiApiKeys_()[0];
 }
 
 function kbCreateGeminiLiveToken_(data) {
-  const apiKey = getGeminiApiKey_();
+  const keys = getGeminiApiKeys_();
+  const startIdx = Math.max(0, Number(data && data.keyIndex) || 0);
+  if (startIdx >= keys.length) {
+    throw new Error("Đã hết API key dự phòng Gemini (quota exceeded).");
+  }
+
   const catalog = getAIProductCatalog_();
   const isMenuControl = data && data.mode === "menu_control";
 
@@ -1168,45 +1197,45 @@ function kbCreateGeminiLiveToken_(data) {
     bidiGenerateContentSetup: bidiSetup
   };
 
-  const response = UrlFetchApp.fetch(
-    KB_CONFIG.GEMINI_TOKEN_URL,
-    {
-      method: "post",
-      contentType: "application/json",
-      headers: {
-        "x-goog-api-key": apiKey
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
+  let lastErr = "Gemini cấp token thất bại";
+  for (let k = startIdx; k < keys.length; k++) {
+    const response = UrlFetchApp.fetch(
+      KB_CONFIG.GEMINI_TOKEN_URL,
+      {
+        method: "post",
+        contentType: "application/json",
+        headers: {
+          "x-goog-api-key": keys[k]
+        },
+        payload: JSON.stringify(payload),
+        muteHttpExceptions: true
+      }
+    );
+
+    const code = response.getResponseCode();
+    const body = response.getContentText();
+    const result = kbParseJson_(body, {});
+
+    if (code >= 200 && code < 300 && result.name) {
+      return {
+        success: true,
+        token: result.name,
+        model: KB_CONFIG.LIVE_MODEL,
+        keyIndex: k,
+        hasBackupKey: k + 1 < keys.length,
+        expiresAt: result.expireTime || expireTime,
+        newSessionExpiresAt:
+          result.newSessionExpireTime || newSessionExpireTime
+      };
     }
-  );
 
-  const code = response.getResponseCode();
-  const body = response.getContentText();
-  const result = kbParseJson_(body, {});
-
-  if (code < 200 || code >= 300) {
-    throw new Error(
-      "Gemini cấp token thất bại HTTP " +
-      code + ": " + body.substring(0, 1000)
-    );
+    lastErr = "Gemini cấp token thất bại HTTP " + code + ": " + body.substring(0, 500);
+    if (code !== 429 && code !== 403) {
+      break;
+    }
   }
 
-  if (!result.name) {
-    throw new Error(
-      "Gemini không trả về token hợp lệ: " +
-      body.substring(0, 500)
-    );
-  }
-
-  return {
-    success: true,
-    token: result.name,
-    model: KB_CONFIG.LIVE_MODEL,
-    expiresAt: result.expireTime || expireTime,
-    newSessionExpiresAt:
-      result.newSessionExpireTime || newSessionExpireTime
-  };
+  throw new Error(lastErr);
 }
 
 function testGeminiLiveToken() {
@@ -1216,6 +1245,8 @@ function testGeminiLiveToken() {
 
   Logger.log("CẤP TOKEN: THÀNH CÔNG");
   Logger.log("Model: " + result.model);
+  Logger.log("Key index đang dùng: " + result.keyIndex);
+  Logger.log("Có key dự phòng tiếp: " + result.hasBackupKey);
   Logger.log("Token tồn tại: " + !!result.token);
   Logger.log("Hết hạn: " + result.expiresAt);
   Logger.log(
@@ -1227,6 +1258,8 @@ function testGeminiLiveToken() {
   return {
     success: true,
     model: result.model,
+    keyIndex: result.keyIndex,
+    hasBackupKey: result.hasBackupKey,
     expiresAt: result.expiresAt
   };
 }
@@ -2212,9 +2245,16 @@ function doPost(e) {
 function checkKimBlingConfig() {
   const p = PropertiesService.getScriptProperties();
 
+  const geminiKeysCount = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]
+    .map(function(k) { return kbText_(p.getProperty(k)); })
+    .filter(function(v, i, arr) { return v && arr.indexOf(v) === i; }).length;
+
   const result = {
     GROQ_API_KEY: !!p.getProperty("GROQ_API_KEY"),
     GEMINI_API_KEY: !!p.getProperty("GEMINI_API_KEY"),
+    GEMINI_API_KEY_2: !!p.getProperty("GEMINI_API_KEY_2"),
+    GEMINI_API_KEY_3: !!p.getProperty("GEMINI_API_KEY_3"),
+    GEMINI_KEYS_COUNT: geminiKeysCount,
     TELEGRAM_BOT_TOKEN: !!p.getProperty("TELEGRAM_BOT_TOKEN"),
     TELEGRAM_CHAT_ID: !!p.getProperty("TELEGRAM_CHAT_ID"),
     AI_DATABASE_ID: !!(
@@ -2250,11 +2290,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.6
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.7
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.6 ==========");
+  Logger.log("========== KIM BLING AI 4.7 ==========");
 
   const config = checkKimBlingConfig();
 
@@ -2294,12 +2334,7 @@ function testKimBlingAI40() {
   }
 
   Logger.log("5. GEMINI:");
-
-  if (config.GEMINI_API_KEY) {
-    Logger.log("Đã có GEMINI_API_KEY.");
-  } else {
-    Logger.log("Chưa có GEMINI_API_KEY.");
-  }
+  Logger.log("Tổng số GEMINI API KEY khả dụng: " + config.GEMINI_KEYS_COUNT);
 
   Logger.log("========== KIỂM TRA HOÀN TẤT ==========");
 
