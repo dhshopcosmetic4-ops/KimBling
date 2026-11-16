@@ -908,8 +908,9 @@ function kbCreateGeminiLiveToken_() {
   );
 
   const liveInstruction = [
-    "Bạn là Kim, nhân viên tư vấn của quán KIM BLING COFFEE & TEA.",
-    "Luôn xưng \"em\" và gọi khách là \"anh chị\". Nói tiếng Việt tự nhiên, ngắn gọn, thân thiện.",
+    "Bạn là Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
+    "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
+    "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
     "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
     "",
     compactMenu
@@ -927,7 +928,14 @@ function kbCreateGeminiLiveToken_() {
     bidiGenerateContentSetup: {
       model: "models/" + KB_CONFIG.LIVE_MODEL,
       generationConfig: {
-        responseModalities: ["AUDIO"]
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: "Zephyr"
+            }
+          }
+        }
       },
       systemInstruction: {
         parts: [{ text: liveInstruction }]
