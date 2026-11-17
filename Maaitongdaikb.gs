@@ -1,6 +1,6 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.8
- * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
+ * KIM BLING AI SERVER - VERSION 4.9
+ * Groq (tốc độ cao) + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
@@ -16,10 +16,10 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.8",
+  VERSION: "4.9",
 
-  MODEL: "openai/gpt-oss-20b",
-  GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+  MODEL: "llama-3.3-70b-versatile",
+  GROQ_FALLBACK_MODELS: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
   GROQ_URL: "https://api.groq.com/openai/v1/chat/completions",
 
   TTS_MODEL: "gemini-3.8-flash-lite-tts",
@@ -208,6 +208,25 @@ function getAIProductCatalog_() {
   });
 
   return result;
+}
+
+function getCachedCatalogForAdvisor_() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get("kb_ai_catalog_v1");
+    if (cached) {
+      const parsed = kbParseJson_(cached, null);
+      if (parsed && Array.isArray(parsed.menu)) return parsed;
+    }
+    const fresh = getAIProductCatalog_();
+    const raw = JSON.stringify(fresh);
+    if (raw.length < 95000) {
+      cache.put("kb_ai_catalog_v1", raw, 60);
+    }
+    return fresh;
+  } catch (e) {
+    return getAIProductCatalog_();
+  }
 }
 
 function kbItemName_(item) {
@@ -662,6 +681,7 @@ function getGroqApiKey_() {
 }
 
 function callGroq_(messages) {
+  const apiKey = getGroqApiKey_();
   const models = Array.isArray(KB_CONFIG.GROQ_FALLBACK_MODELS) && KB_CONFIG.GROQ_FALLBACK_MODELS.length
     ? KB_CONFIG.GROQ_FALLBACK_MODELS
     : [KB_CONFIG.MODEL];
@@ -676,7 +696,7 @@ function callGroq_(messages) {
         method: "post",
         contentType: "application/json",
         headers: {
-          Authorization: "Bearer " + getGroqApiKey_()
+          Authorization: "Bearer " + apiKey
         },
         payload: JSON.stringify({
           model: modelName,
@@ -702,6 +722,7 @@ function callGroq_(messages) {
       lastErr = "Groq (" + modelName + ") trả về nội dung rỗng";
     } else {
       lastErr = "Groq (" + modelName + ") HTTP " + code + ": " + body.substring(0, 300);
+      if (code === 401 || code === 403) break;
     }
   }
 
@@ -722,12 +743,12 @@ function testGroqConnection() {
 }
 
 /* =========================================================
-   8. TƯ VẤN SẢN PHẨM MỚI - GROQ + DỰ PHÒNG GEMINI (3 KEY) + GEMINI TTS
+   8. TƯ VẤN SẢN PHẨM MỚI - GROQ NHANH + DỰ PHÒNG GEMINI (3 KEY) + GEMINI TTS
 ========================================================= */
 
 function kbCallGeminiFallback_(systemPrompt, userMessage) {
   const keys = getGeminiApiKeys_();
-  const models = ["gemini-3.8-flash", "gemini-4-hydrogen", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
+  const models = ["gemini-3.8-flash", "gemini-2.5-flash"];
   let lastErr = "Không gọi được Gemini dự phòng";
 
   for (let k = 0; k < keys.length; k++) {
@@ -864,7 +885,7 @@ function kbAdvisorChat_(data) {
     throw new Error("Anh/chị chưa nhập nội dung cần tư vấn.");
   }
 
-  const catalog = getAIProductCatalog_();
+  const catalog = getCachedCatalogForAdvisor_();
   const selected = data.selectedProduct || null;
 
   let selectedText = "";
@@ -893,7 +914,7 @@ function kbAdvisorChat_(data) {
     "Nếu khách hỏi 1 món: tư vấn 2 đến 4 câu đầy đủ hương vị, giá và gợi ý 1-2 topping hợp. Nếu khách hỏi cả nhóm món: liệt kê gọn các món nổi bật kèm giá.",
     KB_UPSIZE_RULE_TEXT,
     "",
-    kbFormatCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []),
+    kbFormatLiveCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []),
     "",
     matchedText ? ("CÁC MÓN KHỚP VỚI CÂU HỎI:\n" + matchedText) : "",
     selectedText
@@ -985,7 +1006,7 @@ function kbCreateGeminiLiveToken_(data) {
     throw new Error("Đã hết API key dự phòng Gemini (quota exceeded).");
   }
 
-  const catalog = getAIProductCatalog_();
+  const catalog = getCachedCatalogForAdvisor_();
   const isMenuControl = data && data.mode === "menu_control";
 
   const compactMenu = isMenuControl
@@ -2290,11 +2311,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.8
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.9
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.8 ==========");
+  Logger.log("========== KIM BLING AI 4.9 ==========");
 
   const config = checkKimBlingConfig();
 

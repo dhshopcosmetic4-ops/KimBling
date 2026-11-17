@@ -394,16 +394,28 @@ let kimIsBlinking = false;
 let kimStateOverride = "";
 let kimMouthSmoothed = 0;
 
-async function callAPI(payload) {
- const response = await fetch(API_URL, {
-  method: "POST",
-  headers: { "Content-Type": "text/plain;charset=utf-8" },
-  body: JSON.stringify(payload)
- });
- if (!response.ok) throw new Error("Không kết nối được máy chủ. HTTP " + response.status);
- const result = await response.json();
- if (!result) throw new Error("Máy chủ không trả về dữ liệu.");
- return result;
+async function callAPI(payload, timeoutMs = 25000) {
+ const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+ const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+ try {
+  const response = await fetch(API_URL, {
+   method: "POST",
+   headers: { "Content-Type": "text/plain;charset=utf-8" },
+   body: JSON.stringify(payload),
+   signal: controller ? controller.signal : undefined
+  });
+  if (!response.ok) throw new Error("Không kết nối được máy chủ. HTTP " + response.status);
+  const result = await response.json();
+  if (!result) throw new Error("Máy chủ không trả về dữ liệu.");
+  return result;
+ } catch (err) {
+  if (err && err.name === "AbortError") {
+   throw new Error("Máy chủ phản hồi quá lâu (timeout " + Math.round(timeoutMs / 1000) + "s).");
+  }
+  throw err;
+ } finally {
+  if (timer) clearTimeout(timer);
+ }
 }
 
 function setStatus(message, type = "normal") {
@@ -996,20 +1008,16 @@ async function processMessage(question) {
  const sendButton = document.getElementById("sendBtn");
  sendButton.disabled = true;
 
- const voiceChoice = getSelectedVoice();
- const useGeminiTts = voiceChoice !== "google_translate";
-
  try {
   const payload = {
    action: "advisor_chat",
    message: question,
-   withAudio: useGeminiTts,
-   voiceName: useGeminiTts ? voiceChoice : "Charon"
+   withAudio: false
   };
 
   if (selectedProduct) payload.selectedProduct = selectedProduct;
 
-  const result = await callAPI(payload);
+  const result = await callAPI(payload, 25000);
   loadingMessage.remove();
 
   if (result.success === false) {
@@ -1030,18 +1038,13 @@ async function processMessage(question) {
   });
 
   setStatus("Kim đã trả lời xong", "online");
+  selectedProduct = null;
 
   if (ttsBase64) {
-   await playBase64Audio(ttsBase64, ttsMime, reply);
-  } else if (result.ttsAttempted) {
-   stopSpeaking();
-   currentSpeechText = reply;
-   speakViaGoogleOrNative(reply, speechGeneration);
+   playBase64Audio(ttsBase64, ttsMime, reply);
   } else {
-   await speakText(reply);
+   speakText(reply);
   }
-
-  selectedProduct = null;
 
  } catch (error) {
   console.error("Lỗi tư vấn:", error);
@@ -1214,7 +1217,7 @@ async function speakText(text) {
     action: "tts",
     text: cleanTextForSpeech(text),
     voiceName: voiceChoice
-   });
+   }, 20000);
 
    if (generation !== speechGeneration) return;
 
@@ -1920,7 +1923,6 @@ function startKimAnimationLoop() {
    rawLevel = measureAnalyserLevel(ttsAnalyser);
    state = "speaking";
   } else if (fallbackSpeaking) {
-   // Smooth syllabic mouth cadence when cross-origin HTML <audio> / speechSynthesis speaks
    rawLevel = 0.25 + 0.55 * Math.abs(Math.sin(t * 11.2) * Math.cos(t * 4.7));
    state = "speaking";
   } else if (kimStateOverride === "thinking") {
@@ -1943,7 +1945,6 @@ function startKimAnimationLoop() {
    }
   }
 
-  // Natural blinking
   if (!kimIsBlinking && now >= kimNextBlinkAt) {
    kimIsBlinking = true;
    setTimeout(() => {
@@ -1955,7 +1956,6 @@ function startKimAnimationLoop() {
   if (eyeL) eyeL.style.transform = "scaleY(" + eyeScaleY + ")";
   if (eyeR) eyeR.style.transform = "scaleY(" + eyeScaleY + ")";
 
-  // Mouth lip-sync
   if (mouthCavity && tongue && mouthSmile) {
    if (mouthOpen > 0.06) {
     const ry = (1.6 + mouthOpen * 5.2).toFixed(2);
@@ -1972,7 +1972,6 @@ function startKimAnimationLoop() {
    }
   }
 
-  // Expressive head, body & arm movements
   if (head && body && leftArm && rightArm) {
    if (state === "speaking") {
     const headTilt = Math.sin(t * 3.8) * (3 + mouthOpen * 4);
@@ -1995,7 +1994,6 @@ function startKimAnimationLoop() {
     leftArm.style.transform = "rotate(-4deg)";
     rightArm.style.transform = "rotate(26deg)";
    } else {
-    // Gentle cheerful breathing & friendly wave idle
     const breathe = Math.sin(t * 2.1) * 0.9;
     const headSway = Math.sin(t * 1.3) * 2.2;
     const wave = Math.sin(t * 2.4) * 6;
@@ -2006,7 +2004,6 @@ function startKimAnimationLoop() {
    }
   }
 
-  // Mini soundwave visualizer bars
   if (waveBars.length) {
    waveBars.forEach((bar, idx) => {
     let h = 4;
