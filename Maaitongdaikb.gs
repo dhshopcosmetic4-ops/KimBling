@@ -1,6 +1,6 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.9
- * Groq (tốc độ cao) + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
+ * KIM BLING AI SERVER - VERSION 5.0
+ * Groq (openai/gpt-oss-20b tốc độ cao) + Gemini Live + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
@@ -16,10 +16,10 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.9",
+  VERSION: "5.0",
 
-  MODEL: "llama-3.3-70b-versatile",
-  GROQ_FALLBACK_MODELS: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+  MODEL: "openai/gpt-oss-20b",
+  GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
   GROQ_URL: "https://api.groq.com/openai/v1/chat/completions",
 
   TTS_MODEL: "gemini-3.8-flash-lite-tts",
@@ -31,7 +31,7 @@ const KB_CONFIG = {
 
   SESSION_HOURS: 24,
   UPSIZE_FEE: 10000,
-  MAX_TOKENS: 350,
+  MAX_TOKENS: 900,
 
   SHEETS: {
     SESSIONS: "AI_SESSIONS",
@@ -665,7 +665,7 @@ function deleteAISession(sessionId) {
 }
 
 /* =========================================================
-   7. GROQ
+   7. GROQ (openai/gpt-oss-20b / 120b với reasoning_effort: low)
 ========================================================= */
 
 function getGroqApiKey_() {
@@ -690,6 +690,18 @@ function callGroq_(messages) {
 
   for (let i = 0; i < models.length; i++) {
     const modelName = models[i];
+    const reqBody = {
+      model: modelName,
+      messages: messages,
+      max_completion_tokens: KB_CONFIG.MAX_TOKENS,
+      temperature: 0.35
+    };
+
+    if (modelName.indexOf("openai/gpt-oss") === 0) {
+      reqBody.reasoning_effort = "low";
+      reqBody.include_reasoning = false;
+    }
+
     const response = UrlFetchApp.fetch(
       KB_CONFIG.GROQ_URL,
       {
@@ -698,12 +710,7 @@ function callGroq_(messages) {
         headers: {
           Authorization: "Bearer " + apiKey
         },
-        payload: JSON.stringify({
-          model: modelName,
-          messages: messages,
-          max_completion_tokens: KB_CONFIG.MAX_TOKENS,
-          temperature: 0.35
-        }),
+        payload: JSON.stringify(reqBody),
         muteHttpExceptions: true
       }
     );
@@ -730,6 +737,7 @@ function callGroq_(messages) {
 }
 
 function testGroqConnection() {
+  const t0 = Date.now();
   const reply = callGroq_([
     {
       role: "user",
@@ -738,7 +746,7 @@ function testGroqConnection() {
     }
   ]);
 
-  Logger.log(reply);
+  Logger.log("Thời gian: " + (Date.now() - t0) + "ms | Trả lời: " + reply);
   return reply;
 }
 
@@ -752,14 +760,24 @@ function kbCallGeminiFallback_(systemPrompt, userMessage) {
   let lastErr = "Không gọi được Gemini dự phòng";
 
   for (let k = 0; k < keys.length; k++) {
+    let keyExhausted = false;
     for (let i = 0; i < models.length; i++) {
+      const modelId = models[i];
       const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-        models[i] + ":generateContent?key=" + encodeURIComponent(keys[k]);
+        modelId + ":generateContent?key=" + encodeURIComponent(keys[k]);
+
+      const genCfg = {
+        temperature: 0.5,
+        maxOutputTokens: modelId.indexOf("gemini-3.8") === 0 ? 1024 : 700,
+        thinkingConfig: modelId.indexOf("gemini-3.8") === 0
+          ? { thinkingLevel: "low" }
+          : { thinkingBudget: 0 }
+      };
 
       const payload = {
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: { temperature: 0.5, maxOutputTokens: KB_CONFIG.MAX_TOKENS }
+        generationConfig: genCfg
       };
 
       const res = UrlFetchApp.fetch(url, {
@@ -773,15 +791,25 @@ function kbCallGeminiFallback_(systemPrompt, userMessage) {
       const json = kbParseJson_(res.getContentText(), {});
 
       if (code >= 200 && code < 300 && json.candidates && json.candidates[0] &&
-          json.candidates[0].content && json.candidates[0].content.parts &&
-          json.candidates[0].content.parts[0]) {
-        const txt = kbText_(json.candidates[0].content.parts[0].text);
+          json.candidates[0].content && json.candidates[0].content.parts) {
+        const parts = json.candidates[0].content.parts;
+        let txt = "";
+        for (let p = 0; p < parts.length; p++) {
+          if (parts[p].text && !parts[p].thought) {
+            txt += parts[p].text;
+          }
+        }
+        txt = kbText_(txt);
         if (txt) return txt;
       }
 
-      lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini (" + models[i] + ") HTTP " + code);
-      if (code === 429 || code === 403) break;
+      lastErr = (json.error && json.error.message) ? json.error.message : ("Gemini (" + modelId + ") HTTP " + code);
+      if (code === 429 || code === 403) {
+        keyExhausted = true;
+        break;
+      }
     }
+    if (!keyExhausted) break;
   }
 
   throw new Error(lastErr);
@@ -2311,11 +2339,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.9
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 5.0
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.9 ==========");
+  Logger.log("========== KIM BLING AI 5.0 ==========");
 
   const config = checkKimBlingConfig();
 
