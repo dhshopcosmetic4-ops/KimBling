@@ -87,6 +87,14 @@ header{background:linear-gradient(135deg,#b71c1c,#e53935);color:white;padding:14
 /* PHÒNG THU TTS CAPCUT */
 #ttsStudioSection{background:white;border:1px solid #eee;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .studio-heading{padding:12px 14px;font-weight:800;background:#fff8f8;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#b71c1c}
+.studio-heading-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.studio-lock-box{display:none;padding:12px 14px;background:#fffafa;border-bottom:1px solid #f1e4e4}
+.studio-lock-box.open{display:block}
+.studio-pin-row{display:flex;gap:8px;align-items:center}
+#studioPinInput{flex:1;min-width:0;height:42px;padding:0 12px;border:1px solid #ddd;border-radius:12px;background:#fff;color:#222;outline:none}
+#studioPinInput:focus{border-color:#d32f2f}
+.studio-pin-submit{height:42px;padding:0 16px;border:0;border-radius:12px;background:#d32f2f;color:#fff;font-weight:700}
+#studioPinErr{margin-top:6px;font-size:13px!important;color:#d32f2f;display:none}
 .studio-body{padding:14px}
 .studio-body.collapsed{display:none}
 .studio-meta-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap}
@@ -324,14 +332,25 @@ footer{padding:18px 12px;text-align:center;color:#888}
   </div>
  </section>
 
- <!-- PHÒNG THU GIỌNG ĐỌC CHO CAPCUT -->
+ <!-- PHÒNG THU GIỌNG ĐỌC CHO CAPCUT (KHÓA MÃ PIN 2512) -->
  <section id="ttsStudioSection">
   <div class="studio-heading">
    <span>🎬 Phòng thu giọng đọc CapCut</span>
-   <button id="toggleStudioBtn" class="avatar-toggle-btn" type="button" onclick="toggleTtsStudio()">Thu gọn</button>
+   <div class="studio-heading-actions">
+    <button id="studioLockBtn" class="avatar-toggle-btn" type="button" onclick="handleStudioLockButton()">🔒 Mở khóa</button>
+    <button id="toggleStudioBtn" class="avatar-toggle-btn" type="button" onclick="toggleTtsStudio()" style="display:none">Thu gọn</button>
+   </div>
   </div>
 
-  <div id="ttsStudioBody" class="studio-body">
+  <div id="studioLockBox" class="studio-lock-box">
+   <div class="studio-pin-row">
+    <input id="studioPinInput" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Nhập mã PIN để mở Phòng thu..." oninput="onStudioPinInput()">
+    <button class="studio-pin-submit" type="button" onclick="unlockTtsStudio()">Mở khóa</button>
+   </div>
+   <div id="studioPinErr">❌ Mã PIN chưa đúng.</div>
+  </div>
+
+  <div id="ttsStudioBody" class="studio-body collapsed">
    <div class="studio-meta-row">
     <span class="studio-sub">Dán kịch bản, chèn hiệu ứng cười/ngạc nhiên, nghe thử &amp; tải file .WAV</span>
     <span id="studioCount" class="studio-count">0 ký tự</span>
@@ -353,8 +372,8 @@ footer{padding:18px 12px;text-align:center;color:#888}
    <div class="studio-controls">
     <select id="studioVoice" class="studio-select" onchange="saveStudioVoicePreference()">
      <optgroup label="👩 Giọng Nữ Trẻ / Nhỏ Nhẹ (Khuyên dùng)">
+      <option value="Achernar" selected>🎀 Achernar - Nữ nhỏ nhẹ, êm ái nhất (Soft)</option>
       <option value="Leda">🌸 Leda - Nữ trẻ trung nhất, dễ thương (Youthful)</option>
-      <option value="Achernar">🎀 Achernar - Nữ nhỏ nhẹ, êm ái nhất (Soft)</option>
       <option value="Zephyr">✨ Zephyr - Nữ trong trẻo, tươi sáng (Bright)</option>
       <option value="Vindemiatrix">🍃 Vindemiatrix - Nữ dịu dàng, kể chuyện (Gentle)</option>
       <option value="Laomedeia">🌟 Laomedeia - Nữ vui tươi, review TikTok (Upbeat)</option>
@@ -375,7 +394,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
     </select>
 
     <select id="studioStylePreset" class="studio-select" onchange="onStudioStylePresetChange()">
-     <option value="Giọng nữ miền Nam Việt Nam 20 tuổi, nhỏ nhẹ, ngọt ngào, dễ thương, nói tự nhiên">🎭 Style: Nữ miền Nam 20t, nhỏ nhẹ dễ thương</option>
+     <option value="Giọng nữ miền Nam Việt Nam 20 tuổi, nhỏ nhẹ, ngọt ngào, dễ thương, nói tự nhiên" selected>🎭 Style: Nữ miền Nam 20t, nhỏ nhẹ dễ thương</option>
      <option value="Giọng nữ miền Nam trẻ trung, vui vẻ hào hứng, năng lượng review TikTok">🎭 Style: Review TikTok hào hứng, cuốn hút</option>
      <option value="Giọng nữ nhỏ nhẹ, thì thầm tâm sự, chậm rãi truyền cảm">🎭 Style: Nhỏ nhẹ thì thầm / kể chuyện</option>
      <option value="Giọng nữ ngạc nhiên, bất ngờ, nhấn nhá biểu cảm kịch tính">🎭 Style: Bất ngờ, nhấn nhá biểu cảm</option>
@@ -386,8 +405,8 @@ footer{padding:18px 12px;text-align:center;color:#888}
     <input id="studioStyleCustom" class="studio-input" type="text" value="Giọng nữ miền Nam Việt Nam 20 tuổi, nhỏ nhẹ, ngọt ngào, dễ thương, nói tự nhiên" placeholder="Tự mô tả cảm xúc giọng đọc (vd: giọng miền Nam, nhỏ nhẹ, vui tươi)...">
 
     <select id="studioModel" class="studio-select">
+     <option value="gemini-3.8-flash-lite-tts" selected>⚡ Tạo nhanh, tiết kiệm quota (gemini-3.8-flash-lite-tts)</option>
      <option value="gemini-3.8-flash-tts">🎧 Chất lượng cao nhất cho CapCut (gemini-3.8-flash-tts)</option>
-     <option value="gemini-3.8-flash-lite-tts">⚡ Tạo nhanh, tiết kiệm quota (gemini-3.8-flash-lite-tts)</option>
     </select>
    </div>
 
@@ -457,6 +476,7 @@ footer{padding:18px 12px;text-align:center;color:#888}
 const API_URL = "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
 const MENU_URL = "menu.html";
 const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+const STUDIO_PIN = "2512";
 
 let catalogProducts = [];
 let displayedProducts = [];
@@ -482,6 +502,7 @@ let ttsCompressor = null;
 let ttsAnalyser = null;
 let ttsBufferSource = null;
 
+let studioUnlocked = false;
 let studioAudioBlobUrl = "";
 let studioAudioFileName = "kimbling-tts.wav";
 
@@ -582,13 +603,13 @@ function restoreVoicePreference() {
 function saveStudioVoicePreference() {
  try {
   const sel = document.getElementById("studioVoice");
-  if (sel) localStorage.setItem("kb_studio_voice_v1", sel.value);
+  if (sel) localStorage.setItem("kb_studio_voice_v2", sel.value);
  } catch (e) {}
 }
 
 function restoreStudioVoicePreference() {
  try {
-  const saved = localStorage.getItem("kb_studio_voice_v1");
+  const saved = localStorage.getItem("kb_studio_voice_v2");
   const sel = document.getElementById("studioVoice");
   if (saved && sel && Array.from(sel.options).some(o => o.value === saved)) {
    sel.value = saved;
@@ -1258,7 +1279,7 @@ function splitSpeechText(text, maxLength = 180) {
 
 function ensureWavBlob(bytes, mimeType) {
  const isAlreadyWav = bytes.length >= 12 &&
-  bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46; // "RIFF"
+  bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
 
  if (isAlreadyWav) {
   return new Blob([bytes], { type: "audio/wav" });
@@ -1529,8 +1550,85 @@ function testSpeaker() {
  speakText("Dạ em chào anh chị. Em là Kim, trợ lý tư vấn của Kim Bling Coffee and Tea. Anh chị muốn uống món gì hôm nay để em tư vấn nha.");
 }
 
-/* ===== PHÒNG THU TTS CHO CAPCUT ===== */
+/* ===== PHÒNG THU TTS CHO CAPCUT (MÃ PIN 2512) ===== */
+function handleStudioLockButton() {
+ if (studioUnlocked) {
+  lockTtsStudio();
+ } else {
+  const lockBox = document.getElementById("studioLockBox");
+  const pinInput = document.getElementById("studioPinInput");
+  const pinErr = document.getElementById("studioPinErr");
+  if (!lockBox) return;
+  const isOpen = lockBox.classList.toggle("open");
+  if (pinErr) pinErr.style.display = "none";
+  if (isOpen && pinInput) {
+   pinInput.value = "";
+   setTimeout(() => pinInput.focus(), 60);
+  }
+ }
+}
+
+function onStudioPinInput() {
+ const pinInput = document.getElementById("studioPinInput");
+ const pinErr = document.getElementById("studioPinErr");
+ if (!pinInput) return;
+ const val = pinInput.value.replace(/\D/g, "");
+ if (pinInput.value !== val) pinInput.value = val;
+ if (pinErr) pinErr.style.display = "none";
+ if (val.length === 4) {
+  unlockTtsStudio();
+ }
+}
+
+function unlockTtsStudio() {
+ const pinInput = document.getElementById("studioPinInput");
+ const pinErr = document.getElementById("studioPinErr");
+ const lockBox = document.getElementById("studioLockBox");
+ const body = document.getElementById("ttsStudioBody");
+ const lockBtn = document.getElementById("studioLockBtn");
+ const toggleBtn = document.getElementById("toggleStudioBtn");
+
+ const entered = pinInput ? pinInput.value.trim() : "";
+ if (entered !== STUDIO_PIN) {
+  if (pinErr) pinErr.style.display = "block";
+  if (pinInput) {
+   pinInput.value = "";
+   pinInput.focus();
+  }
+  return;
+ }
+
+ studioUnlocked = true;
+ if (pinErr) pinErr.style.display = "none";
+ if (pinInput) pinInput.value = "";
+ if (lockBox) lockBox.classList.remove("open");
+ if (body) body.classList.remove("collapsed");
+ if (lockBtn) lockBtn.textContent = "🔓 Khóa lại";
+ if (toggleBtn) {
+  toggleBtn.style.display = "inline-block";
+  toggleBtn.textContent = "Thu gọn";
+ }
+}
+
+function lockTtsStudio() {
+ studioUnlocked = false;
+ const lockBox = document.getElementById("studioLockBox");
+ const body = document.getElementById("ttsStudioBody");
+ const lockBtn = document.getElementById("studioLockBtn");
+ const toggleBtn = document.getElementById("toggleStudioBtn");
+ const player = document.getElementById("studioPlayer");
+
+ if (player) {
+  try { player.pause(); } catch (e) {}
+ }
+ if (lockBox) lockBox.classList.remove("open");
+ if (body) body.classList.add("collapsed");
+ if (lockBtn) lockBtn.textContent = "🔒 Mở khóa";
+ if (toggleBtn) toggleBtn.style.display = "none";
+}
+
 function toggleTtsStudio() {
+ if (!studioUnlocked) return;
  const body = document.getElementById("ttsStudioBody");
  const btn = document.getElementById("toggleStudioBtn");
  if (!body || !btn) return;
@@ -1545,6 +1643,7 @@ function updateStudioCount() {
 }
 
 function insertTtsTag(tag) {
+ if (!studioUnlocked) return;
  const ta = document.getElementById("studioText");
  if (!ta) return;
  const start = typeof ta.selectionStart === "number" ? ta.selectionStart : ta.value.length;
@@ -1567,6 +1666,7 @@ function onStudioStylePresetChange() {
 }
 
 async function generateStudioTTS() {
+ if (!studioUnlocked) return;
  unlockAudioPlayer();
  const ta = document.getElementById("studioText");
  const voiceEl = document.getElementById("studioVoice");
@@ -1584,9 +1684,9 @@ async function generateStudioTTS() {
   return;
  }
 
- const voiceName = voiceEl ? voiceEl.value : "Leda";
+ const voiceName = voiceEl ? voiceEl.value : "Achernar";
  const style = styleEl ? styleEl.value.trim() : "";
- const model = modelEl ? modelEl.value : "gemini-3.8-flash-tts";
+ const model = modelEl ? modelEl.value : "gemini-3.8-flash-lite-tts";
 
  stopSpeaking();
  genBtn.disabled = true;
@@ -1634,7 +1734,7 @@ async function generateStudioTTS() {
 }
 
 function downloadStudioTTS() {
- if (!studioAudioBlobUrl) return;
+ if (!studioUnlocked || !studioAudioBlobUrl) return;
  const a = document.createElement("a");
  a.href = studioAudioBlobUrl;
  a.download = studioAudioFileName;
@@ -2240,6 +2340,13 @@ document.getElementById("userInput").addEventListener("keydown", event => {
  if (event.key === "Enter") {
   event.preventDefault();
   sendMessage();
+ }
+});
+
+document.getElementById("studioPinInput").addEventListener("keydown", event => {
+ if (event.key === "Enter") {
+  event.preventDefault();
+  unlockTtsStudio();
  }
 });
 
