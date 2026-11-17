@@ -1501,4 +1501,62 @@
 
       const snap = getCheckoutSnapshot();
       if (snap.storeClosed) {
-        return { ok: false, error: "Quán hi
+        return { ok: false, error: "Quán hiện đang tạm ngưng nhận đơn online." };
+      }
+
+      if (snap.missingFields.length > 0) {
+        return {
+          ok: false,
+          openedCheckout: true,
+          missingFields: snap.missingFields,
+          message: "Còn thiếu thông tin khách hàng, hãy hỏi khách đọc bổ sung."
+        };
+      }
+
+      if (snap.payMethod === "Túi Kim Cương" && !isDiamondPinVerified) {
+        return {
+          ok: false,
+          openedCheckout: true,
+          needPin: true,
+          message: "Khách cần tự nhập mã PIN 4 số của Túi Kim Cương trên màn hình."
+        };
+      }
+
+      await waitForShippingIfCalculating();
+      await processOrderSubmit();
+
+      const successModal = document.getElementById("orderSuccessModalOverlay");
+      if (successModal) {
+        voiceCustomerDraft.note = "";
+        autoShutdownMessage = "✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.";
+        autoShutdownPending = true;
+        autoShutdownTimer = setTimeout(() => {
+          if (isActive) {
+            stopBekimLive();
+            showToast("✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.", 3000);
+          }
+        }, 8000);
+      }
+
+      return {
+        ok: !!successModal,
+        submitted: !!successModal,
+        message: successModal
+          ? "Đã gửi đặt hàng thành công lên quán! Hãy cảm ơn khách ngắn gọn 1 câu."
+          : "Chưa gửi được đơn, vui lòng kiểm tra lại thông tin trên màn hình."
+      };
+    }
+
+    return { ok: false, error: "Lệnh không hợp lệ: " + name };
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ensureBekimUI);
+  } else {
+    ensureBekimUI();
+  }
+
+  window.toggleBekimLive = toggleBekimLive;
+  window.stopBekimLive = stopBekimLive;
+  window.addEventListener("pagehide", stopBekimLive);
+})();
