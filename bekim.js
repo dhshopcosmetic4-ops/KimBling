@@ -1,7 +1,7 @@
 /* =========================================================
- * BEKIM.JS (v4.8 - Sửa chuyển Giao hàng / Tự ra lấy + 3 Key Gemini Live)
+ * BEKIM.JS (v4.9 - Bé Kim cử động mấp máy miệng/chớp mắt/vẫy tay trên menu.html)
+ * - Tự nâng cấp nút .floating-ai-btn thành Bé Kim cử động theo giọng nói (lip-sync)
  * - Chuẩn hóa linh hoạt mọi cách nói Giao hàng tận nơi / Tự ra quán lấy
- * - Tự động tính lại khoảng cách & phí ship khi đổi từ Tự ra lấy -> Giao hàng
  * - Xem ảnh / chi tiết món -> mở popup TikTok (#tiktokModal)
  * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn (#optionsModal)
  * - Khách nói bye / tạm biệt -> ngưng hỗ trợ & tự đăng xuất Live
@@ -20,6 +20,7 @@
   let micSource = null;
   let gainNode = null;
   let compressor = null;
+  let liveAnalyser = null;
   let isActive = false;
   let isStarting = false;
   let nextPlayTime = 0;
@@ -37,6 +38,12 @@
   let activeKeyIndex = 0;
   let hasBackupKey = false;
 
+  let bekimAnimStarted = false;
+  let bekimAnimFrame = null;
+  let bekimNextBlinkAt = 0;
+  let bekimIsBlinking = false;
+  let bekimMouthSmoothed = 0;
+
   document.addEventListener("change", function (e) {
     if (!e || !e.target) return;
     if (e.target.name === "orderType") {
@@ -46,18 +53,207 @@
     }
   });
 
+  function upgradeFloatingKimButton() {
+    const btn = document.querySelector(".floating-ai-btn");
+    if (!btn || btn.dataset.kimAnimated === "1") return;
+    btn.dataset.kimAnimated = "1";
+    btn.innerHTML = `
+      <svg id="bekimMenuSvg" viewBox="6 8 108 108" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M27 52 C22 76, 25 103, 35 112 L85 112 C95 103, 98 76, 93 52 C90 25, 76 14, 60 14 C44 14, 30 25, 27 52 Z" fill="#2c1d1b"/>
+        <circle cx="91" cy="30" r="11" fill="#2c1d1b"/>
+        <circle cx="85" cy="33" r="4" fill="#d32f2f"/>
+
+        <g id="bekimMenuBodyGroup">
+          <g id="bekimMenuLeftArm">
+            <path d="M36 86 Q22 93 21 79" fill="none" stroke="#ffd4bc" stroke-width="9.5" stroke-linecap="round"/>
+            <circle cx="20" cy="76" r="5.5" fill="#ffd4bc"/>
+          </g>
+          <g id="bekimMenuRightArm">
+            <path d="M84 86 Q98 93 99 79" fill="none" stroke="#ffd4bc" stroke-width="9.5" stroke-linecap="round"/>
+            <circle cx="100" cy="76" r="5.5" fill="#ffd4bc"/>
+          </g>
+          <path d="M35 84 C36 74, 46 71, 60 71 C74 71, 84 74, 85 84 L88 123 L32 123 Z" fill="#d32f2f"/>
+          <path d="M49 71 L60 83 L71 71 Z" fill="#ffffff"/>
+          <path d="M41 87 L79 87 L82 123 L38 123 Z" fill="#fff8ef"/>
+          <rect x="46" y="101" width="28" height="15" rx="4" fill="#ffe5d0" stroke="#f0b79d" stroke-width="1"/>
+          <text x="60" y="96" text-anchor="middle" font-size="8" font-weight="800" fill="#b71c1c">KB</text>
+        </g>
+
+        <rect x="53" y="62" width="14" height="14" rx="6" fill="#f7c4a7"/>
+
+        <g id="bekimMenuHeadGroup">
+          <circle cx="33" cy="50" r="5" fill="#f7c4a7"/>
+          <circle cx="87" cy="50" r="5" fill="#f7c4a7"/>
+          <ellipse cx="60" cy="48" rx="25" ry="26" fill="#ffd9c2"/>
+          <ellipse cx="42" cy="54" rx="5.5" ry="3.2" fill="#ff9e9e" opacity="0.55"/>
+          <ellipse cx="78" cy="54" rx="5.5" ry="3.2" fill="#ff9e9e" opacity="0.55"/>
+          <path d="M42 37 Q47 34 52 37" fill="none" stroke="#3b231e" stroke-width="2" stroke-linecap="round"/>
+          <path d="M68 37 Q73 34 78 37" fill="none" stroke="#3b231e" stroke-width="2" stroke-linecap="round"/>
+          <g class="bekim-eye-lid" id="bekimMenuEyeL">
+            <ellipse cx="47" cy="45" rx="4.2" ry="4.6" fill="#231614"/>
+            <circle cx="48.5" cy="43.5" r="1.4" fill="#ffffff"/>
+          </g>
+          <g class="bekim-eye-lid" id="bekimMenuEyeR">
+            <ellipse cx="73" cy="45" rx="4.2" ry="4.6" fill="#231614"/>
+            <circle cx="74.5" cy="43.5" r="1.4" fill="#ffffff"/>
+          </g>
+          <path d="M59 49 Q60.5 52 59 53" fill="none" stroke="#e2a588" stroke-width="1.6" stroke-linecap="round"/>
+          <g id="bekimMenuMouthGroup">
+            <ellipse id="bekimMenuMouthCavity" cx="60" cy="59.5" rx="6.5" ry="1.8" fill="#8b1e24" opacity="0"/>
+            <ellipse id="bekimMenuTongue" cx="60" cy="61" rx="4.2" ry="1.2" fill="#ff7d8d" opacity="0"/>
+            <path id="bekimMenuMouthSmile" d="M53 58.5 Q60 63.5 67 58.5" fill="none" stroke="#8b1e24" stroke-width="2.1" stroke-linecap="round"/>
+          </g>
+          <path d="M33 43 C35 23, 49 16, 61 17 C76 17, 86 27, 87 43 C82 33, 73 27, 64 31 C56 26, 44 29, 33 43 Z" fill="#2c1d1b"/>
+          <path d="M34 33 Q60 20 86 33" fill="none" stroke="#e53935" stroke-width="3.2" stroke-linecap="round"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  function measureBekimOutputLevel() {
+    if (!liveAnalyser || !isActive || playSources.length === 0) return 0;
+    const buf = new Uint8Array(liveAnalyser.frequencyBinCount);
+    liveAnalyser.getByteTimeDomainData(buf);
+    let sumSq = 0;
+    for (let i = 0; i < buf.length; i++) {
+      const norm = (buf[i] - 128) / 128;
+      sumSq += norm * norm;
+    }
+    return Math.min(1, Math.sqrt(sumSq / buf.length) * 4.2);
+  }
+
+  function startBekimMenuAnimationLoop() {
+    if (bekimAnimStarted) return;
+    bekimAnimStarted = true;
+    if (bekimAnimFrame) cancelAnimationFrame(bekimAnimFrame);
+
+    bekimNextBlinkAt = performance.now() + 2400;
+
+    function frame(now) {
+      const head = document.getElementById("bekimMenuHeadGroup");
+      const body = document.getElementById("bekimMenuBodyGroup");
+      const leftArm = document.getElementById("bekimMenuLeftArm");
+      const rightArm = document.getElementById("bekimMenuRightArm");
+      const eyeL = document.getElementById("bekimMenuEyeL");
+      const eyeR = document.getElementById("bekimMenuEyeR");
+      const mouthCavity = document.getElementById("bekimMenuMouthCavity");
+      const tongue = document.getElementById("bekimMenuTongue");
+      const mouthSmile = document.getElementById("bekimMenuMouthSmile");
+
+      if (head && body && leftArm && rightArm) {
+        const t = now / 1000;
+        let state = "idle";
+        let rawLevel = 0;
+
+        if (isActive && playSources.length > 0) {
+          state = "speaking";
+          rawLevel = liveAnalyser
+            ? measureBekimOutputLevel()
+            : (0.25 + 0.55 * Math.abs(Math.sin(t * 11.2) * Math.cos(t * 4.7)));
+        } else if (isStarting) {
+          state = "thinking";
+        } else if (isActive) {
+          state = "listening";
+        }
+
+        bekimMouthSmoothed = bekimMouthSmoothed * 0.55 + rawLevel * 0.45;
+        const mouthOpen = state === "speaking" ? Math.min(1, bekimMouthSmoothed) : 0;
+
+        if (!bekimIsBlinking && now >= bekimNextBlinkAt) {
+          bekimIsBlinking = true;
+          setTimeout(() => {
+            bekimIsBlinking = false;
+            bekimNextBlinkAt = performance.now() + 2300 + Math.random() * 2600;
+          }, 130);
+        }
+        const eyeScaleY = bekimIsBlinking ? 0.08 : 1;
+        if (eyeL) eyeL.style.transform = "scaleY(" + eyeScaleY + ")";
+        if (eyeR) eyeR.style.transform = "scaleY(" + eyeScaleY + ")";
+
+        if (mouthCavity && tongue && mouthSmile) {
+          if (mouthOpen > 0.06) {
+            const ry = (1.6 + mouthOpen * 5.2).toFixed(2);
+            const rx = (5.2 + mouthOpen * 2.2).toFixed(2);
+            mouthCavity.setAttribute("ry", ry);
+            mouthCavity.setAttribute("rx", rx);
+            mouthCavity.style.opacity = "1";
+            tongue.style.opacity = mouthOpen > 0.32 ? "0.95" : "0.35";
+            mouthSmile.style.opacity = "0";
+          } else {
+            mouthCavity.style.opacity = "0";
+            tongue.style.opacity = "0";
+            mouthSmile.style.opacity = "1";
+          }
+        }
+
+        if (state === "speaking") {
+          const headTilt = Math.sin(t * 3.8) * (3 + mouthOpen * 4);
+          const headBob = Math.sin(t * 6.2) * (1.2 + mouthOpen * 2);
+          const lArmAngle = -14 + Math.sin(t * 5.4) * (12 + mouthOpen * 14);
+          const rArmAngle = 14 + Math.cos(t * 4.9) * (12 + mouthOpen * 14);
+          head.style.transform = "translateY(" + headBob.toFixed(1) + "px) rotate(" + headTilt.toFixed(1) + "deg)";
+          body.style.transform = "translateY(" + (Math.sin(t * 3.1) * 1.1).toFixed(1) + "px)";
+          leftArm.style.transform = "rotate(" + lArmAngle.toFixed(1) + "deg)";
+          rightArm.style.transform = "rotate(" + rArmAngle.toFixed(1) + "deg)";
+        } else if (state === "listening") {
+          const headTilt = 4 + Math.sin(t * 2.0) * 2.2;
+          head.style.transform = "rotate(" + headTilt.toFixed(1) + "deg)";
+          body.style.transform = "translateY(" + (Math.sin(t * 2.2) * 0.8).toFixed(1) + "px)";
+          leftArm.style.transform = "rotate(" + (-8 + Math.sin(t * 2.1) * 4).toFixed(1) + "deg)";
+          rightArm.style.transform = "rotate(" + (16 + Math.cos(t * 2.3) * 5).toFixed(1) + "deg)";
+        } else if (state === "thinking") {
+          head.style.transform = "rotate(" + (-5 + Math.sin(t * 2.6) * 2).toFixed(1) + "deg)";
+          body.style.transform = "translateY(0px)";
+          leftArm.style.transform = "rotate(-4deg)";
+          rightArm.style.transform = "rotate(26deg)";
+        } else {
+          const breathe = Math.sin(t * 2.1) * 0.9;
+          const headSway = Math.sin(t * 1.3) * 2.2;
+          const wave = Math.sin(t * 2.4) * 6;
+          head.style.transform = "translateY(" + (breathe * 0.7).toFixed(1) + "px) rotate(" + headSway.toFixed(1) + "deg)";
+          body.style.transform = "translateY(" + breathe.toFixed(1) + "px)";
+          leftArm.style.transform = "rotate(" + (-4 + wave * 0.5).toFixed(1) + "deg)";
+          rightArm.style.transform = "rotate(" + (4 - wave).toFixed(1) + "deg)";
+        }
+      }
+
+      bekimAnimFrame = requestAnimationFrame(frame);
+    }
+
+    bekimAnimFrame = requestAnimationFrame(frame);
+  }
+
   function ensureBekimUI() {
     if (!document.getElementById("bekimLiveStyles")) {
       const style = document.createElement("style");
       style.id = "bekimLiveStyles";
       style.textContent = `
+        .floating-ai-btn {
+          transition: width 0.2s ease, height 0.2s ease, right 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+        }
         .floating-ai-btn.bekim-connecting {
           border-color: #ff9800 !important;
           box-shadow: 0 0 0 6px rgba(255, 152, 0, 0.35) !important;
         }
         .floating-ai-btn.bekim-active {
+          width: 60px !important;
+          height: 60px !important;
+          right: 11px !important;
           border-color: #00c853 !important;
           box-shadow: 0 0 0 6px rgba(0, 200, 83, 0.35), 0 4px 18px rgba(0, 200, 83, 0.6) !important;
+        }
+        #bekimMenuHeadGroup, #bekimMenuLeftArm, #bekimMenuRightArm, #bekimMenuBodyGroup {
+          transform-box: fill-box;
+          transition: transform 0.08s linear;
+        }
+        #bekimMenuHeadGroup { transform-origin: 50% 72%; }
+        #bekimMenuBodyGroup { transform-origin: 50% 90%; }
+        #bekimMenuLeftArm { transform-origin: 78% 18%; }
+        #bekimMenuRightArm { transform-origin: 22% 18%; }
+        .bekim-eye-lid {
+          transform-origin: center;
+          transform-box: fill-box;
+          transition: transform 0.07s ease;
         }
         #bekimLiveToast {
           display: none;
@@ -80,14 +276,14 @@
         #bekimLiveBadge {
           display: none;
           position: fixed;
-          right: 12px;
-          bottom: 205px;
+          right: 76px;
+          bottom: 162px;
           background: #00c853;
           color: #ffffff;
           font-size: 11px;
           font-weight: bold;
-          padding: 4px 9px;
-          border-radius: 12px;
+          padding: 5px 10px;
+          border-radius: 14px;
           z-index: 9999;
           box-shadow: 0 2px 8px rgba(0,0,0,0.28);
           pointer-events: none;
@@ -108,6 +304,9 @@
       badge.id = "bekimLiveBadge";
       document.body.appendChild(badge);
     }
+
+    upgradeFloatingKimButton();
+    startBekimMenuAnimationLoop();
   }
 
   function showToast(text, autoHideMs) {
@@ -234,8 +433,11 @@
       compressor.ratio.value = 6;
       compressor.attack.value = 0.003;
       compressor.release.value = 0.12;
+      liveAnalyser = audioCtx.createAnalyser();
+      liveAnalyser.fftSize = 256;
       gainNode.connect(compressor);
-      compressor.connect(audioCtx.destination);
+      compressor.connect(liveAnalyser);
+      liveAnalyser.connect(audioCtx.destination);
 
       const [tokenRes, micStream] = await Promise.all([
         fetch(BEKIM_AI_URL, {
@@ -409,6 +611,7 @@
     stopPlayback();
     if (gainNode) { try { gainNode.disconnect(); } catch (e) {} gainNode = null; }
     if (compressor) { try { compressor.disconnect(); } catch (e) {} compressor = null; }
+    if (liveAnalyser) { try { liveAnalyser.disconnect(); } catch (e) {} liveAnalyser = null; }
     if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
     if (socket) {
       try { socket.close(1000); } catch (e) {}
@@ -1298,56 +1501,4 @@
 
       const snap = getCheckoutSnapshot();
       if (snap.storeClosed) {
-        return { ok: false, error: "Quán hiện đang tạm ngưng nhận đơn online." };
-      }
-
-      if (snap.missingFields.length > 0) {
-        return {
-          ok: false,
-          openedCheckout: true,
-          missingFields: snap.missingFields,
-          message: "Còn thiếu thông tin khách hàng, hãy hỏi khách đọc bổ sung."
-        };
-      }
-
-      if (snap.payMethod === "Túi Kim Cương" && !isDiamondPinVerified) {
-        return {
-          ok: false,
-          openedCheckout: true,
-          needPin: true,
-          message: "Khách cần tự nhập mã PIN 4 số của Túi Kim Cương trên màn hình."
-        };
-      }
-
-      await waitForShippingIfCalculating();
-      await processOrderSubmit();
-
-      const successModal = document.getElementById("orderSuccessModalOverlay");
-      if (successModal) {
-        voiceCustomerDraft.note = "";
-        autoShutdownMessage = "✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.";
-        autoShutdownPending = true;
-        autoShutdownTimer = setTimeout(() => {
-          if (isActive) {
-            stopBekimLive();
-            showToast("✅ Đã đặt đơn xong! Bé Kim đã tự nghỉ.", 3000);
-          }
-        }, 8000);
-      }
-
-      return {
-        ok: !!successModal,
-        submitted: !!successModal,
-        message: successModal
-          ? "Đã gửi đặt hàng thành công lên quán! Hãy cảm ơn khách ngắn gọn 1 câu."
-          : "Chưa gửi được đơn, vui lòng kiểm tra lại thông tin trên màn hình."
-      };
-    }
-
-    return { ok: false, error: "Lệnh không hợp lệ: " + name };
-  }
-
-  window.toggleBekimLive = toggleBekimLive;
-  window.stopBekimLive = stopBekimLive;
-  window.addEventListener("pagehide", stopBekimLive);
-})();
+        return { ok: false, error: "Quán hi
