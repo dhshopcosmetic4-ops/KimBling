@@ -1,5 +1,5 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 4.7
+ * KIM BLING AI SERVER - VERSION 4.8
  * Groq + Gemini Live (aichotdon.html & bekim.js) + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
@@ -16,7 +16,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "4.7",
+  VERSION: "4.8",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
@@ -998,7 +998,7 @@ function kbCreateGeminiLiveToken_(data) {
         "Giọng nữ miền Nam trẻ trung, dễ thương, xưng 'em' gọi 'anh chị', nói ngắn gọn súc tích 1-2 câu tự nhiên.",
         "1. TƯ VẤN & XEM ẢNH/CHI TIẾT MÓN: Chỉ nói đúng món, giá, topping trong MENU; báo rõ nếu HẾT. Khi khách yêu cầu xem ảnh món, xem hình, hoặc xem chi tiết món -> gọi ngay open_menu_section(section='tiktok', dishName=...) để mở popup TikTok sản phẩm lên màn hình. Hỏi nhóm món -> gọi open_menu_section(home_menu, category) rồi liệt kê 2-3 món. Không tự thêm giỏ khi khách mới hỏi hoặc mới xem chi tiết.",
         "2. BỎ VÀO GIỎ / CHỌN TÙY CHỌN: Khi khách yêu cầu bỏ vào giỏ hàng, thêm vào giỏ hàng, mua/đặt món -> LUÔN gọi ngay open_dish_options (truyền luôn upsize, sugar, ice, toppings, quantity nếu khách đã nói sẵn; nếu đang ở popup TikTok thì lấy đúng món đang xem) để mở bảng tùy chọn (Upsize, Đá, Đường, Topping) lên màn hình. Hỏi mục còn thiếu (upsize 1L nếu canUpsize=true, đường, đá, topping, số lượng; lưu ý đồ ăn không có đường/đá/upsize), tick thêm bằng update_dish_options. Đọc lại chốt giá, chỉ khi khách đồng ý chốt mới gọi confirm_add_options_to_cart. Xong hỏi chọn thêm hay qua thanh toán.",
-        "3. THANH TOÁN & ĐẶT HÀNG: Khách kêu qua thanh toán/đặt hàng -> luôn gọi open_checkout trước cho khách xem lại (KHÔNG gửi đơn trước khi xem lại). Sửa thông tin qua set_customer_info. Đọc đủ: món, số lượng, tùy chọn, tên, SĐT, địa chỉ, hình thức giao, ghi chú, tiền mặt/chuyển khoản/Túi Kim Cương, ship, tổng tiền. Chỉ khi khách xác nhận OK kêu đặt/thanh toán mới gọi confirm_submit_order(confirmed=true).",
+        "3. THANH TOÁN & ĐẶT HÀNG: Khách kêu qua thanh toán/đặt hàng -> luôn gọi open_checkout trước cho khách xem lại (KHÔNG gửi đơn trước khi xem lại). Khi khách muốn chọn hoặc đổi giữa 'Giao hàng tận nơi' và 'Tự ra quán lấy', đổi thanh toán, hay sửa tên/SĐT/địa chỉ/ghi chú -> gọi ngay set_customer_info. Đọc đủ: món, số lượng, tùy chọn, tên, SĐT, địa chỉ, hình thức nhận hàng, ghi chú, tiền mặt/chuyển khoản/Túi Kim Cương, ship, tổng tiền. Chỉ khi khách xác nhận OK kêu đặt/thanh toán mới gọi confirm_submit_order(confirmed=true).",
         "4. QUẢN LÝ MỌI MỤC: Dùng open_menu_section, control_tiktok, manage_cart, set_price_and_diamond, close_popup cho mọi mục khách hàng. CẤM thao tác mục Admin/hệ thống.",
         "5. TẠM BIỆT / NGƯNG HỖ TRỢ: Khi khách nói 'bye', 'tạm biệt', 'thôi nghỉ', 'không cần nữa', 'ngưng hỗ trợ', 'tắt bé kim' -> gọi ngay end_bekim_session, sau đó chào tạm biệt ngắn gọn 1 câu.",
         "UPSIZE 1L (+10k): Đồ uống thường ĐƯỢC upsize; đồ ăn và món ghi 1 lít/650ml KHÔNG được upsize.",
@@ -1142,14 +1142,14 @@ function kbCreateGeminiLiveToken_(data) {
         },
         {
           name: "set_customer_info",
-          description: "Điền/sửa thông tin nhận hàng và hình thức thanh toán.",
+          description: "Điền hoặc chuyển đổi hình thức nhận hàng ('Giao hàng' hoặc 'Tự ra lấy'), tên, SĐT, địa chỉ, ghi chú và hình thức thanh toán.",
           parameters: {
             type: "OBJECT",
             properties: {
               name: { type: "STRING", description: "Tên người nhận" },
               phone: { type: "STRING", description: "SĐT" },
               address: { type: "STRING", description: "Địa chỉ giao" },
-              orderType: { type: "STRING", description: "Giao hàng|Tự ra lấy" },
+              orderType: { type: "STRING", description: "Đúng 1 trong 2 giá trị: 'Giao hàng' hoặc 'Tự ra lấy'" },
               note: { type: "STRING", description: "Ghi chú cho quán" },
               payMethod: { type: "STRING", description: "Tiền mặt|Chuyển khoản|Túi Kim Cương" }
             }
@@ -2290,11 +2290,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.7
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 4.8
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 4.7 ==========");
+  Logger.log("========== KIM BLING AI 4.8 ==========");
 
   const config = checkKimBlingConfig();
 

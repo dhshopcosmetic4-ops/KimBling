@@ -1,16 +1,17 @@
 /* =========================================================
- * BEKIM.JS (v4.7 - Tối ưu tiết kiệm Quota + Dự phòng 3 Key Gemini Live)
+ * BEKIM.JS (v4.8 - Sửa chuyển Giao hàng / Tự ra lấy + 3 Key Gemini Live)
+ * - Chuẩn hóa linh hoạt mọi cách nói Giao hàng tận nơi / Tự ra quán lấy
+ * - Tự động tính lại khoảng cách & phí ship khi đổi từ Tự ra lấy -> Giao hàng
  * - Xem ảnh / chi tiết món -> mở popup TikTok (#tiktokModal)
- * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn Upsize, Đá, Đường, Topping (#optionsModal)
+ * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn (#optionsModal)
  * - Khách nói bye / tạm biệt -> ngưng hỗ trợ & tự đăng xuất Live
- * - Tự tắt sau khi chốt đơn xong & tự nghỉ sau 25 giây im lặng
- * - Tự động đổi lần lượt sang GEMINI_API_KEY_2, GEMINI_API_KEY_3 khi gặp lỗi quota
- * - Nếu cả 3 key Gemini đều hết -> tự chuyển sang Bé Kim AI (Groq)
+ * - Tự tắt sau chốt đơn & tự nghỉ sau 25s im lặng
+ * - Dự phòng tối đa 3 key Gemini + chuyển sang Bé Kim AI (Groq) nếu hết lượt
  * ========================================================= */
 (function () {
   const BEKIM_AI_URL =
     "https://script.google.com/macros/s/AKfycby1yOLdWbamA0qmS_UkURyrHGBKO9JmYELP6FmMs-BfVgPdWhNr12nJjEVC3_Y_zgsgfA/exec";
-  const IDLE_TIMEOUT_MS = 25000; // Tự nghỉ sau 25 giây im lặng để tiết kiệm quota
+  const IDLE_TIMEOUT_MS = 25000;
 
   let socket = null;
   let stream = null;
@@ -35,6 +36,15 @@
 
   let activeKeyIndex = 0;
   let hasBackupKey = false;
+
+  document.addEventListener("change", function (e) {
+    if (!e || !e.target) return;
+    if (e.target.name === "orderType") {
+      voiceCustomerDraft.orderType = e.target.value;
+    } else if (e.target.name === "payMethod") {
+      voiceCustomerDraft.payMethod = e.target.value;
+    }
+  });
 
   function ensureBekimUI() {
     if (!document.getElementById("bekimLiveStyles")) {
@@ -554,6 +564,41 @@
     return "Đá bình thường";
   }
 
+  function normalizeOrderType(val) {
+    const n = removeDiacritics(val || "").trim();
+    if (!n) return "";
+    if (
+      n.includes("tu ra") ||
+      n.includes("ra quan") ||
+      n.includes("tai quan") ||
+      n.includes("den quan") ||
+      n.includes("den lay") ||
+      n.includes("tu lay") ||
+      n.includes("mang ve") ||
+      n.includes("pickup")
+    ) {
+      return "Tự ra lấy";
+    }
+    if (
+      n.includes("giao") ||
+      n.includes("ship") ||
+      n.includes("tan noi") ||
+      n.includes("delivery")
+    ) {
+      return "Giao hàng";
+    }
+    return "";
+  }
+
+  function normalizePayMethod(val) {
+    const n = removeDiacritics(val || "").trim();
+    if (!n) return "";
+    if (n.includes("kim cuong") || n.includes("diamond") || n.includes("tui")) return "Túi Kim Cương";
+    if (n.includes("chuyen khoan") || n.includes("bank") || n.includes("qr")) return "Chuyển khoản";
+    if (n.includes("tien mat") || n.includes("cash")) return "Tiền mặt";
+    return "";
+  }
+
   function parseToppingEntry(entry) {
     let topName = "";
     let topQty = 1;
@@ -709,7 +754,10 @@
   function applyVoiceCustomerDraftToInputs() {
     if (voiceCustomerDraft.orderType) {
       const r = document.querySelector(`input[name="orderType"][value="${voiceCustomerDraft.orderType}"]`);
-      if (r) { r.checked = true; toggleOrderTypeUI(); }
+      if (r) {
+        r.checked = true;
+        toggleOrderTypeUI();
+      }
     }
     if (voiceCustomerDraft.name !== undefined) {
       document.getElementById("customerName").value = voiceCustomerDraft.name;
@@ -717,9 +765,16 @@
     if (voiceCustomerDraft.phone !== undefined) {
       document.getElementById("customerPhone").value = voiceCustomerDraft.phone;
     }
-    if (voiceCustomerDraft.address !== undefined && voiceCustomerDraft.orderType !== "Tự ra lấy") {
-      document.getElementById("customerAddress").value = voiceCustomerDraft.address;
-      autoCalculateShippingFromMenu();
+    const curOrderRadio = document.querySelector('input[name="orderType"]:checked');
+    const curOrderType = curOrderRadio ? curOrderRadio.value : "Giao hàng";
+    if (curOrderType !== "Tự ra lấy") {
+      const addrEl = document.getElementById("customerAddress");
+      if (voiceCustomerDraft.address !== undefined) {
+        addrEl.value = voiceCustomerDraft.address;
+      }
+      if (addrEl && addrEl.value.trim() && addrEl.value !== "Khách đến quán lấy") {
+        autoCalculateShippingFromMenu();
+      }
     }
     if (voiceCustomerDraft.note !== undefined) {
       document.getElementById("customerNote").value = voiceCustomerDraft.note;
@@ -1193,7 +1248,10 @@
     }
 
     if (name === "set_customer_info") {
-      if (args.orderType) voiceCustomerDraft.orderType = args.orderType;
+      if (args.orderType !== undefined) {
+        const normType = normalizeOrderType(args.orderType);
+        if (normType) voiceCustomerDraft.orderType = normType;
+      }
       if (args.name !== undefined) {
         voiceCustomerDraft.name = args.name;
         localStorage.setItem("kimbling_cust_name", args.name);
@@ -1202,12 +1260,18 @@
         voiceCustomerDraft.phone = args.phone;
         localStorage.setItem("kimbling_cust_phone", args.phone);
       }
-      if (args.address !== undefined) {
-        voiceCustomerDraft.address = args.address;
-        localStorage.setItem("kimbling_cust_addr", args.address);
+      if (args.address !== undefined && voiceCustomerDraft.orderType !== "Tự ra lấy") {
+        const cleanAddr = String(args.address || "").trim();
+        if (cleanAddr && !/^(tai quan|khach den quan lay|tu ra lay)$/i.test(removeDiacritics(cleanAddr))) {
+          voiceCustomerDraft.address = cleanAddr;
+          localStorage.setItem("kimbling_cust_addr", cleanAddr);
+        }
       }
       if (args.note !== undefined) voiceCustomerDraft.note = args.note;
-      if (args.payMethod) voiceCustomerDraft.payMethod = args.payMethod;
+      if (args.payMethod !== undefined) {
+        const normPay = normalizePayMethod(args.payMethod);
+        if (normPay) voiceCustomerDraft.payMethod = normPay;
+      }
 
       applyVoiceCustomerDraftToInputs();
       await waitForShippingIfCalculating();
