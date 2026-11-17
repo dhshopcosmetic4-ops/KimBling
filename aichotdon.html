@@ -278,10 +278,10 @@ footer{padding:18px 12px;text-align:center;color:#888}
    <div id="livePanel">
     <div id="liveStatus">🎙️ Gemini Live chưa bật. Anh chị có thể trò chuyện trực tiếp bằng giọng nói.</div>
     <div id="liveButtons">
-     <button id="liveStartBtn" onclick="startGeminiLive()">🎙️ TRÒ CHUYỆN LIVE VỚI KIM</button>
-     <button id="liveStopBtn" onclick="stopGeminiLive()" disabled>⏹ KẾT THÚC LIVE</button>
+     <button id="liveStartBtn" onclick="startGeminiLive(0)">🎙️ TRÒ CHUYỆN LIVE VỚI KIM</button>
+     <button id="liveStopBtn" onclick="stopGeminiLive(false, false)" disabled>⏹ KẾT THÚC LIVE</button>
     </div>
-    <div class="live-hint">Khi bật Live, hãy cho phép Safari sử dụng micro. Anh chị có thể nói tự nhiên, Kim sẽ nghe và trả lời bằng giọng nói.</div>
+    <div class="live-hint">Khi bật Live, hãy cho phép Safari sử dụng micro. Anh chị có thể nói tự nhiên, Kim sẽ tự ngắt sau 25s im lặng hoặc khi anh chị chào tạm biệt để tiết kiệm quota.</div>
    </div>
   </div>
  </section>
@@ -386,7 +386,12 @@ let liveSessionGeneration = 0;
 let currentLiveUserEl = null;
 let currentLiveAssistantEl = null;
 let liveIdleTimer = null;
-const LIVE_IDLE_TIMEOUT_MS = 90000;
+const LIVE_IDLE_TIMEOUT_MS = 25000;
+
+let liveActiveKeyIndex = 0;
+let liveHasBackupKey = false;
+let liveAutoShutdownPending = false;
+let liveAutoShutdownTimer = null;
 
 let kimAnimFrame = null;
 let kimNextBlinkAt = 0;
@@ -868,7 +873,7 @@ function consultProduct(index) {
 
 function goToMenu(product) {
  stopSpeaking();
- if (liveIsActive) stopGeminiLive();
+ if (liveIsActive) stopGeminiLive(false, false);
 
  const dishName = (product && product.name) ? String(product.name).trim() : "";
 
@@ -1125,7 +1130,6 @@ async function playBase64Audio(base64, mimeType = "audio/wav", fallbackText = ""
 
  const bytes = base64ToBytes(base64);
 
- // Prefer Web Audio API decode so GainNode (2.5x) + Limiter matches Gemini Live loudness
  try {
   const ctx = ensureTtsAudioChain();
   if (ctx && ttsGainNode) {
@@ -1452,19 +1456,42 @@ function resampleTo16k(input, sourceRate) {
  return output;
 }
 
-async function startGeminiLive() {
+function isLiveQuotaOrKeyError(msg) {
+ return /quota|resource.?exhausted|rate.?limit|429|1008|exceeded|api.?key|permission/i.test(String(msg || ""));
+}
+
+function finishLiveGoodbyeShutdown() {
+ if (!liveAutoShutdownPending || !liveIsActive) return;
+ setTimeout(() => {
+  if (liveAutoShutdownPending && liveIsActive && livePlaybackSources.length === 0) {
+   stopGeminiLive(false, true);
+  }
+ }, 500);
+}
+
+async function startGeminiLive(requestedKeyIndex) {
  if (liveIsActive || liveStarting) return;
  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
   alert("Trình duyệt chưa hỗ trợ micro hoặc trang chưa chạy bằng HTTPS.");
   return;
  }
 
+ const reqIdx = typeof requestedKeyIndex === "number" ? requestedKeyIndex : 0;
+ liveHasBackupKey = false;
+ liveActiveKeyIndex = reqIdx;
+ liveAutoShutdownPending = false;
+ if (liveAutoShutdownTimer) { clearTimeout(liveAutoShutdownTimer); liveAutoShutdownTimer = null; }
+
  liveStarting = true;
  const startBtn = document.getElementById("liveStartBtn");
  const stopBtn = document.getElementById("liveStopBtn");
  startBtn.disabled = true;
 
- setLiveStatus("Đang khởi tạo âm thanh & xin quyền micro...");
+ setLiveStatus(
+  reqIdx > 0
+   ? ("🔄 Đang chuyển sang key dự phòng #" + (reqIdx + 1) + "...")
+   : "Đang khởi tạo âm thanh & xin quyền micro..."
+ );
  setStatus("Đang khởi động Gemini Live...");
 
  try {
@@ -1492,10 +1519,13 @@ async function startGeminiLive() {
   liveCompressor.connect(liveOutputAnalyser);
   liveOutputAnalyser.connect(liveAudioContext.destination);
 
-  const tokenResult = await callAPI({ action: "create_live_token" });
+  const tokenResult = await callAPI({ action: "create_live_token", keyIndex: reqIdx });
   if (!tokenResult || tokenResult.success === false || !tokenResult.token) {
    throw new Error(tokenResult && tokenResult.error ? tokenResult.error : "Không nhận được Gemini Live token.");
   }
+
+  liveActiveKeyIndex = typeof tokenResult.keyIndex === "number" ? tokenResult.keyIndex : reqIdx;
+  liveHasBackupKey = !!tokenResult.hasBackupKey;
 
   const token = tokenResult.token;
   const model = tokenResult.model || "gemini-3.8-live";
@@ -1515,19 +1545,7 @@ async function startGeminiLive() {
   liveSocket.onopen = () => {
    if (generation !== liveSessionGeneration) return;
    liveSocket.send(JSON.stringify({
-    setup: {
-     model: "models/" + model,
-     generationConfig: {
-      responseModalities: ["AUDIO"],
-      speechConfig: {
-       voiceConfig: {
-        prebuiltVoiceConfig: { voiceName: "Zephyr" }
-       }
-      }
-     },
-     inputAudioTranscription: {},
-     outputAudioTranscription: {}
-    }
+    setup: { model: "models/" + model }
    }));
    setLiveStatus("Đã kết nối máy chủ. Đang thiết lập phiên trò chuyện...");
   };
@@ -1554,25 +1572,46 @@ async function startGeminiLive() {
 
   liveSocket.onerror = error => {
    console.error("Gemini Live WebSocket error:", error);
-   setLiveStatus("Kết nối Gemini Live gặp lỗi. Anh chị thử kết thúc và kết nối lại nhé.");
-   setStatus("Gemini Live gặp lỗi kết nối", "error");
+   if (!liveAutoShutdownPending) {
+    setLiveStatus("Kết nối Gemini Live gặp lỗi. Anh chị thử kết thúc và kết nối lại nhé.");
+    setStatus("Gemini Live gặp lỗi kết nối", "error");
+   }
   };
 
   liveSocket.onclose = event => {
    console.log("Gemini Live đóng:", event.code, event.reason);
    if (generation !== liveSessionGeneration) return;
+   if (liveAutoShutdownPending) {
+    stopGeminiLive(false, true);
+    return;
+   }
+   const code = event && event.code ? event.code : 0;
+   const reason = event && event.reason ? event.reason : "";
+   if ((code === 1008 || isLiveQuotaOrKeyError(reason)) && liveHasBackupKey && liveActiveKeyIndex < 5) {
+    const nextIdx = liveActiveKeyIndex + 1;
+    cleanupGeminiLive(true);
+    setLiveStatus("🔄 Key chính hết lượt, đang chuyển sang key dự phòng #" + (nextIdx + 1) + "...");
+    setTimeout(() => startGeminiLive(nextIdx), 300);
+    return;
+   }
    if (liveIsActive) {
     cleanupGeminiLive(false);
-    setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại.");
+    setLiveStatus("Phiên Gemini Live đã kết thúc. Anh chị có thể bật lại hoặc nhắn tin bằng Groq.");
     setStatus("Đã ngắt Gemini Live", "normal");
    }
   };
  } catch (error) {
   console.error("Không khởi động được Gemini Live:", error);
+  const errMsg = error && error.message ? error.message : String(error);
+  if (isLiveQuotaOrKeyError(errMsg) && liveHasBackupKey && liveActiveKeyIndex < 5) {
+   const nextIdx = liveActiveKeyIndex + 1;
+   cleanupGeminiLive(true);
+   setTimeout(() => startGeminiLive(nextIdx), 300);
+   return;
+  }
   cleanupGeminiLive(false);
-  setLiveStatus("Không khởi động được Gemini Live: " + (error.message || error));
-  setStatus("Gemini Live không khởi động được", "error");
-  alert("Không khởi động được Gemini Live:\n" + (error.message || error));
+  setLiveStatus("Không khởi động được Gemini Live (anh chị có thể nhắn bên trên bằng Groq): " + errMsg);
+  setStatus("Gemini Live tạm hết lượt", "error");
  } finally {
   liveStarting = false;
   startBtn.disabled = liveIsActive;
@@ -1582,10 +1621,10 @@ async function startGeminiLive() {
 
 function resetLiveIdleTimer() {
  if (liveIdleTimer) clearTimeout(liveIdleTimer);
- if (!liveIsActive) return;
+ if (!liveIsActive || liveAutoShutdownPending) return;
  liveIdleTimer = setTimeout(() => {
   if (!liveIsActive) return;
-  stopGeminiLive(true);
+  stopGeminiLive(true, false);
  }, LIVE_IDLE_TIMEOUT_MS);
 }
 
@@ -1606,9 +1645,48 @@ function handleGeminiLiveMessage(data) {
   return;
  }
  if (data.error) {
+  const errMsg = data.error.message || JSON.stringify(data.error);
   console.error("Gemini Live báo lỗi:", data.error);
-  setLiveStatus("Gemini báo lỗi: " + (data.error.message || JSON.stringify(data.error)));
+  if (isLiveQuotaOrKeyError(errMsg) && liveHasBackupKey && liveActiveKeyIndex < 5) {
+   const nextIdx = liveActiveKeyIndex + 1;
+   cleanupGeminiLive(true);
+   setLiveStatus("🔄 Key chính hết lượt, đang chuyển sang key dự phòng #" + (nextIdx + 1) + "...");
+   setTimeout(() => startGeminiLive(nextIdx), 300);
+   return;
+  }
+  setLiveStatus("Gemini báo lỗi: " + errMsg);
   return;
+ }
+
+ if (data.toolCall && Array.isArray(data.toolCall.functionCalls)) {
+  resetLiveIdleTimer();
+  const functionResponses = [];
+  for (const fc of data.toolCall.functionCalls) {
+   let resultObj = { ok: false };
+   if (fc.name === "end_bekim_session") {
+    liveAutoShutdownPending = true;
+    if (liveIdleTimer) { clearTimeout(liveIdleTimer); liveIdleTimer = null; }
+    if (liveAutoShutdownTimer) clearTimeout(liveAutoShutdownTimer);
+    liveAutoShutdownTimer = setTimeout(() => {
+     if (liveIsActive) stopGeminiLive(false, true);
+    }, 6000);
+    resultObj = {
+     ok: true,
+     ending: true,
+     message: "Đã nhận lệnh ngưng hỗ trợ. Hãy chào tạm biệt khách ngắn gọn 1 câu."
+    };
+   }
+   functionResponses.push({
+    id: fc.id,
+    name: fc.name,
+    response: { result: resultObj }
+   });
+  }
+  if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+   liveSocket.send(JSON.stringify({
+    toolResponse: { functionResponses: functionResponses }
+   }));
+  }
  }
 
  const serverContent = data.serverContent;
@@ -1653,6 +1731,9 @@ function handleGeminiLiveMessage(data) {
   liveOutputText = "";
   currentLiveUserEl = null;
   currentLiveAssistantEl = null;
+  if (liveAutoShutdownPending && livePlaybackSources.length === 0) {
+   finishLiveGoodbyeShutdown();
+  }
  }
 }
 
@@ -1720,7 +1801,7 @@ async function startLiveMicrophone() {
   liveProcessor = liveAudioContext.createScriptProcessor(4096, 1, 1);
 
   liveProcessor.onaudioprocess = event => {
-   if (!liveIsActive || !liveIsReady || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
+   if (!liveIsActive || !liveIsReady || liveAutoShutdownPending || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
    const input = event.inputBuffer.getChannelData(0);
    const resampled = resampleTo16k(input, liveAudioContext.sampleRate);
    const pcm = floatTo16BitPCM(resampled);
@@ -1740,7 +1821,7 @@ async function startLiveMicrophone() {
  } catch (error) {
   console.error("Lỗi khởi tạo micro Live:", error);
   setLiveStatus("Không mở được micro Live: " + error.message);
-  stopGeminiLive();
+  stopGeminiLive(false, false);
  }
 }
 
@@ -1777,6 +1858,9 @@ function scheduleLivePlayback() {
   source.onended = () => {
    livePlaybackSources = livePlaybackSources.filter(item => item !== source);
    try { source.disconnect(); } catch (e) {}
+   if (liveIsActive && liveAutoShutdownPending && livePlaybackSources.length === 0) {
+    finishLiveGoodbyeShutdown();
+   }
   };
  }
 }
@@ -1793,6 +1877,8 @@ function stopLivePlayback() {
 
 function cleanupGeminiLive(closeSocket = true) {
  if (liveIdleTimer) { clearTimeout(liveIdleTimer); liveIdleTimer = null; }
+ if (liveAutoShutdownTimer) { clearTimeout(liveAutoShutdownTimer); liveAutoShutdownTimer = null; }
+ liveAutoShutdownPending = false;
  liveIsActive = false;
  liveIsReady = false;
  liveStarting = false;
@@ -1835,12 +1921,15 @@ function cleanupGeminiLive(closeSocket = true) {
  document.getElementById("liveStopBtn").disabled = true;
 }
 
-function stopGeminiLive(isAutoIdle = false) {
+function stopGeminiLive(isAutoIdle = false, isGoodbye = false) {
  liveSessionGeneration++;
  cleanupGeminiLive(true);
  if (isAutoIdle) {
-  setLiveStatus("⏱️ Đã tự ngắt Gemini Live sau 90 giây im lặng để tiết kiệm quota. Chạm nút tím nếu muốn nói tiếp nhé!");
+  setLiveStatus("⏱️ Đã tự ngắt Gemini Live sau 25 giây im lặng để tiết kiệm quota. Chạm nút tím nếu muốn nói tiếp nhé!");
   setStatus("Đã tự tắt Live (tiết kiệm quota)", "online");
+ } else if (isGoodbye) {
+  setLiveStatus("👋 Bé Kim đã chào tạm biệt và tắt Live để tiết kiệm quota. Anh chị có thể bấm bật lại hoặc nhắn tin bằng Groq nhé!");
+  setStatus("👋 Bé Kim đã ngưng Live", "online");
  } else {
   setLiveStatus("Gemini Live đã tắt. Anh chị có thể tiếp tục nhắn tin với Kim bằng Groq.");
   setStatus("Đã quay lại chế độ tư vấn Groq", "online");
@@ -1850,7 +1939,7 @@ function stopGeminiLive(isAutoIdle = false) {
 window.addEventListener("message", function(event) {
  if (event.data === "STOP_AI_AUDIO") {
   stopSpeaking();
-  if (liveIsActive || liveSocket) stopGeminiLive();
+  if (liveIsActive || liveSocket) stopGeminiLive(false, false);
  }
 });
 
@@ -2054,7 +2143,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 window.addEventListener("pagehide", () => {
  stopSpeaking();
- if (liveIsActive || liveSocket) stopGeminiLive();
+ if (liveIsActive || liveSocket) stopGeminiLive(false, false);
 });
 </script>
 

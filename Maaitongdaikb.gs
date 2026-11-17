@@ -1,6 +1,7 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 5.0
- * Groq (openai/gpt-oss-20b tốc độ cao) + Gemini Live + Google Sheets + POS_Data + Telegram
+ * KIM BLING AI SERVER - VERSION 5.1
+ * Groq (openai/gpt-oss-20b tốc độ cao) + Gemini Live (bekim.js & aichotdon.html)
+ * + Dự phòng 3 API Key + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
  * GROQ_API_KEY
@@ -16,7 +17,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "5.0",
+  VERSION: "5.1",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
@@ -669,7 +670,7 @@ function deleteAISession(sessionId) {
 ========================================================= */
 
 function getGroqApiKey_() {
-  const key = kbGetProperty_("GROQ_API_KEY");
+  const key = kbText_(kbGetProperty_("GROQ_API_KEY"));
 
   if (!key) {
     throw new Error(
@@ -1037,9 +1038,11 @@ function kbCreateGeminiLiveToken_(data) {
   const catalog = getCachedCatalogForAdvisor_();
   const isMenuControl = data && data.mode === "menu_control";
 
-  const compactMenu = isMenuControl
-    ? kbFormatLiveCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || [])
-    : kbFormatCompactCatalog_(catalog.menu || [], catalog.drinkToppings || [], catalog.snackToppings || []);
+  const compactMenu = kbFormatLiveCompactCatalog_(
+    catalog.menu || [],
+    catalog.drinkToppings || [],
+    catalog.snackToppings || []
+  );
 
   const liveInstruction = isMenuControl
     ? [
@@ -1058,6 +1061,7 @@ function kbCreateGeminiLiveToken_(data) {
         "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
         "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
         "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
+        "KHI TẠM BIỆT: Khi khách nói 'bye', 'tạm biệt', 'thôi nghỉ', 'không cần nữa', 'ngưng hỗ trợ' -> gọi ngay end_bekim_session, sau đó chào tạm biệt ngắn gọn 1 câu.",
         KB_UPSIZE_RULE_TEXT,
         "",
         compactMenu
@@ -1228,6 +1232,21 @@ function kbCreateGeminiLiveToken_(data) {
         {
           name: "end_bekim_session",
           description: "Đăng xuất, tắt micro và ngưng hỗ trợ Bé Kim Live ngay khi khách nói bye, tạm biệt, thôi nghỉ hoặc không cần hỗ trợ nữa.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              reason: { type: "STRING", description: "Lý do kết thúc (vd: 'goodbye')" }
+            }
+          }
+        }
+      ]
+    }];
+  } else {
+    bidiSetup.tools = [{
+      functionDeclarations: [
+        {
+          name: "end_bekim_session",
+          description: "Tắt micro và ngưng hỗ trợ Gemini Live ngay khi khách nói bye, tạm biệt, thôi nghỉ hoặc không cần hỗ trợ nữa.",
           parameters: {
             type: "OBJECT",
             properties: {
@@ -2299,10 +2318,10 @@ function checkKimBlingConfig() {
     .filter(function(v, i, arr) { return v && arr.indexOf(v) === i; }).length;
 
   const result = {
-    GROQ_API_KEY: !!p.getProperty("GROQ_API_KEY"),
-    GEMINI_API_KEY: !!p.getProperty("GEMINI_API_KEY"),
-    GEMINI_API_KEY_2: !!p.getProperty("GEMINI_API_KEY_2"),
-    GEMINI_API_KEY_3: !!p.getProperty("GEMINI_API_KEY_3"),
+    GROQ_API_KEY: !!kbText_(p.getProperty("GROQ_API_KEY")),
+    GEMINI_API_KEY: !!kbText_(p.getProperty("GEMINI_API_KEY")),
+    GEMINI_API_KEY_2: !!kbText_(p.getProperty("GEMINI_API_KEY_2")),
+    GEMINI_API_KEY_3: !!kbText_(p.getProperty("GEMINI_API_KEY_3")),
     GEMINI_KEYS_COUNT: geminiKeysCount,
     TELEGRAM_BOT_TOKEN: !!p.getProperty("TELEGRAM_BOT_TOKEN"),
     TELEGRAM_CHAT_ID: !!p.getProperty("TELEGRAM_CHAT_ID"),
@@ -2339,11 +2358,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 5.0
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 5.1
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 5.0 ==========");
+  Logger.log("========== KIM BLING AI 5.1 ==========");
 
   const config = checkKimBlingConfig();
 
