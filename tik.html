@@ -9,12 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        /* Giữ ngưỡng tối thiểu 16px cho toàn bộ phần tử tương tác và văn bản để chống auto-zoom trên iOS Safari */
         input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
-        .filter-food { filter: saturate(1.5) contrast(1.2) brightness(1.1) sepia(0.05); }
-        .filter-beauty { filter: brightness(1.18) contrast(0.95) saturate(1.12); }
-        .filter-cinematic { filter: contrast(1.35) saturate(1.25) brightness(0.92); }
-        .filter-none { filter: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -101,51 +96,51 @@
         <div class="p-5 bg-slate-900 border-t-2 border-slate-800"><button onclick="closeCapcutGuideModal()" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl shadow-xl">Đã hiểu rõ, quay lại làm video ngay</button></div>
     </div>
 
-    <!-- MODAL CAMERA AR 9:16 (QUAY VIDEO CHUẨN 3-20-4s) -->
-    <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden">
-        <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-10 pb-2 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-auto">
-            <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black backdrop-blur-md shadow-lg">✕</button>
-            <div class="bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-white/20 text-center shadow">
+    <!-- MODAL CAMERA VIDEO CHUẨN IPHONE + AI HỖ TRỢ QUAY -->
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden select-none">
+        <!-- Header trên -->
+        <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-10 pb-2 bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
+            <button id="closeCameraBtn" class="w-11 h-11 rounded-full bg-slate-800/85 text-white flex items-center justify-center font-black backdrop-blur-md shadow-lg">✕</button>
+            <div class="bg-black/75 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-white/20 text-center shadow">
                 <span id="camClipTitle" class="font-extrabold text-rose-300 block leading-tight">Phân đoạn 1</span>
-                <span id="camTimer" class="font-mono text-white font-black leading-tight">00:00 / 7s</span>
+                <span id="camTimer" class="font-mono text-white font-black leading-tight">00:00 / 5s</span>
             </div>
-            <button onclick="toggleRecordingModeQuick()" id="modeSwitchPill" class="px-3 py-2 rounded-2xl bg-slate-800/90 font-black text-amber-300 border border-slate-700 shadow">Chuẩn</button>
+            <div class="flex items-center space-x-1.5">
+                <button onclick="toggleVideoAiAssistant()" id="videoAiToggleBtn" class="px-3 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-black border border-emerald-300 shadow">🤖 AI</button>
+                <button onclick="toggleRecordingModeQuick()" id="modeSwitchPill" class="px-3 py-2 rounded-2xl bg-slate-800/90 font-black text-amber-300 border border-slate-700 shadow">Chuẩn</button>
+            </div>
         </div>
 
-        <div id="cameraViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover filter-beauty transition-transform"></video>
+        <div id="cameraViewport" class="relative flex-1 w-full bg-black overflow-hidden flex items-center justify-center">
+            <!-- Mặc định màu gốc chuẩn iPhone, không ép filter lúc quay -->
+            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover transition-transform"></video>
             <canvas id="recordCanvas" class="hidden"></canvas>
-            
-            <div class="absolute top-24 left-4 z-30 pointer-events-auto">
-                <button onclick="toggleFilterMenu()" class="px-3.5 py-2 rounded-2xl bg-slate-900/85 border border-slate-700 text-rose-300 font-black shadow-lg flex items-center space-x-1.5 active:scale-95 transition-all">
-                    <span>🎨</span><span id="currentFilterLabel">Bộ Lọc</span>
-                </button>
-                <div id="filterDropdownMenu" class="hidden mt-2 bg-slate-900/95 backdrop-blur-md border-2 border-slate-700 rounded-2xl p-3 space-y-2.5 shadow-2xl w-60">
-                    <div class="space-y-1.5">
-                        <button onclick="setFilter('beauty', this)" class="filter-chip w-full text-left px-3 py-2 rounded-xl bg-rose-500 text-white font-black">✨ Mịn Da</button>
-                        <button onclick="setFilter('food', this)" class="filter-chip w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300 font-black">🍔 Món Ngon</button>
-                        <button onclick="setFilter('cinematic', this)" class="filter-chip w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300 font-black">🎥 Điện Ảnh</button>
-                        <button onclick="setFilter('none', this)" class="filter-chip w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300 font-black">Gốc</button>
-                    </div>
-                    <div class="border-t border-slate-800 pt-2 space-y-2">
-                        <div class="flex justify-between font-bold"><label for="skinBrightRange" class="text-amber-300">☀️ Sáng da</label><span id="skinBrightVal">0%</span></div>
-                        <input id="skinBrightRange" type="range" min="0" max="30" value="0" class="w-full accent-amber-400" oninput="updateSkinControls()">
-                        <div class="flex justify-between font-bold"><label for="skinSmoothRange" class="text-pink-300">✨ Mịn da</label><span id="skinSmoothVal">0%</span></div>
-                        <input id="skinSmoothRange" type="range" min="0" max="30" value="0" class="w-full accent-pink-400" oninput="updateSkinControls()">
-                    </div>
+            <canvas id="videoAiCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
+
+            <!-- Huy hiệu AI hỗ trợ quay góc & ánh sáng -->
+            <div id="videoAiStatusRow" class="absolute top-28 inset-x-4 z-30 flex items-center justify-between gap-2 pointer-events-none">
+                <span id="videoAiAngleBadge" class="px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow">📐 Góc: --°</span>
+                <span id="videoAiLightBadge" class="px-3 py-1 rounded-full bg-black/70 border border-amber-400/50 text-amber-200 font-bold backdrop-blur-md shadow">☀️ Sáng đẹp</span>
+            </div>
+
+            <!-- Thanh cân bằng ngang cho video -->
+            <div id="videoLeveler" class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                <div class="relative w-24 h-6 flex items-center justify-center">
+                    <div class="w-20 h-[2px] bg-white/30 rounded-full"></div>
+                    <div id="videoLevelBar" class="absolute w-12 h-[3px] bg-emerald-400 rounded-full transition-transform duration-75"></div>
                 </div>
             </div>
 
-            <div id="arOverlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
-                <div class="absolute inset-x-4 top-24 bottom-52 border border-white/25 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
+            <!-- AR OVERLAY -->
+            <div id="arOverlay" class="hidden absolute inset-0 pointer-events-none flex flex-col justify-between p-4 z-20">
+                <div class="absolute inset-x-4 top-28 bottom-52 border border-white/25 rounded-3xl grid grid-cols-3 grid-rows-3 pointer-events-none">
                     <div class="border-b border-r border-white/20"></div><div class="border-b border-r border-white/20"></div><div class="border-b border-white/20"></div>
                     <div class="border-b border-r border-white/20"></div><div class="border-b border-r border-white/20"></div><div class="border-b border-white/20"></div>
                     <div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div></div>
                 </div>
 
-                <div class="absolute inset-x-0 top-36 flex justify-center pointer-events-none">
-                    <div class="w-72 border-2 border-dashed border-rose-500/90 rounded-3xl flex flex-col items-center justify-center text-center p-3 bg-rose-500/15 backdrop-blur-[2px] space-y-1.5 shadow-xl">
-                        <span class="text-2xl animate-bounce" id="camModeEmoji">🎯</span>
+                <div class="absolute inset-x-0 top-40 flex justify-center pointer-events-none">
+                    <div class="w-72 border-2 border-dashed border-rose-500/85 rounded-3xl flex flex-col items-center justify-center text-center p-3 bg-rose-500/10 backdrop-blur-[1px] space-y-1 shadow-xl">
                         <div class="flex flex-wrap justify-center gap-1.5">
                             <span id="arDistanceBadge" class="px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded-full uppercase shadow">30-40cm</span>
                             <span id="arAngleBadge" class="px-2.5 py-0.5 bg-sky-400 text-slate-950 font-black rounded-full uppercase shadow">Góc 60°</span>
@@ -154,18 +149,26 @@
                     </div>
                 </div>
 
-                <div class="absolute bottom-56 inset-x-4 bg-slate-950/85 backdrop-blur-md p-3 rounded-2xl border border-rose-500/50 text-center z-30 pointer-events-auto space-y-1 shadow-2xl">
+                <div class="absolute bottom-52 inset-x-4 bg-slate-950/80 backdrop-blur-md p-3 rounded-2xl border border-rose-500/50 text-center z-30 pointer-events-auto space-y-1 shadow-2xl">
                     <p id="camActionGuide" class="text-slate-100 font-extrabold leading-snug"></p>
                     <p id="camSpeechPrompt" class="text-amber-300 italic font-bold leading-snug"></p>
                 </div>
             </div>
+
+            <!-- AI Coach dòng ngắn khi tắt bảng AR lớn -->
+            <div id="videoAiTipBar" class="absolute bottom-44 inset-x-6 z-30 flex justify-center pointer-events-none">
+                <span id="videoAiTipText" class="px-3.5 py-1.5 rounded-full bg-black/75 border border-emerald-400/40 text-emerald-200 font-bold text-center backdrop-blur-md shadow">
+                    🤖 AI đang canh góc & ánh sáng giúp bạn
+                </span>
+            </div>
         </div>
 
-        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent px-5 pb-6 pt-3 flex flex-col items-center space-y-3 z-30">
-            <div class="flex items-center space-x-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
-                <button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-300 hover:text-white transition-all">0,5</button>
+        <!-- CỤM ĐIỀU KHIỂN DƯỚI TRONG SUỐT CHUẨN IPHONE -->
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-5 pb-6 pt-3 flex flex-col items-center space-y-3 z-30">
+            <div class="flex items-center space-x-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
+                <button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-200 hover:text-white transition-all">0,5</button>
                 <button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow transition-all">1x</button>
-                <button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-300 hover:text-white transition-all">2,5</button>
+                <button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-200 hover:text-white transition-all">2,5</button>
             </div>
             
             <div class="w-full flex items-center justify-center">
@@ -175,49 +178,54 @@
             </div>
 
             <div class="w-full flex items-center justify-between px-2 pt-0.5">
-                <button id="toggleArBtn" class="w-12 h-12 rounded-full bg-slate-900/80 text-white border border-slate-600 font-black flex items-center justify-center shadow-lg active:scale-95 transition-all">AR</button>
+                <button id="toggleArBtn" class="w-12 h-12 rounded-full bg-black/60 text-white border border-white/25 font-black flex items-center justify-center shadow-lg backdrop-blur-md active:scale-95 transition-all">AR</button>
                 
-                <div class="flex items-center bg-black/70 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/15 space-x-1">
+                <div class="flex items-center bg-black/60 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/15 space-x-1">
                     <button id="modeVideoBtn" onclick="setAppMode('video')" class="px-4 py-1.5 rounded-full font-black bg-amber-400 text-slate-950 shadow transition-all">VIDEO</button>
-                    <button id="modePhotoBtn" onclick="setAppMode('photo')" class="px-4 py-1.5 rounded-full font-black text-slate-300 hover:text-white transition-all">ẢNH AI</button>
+                    <button id="modePhotoBtn" onclick="setAppMode('photo')" class="px-4 py-1.5 rounded-full font-black text-slate-200 hover:text-white transition-all">ẢNH AI</button>
                 </div>
 
-                <button id="switchCameraBtn" class="w-12 h-12 rounded-full bg-slate-900/80 text-white border border-slate-600 flex items-center justify-center shadow-lg active:scale-95 transition-all">🔄</button>
+                <button id="switchCameraBtn" class="w-12 h-12 rounded-full bg-black/60 text-white border border-white/25 flex items-center justify-center shadow-lg backdrop-blur-md active:scale-95 transition-all">🔄</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL STUDIO CẮT SỬA & HIỆU CHỈNH VIDEO -->
+    <!-- MODAL STUDIO CẮT SỬA & ÁP BỘ LỌC THÔNG MINH SAU KHI QUAY VIDEO -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden overflow-hidden">
-        <div class="flex items-center justify-between p-4 bg-slate-900 border-b-2 border-slate-800 shrink-0"><div class="flex items-center space-x-3"><span class="text-2xl">✂️</span><div><h2 class="font-black text-white">Studio Cắt & Hiệu Chỉnh Video</h2><p class="text-slate-300 font-semibold">Cắt bỏ 1s đầu/cuối chuẩn cẩm nang & Tăng sáng</p></div></div><button onclick="closeEditorModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black">✕</button></div>
+        <div class="flex items-center justify-between p-4 bg-slate-900 border-b-2 border-slate-800 shrink-0"><div class="flex items-center space-x-3"><span class="text-2xl">✂️</span><div><h2 class="font-black text-white">Hậu Kỳ Video Thông Minh</h2><p class="text-slate-300 font-semibold">Cắt 1s đầu/cuối & Áp bộ lọc màu sau quay</p></div></div><button onclick="closeEditorModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black">✕</button></div>
         <div class="flex-1 overflow-y-auto p-4 space-y-4 max-w-md mx-auto w-full">
-            <div class="w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-800 shadow-xl max-h-[42vh]"><video id="previewVideo" controls playsinline class="w-full h-auto max-h-[42vh] object-contain"></video></div>
+            <div class="w-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border-2 border-slate-800 shadow-xl max-h-[38vh]"><video id="previewVideo" controls playsinline class="w-full h-auto max-h-[38vh] object-contain"></video></div>
+            
+            <!-- Bộ lọc thông minh áp dụng SAU khi quay -->
+            <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-2.5">
+                <span class="font-black text-rose-300 block">🎨 Bộ Lọc Thông Minh (Hậu kỳ):</span>
+                <div class="flex space-x-2 overflow-x-auto no-scrollbar" id="videoEditorFilterBar">
+                    <button onclick="setFilter('none', this)" class="v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-rose-500 text-white font-black border border-rose-300">📷 Gốc iPhone</button>
+                    <button onclick="setFilter('beauty', this)" class="v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-slate-950 text-slate-300 font-black border border-slate-700">✨ Mịn Da</button>
+                    <button onclick="setFilter('food', this)" class="v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-slate-950 text-slate-300 font-black border border-slate-700">🍔 Món Ngon</button>
+                    <button onclick="setFilter('korean', this)" class="v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-slate-950 text-slate-300 font-black border border-slate-700">🌸 Hàn Quốc</button>
+                    <button onclick="setFilter('cinematic', this)" class="v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-slate-950 text-slate-300 font-black border border-slate-700">🎥 Điện Ảnh</button>
+                </div>
+            </div>
+
             <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-rose-500/40 space-y-2.5"><div class="flex items-center justify-between"><span class="font-black text-rose-300 flex items-center space-x-1"><span>✂️</span><span>Cắt Bỏ 1s Đầu & Cuối:</span></span><span id="trimDurationText" class="text-amber-300 font-bold">Gốc: --s</span></div><div class="grid grid-cols-2 gap-2"><button onclick="applyTrimPreset(1)" class="py-2.5 px-2.5 rounded-xl bg-rose-600/25 hover:bg-rose-600/35 border border-rose-500 text-rose-200 font-extrabold flex items-center justify-center space-x-1"><span>✂️ Cắt 1s chuẩn</span></button><button onclick="applyTrimPreset(0)" class="py-2.5 px-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-700 text-slate-300 font-extrabold flex items-center justify-center space-x-1"><span>🔄 Giữ nguyên</span></button></div><div class="grid grid-cols-2 gap-2.5 pt-1"><div class="space-y-1"><label class="text-slate-400 font-bold block">Bỏ đầu (giây):</label><input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-white font-bold text-center" onchange="updateTrimTimes()"></div><div class="space-y-1"><label class="text-slate-400 font-bold block">Bỏ đuôi (giây):</label><input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-white font-bold text-center" onchange="updateTrimTimes()"></div></div></div>
-            <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-3"><div class="space-y-1"><div class="flex justify-between font-black"><span class="text-amber-300">☀️ Độ Sáng / Tối</span><span id="brightnessVal" class="text-white">100%</span></div><input type="range" id="brightnessRange" min="50" max="150" value="100" class="w-full h-2 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()"></div><div class="space-y-1"><div class="flex justify-between font-black"><span class="text-sky-300">💎 Độ Rõ Nét & Tương Phản</span><span id="contrastVal" class="text-white">100%</span></div><input type="range" id="contrastRange" min="80" max="180" value="100" class="w-full h-2 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()"></div></div>
+
+            <div class="bg-slate-900 p-3.5 rounded-2xl border-2 border-slate-800 space-y-3">
+                <div class="space-y-1"><div class="flex justify-between font-black"><span class="text-amber-300">☀️ Độ Sáng</span><span id="brightnessVal" class="text-white">100%</span></div><input type="range" id="brightnessRange" min="65" max="145" value="100" class="w-full h-2 accent-amber-500 cursor-pointer" oninput="updateVideoFilters()"></div>
+                <div class="space-y-1"><div class="flex justify-between font-black"><span class="text-sky-300">💎 Tương Phản</span><span id="contrastVal" class="text-white">100%</span></div><input type="range" id="contrastRange" min="80" max="155" value="100" class="w-full h-2 accent-sky-500 cursor-pointer" oninput="updateVideoFilters()"></div>
+                <div class="space-y-1"><div class="flex justify-between font-black"><span class="text-rose-300">🌸 Tươi Màu</span><span id="saturationVal" class="text-white">100%</span></div><input type="range" id="saturationRange" min="80" max="160" value="100" class="w-full h-2 accent-rose-500 cursor-pointer" oninput="updateVideoFilters()"></div>
+            </div>
+
             <div class="flex space-x-3 pt-1 pb-4"><button onclick="closeEditorModal()" class="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl shadow-lg">Quay lại</button><button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="flex-1 py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl shadow-xl flex items-center justify-center space-x-1.5"><span>💾</span><span>Tải Về Máy</span></button></div>
         </div>
     </div>
 
-    <!-- MODAL SIÊU MÁY ẢNH AI - KIM BLING EDITION -->
-    <div id="aiPhotoModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden select-none">
-        <div class="absolute top-0 inset-x-0 z-40 px-4 pt-9 pb-2 bg-gradient-to-b from-black/95 via-black/70 to-transparent space-y-2">
-            <div class="flex items-center justify-between">
-                <button onclick="closeAiPhotoStudio()" class="w-11 h-11 rounded-full bg-slate-800/90 text-white flex items-center justify-center font-black shadow-lg">✕</button>
-                <span id="aiContextPill" class="px-3.5 py-1.5 rounded-full bg-rose-500/25 border border-rose-400/60 text-rose-200 font-black truncate max-w-[48%]">
-                    📸 Kim Bling AI
-                </span>
-                <button onclick="toggleAiBeforeAfter()" id="aiBaBtn" class="px-3 py-2 rounded-2xl bg-slate-800/90 text-amber-300 border border-amber-400/50 font-black shadow">🔀 Trước/Sau</button>
-            </div>
-
-            <div class="flex items-center justify-center space-x-2">
-                <button onclick="cycleAiAspect()" id="aiAspectBtn" class="px-3 py-1.5 rounded-2xl bg-slate-900/90 text-amber-300 border border-slate-700 font-black">3:4</button>
-                <button onclick="toggleAiVoice()" id="aiVoiceBtn" class="px-3 py-1.5 rounded-2xl bg-slate-900/90 text-slate-200 border border-slate-700 font-black">🔇 Loa</button>
-                <button onclick="toggleAiAutoSnap()" id="aiAutoSnapBtn" class="px-3 py-1.5 rounded-2xl bg-slate-900/90 text-emerald-300 border border-emerald-500/50 font-black">🤖 Tự chụp: TẮT</button>
-            </div>
-        </div>
-
-        <div id="aiCamViewport" class="relative flex-1 w-full bg-slate-950 overflow-hidden flex items-center justify-center">
-            <div id="aiCropFrame" class="relative w-full h-full overflow-hidden flex items-center justify-center transition-all duration-300">
+    <!-- MODAL SIÊU MÁY ẢNH AI - FULL MÀN HÌNH + GIAO DIỆN DƯỚI TRONG SUỐT + TỶ LỆ THỰC -->
+    <div id="aiPhotoModal" class="fixed inset-0 z-50 bg-black overflow-hidden hidden select-none">
+        <!-- Viewport full màn hình nằm dưới lớp điều khiển trong suốt -->
+        <div id="aiCamViewport" class="absolute inset-0 bg-black flex items-center justify-center overflow-hidden">
+            <!-- Khung tỷ lệ ảnh thực sự (thay đổi kích thước rõ rệt theo 9:16, 3:4, 4:5, 1:1) -->
+            <div id="aiCropFrame" class="relative overflow-hidden flex items-center justify-center transition-all duration-200 border border-white/25 bg-slate-950">
                 <video id="aiPhotoVideo" autoplay playsinline muted class="w-full h-full object-cover transition-transform duration-200"></video>
                 <img id="aiBeforeGhostImg" class="hidden absolute inset-0 w-full h-full object-cover opacity-35 pointer-events-none z-10" alt="Before Ghost">
                 <canvas id="aiPoseCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
@@ -235,85 +243,114 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="absolute top-32 inset-x-4 z-30 flex items-center justify-between gap-2 pointer-events-none">
-                <span id="aiPoseScoreBadge" class="px-3 py-1.5 rounded-full bg-black/75 border border-rose-400/60 text-white font-black backdrop-blur-md shadow">
+        <!-- Thanh trên trong suốt mờ -->
+        <div class="absolute top-0 inset-x-0 z-40 px-4 pt-9 pb-2 bg-gradient-to-b from-black/80 via-black/45 to-transparent space-y-2 pointer-events-auto">
+            <div class="flex items-center justify-between">
+                <button onclick="closeAiPhotoStudio()" class="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center font-black shadow-lg">✕</button>
+                <span id="aiContextPill" class="px-3.5 py-1.5 rounded-full bg-rose-500/30 backdrop-blur-md border border-rose-400/60 text-rose-100 font-black truncate max-w-[48%]">
+                    📸 Kim Bling AI
+                </span>
+                <button onclick="toggleAiBeforeAfter()" id="aiBaBtn" class="px-3 py-2 rounded-2xl bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/50 font-black shadow">🔀 Trước/Sau</button>
+            </div>
+
+            <div class="flex items-center justify-center space-x-2">
+                <button onclick="cycleAiAspect()" id="aiAspectBtn" class="px-3.5 py-1 rounded-2xl bg-amber-400 text-slate-950 font-black shadow">3:4</button>
+                <button onclick="toggleAiVoice()" id="aiVoiceBtn" class="px-3 py-1 rounded-2xl bg-black/60 backdrop-blur-md text-slate-200 border border-white/20 font-black">🔇 Loa</button>
+                <button onclick="toggleAiAutoSnap()" id="aiAutoSnapBtn" class="px-3 py-1 rounded-2xl bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/50 font-black">🤖 Tự chụp: TẮT</button>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-0.5 pointer-events-none">
+                <span id="aiPoseScoreBadge" class="px-3 py-1 rounded-full bg-black/65 border border-rose-400/50 text-white font-black backdrop-blur-md shadow">
                     ⏳ Đang tải AI...
                 </span>
-                <span id="aiLightBadge" class="px-3 py-1.5 rounded-full bg-black/75 border border-amber-400/60 text-amber-200 font-bold backdrop-blur-md shadow">
+                <span id="aiLightBadge" class="px-3 py-1 rounded-full bg-black/65 border border-amber-400/50 text-amber-200 font-bold backdrop-blur-md shadow">
                     ☀️ Đo sáng...
                 </span>
             </div>
+        </div>
 
-            <div id="aiBaBanner" class="hidden absolute top-44 inset-x-6 z-30 bg-amber-500 text-slate-950 font-black px-4 py-1.5 rounded-full text-center shadow-xl pointer-events-none">
-                Bước 1/2: Chụp ảnh TRƯỚC (Before)
-            </div>
+        <div id="aiBaBanner" class="hidden absolute top-44 inset-x-6 z-30 bg-amber-500 text-slate-950 font-black px-4 py-1.5 rounded-full text-center shadow-xl pointer-events-none">
+            Bước 1/2: Chụp ảnh TRƯỚC (Before)
+        </div>
 
-            <div id="aiCountdownOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none bg-black/25">
-                <span id="aiCountdownNum" class="text-white font-black drop-shadow-2xl" style="font-size: 96px !important;">3</span>
-            </div>
+        <div id="aiCountdownOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none bg-black/25">
+            <span id="aiCountdownNum" class="text-white font-black drop-shadow-2xl" style="font-size: 96px !important;">3</span>
+        </div>
 
-            <div class="absolute bottom-4 inset-x-4 z-30 flex justify-center pointer-events-none">
-                <div class="bg-slate-950/85 backdrop-blur-md border border-sky-400/50 px-4 py-2.5 rounded-2xl text-center max-w-sm shadow-2xl">
+        <!-- Cụm điều khiển dưới TRONG SUỐT đè lên màn hình -->
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-5 pt-6 space-y-2.5 z-30 pointer-events-auto">
+            <!-- Hộp nhắc AI Coach -->
+            <div class="flex justify-center pointer-events-none">
+                <div class="bg-black/65 backdrop-blur-md border border-sky-400/45 px-3.5 py-1.5 rounded-2xl text-center max-w-sm shadow-lg">
                     <p id="aiCoachText" class="text-sky-200 font-extrabold leading-snug">Đưa chủ thể vào khung để AI phân tích...</p>
                 </div>
             </div>
-        </div>
 
-        <div class="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 pb-6 pt-3 space-y-3 z-30">
-            <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-1" id="aiPosePresetBar"></div>
+            <!-- Thanh chọn Dáng Mẫu AR -->
+            <div class="flex space-x-2 overflow-x-auto no-scrollbar pb-0.5" id="aiPosePresetBar"></div>
 
+            <!-- Zoom 0,5 | 1x | 1,5 | 2x & Hẹn giờ & Lưới -->
             <div class="flex items-center justify-between px-1">
-                <button onclick="cycleAiTimer()" id="aiTimerBtn" class="px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700 text-slate-200 font-black">⏱️ 0s</button>
-                <div class="flex items-center space-x-1.5 bg-slate-900/90 px-2 py-1 rounded-full border border-white/10">
-                    <button onclick="setAiZoom(1.0, this)" class="ai-zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950">1x</button>
-                    <button onclick="setAiZoom(1.5, this)" class="ai-zoom-btn px-3 py-1 rounded-full font-black text-slate-300">1.5x</button>
-                    <button onclick="setAiZoom(2.0, this)" class="ai-zoom-btn px-3 py-1 rounded-full font-black text-slate-300">2x</button>
+                <button onclick="cycleAiTimer()" id="aiTimerBtn" class="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-slate-100 font-black">⏱️ 0s</button>
+                <div class="flex items-center space-x-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20">
+                    <button onclick="setAiZoom(0.5, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">0,5</button>
+                    <button onclick="setAiZoom(1.0, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950">1x</button>
+                    <button onclick="setAiZoom(1.5, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">1,5</button>
+                    <button onclick="setAiZoom(2.0, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">2x</button>
                 </div>
-                <button onclick="toggleAiGridAndLevel()" id="aiGridBtn" class="px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700 text-amber-300 font-black">📐 Lưới</button>
+                <button onclick="toggleAiGridAndLevel()" id="aiGridBtn" class="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-amber-300 font-black">📐 Lưới</button>
             </div>
 
-            <div class="flex items-center justify-between px-3">
-                <button onclick="cycleAiFilter()" id="aiFilterQuickBtn" class="w-24 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-rose-300 font-black flex items-center justify-center shadow truncate px-2">✨ Hàn</button>
+            <!-- Nút Chụp chính -->
+            <div class="flex items-center justify-between px-4">
+                <button onclick="switchPhotoToVideoMode()" class="px-3.5 h-12 rounded-2xl bg-black/60 backdrop-blur-md border border-white/25 text-amber-300 font-black flex items-center justify-center shadow">🎥 Video</button>
                 <button onclick="triggerAiCapture()" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 active:scale-95 transition-transform shadow-2xl">
                     <div class="w-16 h-16 bg-white rounded-full"></div>
                 </button>
-                <button onclick="switchAiCamera()" class="w-16 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-white font-black flex items-center justify-center shadow">🔄</button>
+                <button onclick="switchAiCamera()" class="w-14 h-12 rounded-2xl bg-black/60 backdrop-blur-md border border-white/25 text-white font-black flex items-center justify-center shadow">🔄</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ ẢNH AI + TEM KIM BLING + CAPTION -->
+    <!-- MODAL HẬU KỲ ẢNH THÔNG MINH SAU KHI CHỤP -->
     <div id="aiPhotoEditorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden">
         <div class="flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
-            <h2 class="font-black text-white">✨ Hậu Kỳ Ảnh Kim Bling</h2>
+            <h2 class="font-black text-white">✨ Chỉnh Sửa Ảnh Thông Minh</h2>
             <button onclick="closeAiPhotoEditor()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black">✕</button>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 space-y-4 max-w-md mx-auto w-full">
-            <div class="bg-black rounded-2xl border-2 border-slate-800 overflow-hidden flex items-center justify-center max-h-[45vh]">
-                <canvas id="aiEditedPreviewCanvas" class="max-w-full max-h-[45vh] object-contain"></canvas>
+            <div class="bg-black rounded-2xl border-2 border-slate-800 overflow-hidden flex items-center justify-center max-h-[42vh]">
+                <canvas id="aiEditedPreviewCanvas" class="max-w-full max-h-[42vh] object-contain"></canvas>
             </div>
 
+            <!-- Bộ lọc thông minh sau chụp -->
             <div class="flex space-x-2 overflow-x-auto no-scrollbar" id="aiEditorFilterBar"></div>
 
-            <div class="flex items-center justify-between bg-slate-900 px-4 py-3 rounded-2xl border border-slate-800">
-                <span class="font-black text-amber-300">🏷️ Gắn tem Kim Bling lên ảnh</span>
-                <button onclick="toggleAiWatermark()" id="aiWatermarkBtn" class="px-4 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-black">ĐANG BẬT</button>
+            <!-- Nút bật tắt Tem & Tự động làm đẹp -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="applySmartAutoEnhance()" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black shadow">🪄 Tự cân bằng AI</button>
+                <button onclick="toggleAiWatermark()" id="aiWatermarkBtn" class="py-2.5 px-3 rounded-xl bg-emerald-500 text-slate-950 font-black shadow">🏷️ Tem KB: BẬT</button>
             </div>
 
             <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3">
                 <div>
                     <div class="flex justify-between font-bold text-amber-300"><span>☀️ Độ sáng</span><span id="edBrightVal">100%</span></div>
-                    <input type="range" id="edBrightRange" min="75" max="135" value="100" class="w-full accent-amber-400" oninput="renderEditedPhoto()">
+                    <input type="range" id="edBrightRange" min="70" max="140" value="100" class="w-full accent-amber-400" oninput="renderEditedPhoto()">
                 </div>
                 <div>
                     <div class="flex justify-between font-bold text-sky-300"><span>💎 Tương phản</span><span id="edContrastVal">100%</span></div>
-                    <input type="range" id="edContrastRange" min="80" max="140" value="100" class="w-full accent-sky-400" oninput="renderEditedPhoto()">
+                    <input type="range" id="edContrastRange" min="80" max="145" value="100" class="w-full accent-sky-400" oninput="renderEditedPhoto()">
                 </div>
                 <div>
                     <div class="flex justify-between font-bold text-rose-300"><span>🌸 Tươi tắn</span><span id="edSatVal">105%</span></div>
-                    <input type="range" id="edSatRange" min="80" max="150" value="105" class="w-full accent-rose-400" oninput="renderEditedPhoto()">
+                    <input type="range" id="edSatRange" min="75" max="155" value="105" class="w-full accent-rose-400" oninput="renderEditedPhoto()">
+                </div>
+                <div>
+                    <div class="flex justify-between font-bold text-orange-300"><span>🔥 Độ ấm màu</span><span id="edWarmVal">0%</span></div>
+                    <input type="range" id="edWarmRange" min="0" max="30" value="0" class="w-full accent-orange-400" oninput="renderEditedPhoto()">
                 </div>
             </div>
 
@@ -332,7 +369,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT CHÍNH CỦA KIM BLING STUDIO PRO -->
+    <!-- SCRIPT CHÍNH (QUAY VIDEO CHUẨN IPHONE + CÁC TÍNH NĂNG CŨ) -->
     <script>
         let currentCatIndex = 0;
         let currentStepIndex = 0;
@@ -340,8 +377,7 @@
         let currentCustomDish = '';
         let currentPmuType = 'may';
         let currentCapcutTab = 0;
-        let currentFilterClass = 'filter-beauty';
-        let currentCamMode = 'video';
+        let currentFilterClass = 'filter-none'; // Mặc định quay gốc giống iPhone
         let recordingMode = 'segment';
         let activeStepIndex = 0;
         let activeSubClipId = 0;
@@ -356,10 +392,10 @@
         let recordedRawBlob = null;
         let videoDuration = 0;
         let currentZoom = 1.0;
+        let videoHardwareZoom = false;
         let currentBrightness = 100;
         let currentContrast = 100;
-        let currentSkinBright = 0;
-        let currentSkinSmooth = 0;
+        let currentSaturation = 100;
         let exportInProgress = false;
         let recordingCanvasStream = null;
         let recordingAnimationId = null;
@@ -372,48 +408,28 @@
                 renderStepContent();
                 renderCaptions();
             }
-            updateSkinControls();
-        }
-
-        function toggleFilterMenu() {
-            const menu = document.getElementById('filterDropdownMenu');
-            menu.classList.toggle('hidden');
         }
 
         function setFilter(filterType, btn) {
-            document.querySelectorAll('.filter-chip').forEach(b => { 
-                b.className = "filter-chip w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300 font-black"; 
+            document.querySelectorAll('.v-filter-chip').forEach(b => {
+                b.className = "v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-slate-950 text-slate-300 font-black border border-slate-700";
             });
             if (btn) {
-                btn.className = "filter-chip w-full text-left px-3 py-2 rounded-xl bg-rose-500 text-white font-black shadow-lg";
-                document.getElementById('currentFilterLabel').innerText = btn.innerText.replace(/^[^\w\s]+/, '').trim();
+                btn.className = "v-filter-chip shrink-0 px-3.5 py-2 rounded-xl bg-rose-500 text-white font-black border border-rose-300 shadow";
             }
-            currentFilterClass = filterType === 'beauty' ? 'filter-beauty' : filterType === 'food' ? 'filter-food' : filterType === 'cinematic' ? 'filter-cinematic' : 'filter-none';
-            updateLivePreviewFilter();
-        }
-
-        function updateLivePreviewFilter() {
-            const v = document.getElementById('liveVideo'); if(!v) return;
-            const base = currentFilterClass === 'filter-beauty' ? 'brightness(1.18) contrast(.95) saturate(1.12)' : currentFilterClass === 'filter-food' ? 'saturate(1.5) contrast(1.2) brightness(1.1) sepia(.05)' : currentFilterClass === 'filter-cinematic' ? 'contrast(1.35) saturate(1.25) brightness(.92)' : '';
-            const brightFactor = 1 + (currentSkinBright * 0.008);
-            const smoothFactor = 1 + (currentSkinSmooth * 0.005);
-            v.style.filter = [base, `brightness(${brightFactor})`, `contrast(${smoothFactor})`].filter(Boolean).join(' ');
-        }
-
-        function updateSkinControls(){
-            const b = document.getElementById('skinBrightRange'), m = document.getElementById('skinSmoothRange');
-            if(b) currentSkinBright = Number(b.value) || 0;
-            if(m) currentSkinSmooth = Number(m.value) || 0;
-            document.getElementById('skinBrightVal').innerText = currentSkinBright + '%';
-            document.getElementById('skinSmoothVal').innerText = currentSkinSmooth + '%';
-            updateLivePreviewFilter();
+            currentFilterClass = filterType === 'beauty' ? 'filter-beauty'
+                              : filterType === 'food' ? 'filter-food'
+                              : filterType === 'korean' ? 'filter-korean'
+                              : filterType === 'cinematic' ? 'filter-cinematic'
+                              : 'filter-none';
+            updateVideoFilters();
         }
 
         function toggleRecordingModeQuick() {
-            if(isRecording) return;
+            if (isRecording) return;
             recordingMode = recordingMode === 'segment' ? 'unlimited' : 'segment';
             const pill = document.getElementById('modeSwitchPill');
-            if(recordingMode === 'unlimited') {
+            if (recordingMode === 'unlimited') {
                 pill.innerText = 'Vô hạn';
                 pill.className = 'px-3 py-2 rounded-2xl bg-rose-600 font-black text-white border border-rose-500 shadow';
             } else {
@@ -421,7 +437,7 @@
                 pill.className = 'px-3 py-2 rounded-2xl bg-slate-800/90 font-black text-amber-300 border border-slate-700 shadow';
             }
             const timerEl = document.getElementById('camTimer');
-            if(timerEl) timerEl.innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Vô hạn`;
+            if (timerEl) timerEl.innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Vô hạn`;
         }
 
         function setAppMode(mode) {
@@ -429,9 +445,7 @@
             if (mode === 'photo') {
                 closeCameraModal();
                 if (typeof window.openAiPhotoStudio === 'function') window.openAiPhotoStudio();
-                return;
             }
-            currentCamMode = 'video';
         }
 
         document.getElementById('recordBtn').addEventListener('click', e => {
@@ -442,25 +456,39 @@
         async function startCamera(facingMode) {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: true
+                });
                 const videoElement = document.getElementById('liveVideo');
                 videoElement.srcObject = mediaStream;
+                videoElement.style.filter = 'none'; // Luôn giữ preview video gốc chuẩn iPhone
                 await videoElement.play();
-                updateLivePreviewFilter();
+                setZoomLevel(1.0, document.getElementById('zoomBtn1'));
             } catch (err) { console.error(err); alert('Không thể mở camera. Vui lòng cấp quyền Safari.'); closeCameraModal(); }
         }
 
         function setZoomLevel(zoom, btn) {
             currentZoom = zoom;
-            document.querySelectorAll('.zoom-btn').forEach(b => { b.className = "zoom-btn px-3 py-1 rounded-full font-black text-slate-300 hover:text-white transition-all"; });
-            btn.className = "zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow transition-all";
+            videoHardwareZoom = false;
+            document.querySelectorAll('.zoom-btn').forEach(b => { b.className = "zoom-btn px-3 py-1 rounded-full font-black text-slate-200 hover:text-white transition-all"; });
+            if (btn) btn.className = "zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow transition-all";
+            const videoEl = document.getElementById('liveVideo');
+            videoEl.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scale(1.0)';
+
             if (mediaStream) {
                 const track = mediaStream.getVideoTracks()[0];
                 if (track) {
                     let capabilities = {};
-                    try { capabilities = track.getCapabilities ? track.getCapabilities() : {}; } catch(e) {}
-                    if (capabilities.zoom) track.applyConstraints({ advanced: [{ zoom }] }).catch(err => console.log("Thiết bị giới hạn mức zoom này:", err));
-                    else { const videoEl = document.getElementById('liveVideo'); videoEl.style.transform = zoom === 0.5 ? 'scale(0.85)' : zoom === 2.5 ? 'scale(2.0)' : 'scale(1.0)'; }
+                    try { capabilities = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+                    if (capabilities.zoom && zoom >= capabilities.zoom.min && zoom <= capabilities.zoom.max) {
+                        videoHardwareZoom = true;
+                        track.applyConstraints({ advanced: [{ zoom }] }).catch(() => { videoHardwareZoom = false; });
+                    } else {
+                        const mirror = currentFacingMode === 'user' ? 'scaleX(-1) ' : '';
+                        const softScale = zoom === 0.5 ? 1.0 : zoom === 2.5 ? 2.0 : 1.0;
+                        videoEl.style.transform = `${mirror}scale(${softScale})`;
+                    }
                 }
             }
         }
@@ -551,8 +579,11 @@
             document.getElementById('camClipTitle').innerText=stepIdx===1?`Đoạn 2.${subId+1}`:`Phân đoạn ${stepIdx+1}`;
             document.getElementById('camTimer').innerText=recordingMode==='segment'?`00:00 / ${targetRecordingSeconds}s`:`00:00 • Vô hạn`;
             document.getElementById('camActionGuide').innerText=guideText; document.getElementById('camSpeechPrompt').innerText=`💬 "${speechText}"`; document.getElementById('arDistanceBadge').innerText=distanceStr; document.getElementById('arAngleBadge').innerText=angleStr;
-            document.getElementById('cameraModal').classList.remove('hidden'); setZoomLevel(1.0,document.getElementById('zoomBtn1')); await startCamera(currentFacingMode);
+            document.getElementById('cameraModal').classList.remove('hidden');
+            await startCamera(currentFacingMode);
+            if (typeof window.startVideoAiMonitor === 'function') window.startVideoAiMonitor(angleStr);
         }
+
         function resetRecordButtonUI() {
             const inner = document.getElementById('recordInnerBtn');
             if (!inner) return;
@@ -562,13 +593,18 @@
         }
         function closeCameraModal() {
             if(isRecording){stopRecording();return;}
+            if (typeof window.stopVideoAiMonitor === 'function') window.stopVideoAiMonitor();
             if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
             if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
             document.getElementById('cameraModal').classList.add('hidden'); resetRecordButtonUI();
         }
         document.getElementById('switchCameraBtn').addEventListener('click',e=>{e.stopPropagation();if(isRecording)return;currentFacingMode=currentFacingMode==='environment'?'user':'environment';startCamera(currentFacingMode);});
         document.getElementById('closeCameraBtn').addEventListener('click',e=>{e.stopPropagation();closeCameraModal();});
-        document.getElementById('toggleArBtn').addEventListener('click',e=>{e.stopPropagation();const ar=document.getElementById('arOverlay');ar.style.display=ar.style.display==='none'?'flex':'none';});
+        document.getElementById('toggleArBtn').addEventListener('click',e=>{
+            e.stopPropagation();
+            const ar=document.getElementById('arOverlay');
+            ar.classList.toggle('hidden');
+        });
 
         function startRecording() {
             if(!mediaStream||!mediaStream.getVideoTracks().length){alert('Camera chưa sẵn sàng.');return;}
@@ -576,9 +612,17 @@
             const ctx=canvas.getContext('2d'); recordedChunks=[];
             function drawFrame(){
                 if(!isRecording)return;
-                const vW=videoElement.videoWidth||1280,vH=videoElement.videoHeight||720,aspect=9/16;let sw,sh,sx,sy;
-                if(vW/vH>aspect){sh=vH;sw=vH*aspect;sx=(vW-sw)/2;sy=0;}else{sw=vW;sh=vW/aspect;sx=0;sy=(vH-sh)/2;}
-                ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);ctx.filter='none';ctx.drawImage(videoElement,sx,sy,sw,sh,0,0,canvas.width,canvas.height);ctx.restore();
+                const vW=videoElement.videoWidth||1280,vH=videoElement.videoHeight||720,aspect=9/16;
+                let baseSw,baseSh;
+                if(vW/vH>aspect){baseSh=vH;baseSw=vH*aspect;}else{baseSw=vW;baseSh=vW/aspect;}
+                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0;
+                const sw = baseSw / softZoom, sh = baseSh / softZoom;
+                const sx = (vW - sw) / 2, sy = (vH - sh) / 2;
+
+                ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);
+                if (currentFacingMode === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+                ctx.drawImage(videoElement,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+                ctx.restore();
                 recordingAnimationId=requestAnimationFrame(drawFrame);
             }
             recordingCanvasStream=canvas.captureStream(30);
@@ -588,6 +632,7 @@
             mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};
             mediaRecorder.onstop=()=>{
                 if(recordingAnimationId){cancelAnimationFrame(recordingAnimationId);recordingAnimationId=null;}
+                if (typeof window.stopVideoAiMonitor === 'function') window.stopVideoAiMonitor();
                 recordedRawBlob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'video/webm'});
                 if(recordedBlobUrl)URL.revokeObjectURL(recordedBlobUrl);
                 recordedBlobUrl=URL.createObjectURL(recordedRawBlob);
@@ -605,9 +650,17 @@
         function chooseRecorderMime(types){if(typeof MediaRecorder==='undefined')return '';if(typeof MediaRecorder.isTypeSupported!=='function')return '';return types.find(t=>MediaRecorder.isTypeSupported(t))||'';}
 
         function openEditorModal(videoUrl){
-            const preview=document.getElementById('previewVideo');preview.pause();preview.src=videoUrl;preview.style.filter=getExportFilter();
+            const preview=document.getElementById('previewVideo');preview.pause();preview.src=videoUrl;
+            currentFilterClass = 'filter-none';
+            currentBrightness = 100; currentContrast = 100; currentSaturation = 100;
+            const firstChip = document.querySelector('.v-filter-chip');
+            setFilter('none', firstChip);
             preview.onloadedmetadata=()=>{videoDuration=preview.duration;document.getElementById('trimDurationText').innerText=`Gốc: ${videoDuration.toFixed(1)}s`;document.getElementById('trimStartInput').value='1.0';document.getElementById('trimEndInput').value='1.0';updateTrimTimes();};
-            document.getElementById('editorModal').classList.remove('hidden');document.getElementById('brightnessRange').value=currentBrightness;document.getElementById('contrastRange').value=currentContrast;updateVideoFilters();
+            document.getElementById('editorModal').classList.remove('hidden');
+            document.getElementById('brightnessRange').value=100;
+            document.getElementById('contrastRange').value=100;
+            document.getElementById('saturationRange').value=100;
+            updateVideoFilters();
         }
         function closeEditorModal(){if(exportInProgress)return;document.getElementById('editorModal').classList.add('hidden');const preview=document.getElementById('previewVideo');preview.pause();}
         function applyTrimPreset(preset){document.getElementById('trimStartInput').value=preset===1?'1.0':'0.0';document.getElementById('trimEndInput').value=preset===1?'1.0':'0.0';updateTrimTimes();}
@@ -616,14 +669,21 @@
             if(videoDuration>0){if(start+end>=videoDuration-0.1){end=Math.max(0,videoDuration-start-0.1);endInput.value=end.toFixed(1);}const finalDuration=Math.max(0,videoDuration-start-end);document.getElementById('trimDurationText').innerText=`Sau cắt: ${finalDuration.toFixed(1)}s`;const preview=document.getElementById('previewVideo');if(Math.abs(preview.currentTime-start)>0.15&&start<videoDuration)preview.currentTime=start;}
         }
         function getExportFilter(){
-            let base='';if(currentFilterClass==='filter-beauty')base='brightness(1.18) contrast(0.95) saturate(1.12)';else if(currentFilterClass==='filter-food')base='saturate(1.5) contrast(1.2) brightness(1.1) sepia(0.05)';else if(currentFilterClass==='filter-cinematic')base='contrast(1.35) saturate(1.25) brightness(0.92)';
-            const brightFactor = 1 + (currentSkinBright * 0.008);
-            const smoothFactor = 1 + (currentSkinSmooth * 0.005);
-            return [base, `brightness(${currentBrightness * brightFactor}%)`, `contrast(${currentContrast * smoothFactor}%)`].filter(Boolean).join(' ');
+            let base='';
+            if(currentFilterClass==='filter-beauty') base='brightness(1.12) contrast(0.96) saturate(1.10)';
+            else if(currentFilterClass==='filter-food') base='saturate(1.40) contrast(1.18) brightness(1.06) sepia(0.05)';
+            else if(currentFilterClass==='filter-korean') base='brightness(1.09) contrast(0.97) saturate(1.08)';
+            else if(currentFilterClass==='filter-cinematic') base='contrast(1.30) saturate(1.20) brightness(0.94)';
+            return [base, `brightness(${currentBrightness}%)`, `contrast(${currentContrast}%)`, `saturate(${currentSaturation}%)`].filter(Boolean).join(' ');
         }
         function updateVideoFilters(){
-            currentBrightness=Number(document.getElementById('brightnessRange').value);currentContrast=Number(document.getElementById('contrastRange').value);
-            document.getElementById('brightnessVal').innerText=currentBrightness+'%';document.getElementById('contrastVal').innerText=currentContrast+'%';document.getElementById('previewVideo').style.filter=getExportFilter();
+            currentBrightness=Number(document.getElementById('brightnessRange').value);
+            currentContrast=Number(document.getElementById('contrastRange').value);
+            currentSaturation=Number(document.getElementById('saturationRange').value);
+            document.getElementById('brightnessVal').innerText=currentBrightness+'%';
+            document.getElementById('contrastVal').innerText=currentContrast+'%';
+            document.getElementById('saturationVal').innerText=currentSaturation+'%';
+            document.getElementById('previewVideo').style.filter=getExportFilter();
         }
 
         function bakeFiltersIntoFrame(ctx, width, height) {
@@ -631,12 +691,14 @@
             const pixels = image.data;
             let brightness = 1, contrast = 1, saturation = 1, sepia = 0;
 
-            if (currentFilterClass === 'filter-beauty') { brightness = 1.18; contrast = 0.95; saturation = 1.12; }
-            else if (currentFilterClass === 'filter-food') { saturation = 1.5; contrast = 1.2; brightness = 1.1; sepia = 0.05; }
-            else if (currentFilterClass === 'filter-cinematic') { contrast = 1.35; saturation = 1.25; brightness = 0.92; }
+            if (currentFilterClass === 'filter-beauty') { brightness = 1.12; contrast = 0.96; saturation = 1.10; }
+            else if (currentFilterClass === 'filter-food') { saturation = 1.40; contrast = 1.18; brightness = 1.06; sepia = 0.05; }
+            else if (currentFilterClass === 'filter-korean') { brightness = 1.09; contrast = 0.97; saturation = 1.08; }
+            else if (currentFilterClass === 'filter-cinematic') { contrast = 1.30; saturation = 1.20; brightness = 0.94; }
 
-            brightness *= (currentBrightness / 100) * (1 + currentSkinBright * 0.008);
-            contrast *= (currentContrast / 100) * (1 + currentSkinSmooth * 0.005);
+            brightness *= (currentBrightness / 100);
+            contrast *= (currentContrast / 100);
+            saturation *= (currentSaturation / 100);
             const clamp = value => value < 0 ? 0 : value > 255 ? 255 : value;
 
             for (let i = 0; i < pixels.length; i += 4) {
@@ -733,7 +795,7 @@
         window.onload=initApp;
     </script>
 
-    <!-- MODULE SIÊU MÁY ẢNH AI (MEDIAPIPE POSE + TỰ ĐỒNG BỘ TENMON.JS) -->
+    <!-- MODULE AI HỖ TRỢ CẢ CHỤP ẢNH VÀ QUAY VIDEO -->
     <script type="module">
     import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
@@ -803,22 +865,24 @@
     ];
 
     const AI_FILTERS = [
+        { id: 'none', label: '📷 Gốc', css: 'none', b: 1.0, c: 1.0, s: 1.0, sepia: 0 },
         { id: 'korean', label: '✨ Hàn', css: 'brightness(1.09) contrast(0.97) saturate(1.08)', b: 1.09, c: 0.97, s: 1.08, sepia: 0 },
-        { id: 'natural', label: '📷 Chân thực', css: 'brightness(1.02) contrast(1.03) saturate(1.04)', b: 1.02, c: 1.03, s: 1.04, sepia: 0 },
         { id: 'pmu_true', label: '💄 Chuẩn Mực', css: 'brightness(1.06) contrast(1.05) saturate(1.00)', b: 1.06, c: 1.05, s: 1.00, sepia: 0 },
         { id: 'food', label: '🔥 Ngon Mắt', css: 'brightness(1.06) contrast(1.16) saturate(1.38)', b: 1.06, c: 1.16, s: 1.38, sepia: 0 },
-        { id: 'kodak', label: '🎞️ Film Ấm', css: 'brightness(1.02) contrast(1.12) saturate(1.20) sepia(0.12)', b: 1.02, c: 1.12, s: 1.20, sepia: 0.12 }
+        { id: 'kodak', label: '🎞️ Film Ấm', css: 'brightness(1.02) contrast(1.12) saturate(1.20) sepia(0.12)', b: 1.02, c: 1.12, s: 1.20, sepia: 0.12 },
+        { id: 'studio', label: '💎 Studio', css: 'brightness(1.12) contrast(1.06) saturate(1.05)', b: 1.12, c: 1.06, s: 1.05, sepia: 0 }
     ];
 
-    const AI_ASPECTS = ['3:4', '9:16', '4:5', '1:1'];
+    const AI_ASPECTS = ['9:16', '3:4', '4:5', '1:1'];
     const POSE_EDGES = [['head','ls'],['head','rs'],['ls','rs'],['ls','le'],['le','lw'],['rs','re'],['re','rw'],['ls','lh'],['rs','rh'],['lh','rh'],['lh','lk'],['lk','la'],['rh','rk'],['rk','ra']];
 
     let poseLandmarker = null;
     let aiStream = null;
     let aiFacing = 'environment';
     let aiZoom = 1.0;
-    let aiAspectIdx = 0;
-    let aiFilterIdx = 0;
+    let aiHardwareZoom = false;
+    let aiAspectIdx = 1; // Mặc định 3:4
+    let aiFilterIdx = 0; // Mặc định Gốc khi chụp, chỉnh hậu kỳ thông minh sau khi chụp
     let aiModeIdx = 0;
     let aiTimerSec = 0;
     let aiAutoSnap = false;
@@ -832,9 +896,17 @@
     let aiIsCountingDown = false;
     let aiLastSpeakTime = 0;
     let aiGyroBeta = 75;
+    let aiGyroGamma = 0;
     let aiCapturedCanvas = null;
     let aiBaMode = false;
     let aiBeforeCanvas = null;
+
+    // Biến cho AI hỗ trợ Quay Video
+    let videoAiEnabled = true;
+    let videoAiRafId = 0;
+    let videoAiLightTimer = 0;
+    let videoTargetAngleNum = 60;
+    let videoLastPoseTime = 0;
 
     const supportsCanvasFilter = (() => {
         try {
@@ -858,7 +930,7 @@
         if (poseLandmarker) return true;
         const badge = document.getElementById('aiPoseScoreBadge');
         try {
-            badge.innerText = '⏳ Đang tải AI...';
+            if (badge) badge.innerText = '⏳ Đang tải AI...';
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
             try {
                 poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
@@ -873,11 +945,136 @@
             }
             return true;
         } catch (e) {
-            badge.innerText = '👻 Khung AR Sẵn sàng';
+            if (badge) badge.innerText = '👻 Khung AR Sẵn sàng';
             return false;
         }
     }
 
+    // ====== TÍNH KÍCH THƯỚC KHUNG TỶ LỆ THỰC (9:16, 3:4, 4:5, 1:1) ======
+    function resizeAiCropFrame() {
+        const frame = document.getElementById('aiCropFrame');
+        if (!frame) return;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const ratioStr = AI_ASPECTS[aiAspectIdx];
+
+        if (ratioStr === '9:16') {
+            frame.style.width = vw + 'px';
+            frame.style.height = vh + 'px';
+            frame.style.borderWidth = '0px';
+            return;
+        }
+
+        const [rw, rh] = ratioStr.split(':').map(Number);
+        const targetAspect = rw / rh;
+        let boxW = vw;
+        let boxH = Math.round(vw / targetAspect);
+        if (boxH > vh) {
+            boxH = vh;
+            boxW = Math.round(vh * targetAspect);
+        }
+        frame.style.width = boxW + 'px';
+        frame.style.height = boxH + 'px';
+        frame.style.borderWidth = '1px';
+    }
+    window.addEventListener('resize', resizeAiCropFrame);
+
+    // ====== CHUYỂN NHANH TỪ ẢNH AI -> VIDEO ======
+    window.switchPhotoToVideoMode = function () {
+        window.closeAiPhotoStudio();
+        if (typeof openCameraModal === 'function' && typeof currentStepIndex !== 'undefined') {
+            openCameraModal(currentStepIndex, 0);
+        }
+    };
+
+    // ====== AI HỖ TRỢ KHI QUAY VIDEO ======
+    window.toggleVideoAiAssistant = function () {
+        videoAiEnabled = !videoAiEnabled;
+        const btn = document.getElementById('videoAiToggleBtn');
+        const statusRow = document.getElementById('videoAiStatusRow');
+        const tipBar = document.getElementById('videoAiTipBar');
+        const leveler = document.getElementById('videoLeveler');
+        btn.className = videoAiEnabled
+            ? 'px-3 py-2 rounded-2xl bg-emerald-500 text-slate-950 font-black border border-emerald-300 shadow'
+            : 'px-3 py-2 rounded-2xl bg-slate-800/90 text-slate-300 font-black border border-slate-700 shadow';
+        statusRow.style.display = videoAiEnabled ? 'flex' : 'none';
+        tipBar.style.display = videoAiEnabled ? 'flex' : 'none';
+        leveler.style.display = videoAiEnabled ? 'flex' : 'none';
+        if (!videoAiEnabled) {
+            const c = document.getElementById('videoAiCanvas');
+            if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+        }
+    };
+
+    window.startVideoAiMonitor = function (angleStr) {
+        const match = (angleStr || '').match(/\d+/);
+        videoTargetAngleNum = match ? Number(match[0]) : 60;
+        requestGyroPermission();
+        ensurePoseModel();
+
+        clearInterval(videoAiLightTimer);
+        cancelAnimationFrame(videoAiRafId);
+
+        videoAiLightTimer = setInterval(() => {
+            if (!videoAiEnabled) return;
+            const v = document.getElementById('liveVideo');
+            if (!v || v.readyState < 2) return;
+            const res = computeLightStatus(v);
+            document.getElementById('videoAiLightBadge').innerText = res;
+        }, 800);
+
+        const loop = (now) => {
+            if (document.getElementById('cameraModal').classList.contains('hidden')) return;
+            if (videoAiEnabled) {
+                const angleDiff = Math.abs(Math.round(aiGyroBeta) - videoTargetAngleNum);
+                const angleOk = angleDiff <= 12;
+                document.getElementById('videoAiAngleBadge').innerText = `📐 Góc: ${Math.round(aiGyroBeta)}° / ${videoTargetAngleNum}°`;
+                document.getElementById('videoAiAngleBadge').className = angleOk
+                    ? 'px-3 py-1 rounded-full bg-emerald-500/80 text-slate-950 font-black backdrop-blur-md shadow'
+                    : 'px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow';
+
+                const v = document.getElementById('liveVideo');
+                const c = document.getElementById('videoAiCanvas');
+                if (c && v && v.readyState >= 2 && poseLandmarker && now - videoLastPoseTime > 170) {
+                    videoLastPoseTime = now;
+                    const rect = c.getBoundingClientRect();
+                    if (c.width !== Math.round(rect.width) || c.height !== Math.round(rect.height)) {
+                        c.width = Math.max(1, Math.round(rect.width));
+                        c.height = Math.max(1, Math.round(rect.height));
+                    }
+                    const ctx = c.getContext('2d');
+                    ctx.clearRect(0, 0, c.width, c.height);
+                    try {
+                        const res = poseLandmarker.detectForVideo(v, performance.now());
+                        if (res.landmarks && res.landmarks.length > 0) {
+                            const lm = res.landmarks[0];
+                            const nose = lm[0];
+                            const cx = (typeof currentFacingMode !== 'undefined' && currentFacingMode === 'user') ? (1 - nose.x) : nose.x;
+                            // Vẽ điểm dẫn hướng nhẹ ở tâm người
+                            ctx.fillStyle = 'rgba(52, 211, 153, 0.85)';
+                            ctx.beginPath(); ctx.arc(cx * c.width, nose.y * c.height, 6, 0, Math.PI * 2); ctx.fill();
+
+                            let msg = angleOk ? '🔥 Góc máy & khung hình đẹp! Quay thôi!' : `📐 Điều chỉnh độ nghiêng máy về gần ${videoTargetAngleNum}°`;
+                            if (cx < 0.30) msg = '👉 Lia máy nhẹ sang TRÁI để chủ thể vào giữa';
+                            else if (cx > 0.70) msg = '👈 Lia máy nhẹ sang PHẢI để chủ thể vào giữa';
+                            document.getElementById('videoAiTipText').innerText = msg;
+                        } else {
+                            document.getElementById('videoAiTipText').innerText = angleOk ? '🔥 Góc máy chuẩn rồi! Đưa sản phẩm vào giữa khung' : `📐 Nghiêng máy về khoảng ${videoTargetAngleNum}°`;
+                        }
+                    } catch (e) {}
+                }
+            }
+            videoAiRafId = requestAnimationFrame(loop);
+        };
+        videoAiRafId = requestAnimationFrame(loop);
+    };
+
+    window.stopVideoAiMonitor = function () {
+        cancelAnimationFrame(videoAiRafId);
+        clearInterval(videoAiLightTimer);
+    };
+
+    // ====== MỞ / ĐÓNG SIÊU MÁY ẢNH AI ======
     window.openAiPhotoStudio = async function () {
         const { cat, pmu, dish } = getAppContext();
         document.getElementById('aiPhotoModal').classList.remove('hidden');
@@ -887,34 +1084,28 @@
             if (cat.id === 'phun-xam-tham-my') {
                 pill.innerText = pmu === 'may' ? '👁️ Phun / Sợi Mày' : '💋 Phun / Khử Môi';
                 aiModeIdx = AI_MODES.findIndex(m => m.id === 'pmu_front');
-                aiFilterIdx = AI_FILTERS.findIndex(f => f.id === 'pmu_true');
             } else if (cat.id === 'an-vat-nuong') {
                 pill.innerText = dish ? `🔥 ${dish}` : '🔥 Đồ Ăn Vặt & Nướng';
                 aiModeIdx = AI_MODES.findIndex(m => m.id === 'food_45');
-                aiFilterIdx = AI_FILTERS.findIndex(f => f.id === 'food');
             } else if (cat.id === 'tra-sua-cafe') {
                 pill.innerText = dish ? `🧋 ${dish}` : '🧋 Trà Sữa & Cà Phê';
                 aiModeIdx = AI_MODES.findIndex(m => m.id === 'drink_checkin');
-                aiFilterIdx = AI_FILTERS.findIndex(f => f.id === 'korean');
             } else if (cat.id === 'dao-tao-phun-xam') {
                 pill.innerText = '🎓 Đào Tạo Phun Xăm';
                 aiModeIdx = AI_MODES.findIndex(m => m.id === 'student_cert');
-                aiFilterIdx = 0;
             } else {
                 pill.innerText = '🏡 Vlog & Quán Kim Bling';
                 aiModeIdx = AI_MODES.findIndex(m => m.id === 'full_tall');
-                aiFilterIdx = 0;
             }
         }
         if (aiModeIdx < 0) aiModeIdx = 0;
-        if (aiFilterIdx < 0) aiFilterIdx = 0;
 
+        aiFilterIdx = 0; // Mặc định chụp ảnh gốc chuẩn iPhone, chỉnh hậu kỳ thông minh sau khi chụp
         aiBaMode = false;
         aiBeforeCanvas = null;
         updateBaUI();
         renderAiPosePresets();
         applyAiAspectUI();
-        applyAiFilterUI();
         requestGyroPermission();
         await startAiCamera(aiFacing);
         ensurePoseModel();
@@ -939,8 +1130,10 @@
             });
             const video = document.getElementById('aiPhotoVideo');
             video.srcObject = aiStream;
+            video.style.filter = 'none';
             await video.play();
-            updateAiVideoTransform();
+            const btn1x = document.querySelectorAll('.ai-zoom-btn')[1];
+            window.setAiZoom(1.0, btn1x);
         } catch (err) {
             alert('Không thể mở camera. Vui lòng cấp quyền Camera.');
             window.closeAiPhotoStudio();
@@ -952,17 +1145,31 @@
         await startAiCamera(aiFacing);
     };
 
-    function updateAiVideoTransform() {
-        const video = document.getElementById('aiPhotoVideo');
-        const mirror = aiFacing === 'user' ? 'scaleX(-1) ' : '';
-        video.style.transform = `${mirror}scale(${aiZoom})`;
-    }
-
+    // Zoom hỗ trợ 0.5x thật trên iPhone (nếu máy hỗ trợ)
     window.setAiZoom = function (z, btn) {
         aiZoom = z;
-        document.querySelectorAll('.ai-zoom-btn').forEach(b => b.className = 'ai-zoom-btn px-3 py-1 rounded-full font-black text-slate-300');
-        if (btn) btn.className = 'ai-zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950';
-        updateAiVideoTransform();
+        aiHardwareZoom = false;
+        document.querySelectorAll('.ai-zoom-btn').forEach(b => b.className = 'ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200');
+        if (btn) btn.className = 'ai-zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950';
+
+        const video = document.getElementById('aiPhotoVideo');
+        const mirror = aiFacing === 'user' ? 'scaleX(-1) ' : '';
+        video.style.transform = `${mirror}scale(1.0)`;
+
+        if (aiStream) {
+            const track = aiStream.getVideoTracks()[0];
+            if (track) {
+                let capabilities = {};
+                try { capabilities = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
+                if (capabilities.zoom && z >= capabilities.zoom.min && z <= capabilities.zoom.max) {
+                    aiHardwareZoom = true;
+                    track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { aiHardwareZoom = false; });
+                } else {
+                    const softScale = z > 1.0 ? z : 1.0;
+                    video.style.transform = `${mirror}scale(${softScale})`;
+                }
+            }
+        }
     };
 
     function renderAiPosePresets() {
@@ -972,7 +1179,7 @@
                                .sort((a, b) => b.match - a.match);
 
         document.getElementById('aiPosePresetBar').innerHTML = sorted.map(({ m, idx }) => `
-            <button onclick="selectAiMode(${idx})" class="shrink-0 px-3.5 py-2 rounded-xl border font-extrabold transition-all ${idx === aiModeIdx ? 'bg-rose-500 text-white border-rose-300 shadow' : 'bg-slate-900 text-slate-300 border-slate-700'}">
+            <button onclick="selectAiMode(${idx})" class="shrink-0 px-3.5 py-1.5 rounded-xl border font-extrabold transition-all ${idx === aiModeIdx ? 'bg-rose-500 text-white border-rose-300 shadow' : 'bg-black/60 backdrop-blur-md text-slate-200 border-white/20'}">
                 ${m.name}
             </button>
         `).join('');
@@ -996,7 +1203,7 @@
         const banner = document.getElementById('aiBaBanner');
         const ghost = document.getElementById('aiBeforeGhostImg');
         if (!aiBaMode) {
-            btn.className = 'px-3 py-2 rounded-2xl bg-slate-800/90 text-amber-300 border border-amber-400/50 font-black shadow';
+            btn.className = 'px-3 py-2 rounded-2xl bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/50 font-black shadow';
             banner.classList.add('hidden');
             ghost.classList.add('hidden');
         } else {
@@ -1013,20 +1220,13 @@
         }
     }
 
-    window.cycleAiAspect = function () { aiAspectIdx = (aiAspectIdx + 1) % AI_ASPECTS.length; applyAiAspectUI(); };
+    window.cycleAiAspect = function () {
+        aiAspectIdx = (aiAspectIdx + 1) % AI_ASPECTS.length;
+        applyAiAspectUI();
+    };
     function applyAiAspectUI() {
-        const ratio = AI_ASPECTS[aiAspectIdx];
-        document.getElementById('aiAspectBtn').innerText = ratio;
-        const frame = document.getElementById('aiCropFrame');
-        frame.style.aspectRatio = ratio.replace(':', ' / ');
-        frame.style.maxHeight = '100%'; frame.style.maxWidth = '100%';
-    }
-
-    window.cycleAiFilter = function () { aiFilterIdx = (aiFilterIdx + 1) % AI_FILTERS.length; applyAiFilterUI(); };
-    function applyAiFilterUI() {
-        const f = AI_FILTERS[aiFilterIdx];
-        document.getElementById('aiFilterQuickBtn').innerText = f.label;
-        document.getElementById('aiPhotoVideo').style.filter = f.css;
+        document.getElementById('aiAspectBtn').innerText = AI_ASPECTS[aiAspectIdx];
+        resizeAiCropFrame();
     }
 
     window.cycleAiTimer = function () {
@@ -1040,8 +1240,8 @@
         const btn = document.getElementById('aiAutoSnapBtn');
         btn.innerText = aiAutoSnap ? '🤖 Tự chụp: BẬT' : '🤖 Tự chụp: TẮT';
         btn.className = aiAutoSnap
-            ? 'px-3 py-1.5 rounded-2xl bg-emerald-500 text-slate-950 border border-emerald-300 font-black'
-            : 'px-3 py-1.5 rounded-2xl bg-slate-900/90 text-emerald-300 border border-emerald-500/50 font-black';
+            ? 'px-3 py-1 rounded-2xl bg-emerald-500 text-slate-950 border border-emerald-300 font-black'
+            : 'px-3 py-1 rounded-2xl bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/50 font-black';
     };
 
     window.toggleAiVoice = function () {
@@ -1081,21 +1281,20 @@
     function handleGyro(e) {
         if (e.beta != null) aiGyroBeta = e.beta;
         if (e.gamma == null) return;
+        aiGyroGamma = e.gamma;
         const tilt = Math.max(-25, Math.min(25, e.gamma));
+        const color = Math.abs(tilt) <= 2.5 ? '#34d399' : '#fbbf24';
         const bar = document.getElementById('aiLevelBar');
-        if (bar) {
-            bar.style.transform = `rotate(${-tilt}deg)`;
-            bar.style.backgroundColor = Math.abs(tilt) <= 2.5 ? '#34d399' : '#fbbf24';
-        }
+        if (bar) { bar.style.transform = `rotate(${-tilt}deg)`; bar.style.backgroundColor = color; }
+        const vBar = document.getElementById('videoLevelBar');
+        if (vBar) { vBar.style.transform = `rotate(${-tilt}deg)`; vBar.style.backgroundColor = color; }
     }
 
     const lightCanvas = document.createElement('canvas');
     lightCanvas.width = 48; lightCanvas.height = 48;
     const lightCtx = lightCanvas.getContext('2d', { willReadFrequently: true });
 
-    function analyzeAiLighting() {
-        const video = document.getElementById('aiPhotoVideo');
-        if (!video || video.readyState < 2) return;
+    function computeLightStatus(video) {
         lightCtx.drawImage(video, 0, 0, 48, 48);
         const data = lightCtx.getImageData(0, 0, 48, 48).data;
         let cSum = 0, cCnt = 0, eSum = 0, eCnt = 0;
@@ -1108,11 +1307,16 @@
             }
         }
         const cL = cSum / cCnt, eL = eSum / eCnt;
-        const badge = document.getElementById('aiLightBadge');
-        if (cL < 65) badge.innerText = '🌑 Thiếu sáng';
-        else if (eL - cL > 60 && cL < 115) badge.innerText = '⚠️ Ngược sáng';
-        else if (cL > 215) badge.innerText = '⚡ Hơi chói';
-        else badge.innerText = '✨ Sáng đẹp';
+        if (cL < 65) return '🌑 Thiếu sáng';
+        if (eL - cL > 60 && cL < 115) return '⚠️ Ngược sáng';
+        if (cL > 215) return '⚡ Hơi chói';
+        return '✨ Sáng đẹp';
+    }
+
+    function analyzeAiLighting() {
+        const video = document.getElementById('aiPhotoVideo');
+        if (!video || video.readyState < 2) return;
+        document.getElementById('aiLightBadge').innerText = computeLightStatus(video);
     }
 
     function startAiLoop() {
@@ -1164,7 +1368,7 @@
         ctx.lineWidth = 3;
         ctx.setLineDash([8, 6]);
         ctx.beginPath();
-        ctx.arc(w * 0.5, h * 0.52, Math.min(w, h) * 0.25, 0, Math.PI * 2);
+        ctx.arc(w * 0.5, h * 0.50, Math.min(w, h) * 0.25, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
@@ -1321,7 +1525,9 @@
         if (vw / vh > targetAspect) { baseSh = vh; baseSw = vh * targetAspect; }
         else { baseSw = vw; baseSh = vw / targetAspect; }
 
-        const sw = baseSw / aiZoom, sh = baseSh / aiZoom;
+        // Chỉ crop zoom mềm nếu máy không dùng zoom quang học phần cứng
+        const softZoom = (!aiHardwareZoom && aiZoom > 1.0) ? aiZoom : 1.0;
+        const sw = baseSw / softZoom, sh = baseSh / softZoom;
         const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
         const outW = 1080, outH = Math.round(outW / targetAspect);
 
@@ -1370,11 +1576,19 @@
         openAiPhotoEditor();
     }
 
+    // ====== STUDIO HẬU KỲ ẢNH THÔNG MINH SAU CHỤP ======
     function openAiPhotoEditor() {
+        const { cat } = getAppContext();
+        // Gợi ý sẵn bộ lọc thông minh theo ngành khi vào chỉnh ảnh (vẫn giữ nút Gốc để đổi lại)
+        if (cat && cat.id === 'an-vat-nuong') aiFilterIdx = 3;
+        else if (cat && cat.id === 'phun-xam-tham-my') aiFilterIdx = 2;
+        else aiFilterIdx = 1;
+
         document.getElementById('aiPhotoEditorModal').classList.remove('hidden');
         document.getElementById('edBrightRange').value = 100;
         document.getElementById('edContrastRange').value = 100;
         document.getElementById('edSatRange').value = 105;
+        document.getElementById('edWarmRange').value = 0;
         renderEditorFilterChips();
         updateAiCaptionPreview();
         window.renderEditedPhoto();
@@ -1382,11 +1596,36 @@
 
     window.closeAiPhotoEditor = function () { document.getElementById('aiPhotoEditorModal').classList.add('hidden'); };
 
+    window.applySmartAutoEnhance = function () {
+        const { cat } = getAppContext();
+        if (cat && cat.id === 'an-vat-nuong') {
+            aiFilterIdx = 3;
+            document.getElementById('edBrightRange').value = 105;
+            document.getElementById('edContrastRange').value = 112;
+            document.getElementById('edSatRange').value = 120;
+            document.getElementById('edWarmRange').value = 8;
+        } else if (cat && cat.id === 'phun-xam-tham-my') {
+            aiFilterIdx = 2;
+            document.getElementById('edBrightRange').value = 108;
+            document.getElementById('edContrastRange').value = 103;
+            document.getElementById('edSatRange').value = 102;
+            document.getElementById('edWarmRange').value = 0;
+        } else {
+            aiFilterIdx = 1;
+            document.getElementById('edBrightRange').value = 106;
+            document.getElementById('edContrastRange').value = 105;
+            document.getElementById('edSatRange').value = 110;
+            document.getElementById('edWarmRange').value = 4;
+        }
+        renderEditorFilterChips();
+        window.renderEditedPhoto();
+    };
+
     window.toggleAiWatermark = function () {
         aiWatermarkOn = !aiWatermarkOn;
         const btn = document.getElementById('aiWatermarkBtn');
-        btn.innerText = aiWatermarkOn ? 'ĐANG BẬT' : 'ĐÃ TẮT';
-        btn.className = aiWatermarkOn ? 'px-4 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-black' : 'px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 font-black';
+        btn.innerText = aiWatermarkOn ? '🏷️ Tem KB: BẬT' : '🏷️ Tem KB: TẮT';
+        btn.className = aiWatermarkOn ? 'py-2.5 px-3 rounded-xl bg-emerald-500 text-slate-950 font-black shadow' : 'py-2.5 px-3 rounded-xl bg-slate-800 text-slate-300 font-black shadow';
         window.renderEditedPhoto();
     };
 
@@ -1396,15 +1635,15 @@
         `).join('');
     }
 
-    window.selectEditorFilter = function (idx) { aiFilterIdx = idx; renderEditorFilterChips(); applyAiFilterUI(); window.renderEditedPhoto(); };
+    window.selectEditorFilter = function (idx) { aiFilterIdx = idx; renderEditorFilterChips(); window.renderEditedPhoto(); };
 
-    function applyPixelFilterFallback(ctx, w, h, f, bPct, cPct, sPct) {
+    function applyPixelFilterFallback(ctx, w, h, f, bPct, cPct, sPct, warmPct) {
         const img = ctx.getImageData(0, 0, w, h);
         const d = img.data;
         const brightness = f.b * (bPct / 100);
         const contrast = f.c * (cPct / 100);
         const saturation = f.s * (sPct / 100);
-        const sepia = f.sepia || 0;
+        const sepia = Math.min(1, (f.sepia || 0) + (warmPct / 100));
         const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
 
         for (let i = 0; i < d.length; i += 4) {
@@ -1435,20 +1674,24 @@
         const b = Number(document.getElementById('edBrightRange').value);
         const c = Number(document.getElementById('edContrastRange').value);
         const s = Number(document.getElementById('edSatRange').value);
+        const w = Number(document.getElementById('edWarmRange').value);
         document.getElementById('edBrightVal').innerText = b + '%';
         document.getElementById('edContrastVal').innerText = c + '%';
         document.getElementById('edSatVal').innerText = s + '%';
+        document.getElementById('edWarmVal').innerText = w + '%';
 
         const ctx = preview.getContext('2d', { willReadFrequently: !supportsCanvasFilter });
         const f = AI_FILTERS[aiFilterIdx];
 
         if (supportsCanvasFilter) {
-            ctx.filter = `${f.css} brightness(${b}%) contrast(${c}%) saturate(${s}%)`;
+            const baseCss = f.css === 'none' ? '' : f.css;
+            const warmCss = w > 0 ? `sepia(${w}%)` : '';
+            ctx.filter = `${baseCss} brightness(${b}%) contrast(${c}%) saturate(${s}%) ${warmCss}`.trim();
             ctx.drawImage(aiCapturedCanvas, 0, 0);
             ctx.filter = 'none';
         } else {
             ctx.drawImage(aiCapturedCanvas, 0, 0);
-            applyPixelFilterFallback(ctx, preview.width, preview.height, f, b, c, s);
+            applyPixelFilterFallback(ctx, preview.width, preview.height, f, b, c, s, w);
         }
 
         if (aiWatermarkOn) {
