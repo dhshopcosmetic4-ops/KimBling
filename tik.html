@@ -577,10 +577,21 @@
         async function startCamera(facingMode) {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
-                const videoElement = document.getElementById('liveVideo'); videoElement.srcObject = mediaStream;
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode,
+                        width: { ideal: 1080 },
+                        height: { ideal: 1920 },
+                        aspectRatio: { ideal: 9 / 16 },
+                        frameRate: { ideal: 30, max: 60 }
+                    },
+                    audio: true
+                });
+                const videoElement = document.getElementById('liveVideo');
+                videoElement.srcObject = mediaStream;
                 if (typeof window.applyActiveCameraPreviewStyle === 'function') window.applyActiveCameraPreviewStyle('video');
-                await videoElement.play(); setZoomLevel(1.0, document.getElementById('zoomBtn1'));
+                await videoElement.play();
+                setZoomLevel(1.0, document.getElementById('zoomBtn1'));
             } catch (err) { alert('Không thể mở camera. Vui lòng cấp quyền Safari.'); closeCameraModal(); }
         }
         function setZoomLevel(zoom, btn) {
@@ -701,35 +712,83 @@
         function startRecording() {
             if(!mediaStream||!mediaStream.getVideoTracks().length){alert('Camera chưa sẵn sàng.');return;}
             recordStartTimeMs = Date.now();
-            const videoElement=document.getElementById('liveVideo'), canvas=document.getElementById('recordCanvas'); canvas.width=1080;canvas.height=1920;
-            const ctx=canvas.getContext('2d'); recordedChunks=[];
-            function drawFrame(){
-                if(!isRecording)return;
-                const vW=videoElement.videoWidth||1280,vH=videoElement.videoHeight||720,aspect=9/16;
-                let baseSw,baseSh; if(vW/vH>aspect){baseSh=vH;baseSw=vH*aspect;}else{baseSw=vW;baseSh=vW/aspect;}
-                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0, sw = baseSw / softZoom, sh = baseSh / softZoom, sx = (vW - sw) / 2, sy = (vH - sh) / 2;
-                ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);
-                if (currentFacingMode === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-                ctx.drawImage(videoElement,sx,sy,sw,sh,0,0,canvas.width,canvas.height); ctx.restore();
-                recordingAnimationId=requestAnimationFrame(drawFrame);
+            const videoElement = document.getElementById('liveVideo');
+            const vW = videoElement.videoWidth || 1280, vH = videoElement.videoHeight || 720;
+            const isNativeVertical916 = (vH > vW) && Math.abs((vW / vH) - (9 / 16)) < 0.08;
+            const needSoftwareTransform = (currentFacingMode === 'user') || (!videoHardwareZoom && currentZoom > 1.0);
+
+            recordedChunks = [];
+            const mime = chooseRecorderMime(['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']);
+            const recOpts = mime ? { mimeType: mime, videoBitsPerSecond: 6000000 } : { videoBitsPerSecond: 6000000 };
+
+            let targetStream = null;
+            if (isNativeVertical916 && !needSoftwareTransform) {
+                // GHI TRỰC TIẾP TỪ LUỒNG CAMERA GỐC (Không qua Canvas -> Siêu mượt như iPhone!)
+                targetStream = mediaStream;
+                recordingCanvasStream = null;
+            } else {
+                // Chỉ dùng Canvas (720x1280) khi cần cắt dọc hoặc lật gương camera trước
+                const canvas = document.getElementById('recordCanvas');
+                canvas.width = 720; canvas.height = 1280;
+                const ctx = canvas.getContext('2d', { alpha: false });
+                const aspect = 9 / 16;
+                let baseSw, baseSh;
+                if (vW / vH > aspect) { baseSh = vH; baseSw = vH * aspect; } else { baseSw = vW; baseSh = vW / aspect; }
+                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0;
+                const sw = baseSw / softZoom, sh = baseSh / softZoom, sx = (vW - sw) / 2, sy = (vH - sh) / 2;
+
+                const drawFrame = () => {
+                    if (!isRecording) return;
+                    ctx.save();
+                    if (currentFacingMode === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+                    ctx.drawImage(videoElement, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                    if (typeof videoElement.requestVideoFrameCallback === 'function') {
+                        recordingAnimationId = videoElement.requestVideoFrameCallback(drawFrame);
+                    } else {
+                        recordingAnimationId = requestAnimationFrame(drawFrame);
+                    }
+                };
+                recordingCanvasStream = canvas.captureStream(30);
+                mediaStream.getAudioTracks().forEach(track => recordingCanvasStream.addTrack(track.clone()));
+                targetStream = recordingCanvasStream;
+                if (typeof videoElement.requestVideoFrameCallback === 'function') {
+                    recordingAnimationId = videoElement.requestVideoFrameCallback(drawFrame);
+                } else {
+                    recordingAnimationId = requestAnimationFrame(drawFrame);
+                }
             }
-            recordingCanvasStream=canvas.captureStream(30);
-            mediaStream.getAudioTracks().forEach(track=>recordingCanvasStream.addTrack(track.clone()));
-            const mime=chooseRecorderMime(['video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']);
-            try{mediaRecorder=new MediaRecorder(recordingCanvasStream,mime?{mimeType:mime}:{});}catch(e){try{mediaRecorder=new MediaRecorder(recordingCanvasStream);}catch(err){recordingCanvasStream.getTracks().forEach(t=>t.stop());recordingCanvasStream=null;alert('Safari không hỗ trợ ghi video.');return;}}
-            mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};
-            mediaRecorder.onstop=()=>{
+
+            try { mediaRecorder = new MediaRecorder(targetStream, recOpts); }
+            catch (e) {
+                try { mediaRecorder = new MediaRecorder(targetStream, mime ? { mimeType: mime } : {}); }
+                catch (err) {
+                    if (recordingCanvasStream) { recordingCanvasStream.getTracks().forEach(t => t.stop()); recordingCanvasStream = null; }
+                    alert('Safari không hỗ trợ ghi video.'); return;
+                }
+            }
+
+            mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
                 lastRecordedDurationSec = Math.max(1, (Date.now() - recordStartTimeMs) / 1000);
-                if(recordingAnimationId){cancelAnimationFrame(recordingAnimationId);recordingAnimationId=null;}
+                if (recordingAnimationId) {
+                    if (typeof videoElement.cancelVideoFrameCallback === 'function') videoElement.cancelVideoFrameCallback(recordingAnimationId);
+                    else cancelAnimationFrame(recordingAnimationId);
+                    recordingAnimationId = null;
+                }
                 if (typeof window.stopVideoAiMonitor === 'function') window.stopVideoAiMonitor();
-                recordedRawBlob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'video/webm'});
-                if(recordedBlobUrl)URL.revokeObjectURL(recordedBlobUrl);
-                recordedBlobUrl=URL.createObjectURL(recordedRawBlob);
-                if(recordingCanvasStream){recordingCanvasStream.getTracks().forEach(t=>t.stop());recordingCanvasStream=null;}
-                if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
-                document.getElementById('cameraModal').classList.add('hidden');openEditorModal(recordedBlobUrl);
+                recordedRawBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
+                if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+                recordedBlobUrl = URL.createObjectURL(recordedRawBlob);
+                if (recordingCanvasStream) { recordingCanvasStream.getTracks().forEach(t => t.stop()); recordingCanvasStream = null; }
+                if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+                document.getElementById('cameraModal').classList.add('hidden');
+                openEditorModal(recordedBlobUrl);
             };
-            isRecording=true;mediaRecorder.start(250);recordingAnimationId=requestAnimationFrame(drawFrame);startTimer();setRecordingUI(true);
+            isRecording = true;
+            mediaRecorder.start(1000); // Gom 1s/lần để giảm giật khung hình
+            startTimer();
+            setRecordingUI(true);
         }
         function stopRecording(){ if(!isRecording)return;isRecording=false;stopTimer();setRecordingUI(false); if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop(); else closeCameraModal(); }
         function chooseRecorderMime(types){if(typeof MediaRecorder==='undefined'||typeof MediaRecorder.isTypeSupported!=='function')return '';return types.find(t=>MediaRecorder.isTypeSupported(t))||'';}
@@ -1599,15 +1658,21 @@ Trả về JSON:
         sheetOwner = 'video'; const match = (angleStr||'').match(/\d+/); videoTargetAngleNum = match ? Number(match[0]) : 60;
         requestGyroPermission(); ensurePoseModel(); window.applyActiveCameraPreviewStyle('video');
         clearInterval(videoAiLightTimer); cancelAnimationFrame(videoAiRafId);
-        videoAiLightTimer = setInterval(() => { if (!videoAiEnabled) return; const v = document.getElementById('liveVideo'); if (v && v.readyState >= 2) document.getElementById('videoAiLightBadge').innerText = computeLightStatus(v); }, 800);
+        videoAiLightTimer = setInterval(() => {
+            if (!videoAiEnabled || (typeof isRecording !== 'undefined' && isRecording)) return; // Tạm nghỉ đo sáng khi đang quay
+            const v = document.getElementById('liveVideo');
+            if (v && v.readyState >= 2) document.getElementById('videoAiLightBadge').innerText = computeLightStatus(v);
+        }, 800);
         const loop = (now) => {
             if (document.getElementById('cameraModal').classList.contains('hidden')) return;
+            // Khi đang bấm ĐỎ quay video: Tạm dừng AI nhận diện xương để quay mượt 100%, chỉ giữ đo góc gyro!
+            const recordingNow = (typeof isRecording !== 'undefined' && isRecording);
             if (videoAiEnabled) {
                 const angleOk = Math.abs(Math.round(aiGyroBeta) - videoTargetAngleNum) <= 12, ab = document.getElementById('videoAiAngleBadge');
                 ab.innerText = `📐 Góc: ${Math.round(aiGyroBeta)}° / ${videoTargetAngleNum}°`;
                 ab.className = angleOk ? 'px-3 py-1 rounded-full bg-emerald-500/80 text-slate-950 font-black backdrop-blur-md shadow' : 'px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow';
                 const v = document.getElementById('liveVideo'), c = document.getElementById('videoAiCanvas');
-                if (c && v && v.readyState >= 2 && poseLandmarker && now - videoLastPoseTime > 170) {
+                if (!recordingNow && c && v && v.readyState >= 2 && poseLandmarker && now - videoLastPoseTime > 170) {
                     videoLastPoseTime = now; const rect = c.getBoundingClientRect();
                     if (c.width !== Math.round(rect.width) || c.height !== Math.round(rect.height)) { c.width = Math.max(1, Math.round(rect.width)); c.height = Math.max(1, Math.round(rect.height)); }
                     const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height);
