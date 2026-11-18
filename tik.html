@@ -7,18 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; max-width: 100vw; }
         input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         input[type="range"].pro-slider {
-            -webkit-appearance: none; appearance: none; width: 100%; height: 38px;
+            -webkit-appearance: none; appearance: none; width: 100%; height: 36px;
             background: transparent; touch-action: none; cursor: pointer;
         }
         input[type="range"].pro-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: #334155; }
         input[type="range"].pro-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 26px; height: 26px; border-radius: 999px;
-            background: #ffffff; border: 3px solid #38bdf8; margin-top: -10px; box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 999px;
+            background: #ffffff; border: 3px solid #38bdf8; margin-top: -9px; box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
         @keyframes radarSweep {
             0% { top: 18%; opacity: 0.85; }
@@ -71,7 +71,7 @@
                 <span id="activeDishBadge" class="hidden px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black">Đã áp dụng</span>
             </div>
             <div class="flex space-x-2.5">
-                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3.5 text-white placeholder-slate-400 outline-none font-bold">
+                <input id="dishNameInput" type="text" placeholder="VD: Matcha Latte, Cà phê muối..." class="flex-1 min-w-0 bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3.5 text-white placeholder-slate-400 outline-none font-bold">
                 <button onclick="applyCustomDish()" class="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl whitespace-nowrap active:scale-95 shadow-lg">Áp dụng</button>
             </div>
             <div id="quickDishChips" class="flex flex-wrap gap-2 pt-1"></div>
@@ -96,18 +96,18 @@
     </main>
 
     <!-- MODAL HƯỚNG DẪN CAPCUT -->
-    <div id="capcutGuideModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col hidden">
-        <div class="flex items-center justify-between p-5 border-b-2 border-slate-800 bg-slate-900">
-            <div class="flex items-center space-x-3"><span class="text-3xl">🎬</span><div><h2 class="font-black text-white">Cẩm Nang Dựng CapCut Cho Người Mới</h2><p class="text-slate-300 font-semibold">Hướng dẫn chuẩn từng câu từng chữ từ cẩm nang</p></div></div>
-            <button onclick="closeCapcutGuideModal()" class="w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center font-black">✕</button>
+    <div id="capcutGuideModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
+        <div class="flex items-center justify-between p-5 border-b-2 border-slate-800 bg-slate-900 shrink-0">
+            <div class="flex items-center space-x-3 min-w-0"><span class="text-3xl">🎬</span><div class="min-w-0"><h2 class="font-black text-white truncate">Cẩm Nang Dựng CapCut</h2><p class="text-slate-300 font-semibold truncate">Hướng dẫn chuẩn từng bước</p></div></div>
+            <button onclick="closeCapcutGuideModal()" class="w-11 h-11 shrink-0 rounded-full bg-slate-800 text-white flex items-center justify-center font-black">✕</button>
         </div>
-        <div class="grid grid-cols-5 gap-1.5 p-3 bg-slate-900/80 border-b border-slate-800 text-center" id="capcutTabBar"></div>
+        <div class="grid grid-cols-5 gap-1.5 p-3 bg-slate-900/80 border-b border-slate-800 text-center shrink-0" id="capcutTabBar"></div>
         <div id="capcutGuideBody" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
-        <div class="p-5 bg-slate-900 border-t-2 border-slate-800"><button onclick="closeCapcutGuideModal()" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl shadow-xl">Đã hiểu rõ, quay lại làm video ngay</button></div>
+        <div class="p-4 bg-slate-900 border-t-2 border-slate-800 shrink-0"><button onclick="closeCapcutGuideModal()" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl shadow-xl">Đã hiểu rõ, quay lại ngay</button></div>
     </div>
 
     <!-- MODAL CAMERA VIDEO CHUẨN IPHONE + ĐẠO DIỄN AI -->
-    <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden select-none">
+    <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden select-none w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div id="videoEvCorner" class="absolute top-2 left-4 z-40 px-2 py-0.5 rounded bg-black/50 text-white font-mono font-bold pointer-events-none" style="font-size: 13px !important;">EV 0,0</div>
 
         <div class="absolute top-0 inset-x-0 z-40 flex items-center justify-between px-4 pt-9 pb-2 bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
@@ -197,77 +197,76 @@
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ VIDEO WEBGL PRO (ĐỦ 22 CÔNG CỤ NHƯ ẢNH + PLAY LẠI & TUA MƯỢT + PHÓNG TO GIỮ HIỆU ỨNG) -->
-    <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 shrink-0">
-            <button onclick="closeEditorModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black">✕</button>
-            <h2 class="font-black text-white">🎬 AI Chỉnh Video Pro</h2>
-            <button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl shadow"><span>💾</span><span> Xuất</span></button>
+    <!-- MODAL HẬU KỲ VIDEO WEBGL PRO (KHÔNG TRÀN KHUNG 100VW + PLAY LẠI & TUA MƯỢT) -->
+    <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
+        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0">
+            <button onclick="closeEditorModal()" class="w-9 h-9 shrink-0 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
+            <h2 class="font-black text-white truncate px-2">🎬 AI Chỉnh Video Pro</h2>
+            <button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="px-3.5 py-2 shrink-0 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl shadow"><span>💾</span><span> Xuất</span></button>
         </div>
 
-        <div id="previewVideoWrapper" class="relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0">
-            <!-- Opacity 0.01 (không dùng 0) để Safari luôn giải mã frame vào GPU WebGL -->
+        <div id="previewVideoWrapper" class="relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
             <video id="previewVideo" playsinline preload="auto" class="absolute inset-0 w-full h-full object-contain opacity-[0.01] pointer-events-none"></video>
             <canvas id="videoPreviewCanvas" class="relative z-10 max-w-full max-h-full object-contain rounded-xl"></canvas>
 
             <button onmousedown="holdCompareVideoOriginal(true)" onmouseup="holdCompareVideoOriginal(false)" onmouseleave="holdCompareVideoOriginal(false)" ontouchstart="holdCompareVideoOriginal(true)" ontouchend="holdCompareVideoOriginal(false)"
-                class="absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full bg-black/70 border border-white/25 text-white font-black shadow select-none" style="font-size: 13px !important;">👁️ Giữ xem Gốc</button>
-            <div id="vRetouchSummary" class="hidden absolute top-3 right-3 left-36 z-20 px-3 py-1.5 rounded-xl bg-emerald-500/90 text-slate-950 font-extrabold text-right truncate pointer-events-none shadow" style="font-size: 12px !important;"></div>
+                class="absolute top-2.5 left-2.5 z-20 px-2.5 py-1 rounded-full bg-black/75 border border-white/25 text-white font-black shadow select-none" style="font-size: 12px !important;">👁️ Gốc</button>
+            <div id="vRetouchSummary" class="hidden absolute top-2.5 right-2.5 max-w-[60%] z-20 px-2.5 py-1 rounded-xl bg-emerald-500/90 text-slate-950 font-extrabold truncate pointer-events-none shadow" style="font-size: 12px !important;"></div>
             <button id="exitVideoZoomBtn" onclick="toggleVideoPreviewFullscreen()" class="hidden absolute top-10 right-4 z-30 px-4 py-2 rounded-full bg-black/75 border border-white/30 text-white font-black shadow-xl">✕ Thu nhỏ</button>
 
-            <div class="absolute bottom-2 inset-x-3 z-20 bg-black/80 backdrop-blur-md border border-white/20 rounded-2xl px-3 py-1 flex items-center space-x-2">
-                <button onclick="togglePreviewVideoPlay()" id="vPlayPauseBtn" class="w-10 h-10 rounded-full bg-white/20 text-white font-black flex items-center justify-center shrink-0">▶️</button>
-                <input id="vScrubRange" type="range" min="0" max="100" step="0.5" value="0" class="pro-slider flex-1"
+            <div class="absolute bottom-2 inset-x-2.5 z-20 bg-black/80 backdrop-blur-md border border-white/20 rounded-2xl px-2.5 py-1 flex items-center space-x-2">
+                <button onclick="togglePreviewVideoPlay()" id="vPlayPauseBtn" class="w-9 h-9 rounded-full bg-white/20 text-white font-black flex items-center justify-center shrink-0">▶️</button>
+                <input id="vScrubRange" type="range" min="0" max="100" step="0.5" value="0" class="pro-slider flex-1 min-w-0"
                     onpointerdown="startVideoScrub()" ontouchstart="startVideoScrub()"
                     oninput="scrubPreviewVideo(this.value)"
                     onchange="endVideoScrub()" onpointerup="endVideoScrub()" ontouchend="endVideoScrub()">
-                <span id="vTimeLabel" class="font-mono text-slate-200 font-bold shrink-0" style="font-size: 13px !important;">0:00</span>
-                <button onclick="toggleVideoPreviewFullscreen()" class="w-10 h-10 rounded-full bg-sky-500/25 border border-sky-400/50 text-sky-200 font-black flex items-center justify-center shrink-0">⛶</button>
+                <span id="vTimeLabel" class="font-mono text-slate-200 font-bold shrink-0" style="font-size: 12px !important;">0:00</span>
+                <button onclick="toggleVideoPreviewFullscreen()" class="w-9 h-9 rounded-full bg-sky-500/25 border border-sky-400/50 text-sky-200 font-black flex items-center justify-center shrink-0">⛶</button>
             </div>
         </div>
 
-        <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3.5 pt-2 pb-4 space-y-2 max-w-md mx-auto w-full">
-            <div class="flex items-center justify-between bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 gap-2">
-                <span class="font-black text-rose-300 shrink-0" style="font-size: 13px !important;">✂️ Cắt:</span>
-                <button onclick="applyTrimPreset(1)" class="px-2.5 py-1 rounded-lg bg-rose-600/25 border border-rose-500 text-rose-200 font-black" style="font-size: 13px !important;">1s</button>
-                <button onclick="applyTrimPreset(0)" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-black" style="font-size: 13px !important;">Gốc</button>
-                <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-14 bg-slate-900 border border-slate-700 rounded-lg py-1 text-white font-bold text-center" onchange="updateTrimTimes()">
-                <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-14 bg-slate-900 border border-slate-700 rounded-lg py-1 text-white font-bold text-center" onchange="updateTrimTimes()">
+        <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2 w-full max-w-md mx-auto min-w-0 overflow-hidden">
+            <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 gap-1.5 w-full min-w-0">
+                <span class="font-black text-rose-300 shrink-0" style="font-size: 12px !important;">✂️ Cắt:</span>
+                <button onclick="applyTrimPreset(1)" class="px-2 py-1 rounded-lg bg-rose-600/25 border border-rose-500 text-rose-200 font-black shrink-0" style="font-size: 12px !important;">1s</button>
+                <button onclick="applyTrimPreset(0)" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 font-black shrink-0" style="font-size: 12px !important;">Gốc</button>
+                <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-12 bg-slate-900 border border-slate-700 rounded-lg py-0.5 text-white font-bold text-center" onchange="updateTrimTimes()">
+                <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-12 bg-slate-900 border border-slate-700 rounded-lg py-0.5 text-white font-bold text-center" onchange="updateTrimTimes()">
                 <span id="trimDurationText" class="text-amber-300 font-bold truncate" style="font-size: 12px !important;">--s</span>
             </div>
 
-            <div class="flex items-center space-x-3.5 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1.5">
-                <button onclick="switchVideoEditorTab('smart')" id="vTabSmart" class="shrink-0 font-black text-slate-400">Thông minh</button>
-                <button onclick="switchVideoEditorTab('beauty')" id="vTabBeauty" class="shrink-0 font-black text-rose-400 border-b-2 border-rose-400 pb-0.5">Da & Dáng</button>
-                <button onclick="switchVideoEditorTab('adjust')" id="vTabAdjust" class="shrink-0 font-black text-slate-400">Ánh sáng & Màu</button>
-                <button onclick="switchVideoEditorTab('filter')" id="vTabFilter" class="shrink-0 font-black text-slate-400">Bộ lọc</button>
+            <div class="flex items-center space-x-3.5 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1.5 w-full">
+                <button onclick="switchVideoEditorTab('smart')" id="vTabSmart" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Thông minh</button>
+                <button onclick="switchVideoEditorTab('beauty')" id="vTabBeauty" class="shrink-0 font-black text-rose-400 border-b-2 border-rose-400 pb-0.5" style="font-size: 14px !important;">Da & Dáng</button>
+                <button onclick="switchVideoEditorTab('adjust')" id="vTabAdjust" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Ánh sáng & Màu</button>
+                <button onclick="switchVideoEditorTab('filter')" id="vTabFilter" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Bộ lọc</button>
             </div>
 
-            <div id="vPanelSmart" class="hidden flex space-x-3 overflow-x-auto no-scrollbar py-1">
-                <button onclick="applyVideoSmartAutoEnhance()" class="shrink-0 flex flex-col items-center space-y-1.5 px-3 py-2 rounded-2xl bg-slate-950 border border-indigo-500/60">
-                    <span class="w-11 h-11 rounded-full bg-indigo-500/25 text-indigo-300 flex items-center justify-center text-xl">🪄</span>
-                    <span id="vSmartEnhanceLabel" class="font-bold text-slate-100" style="font-size: 13px !important;">AI Chỉnh Đẹp</span>
+            <div id="vPanelSmart" class="hidden flex space-x-3 overflow-x-auto no-scrollbar py-1 w-full">
+                <button onclick="applyVideoSmartAutoEnhance()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-indigo-500/60">
+                    <span class="w-10 h-10 rounded-full bg-indigo-500/25 text-indigo-300 flex items-center justify-center text-lg">🪄</span>
+                    <span id="vSmartEnhanceLabel" class="font-bold text-slate-100" style="font-size: 12px !important;">AI Chỉnh Đẹp</span>
                 </button>
-                <button onclick="resetAllVideoAdjustments()" class="shrink-0 flex flex-col items-center space-y-1.5 px-3 py-2 rounded-2xl bg-slate-950 border border-slate-700">
-                    <span class="w-11 h-11 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center text-xl">↺</span>
-                    <span class="font-bold text-slate-200" style="font-size: 13px !important;">Về Video Gốc</span>
+                <button onclick="resetAllVideoAdjustments()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-slate-700">
+                    <span class="w-10 h-10 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center text-lg">↺</span>
+                    <span class="font-bold text-slate-200" style="font-size: 12px !important;">Về Video Gốc</span>
                 </button>
             </div>
 
-            <div id="vPanelFilter" class="hidden flex space-x-2 overflow-x-auto no-scrollbar py-2"></div>
+            <div id="vPanelFilter" class="hidden flex space-x-2 overflow-x-auto no-scrollbar py-1.5 w-full"></div>
 
-            <div id="vPanelAdjustWrap" class="space-y-2">
-                <div id="vAdjustButtonsRow" class="flex space-x-3 overflow-x-auto no-scrollbar py-1"></div>
-                <div class="bg-slate-950 rounded-2xl px-3.5 py-2 border border-slate-800 space-y-1">
+            <div id="vPanelAdjustWrap" class="space-y-1.5 w-full min-w-0">
+                <div id="vAdjustButtonsRow" class="flex space-x-2.5 overflow-x-auto no-scrollbar py-1 w-full"></div>
+                <div class="bg-slate-950 rounded-2xl px-3 py-1.5 border border-slate-800 space-y-0.5 w-full">
                     <div class="flex items-center justify-between">
-                        <span id="vActiveToolLabel" class="font-bold text-sky-300">✨ Trắng da</span>
-                        <span id="vActiveToolVal" class="font-mono font-black text-white">0</span>
+                        <span id="vActiveToolLabel" class="font-bold text-sky-300" style="font-size: 14px !important;">✨ Trắng da</span>
+                        <span id="vActiveToolVal" class="font-mono font-black text-white" style="font-size: 14px !important;">0</span>
                     </div>
                     <input id="vActiveToolSlider" type="range" min="0" max="100" value="0" class="pro-slider" oninput="onVideoSingleSliderInput(this.value)" onchange="onVideoSingleSliderCommit()">
                     <div class="flex justify-between items-center">
-                        <button onclick="resetCurrentVideoTool()" class="text-slate-400 hover:text-white font-bold flex items-center space-x-1" style="font-size: 14px !important;"><span>↺</span><span>Đặt lại</span></button>
-                        <button onclick="applyVideoSmartAutoEnhance()" class="text-indigo-400 font-black" style="font-size: 14px !important;">🪄 AI Tự Chỉnh</button>
-                        <button onclick="resetAllVideoAdjustments()" class="text-rose-400 font-bold" style="font-size: 14px !important;">Video gốc</button>
+                        <button onclick="resetCurrentVideoTool()" class="text-slate-400 hover:text-white font-bold" style="font-size: 13px !important;">↺ Đặt lại</button>
+                        <button onclick="applyVideoSmartAutoEnhance()" class="text-indigo-400 font-black" style="font-size: 13px !important;">🪄 AI Tự Chỉnh</button>
+                        <button onclick="resetAllVideoAdjustments()" class="text-rose-400 font-bold" style="font-size: 13px !important;">Video gốc</button>
                     </div>
                 </div>
             </div>
@@ -275,7 +274,7 @@
     </div>
 
     <!-- MODAL SIÊU MÁY ẢNH AI + RADAR QUÉT CẢNH TRỰC QUAN -->
-    <div id="aiPhotoModal" class="fixed inset-0 z-50 bg-black overflow-hidden hidden select-none">
+    <div id="aiPhotoModal" class="fixed inset-0 z-50 bg-black overflow-hidden hidden select-none w-full max-w-[100vw] h-[100dvh]">
         <div id="frontFlashOverlay" class="hidden fixed inset-0 z-[70] bg-white pointer-events-none"></div>
         <div id="photoEvCorner" class="absolute top-2 left-4 z-40 px-2 py-0.5 rounded bg-black/50 text-white font-mono font-bold pointer-events-none" style="font-size: 13px !important;">EV 0,0</div>
 
@@ -363,7 +362,7 @@
     </div>
 
     <!-- LỚP RADAR QUÉT GÓC TRỰC QUAN TRONG SUỐT TRÊN CAMERA -->
-    <div id="aiDirectorModal" class="fixed inset-0 z-[65] pointer-events-none hidden flex flex-col justify-between">
+    <div id="aiDirectorModal" class="fixed inset-0 z-[65] pointer-events-none hidden flex flex-col justify-between w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div class="bg-gradient-to-b from-black/90 via-black/70 to-transparent px-4 pt-9 pb-4 space-y-2.5 pointer-events-auto">
             <div class="flex items-center justify-between">
                 <button onclick="closeAiDirector()" class="px-3.5 py-2 rounded-full bg-slate-800/90 text-white font-black border border-white/20">✕ Đóng</button>
@@ -443,69 +442,69 @@
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ ẢNH AI PRO -->
-    <div id="aiPhotoEditorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 shrink-0">
-            <button onclick="closeAiPhotoEditor()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black">✕</button>
-            <h2 class="font-black text-white">✨ AI Làm Đẹp & Chỉnh Ảnh</h2>
-            <button onclick="saveOrShareAiPhoto()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow">💾 Lưu</button>
+    <!-- MODAL HẬU KỲ ẢNH AI PRO (ĐÃ FIX TRÀN KHUNG IPHONE 100%) -->
+    <div id="aiPhotoEditorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
+        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0">
+            <button onclick="closeAiPhotoEditor()" class="w-9 h-9 shrink-0 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
+            <h2 class="font-black text-white truncate px-2">✨ AI Làm Đẹp & Chỉnh Ảnh</h2>
+            <button onclick="saveOrShareAiPhoto()" class="px-3.5 py-2 shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow">💾 Lưu</button>
         </div>
 
-        <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden p-2 min-h-0">
+        <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
             <canvas id="aiEditedPreviewCanvas" class="max-w-full max-h-full object-contain rounded-xl"></canvas>
             <button onmousedown="holdCompareOriginal(true)" onmouseup="holdCompareOriginal(false)" onmouseleave="holdCompareOriginal(false)" ontouchstart="holdCompareOriginal(true)" ontouchend="holdCompareOriginal(false)"
-                class="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/70 border border-white/25 text-white font-black shadow select-none" style="font-size: 13px !important;">👁️ Giữ xem Gốc</button>
-            <div id="aiRetouchSummary" class="hidden absolute top-3 right-3 left-36 px-3 py-1.5 rounded-xl bg-emerald-500/90 text-slate-950 font-extrabold text-right truncate pointer-events-none shadow" style="font-size: 12px !important;"></div>
-            <div id="aiWatermarkPreviewBadge" class="absolute bottom-4 right-4 px-3 py-1 rounded-lg bg-slate-900/75 text-amber-300 font-black pointer-events-none shadow" style="font-size: 12px !important;">✨ Kim Bling Studio Pro</div>
+                class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/75 border border-white/25 text-white font-black shadow select-none" style="font-size: 12px !important;">👁️ Gốc</button>
+            <div id="aiRetouchSummary" class="hidden absolute top-2.5 right-2.5 max-w-[65%] px-2.5 py-1 rounded-xl bg-emerald-500/90 text-slate-950 font-extrabold truncate pointer-events-none shadow" style="font-size: 12px !important;"></div>
+            <div id="aiWatermarkPreviewBadge" class="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-slate-900/75 text-amber-300 font-black pointer-events-none shadow" style="font-size: 11px !important;">✨ Kim Bling Studio</div>
         </div>
 
-        <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3.5 pt-2.5 pb-5 space-y-2 max-w-md mx-auto w-full">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2 gap-2">
-                <div class="flex items-center space-x-3.5 overflow-x-auto no-scrollbar">
-                    <button onclick="switchPhotoEditorTab('smart')" id="pTabSmart" class="shrink-0 font-black text-slate-400">Thông minh</button>
-                    <button onclick="switchPhotoEditorTab('beauty')" id="pTabBeauty" class="shrink-0 font-black text-rose-400 border-b-2 border-rose-400 pb-0.5">Da & Dáng</button>
-                    <button onclick="switchPhotoEditorTab('adjust')" id="pTabAdjust" class="shrink-0 font-black text-slate-400">Ánh sáng & Màu</button>
-                    <button onclick="switchPhotoEditorTab('filter')" id="pTabFilter" class="shrink-0 font-black text-slate-400">Bộ lọc</button>
+        <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2 w-full max-w-md mx-auto min-w-0 overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 gap-2 w-full min-w-0">
+                <div class="flex items-center space-x-3 overflow-x-auto no-scrollbar min-w-0 flex-1">
+                    <button onclick="switchPhotoEditorTab('smart')" id="pTabSmart" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Thông minh</button>
+                    <button onclick="switchPhotoEditorTab('beauty')" id="pTabBeauty" class="shrink-0 font-black text-rose-400 border-b-2 border-rose-400 pb-0.5" style="font-size: 14px !important;">Da & Dáng</button>
+                    <button onclick="switchPhotoEditorTab('adjust')" id="pTabAdjust" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Ánh sáng & Màu</button>
+                    <button onclick="switchPhotoEditorTab('filter')" id="pTabFilter" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Bộ lọc</button>
                 </div>
-                <button onclick="copyAiPhotoCaption()" id="aiCopyCapBtn" class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600/80 text-white font-bold" style="font-size: 12px !important;">📋 Chép</button>
+                <button onclick="copyAiPhotoCaption()" id="aiCopyCapBtn" class="shrink-0 px-2.5 py-1 rounded-lg bg-indigo-600/85 text-white font-bold" style="font-size: 12px !important;">📋 Chép</button>
             </div>
 
-            <div id="pPanelSmart" class="hidden flex space-x-3 overflow-x-auto no-scrollbar py-1">
-                <button onclick="applySmartAutoEnhance()" class="shrink-0 flex flex-col items-center space-y-1.5 px-3 py-2 rounded-2xl bg-slate-950 border border-indigo-500/60">
-                    <span class="w-11 h-11 rounded-full bg-indigo-500/25 text-indigo-300 flex items-center justify-center text-xl">🪄</span>
-                    <span id="smartEnhanceLabel" class="font-bold text-slate-100" style="font-size: 13px !important;">AI Chỉnh Đẹp</span>
+            <div id="pPanelSmart" class="hidden flex space-x-3 overflow-x-auto no-scrollbar py-1 w-full">
+                <button onclick="applySmartAutoEnhance()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-indigo-500/60">
+                    <span class="w-10 h-10 rounded-full bg-indigo-500/25 text-indigo-300 flex items-center justify-center text-lg">🪄</span>
+                    <span id="smartEnhanceLabel" class="font-bold text-slate-100" style="font-size: 12px !important;">AI Chỉnh Đẹp</span>
                 </button>
-                <button onclick="toggleAiWatermark()" id="aiWatermarkBtn" class="shrink-0 flex flex-col items-center space-y-1.5 px-3 py-2 rounded-2xl bg-slate-950 border border-emerald-500/50">
-                    <span class="w-11 h-11 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xl">🏷️</span>
-                    <span id="aiWatermarkLabel" class="font-bold text-emerald-300" style="font-size: 13px !important;">Tem KB: BẬT</span>
+                <button onclick="toggleAiWatermark()" id="aiWatermarkBtn" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-emerald-500/50">
+                    <span class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-lg">🏷️</span>
+                    <span id="aiWatermarkLabel" class="font-bold text-emerald-300" style="font-size: 12px !important;">Tem KB: BẬT</span>
                 </button>
-                <button onclick="resetAllPhotoAdjustments()" class="shrink-0 flex flex-col items-center space-y-1.5 px-3 py-2 rounded-2xl bg-slate-950 border border-slate-700">
-                    <span class="w-11 h-11 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center text-xl">↺</span>
-                    <span class="font-bold text-slate-200" style="font-size: 13px !important;">Về Ảnh Gốc</span>
+                <button onclick="resetAllPhotoAdjustments()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-slate-700">
+                    <span class="w-10 h-10 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center text-lg">↺</span>
+                    <span class="font-bold text-slate-200" style="font-size: 12px !important;">Về Ảnh Gốc</span>
                 </button>
             </div>
 
-            <div id="pPanelFilter" class="hidden flex space-x-2 overflow-x-auto no-scrollbar py-2"></div>
+            <div id="pPanelFilter" class="hidden flex space-x-2 overflow-x-auto no-scrollbar py-1.5 w-full"></div>
 
-            <div id="pPanelAdjustWrap" class="space-y-2">
-                <div id="pAdjustButtonsRow" class="flex space-x-3 overflow-x-auto no-scrollbar py-1"></div>
-                <div class="bg-slate-950 rounded-2xl px-3.5 py-2 border border-slate-800 space-y-1">
+            <div id="pPanelAdjustWrap" class="space-y-1.5 w-full min-w-0">
+                <div id="pAdjustButtonsRow" class="flex space-x-2.5 overflow-x-auto no-scrollbar py-1 w-full"></div>
+                <div class="bg-slate-950 rounded-2xl px-3 py-1.5 border border-slate-800 space-y-0.5 w-full">
                     <div class="flex items-center justify-between">
-                        <span id="pActiveToolLabel" class="font-bold text-sky-300">✨ Trắng da</span>
-                        <span id="pActiveToolVal" class="font-mono font-black text-white">0</span>
+                        <span id="pActiveToolLabel" class="font-bold text-sky-300" style="font-size: 14px !important;">✨ Trắng da</span>
+                        <span id="pActiveToolVal" class="font-mono font-black text-white" style="font-size: 14px !important;">0</span>
                     </div>
                     <input id="pActiveToolSlider" type="range" min="0" max="100" value="0" class="pro-slider" oninput="onPhotoSingleSliderInput(this.value)" onchange="onPhotoSingleSliderCommit()">
                     <div class="flex justify-between items-center">
-                        <button onclick="resetCurrentPhotoTool()" class="text-slate-400 hover:text-white font-bold flex items-center space-x-1" style="font-size: 14px !important;"><span>↺</span><span>Đặt lại</span></button>
-                        <button onclick="applySmartAutoEnhance()" class="text-indigo-400 font-black" style="font-size: 14px !important;">🪄 AI Tự Chỉnh</button>
-                        <button onclick="resetAllPhotoAdjustments()" class="text-rose-400 font-bold" style="font-size: 14px !important;">Ảnh gốc</button>
+                        <button onclick="resetCurrentPhotoTool()" class="text-slate-400 hover:text-white font-bold" style="font-size: 13px !important;">↺ Đặt lại</button>
+                        <button onclick="applySmartAutoEnhance()" class="text-indigo-400 font-black" style="font-size: 13px !important;">🪄 AI Tự Chỉnh</button>
+                        <button onclick="resetAllPhotoAdjustments()" class="text-rose-400 font-bold" style="font-size: 13px !important;">Ảnh gốc</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT CƠ BẢN (ĐÃ FIX PLAY LẠI + KÉO THANH TUA VIDEO MƯỢT) -->
+    <!-- SCRIPT CƠ BẢN -->
     <script>
         let currentCatIndex = 0, currentStepIndex = 0, currentHookIndex = 0, currentCustomDish = '', currentPmuType = 'may', currentCapcutTab = 0;
         let recordingMode = 'segment', activeStepIndex = 0, activeSubClipId = 0;
@@ -518,107 +517,60 @@
             if (typeof categoriesData !== 'undefined') { renderCategories(); renderSubControls(); renderStepTabs(); renderStepContent(); renderCaptions(); }
             setupPreviewVideoEvents();
         }
-
         function getSafeVideoDuration(pv) {
             if (pv && Number.isFinite(pv.duration) && pv.duration > 0.1 && pv.duration < 36000) return pv.duration;
-            if (pv && pv.seekable && pv.seekable.length > 0) {
-                const end = pv.seekable.end(pv.seekable.length - 1);
-                if (Number.isFinite(end) && end > 0.1) return end;
-            }
+            if (pv && pv.seekable && pv.seekable.length > 0) { const end = pv.seekable.end(pv.seekable.length - 1); if (Number.isFinite(end) && end > 0.1) return end; }
             return lastRecordedDurationSec || 5;
         }
-
         function startVideoScrub() { isScrubbingVideo = true; }
         function endVideoScrub() { isScrubbingVideo = false; }
-
         function setupPreviewVideoEvents() {
-            const pv = document.getElementById('previewVideo');
-            if (!pv) return;
-            pv.addEventListener('loadeddata', () => {
-                if (typeof window.initVideoWebGLPreview === 'function') window.initVideoWebGLPreview();
-            });
+            const pv = document.getElementById('previewVideo'); if (!pv) return;
+            pv.addEventListener('loadeddata', () => { if (typeof window.initVideoWebGLPreview === 'function') window.initVideoWebGLPreview(); });
             pv.addEventListener('timeupdate', () => {
-                if (isScrubbingVideo) return;
-                const dur = getSafeVideoDuration(pv);
-                if (dur <= 0) return;
+                if (isScrubbingVideo) return; const dur = getSafeVideoDuration(pv); if (dur <= 0) return;
                 document.getElementById('vScrubRange').value = Math.min(100, Math.max(0, (pv.currentTime / dur) * 100));
-                const s = Math.floor(pv.currentTime);
-                document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+                const s = Math.floor(pv.currentTime); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
             });
-            pv.addEventListener('seeked', () => {
-                if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
-            });
+            pv.addEventListener('seeked', () => { if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow(); });
             pv.addEventListener('ended', () => {
-                document.getElementById('vPlayPauseBtn').innerText = '▶️';
-                document.getElementById('vScrubRange').value = 0;
-                document.getElementById('vTimeLabel').innerText = '0:00';
+                document.getElementById('vPlayPauseBtn').innerText = '▶️'; document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00';
                 try { pv.currentTime = 0; } catch (e) {}
                 setTimeout(() => { if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow(); }, 60);
             });
         }
-
         async function togglePreviewVideoPlay() {
-            const pv = document.getElementById('previewVideo'), btn = document.getElementById('vPlayPauseBtn');
-            if (!pv) return;
+            const pv = document.getElementById('previewVideo'), btn = document.getElementById('vPlayPauseBtn'); if (!pv) return;
             const dur = getSafeVideoDuration(pv);
             if (pv.paused || pv.ended) {
-                if (pv.ended || pv.currentTime >= dur - 0.12) {
-                    try { pv.currentTime = 0; } catch (e) {}
-                    document.getElementById('vScrubRange').value = 0;
-                    document.getElementById('vTimeLabel').innerText = '0:00';
+                if (pv.ended || pv.currentTime >= dur - 0.12) { try { pv.currentTime = 0; } catch (e) {} document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00'; }
+                try { await pv.play(); btn.innerText = '⏸️'; if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); }
+                catch (err) {
+                    try { pv.load(); await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 450); }); pv.currentTime = 0; await pv.play(); btn.innerText = '⏸️'; if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); } catch (e2) {}
                 }
-                try {
-                    await pv.play();
-                    btn.innerText = '⏸️';
-                    if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop();
-                } catch (err) {
-                    try {
-                        pv.load();
-                        await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 450); });
-                        pv.currentTime = 0;
-                        await pv.play();
-                        btn.innerText = '⏸️';
-                        if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop();
-                    } catch (e2) {}
-                }
-            } else {
-                pv.pause();
-                btn.innerText = '▶️';
-            }
+            } else { pv.pause(); btn.innerText = '▶️'; }
         }
-
         function scrubPreviewVideo(pct) {
-            const pv = document.getElementById('previewVideo');
-            if (!pv) return;
-            const dur = getSafeVideoDuration(pv);
-            let target = (Number(pct) / 100) * dur;
-            if (pv.seekable && pv.seekable.length > 0) {
-                const s0 = pv.seekable.start(0), s1 = pv.seekable.end(pv.seekable.length - 1);
-                target = Math.max(s0, Math.min(Math.max(s0, s1 - 0.03), target));
-            }
+            const pv = document.getElementById('previewVideo'); if (!pv) return;
+            const dur = getSafeVideoDuration(pv); let target = (Number(pct) / 100) * dur;
+            if (pv.seekable && pv.seekable.length > 0) { const s0 = pv.seekable.start(0), s1 = pv.seekable.end(pv.seekable.length - 1); target = Math.max(s0, Math.min(Math.max(s0, s1 - 0.03), target)); }
             try { pv.currentTime = target; } catch (e) {}
-            const s = Math.floor(target);
-            document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+            const s = Math.floor(target); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
             if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
         }
-
         function toggleVideoPreviewFullscreen() {
             vFullscreenActive = !vFullscreenActive;
             const wrap = document.getElementById('previewVideoWrapper'), exitBtn = document.getElementById('exitVideoZoomBtn');
             if (vFullscreenActive) { wrap.className = 'fixed inset-0 z-[80] bg-black flex flex-col items-center justify-center'; exitBtn.classList.remove('hidden'); }
-            else { wrap.className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0'; exitBtn.classList.add('hidden'); }
+            else { wrap.className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full'; exitBtn.classList.add('hidden'); }
         }
-
         function toggleRecordingModeQuick() {
-            if (isRecording) return;
-            recordingMode = recordingMode === 'segment' ? 'unlimited' : 'segment';
+            if (isRecording) return; recordingMode = recordingMode === 'segment' ? 'unlimited' : 'segment';
             const pill = document.getElementById('modeSwitchPill');
             pill.innerText = recordingMode === 'unlimited' ? 'Vô hạn' : 'Chuẩn';
             pill.className = recordingMode === 'unlimited' ? 'px-2.5 py-2 rounded-2xl bg-rose-600 font-black text-white border border-rose-500 shadow' : 'px-2.5 py-2 rounded-2xl bg-slate-800/90 font-black text-amber-300 border border-slate-700 shadow';
-            const timerEl = document.getElementById('camTimer');
-            if (timerEl) timerEl.innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Vô hạn`;
+            const timerEl = document.getElementById('camTimer'); if (timerEl) timerEl.innerText = recordingMode === 'segment' ? `00:00 / ${targetRecordingSeconds}s` : `00:00 • Vô hạn`;
         }
-
         function setAppMode(mode) { if (!isRecording && mode === 'photo') { closeCameraModal(); if (typeof window.openAiPhotoStudio === 'function') window.openAiPhotoStudio(); } }
         document.getElementById('recordBtn').addEventListener('click', e => { e.stopPropagation(); if (!isRecording) startRecording(); else stopRecording(); });
 
@@ -626,20 +578,16 @@
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
                 mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
-                const videoElement = document.getElementById('liveVideo');
-                videoElement.srcObject = mediaStream;
+                const videoElement = document.getElementById('liveVideo'); videoElement.srcObject = mediaStream;
                 if (typeof window.applyActiveCameraPreviewStyle === 'function') window.applyActiveCameraPreviewStyle('video');
-                await videoElement.play();
-                setZoomLevel(1.0, document.getElementById('zoomBtn1'));
+                await videoElement.play(); setZoomLevel(1.0, document.getElementById('zoomBtn1'));
             } catch (err) { alert('Không thể mở camera. Vui lòng cấp quyền Safari.'); closeCameraModal(); }
         }
-
         function setZoomLevel(zoom, btn) {
             currentZoom = zoom; videoHardwareZoom = false;
             document.querySelectorAll('.zoom-btn').forEach(b => b.className = "zoom-btn px-3 py-1 rounded-full font-black text-slate-200");
             if (btn) btn.className = "zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow";
-            const videoEl = document.getElementById('liveVideo');
-            videoEl.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scale(1.0)';
+            const videoEl = document.getElementById('liveVideo'); videoEl.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scale(1.0)';
             if (mediaStream) {
                 const track = mediaStream.getVideoTracks()[0];
                 if (track) {
@@ -649,7 +597,6 @@
                 }
             }
         }
-
         function renderCategories() {
             document.getElementById('categoryGrid').innerHTML = categoriesData.map((cat, idx) => `<button onclick="selectCategory(${idx})" class="w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center space-x-4 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-rose-500 shadow-xl' : 'bg-slate-900 border-slate-800'}"><span class="text-4xl">${cat.icon}</span><div><h3 class="font-black text-white leading-snug">${cat.name}</h3><p class="text-slate-300 font-semibold mt-1">${cat.desc}</p></div></button>`).join('');
         }
@@ -759,14 +706,11 @@
             function drawFrame(){
                 if(!isRecording)return;
                 const vW=videoElement.videoWidth||1280,vH=videoElement.videoHeight||720,aspect=9/16;
-                let baseSw,baseSh;
-                if(vW/vH>aspect){baseSh=vH;baseSw=vH*aspect;}else{baseSw=vW;baseSh=vW/aspect;}
-                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0;
-                const sw = baseSw / softZoom, sh = baseSh / softZoom, sx = (vW - sw) / 2, sy = (vH - sh) / 2;
+                let baseSw,baseSh; if(vW/vH>aspect){baseSh=vH;baseSw=vH*aspect;}else{baseSw=vW;baseSh=vW/aspect;}
+                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0, sw = baseSw / softZoom, sh = baseSh / softZoom, sx = (vW - sw) / 2, sy = (vH - sh) / 2;
                 ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);
                 if (currentFacingMode === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-                ctx.drawImage(videoElement,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
-                ctx.restore();
+                ctx.drawImage(videoElement,sx,sy,sw,sh,0,0,canvas.width,canvas.height); ctx.restore();
                 recordingAnimationId=requestAnimationFrame(drawFrame);
             }
             recordingCanvasStream=canvas.captureStream(30);
@@ -787,35 +731,25 @@
             };
             isRecording=true;mediaRecorder.start(250);recordingAnimationId=requestAnimationFrame(drawFrame);startTimer();setRecordingUI(true);
         }
-        function stopRecording(){
-            if(!isRecording)return;isRecording=false;stopTimer();setRecordingUI(false);
-            if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop(); else closeCameraModal();
-        }
+        function stopRecording(){ if(!isRecording)return;isRecording=false;stopTimer();setRecordingUI(false); if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop(); else closeCameraModal(); }
         function chooseRecorderMime(types){if(typeof MediaRecorder==='undefined'||typeof MediaRecorder.isTypeSupported!=='function')return '';return types.find(t=>MediaRecorder.isTypeSupported(t))||'';}
 
         function openEditorModal(videoUrl){
             const preview=document.getElementById('previewVideo'); preview.pause(); preview.src=videoUrl; preview.load();
             vFullscreenActive = false;
-            document.getElementById('previewVideoWrapper').className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0';
+            document.getElementById('previewVideoWrapper').className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full';
             document.getElementById('exitVideoZoomBtn').classList.add('hidden');
-            document.getElementById('vPlayPauseBtn').innerText = '▶️';
-            document.getElementById('vScrubRange').value = 0;
-            document.getElementById('vTimeLabel').innerText = '0:00';
+            document.getElementById('vPlayPauseBtn').innerText = '▶️'; document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00';
             document.getElementById('trimDurationText').innerText = `${lastRecordedDurationSec.toFixed(1)}s`;
             document.getElementById('trimStartInput').value='1.0'; document.getElementById('trimEndInput').value='1.0';
-            preview.onloadedmetadata=()=>{
-                const d = getSafeVideoDuration(preview);
-                document.getElementById('trimDurationText').innerText=`${d.toFixed(1)}s`;
-                updateTrimTimes();
-            };
+            preview.onloadedmetadata=()=>{ const d = getSafeVideoDuration(preview); document.getElementById('trimDurationText').innerText=`${d.toFixed(1)}s`; updateTrimTimes(); };
             document.getElementById('editorModal').classList.remove('hidden');
             if (typeof window.openVideoProEditorSetup === 'function') window.openVideoProEditorSetup();
         }
         function closeEditorModal(){if(exportInProgress)return;vFullscreenActive=false;if(typeof window.stopVideoRenderLoop==='function')window.stopVideoRenderLoop();document.getElementById('editorModal').classList.add('hidden');document.getElementById('previewVideo').pause();}
         function applyTrimPreset(preset){document.getElementById('trimStartInput').value=preset===1?'1.0':'0.0';document.getElementById('trimEndInput').value=preset===1?'1.0':'0.0';updateTrimTimes();}
         function updateTrimTimes(){
-            const pv=document.getElementById('previewVideo'), dur=getSafeVideoDuration(pv);
-            const startInput=document.getElementById('trimStartInput'),endInput=document.getElementById('trimEndInput');
+            const pv=document.getElementById('previewVideo'), dur=getSafeVideoDuration(pv), startInput=document.getElementById('trimStartInput'),endInput=document.getElementById('trimEndInput');
             let start=Math.max(0,Number(startInput.value)||0),end=Math.max(0,Number(endInput.value)||0);
             if(dur>0){if(start+end>=dur-0.1){end=Math.max(0,dur-start-0.1);endInput.value=end.toFixed(1);}document.getElementById('trimDurationText').innerText=`${Math.max(0,dur-start-end).toFixed(1)}s`;}
         }
@@ -839,15 +773,11 @@
                 recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});const chunks=[];
                 const finished=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||'video/webm'}));recorder.onerror=()=>reject(new Error('MediaRecorder gặp lỗi.'));});
                 try { video.currentTime = start; } catch(e){}
-                await new Promise(r => setTimeout(r, 250));
-                await audioContext.resume();
+                await new Promise(r => setTimeout(r, 250)); await audioContext.resume();
                 let stopped=false;
                 function draw(){
                     if(stopped||!video||recorder.state==='inactive')return;
-                    if(video.readyState>=2){
-                        if(typeof window.renderVideoFrameToExportCanvas === 'function') window.renderVideoFrameToExportCanvas(video, ctx, 720, 1280);
-                        else ctx.drawImage(video, 0, 0, 720, 1280);
-                    }
+                    if(video.readyState>=2){ if(typeof window.renderVideoFrameToExportCanvas === 'function') window.renderVideoFrameToExportCanvas(video, ctx, 720, 1280); else ctx.drawImage(video, 0, 0, 720, 1280); }
                     if(video.currentTime>=end||video.ended){stopped=true;if(recorder.state!=='inactive')recorder.stop();return;}
                     raf=requestAnimationFrame(draw);
                 }
@@ -878,7 +808,7 @@
     </script>
     <!-- === HẾT PHẦN 1 === -->
 
-<!-- === PHẦN 2: MODULE AI CAMERA + RADAR QUÉT GÓC + WEBGL GPU 22 CÔNG CỤ CHO CẢ ẢNH & VIDEO === -->
+<!-- === PHẦN 2: WEBGL NHIẾP ẢNH + AI PHÂN LOẠI THEO CẢNH + RADAR QUÉT GÓC === -->
     <script type="module">
     import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
@@ -891,56 +821,56 @@
     let sceneCtxIdx = 0;
 
     const AI_MODES = [
-        { id: 'travel_13_right', cats: ['travel_wife','vlog-doi-thuong'], type: 'pose', name: '👩 Đứng 1/3 Phải (Ngắm cảnh)', tip: 'Đứng vào vạch 1/3 bên phải để chừa không gian cảnh đẹp bên trái, 1 chân bước nhẹ', pts: { head:[0.66,0.28], ls:[0.60,0.38], rs:[0.72,0.38], le:[0.57,0.49], re:[0.76,0.49], lw:[0.62,0.58], rw:[0.73,0.58], lh:[0.62,0.57], rh:[0.70,0.57], lk:[0.60,0.74], rk:[0.71,0.74], la:[0.58,0.90], ra:[0.72,0.90] } },
-        { id: 'travel_lookback', cats: ['travel_wife'], type: 'pose', name: '💃 Quay lưng Ngoái nhìn', tip: 'Quay lưng nhẹ về cảnh, xoay đầu nhìn lại vai, tay vén nhẹ tóc cực tự nhiên', pts: { head:[0.35,0.29], ls:[0.28,0.39], rs:[0.42,0.40], le:[0.23,0.50], re:[0.44,0.44], lw:[0.25,0.61], rw:[0.37,0.29], lh:[0.30,0.58], rh:[0.40,0.58], lk:[0.30,0.74], rk:[0.41,0.74], la:[0.29,0.90], ra:[0.42,0.90] } },
-        { id: 'scenery_13', cats: ['scenery'], type: 'scenery', name: '🏞️ Phong cảnh Tỷ lệ 1/3', tip: 'Đặt đường chân trời ở vạch ngang 1/3 trên hoặc 1/3 dưới, giữ thước ngang màu xanh lá!', targetBeta: 88 },
+        { id: 'travel_13_right', cats: ['travel_wife','vlog-doi-thuong'], type: 'pose', name: '👩 Đứng 1/3 Phải', tip: 'Đứng vào vạch 1/3 bên phải để chừa không gian cảnh đẹp bên trái', pts: { head:[0.66,0.28], ls:[0.60,0.38], rs:[0.72,0.38], le:[0.57,0.49], re:[0.76,0.49], lw:[0.62,0.58], rw:[0.73,0.58], lh:[0.62,0.57], rh:[0.70,0.57], lk:[0.60,0.74], rk:[0.71,0.74], la:[0.58,0.90], ra:[0.72,0.90] } },
+        { id: 'travel_lookback', cats: ['travel_wife'], type: 'pose', name: '💃 Quay lưng Ngoái nhìn', tip: 'Quay lưng nhẹ về cảnh, xoay đầu nhìn lại vai, tay vén nhẹ tóc', pts: { head:[0.35,0.29], ls:[0.28,0.39], rs:[0.42,0.40], le:[0.23,0.50], re:[0.44,0.44], lw:[0.25,0.61], rw:[0.37,0.29], lh:[0.30,0.58], rh:[0.40,0.58], lk:[0.30,0.74], rk:[0.41,0.74], la:[0.29,0.90], ra:[0.42,0.90] } },
+        { id: 'scenery_13', cats: ['scenery'], type: 'scenery', name: '🏞️ Phong cảnh 1/3', tip: 'Đặt đường chân trời ở vạch xanh 1/3 & giữ thước ngang xanh lá!', targetBeta: 88 },
         { id: 'drink_checkin', cats: ['shop','tra-sua-cafe','vlog-doi-thuong'], type: 'pose', name: '🥤 Cầm ly Check-in', tip: 'Nâng ly ngang vai hoặc gần má, nghiêng đầu nhẹ 10°, vai thả lỏng', pts: { head:[0.48,0.26], ls:[0.37,0.44], rs:[0.59,0.44], le:[0.32,0.62], re:[0.69,0.58], lw:[0.36,0.78], rw:[0.62,0.40], lh:[0.40,0.78], rh:[0.57,0.78] } },
-        { id: 'cafe_sit', cats: ['shop','travel_wife','tra-sua-cafe','an-vat-nuong'], type: 'pose', name: '☕ Ngồi Bàn / Lan can', tip: 'Ngồi nghiêng vai 30°, 1 tay đặt cạnh ly hoặc chống cằm nhẹ, chân duỗi chéo góc ảnh', pts: { head:[0.52,0.25], ls:[0.42,0.41], rs:[0.61,0.40], le:[0.36,0.56], re:[0.68,0.54], lw:[0.47,0.57], rw:[0.61,0.46], lh:[0.44,0.72], rh:[0.59,0.72] } },
-        { id: 'food_45', cats: ['shop','an-vat-nuong','tra-sua-cafe'], type: 'food_angle', targetBeta: 45, name: '🍽️ Món/Ly Góc 45°', tip: 'Đặt món chính vào vòng tròn vàng, giữ máy nghiêng khoảng 45° so với mặt bàn' },
-        { id: 'food_flatlay', cats: ['shop','an-vat-nuong','tra-sua-cafe'], type: 'food_angle', targetBeta: 8, name: '📸 Thẳng 90° (Flatlay)', tip: 'Giữ máy song song úp thẳng xuống mặt bàn (góc ~0-15°) để thấy trọn mẹt đồ ăn' },
-        { id: 'pmu_front', cats: ['pmu','phun-xam-tham-my'], type: 'face_front', name: '💄 Feedback Chính diện', tip: 'Đưa khuôn mặt vào khung oval, giữ 2 mắt ngang bằng 0° và nhìn thẳng ống kính' },
-        { id: 'pmu_45', cats: ['pmu','phun-xam-tham-my'], type: 'face_45', name: '✨ Góc nghiêng 45° Mày/Môi', tip: 'Xoay mặt nghiêng sang trái hoặc phải khoảng 45° để khoe trọn dáng mày / độ căng môi' },
-        { id: 'full_tall', cats: ['travel_wife','vlog-doi-thuong','dao-tao-phun-xam'], type: 'pose', name: '🧍 Toàn thân Hack chân', tip: 'Đặt bàn chân gần mép dưới khung hình, chừa trống trên đầu ~15% để kéo dài chân', pts: { head:[0.50,0.22], ls:[0.42,0.34], rs:[0.58,0.34], le:[0.38,0.46], re:[0.62,0.46], lw:[0.41,0.56], rw:[0.59,0.56], lh:[0.44,0.56], rh:[0.56,0.56], lk:[0.44,0.74], rk:[0.56,0.74], la:[0.43,0.92], ra:[0.57,0.92] } },
-        { id: 's_curve', cats: ['travel_wife','vlog-doi-thuong','pmu'], type: 'pose', name: '💃 Dáng chữ S Sang chảnh', tip: 'Xoay vai nhẹ, 1 tay chống hông, 1 chân bước nhẹ lên trước tạo đường cong', pts: { head:[0.49,0.23], ls:[0.41,0.35], rs:[0.57,0.36], le:[0.33,0.46], re:[0.61,0.48], lw:[0.42,0.55], rw:[0.60,0.58], lh:[0.43,0.56], rh:[0.54,0.56], lk:[0.45,0.74], rk:[0.57,0.73], la:[0.44,0.91], ra:[0.53,0.92] } },
-        { id: 'student_cert', cats: ['dao-tao-phun-xam'], type: 'pose', name: '🎓 Học viên & Tác phẩm', tip: 'Đứng/ngồi thẳng lưng, 2 tay nâng nhẹ bằng chứng chỉ hoặc dụng cụ trước ngực', pts: { head:[0.50,0.23], ls:[0.40,0.38], rs:[0.60,0.38], le:[0.35,0.53], re:[0.65,0.53], lw:[0.44,0.56], rw:[0.56,0.56], lh:[0.42,0.66], rh:[0.58,0.66] } },
-        { id: 'ai_custom', cats: ['travel_wife','shop','pmu'], type: 'pose', name: '✨ Dáng AI Đặt Riêng', tip: 'Đứng vào đúng vị trí Người Mẫu AR phát sáng do AI thiết kế!', pts: { head:[0.65,0.26], ls:[0.58,0.37], rs:[0.72,0.37], le:[0.54,0.48], re:[0.77,0.47], lw:[0.56,0.57], rw:[0.79,0.34], lh:[0.60,0.56], rh:[0.70,0.56], lk:[0.59,0.73], rk:[0.71,0.73], la:[0.58,0.90], ra:[0.72,0.90] } }
+        { id: 'cafe_sit', cats: ['shop','travel_wife','tra-sua-cafe','an-vat-nuong'], type: 'pose', name: '☕ Ngồi Bàn / Lan can', tip: 'Ngồi nghiêng vai 30°, 1 tay đặt cạnh ly hoặc chống cằm nhẹ', pts: { head:[0.52,0.25], ls:[0.42,0.41], rs:[0.61,0.40], le:[0.36,0.56], re:[0.68,0.54], lw:[0.47,0.57], rw:[0.61,0.46], lh:[0.44,0.72], rh:[0.59,0.72] } },
+        { id: 'food_45', cats: ['shop','an-vat-nuong','tra-sua-cafe'], type: 'food_angle', targetBeta: 45, name: '🍽️ Món/Ly Góc 45°', tip: 'Đặt món vào vòng tròn vàng, giữ máy nghiêng ~45° so với mặt bàn' },
+        { id: 'food_flatlay', cats: ['shop','an-vat-nuong','tra-sua-cafe'], type: 'food_angle', targetBeta: 8, name: '📸 Thẳng 90° (Flatlay)', tip: 'Giữ máy song song úp thẳng xuống mặt bàn (góc ~0-15°)' },
+        { id: 'pmu_front', cats: ['pmu','phun-xam-tham-my'], type: 'face_front', name: '💄 Feedback Chính diện', tip: 'Đưa khuôn mặt vào khung oval, giữ 2 mắt ngang 0° nhìn thẳng ống kính' },
+        { id: 'pmu_45', cats: ['pmu','phun-xam-tham-my'], type: 'face_45', name: '✨ Góc nghiêng 45°', tip: 'Xoay mặt nghiêng 45° để khoe trọn dáng mày / độ căng môi' },
+        { id: 'full_tall', cats: ['travel_wife','vlog-doi-thuong','dao-tao-phun-xam'], type: 'pose', name: '🧍 Toàn thân Hack chân', tip: 'Đặt chân sát mép dưới, chừa trống trên đầu ~15% để chân dài hơn', pts: { head:[0.50,0.22], ls:[0.42,0.34], rs:[0.58,0.34], le:[0.38,0.46], re:[0.62,0.46], lw:[0.41,0.56], rw:[0.59,0.56], lh:[0.44,0.56], rh:[0.56,0.56], lk:[0.44,0.74], rk:[0.56,0.74], la:[0.43,0.92], ra:[0.57,0.92] } },
+        { id: 's_curve', cats: ['travel_wife','vlog-doi-thuong','pmu'], type: 'pose', name: '💃 Dáng chữ S', tip: 'Xoay vai nhẹ, 1 tay chống hông, 1 chân bước nhẹ lên trước', pts: { head:[0.49,0.23], ls:[0.41,0.35], rs:[0.57,0.36], le:[0.33,0.46], re:[0.61,0.48], lw:[0.42,0.55], rw:[0.60,0.58], lh:[0.43,0.56], rh:[0.54,0.56], lk:[0.45,0.74], rk:[0.57,0.73], la:[0.44,0.91], ra:[0.53,0.92] } },
+        { id: 'student_cert', cats: ['dao-tao-phun-xam'], type: 'pose', name: '🎓 Học viên & Tác phẩm', tip: 'Đứng/ngồi thẳng, 2 tay nâng nhẹ bằng chứng chỉ hoặc dụng cụ', pts: { head:[0.50,0.23], ls:[0.40,0.38], rs:[0.60,0.38], le:[0.35,0.53], re:[0.65,0.53], lw:[0.44,0.56], rw:[0.56,0.56], lh:[0.42,0.66], rh:[0.58,0.66] } },
+        { id: 'ai_custom', cats: ['travel_wife','shop','pmu'], type: 'pose', name: '✨ Dáng AI Đặt Riêng', tip: 'Đứng vào đúng vị trí Người Mẫu AR phát sáng!', pts: { head:[0.65,0.26], ls:[0.58,0.37], rs:[0.72,0.37], le:[0.54,0.48], re:[0.77,0.47], lw:[0.56,0.57], rw:[0.79,0.34], lh:[0.60,0.56], rh:[0.70,0.56], lk:[0.59,0.73], rk:[0.71,0.73], la:[0.58,0.90], ra:[0.72,0.90] } }
     ];
 
     const AI_FILTERS = [
         { id: 'none', label: '📷 Gốc', b: 1.0, c: 1.0, s: 1.0, sepia: 0 },
-        { id: 'korean', label: '✨ Hàn Trong Trẻo', b: 1.09, c: 0.97, s: 1.08, sepia: 0 },
-        { id: 'pmu_true', label: '💄 Chuẩn Mực', b: 1.06, c: 1.05, s: 1.00, sepia: 0 },
-        { id: 'food', label: '🔥 Đồ Ăn Ngon', b: 1.06, c: 1.16, s: 1.38, sepia: 0 },
-        { id: 'travel', label: '🌴 Du Lịch Rực Rỡ', b: 1.05, c: 1.12, s: 1.24, sepia: 0.04 },
-        { id: 'kodak', label: '🎞️ Film Ấm', b: 1.02, c: 1.12, s: 1.20, sepia: 0.12 }
+        { id: 'korean', label: '✨ Hàn Trong Trẻo', b: 1.04, c: 1.02, s: 1.06, sepia: 0 },
+        { id: 'pmu_true', label: '💄 Chuẩn Mực', b: 1.03, c: 1.05, s: 1.00, sepia: 0 },
+        { id: 'food', label: '🔥 Đồ Ăn Ngon', b: 1.03, c: 1.12, s: 1.26, sepia: 0 },
+        { id: 'travel', label: '🌴 Du Lịch Rực', b: 1.02, c: 1.10, s: 1.18, sepia: 0.03 },
+        { id: 'kodak', label: '🎞️ Film Ấm', b: 1.00, c: 1.10, s: 1.12, sepia: 0.10 }
     ];
 
     const BEAUTY_TOOLS = [
         { id: 'skinWhiten', name: 'Trắng da', icon: '✨', min: 0, max: 100 },
         { id: 'skinSmooth', name: 'Mịn da', icon: '🫧', min: 0, max: 100 },
         { id: 'slimFace', name: 'Thon mặt', icon: '💆', min: 0, max: 100 },
-        { id: 'slimBody', name: 'Thon eo/người', icon: '⏳', min: 0, max: 100 },
-        { id: 'slimArms', name: 'Thon cánh tay', icon: '💪', min: 0, max: 100 },
-        { id: 'slimThighs', name: 'Thon đùi/chân', icon: '🦵', min: 0, max: 100 },
-        { id: 'longLegs', name: 'Kéo dài chân', icon: '📏', min: 0, max: 100 }
+        { id: 'slimBody', name: 'Thon eo', icon: '⏳', min: 0, max: 100 },
+        { id: 'slimArms', name: 'Thon tay', icon: '💪', min: 0, max: 100 },
+        { id: 'slimThighs', name: 'Thon đùi', icon: '🦵', min: 0, max: 100 },
+        { id: 'longLegs', name: 'Chân dài', icon: '📏', min: 0, max: 100 }
     ];
 
     const ADJUST_TOOLS = [
-        { id: 'deglare', name: 'Hết chói đèn', icon: '💡', min: 0, max: 100 },
-        { id: 'shadows', name: 'Cứu ngược sáng', icon: '🌓', min: -50, max: 100 },
+        { id: 'deglare', name: 'Hết chói', icon: '💡', min: 0, max: 100 },
+        { id: 'shadows', name: 'Vùng tối', icon: '🌓', min: -50, max: 100 },
         { id: 'dehaze', name: 'Trong ảnh', icon: '🌫️', min: 0, max: 100 },
-        { id: 'sharpen', name: 'Làm sắc nét', icon: '🔺', min: 0, max: 100 },
+        { id: 'sharpen', name: 'Sắc nét', icon: '🔺', min: 0, max: 100 },
         { id: 'brightness', name: 'Độ sáng', icon: '☀️', min: -50, max: 50 },
         { id: 'contrast', name: 'Tương phản', icon: '◐', min: -50, max: 50 },
-        { id: 'saturation', name: 'Độ bão hoà', icon: '💧', min: -50, max: 50 },
-        { id: 'brilliance', name: 'Độ chói', icon: '🔆', min: -50, max: 50 },
+        { id: 'saturation', name: 'Bão hoà', icon: '💧', min: -50, max: 50 },
+        { id: 'brilliance', name: 'Nổi khối', icon: '🔆', min: -50, max: 50 },
         { id: 'clarity', name: 'Độ rõ nét', icon: '💎', min: 0, max: 100 },
         { id: 'highlights', name: 'Điểm nhấn', icon: '⭕', min: -100, max: 50 },
-        { id: 'temp', name: 'Nhiệt độ màu', icon: '🌡️', min: -50, max: 50 },
+        { id: 'temp', name: 'Nhiệt màu', icon: '🌡️', min: -50, max: 50 },
         { id: 'tint', name: 'Tông màu', icon: '🎨', min: -50, max: 50 },
         { id: 'blur', name: 'Làm mờ', icon: '🫧', min: 0, max: 50 },
-        { id: 'vignette', name: 'Viền mờ dần', icon: '🔲', min: -50, max: 50 },
-        { id: 'grain', name: 'Hạt', icon: '⁙', min: 0, max: 50 }
+        { id: 'vignette', name: 'Viền tối', icon: '🔲', min: -50, max: 50 },
+        { id: 'grain', name: 'Hạt film', icon: '⁙', min: 0, max: 50 }
     ];
 
     const createDefaultAdj = () => ({
@@ -949,10 +879,8 @@
         brilliance: 0, clarity: 0, highlights: 0, temp: 0, tint: 0, blur: 0, vignette: 0, grain: 0
     });
 
-    // State riêng cho Ảnh & Video (dùng chung 1 GPU engine)
-    let pAdj = createDefaultAdj(), pActiveTab = 'beauty', pActiveToolId = 'skinWhiten', aiFilterIdx = 0, isComparingPhotoOrig = false;
-    let vAdj = createDefaultAdj(), vActiveToolId = 'beauty', vFilterIdx = 0, isComparingVideoOrig = false;
-    vActiveToolId = 'skinWhiten';
+    let pAdj = createDefaultAdj(), pActiveTab = 'adjust', pActiveToolId = 'brightness', aiFilterIdx = 0, isComparingPhotoOrig = false;
+    let vAdj = createDefaultAdj(), vActiveTab = 'adjust', vActiveToolId = 'brightness', vFilterIdx = 0, isComparingVideoOrig = false;
 
     const AI_ASPECTS = ['9:16', '3:4', '4:5', '1:1'];
     const POSE_EDGES = [['head','ls'],['head','rs'],['ls','rs'],['ls','le'],['le','lw'],['rs','re'],['re','rw'],['ls','lh'],['rs','rh'],['lh','rh'],['lh','lk'],['lk','la'],['rh','rk'],['rk','ra']];
@@ -969,7 +897,7 @@
     let directorOwner = 'photo', directorTarget = 'travel_wife', lastDirectorPlan = null;
     const GEMINI_KEY_STORAGE = 'kimbling_gemini_api_key';
 
-    // ====== BỘ RENDER WEBGL GPU DÙNG CHUNG CHO CẢ ẢNH VÀ VIDEO (22 CÔNG CỤ) ======
+    // ====== WEBGL SHADER CHUẨN NHIẾP ẢNH (KHÔNG BẠC ĐEN, KHÔNG MỜ CẢNH) ======
     function createWebGLEngine(canvas) {
         const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true, antialias: false })
                 || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
@@ -1008,9 +936,14 @@
                 float t = 1.0 - dist / radius;
                 return uv + vec2(d.x * t * t * amount, d.y * t * t * amount * 0.3);
             }
+            // Chuẩn YCbCr để chỉ nhận đúng sắc độ da người, loại trừ rèm/gạch/dù cam
             float isSkinTone(vec3 c) {
-                float mn = min(c.r, min(c.g, c.b));
-                return clamp(step(0.22,c.r)*step(c.g,c.r)*step(c.b,c.r)*smoothstep(0.03,0.14,c.r-mn)*smoothstep(0.01,0.08,c.r-c.g), 0.0, 1.0);
+                float cb = 0.5 - 0.1687 * c.r - 0.3313 * c.g + 0.5 * c.b;
+                float cr = 0.5 + 0.5 * c.r - 0.4187 * c.g - 0.0813 * c.b;
+                float lum = dot(c, vec3(0.299, 0.587, 0.114));
+                return smoothstep(0.30, 0.35, cb) * (1.0 - smoothstep(0.46, 0.51, cb))
+                     * smoothstep(0.515, 0.56, cr) * (1.0 - smoothstep(0.65, 0.70, cr))
+                     * smoothstep(0.18, 0.30, lum);
             }
             void main() {
                 vec2 uv = v_texCoord;
@@ -1028,35 +961,60 @@
                 uv = clamp(uv, vec2(0.001), vec2(0.999));
 
                 vec3 col = texture2D(u_image, uv).rgb;
-                float skinMask = isSkinTone(col);
-                if (u_skin.y > 0.001 && skinMask > 0.1) {
-                    vec2 sOff = u_texel * (1.5 + u_skin.y * 4.0);
-                    vec3 s1 = texture2D(u_image, uv+vec2(sOff.x,0.0)).rgb; float w1 = exp(-dot(s1-col,s1-col)*35.0);
-                    vec3 s2 = texture2D(u_image, uv-vec2(sOff.x,0.0)).rgb; float w2 = exp(-dot(s2-col,s2-col)*35.0);
-                    vec3 s3 = texture2D(u_image, uv+vec2(0.0,sOff.y)).rgb; float w3 = exp(-dot(s3-col,s3-col)*35.0);
-                    vec3 s4 = texture2D(u_image, uv-vec2(0.0,sOff.y)).rgb; float w4 = exp(-dot(s4-col,s4-col)*35.0);
-                    col = mix(col, (col + s1*w1 + s2*w2 + s3*w3 + s4*w4) / (1.0+w1+w2+w3+w4), u_skin.y * 0.85 * skinMask);
+                float skinMask = (u_skin.x > 0.001 || u_skin.y > 0.001) ? isSkinTone(col) : 0.0;
+
+                // Mịn da giữ nét lông mày, mắt, môi
+                if (u_skin.y > 0.001 && skinMask > 0.15) {
+                    vec2 sOff = u_texel * (1.2 + u_skin.y * 3.0);
+                    vec3 s1 = texture2D(u_image, uv+vec2(sOff.x,0.0)).rgb; float w1 = exp(-dot(s1-col,s1-col)*45.0);
+                    vec3 s2 = texture2D(u_image, uv-vec2(sOff.x,0.0)).rgb; float w2 = exp(-dot(s2-col,s2-col)*45.0);
+                    vec3 s3 = texture2D(u_image, uv+vec2(0.0,sOff.y)).rgb; float w3 = exp(-dot(s3-col,s3-col)*45.0);
+                    vec3 s4 = texture2D(u_image, uv-vec2(0.0,sOff.y)).rgb; float w4 = exp(-dot(s4-col,s4-col)*45.0);
+                    col = mix(col, (col + s1*w1 + s2*w2 + s3*w3 + s4*w4) / (1.0+w1+w2+w3+w4), u_skin.y * 0.78 * skinMask);
                 }
                 if (u_scbv.z > 0.001) {
                     vec2 off = u_texel * (u_scbv.z * 2.2);
                     vec3 bCol = (col + texture2D(u_image,uv+vec2(off.x,0.0)).rgb + texture2D(u_image,uv-vec2(off.x,0.0)).rgb + texture2D(u_image,uv+vec2(0.0,off.y)).rgb + texture2D(u_image,uv-vec2(0.0,off.y)).rgb + texture2D(u_image,uv+off).rgb + texture2D(u_image,uv-off).rgb + texture2D(u_image,uv+vec2(off.x,-off.y)).rgb + texture2D(u_image,uv+vec2(-off.x,off.y)).rgb)/9.0;
                     col = mix(col, bCol, 0.85);
                 }
+                // Làm sắc nét & Độ rõ nét chuẩn
                 if (u_scbv.x > 0.001 || u_scbv.y > 0.001) {
-                    vec2 d = u_texel * 1.3;
+                    vec2 d = u_texel * 1.15;
                     vec3 lap = col*4.0 - (texture2D(u_image,uv+vec2(d.x,0.0)).rgb + texture2D(u_image,uv-vec2(d.x,0.0)).rgb + texture2D(u_image,uv+vec2(0.0,d.y)).rgb + texture2D(u_image,uv-vec2(0.0,d.y)).rgb);
-                    col += lap * (u_scbv.x*0.55 + u_scbv.y*0.22);
+                    col += lap * (u_scbv.x*0.38 + u_scbv.y*0.18);
+                    col = clamp(col, 0.0, 1.0);
                 }
-                if (u_skin.x > 0.001 && skinMask > 0.1) col = mix(col, col + vec3(0.11, 0.095, 0.095) * u_skin.x, skinMask * 0.85);
+                if (u_skin.x > 0.001 && skinMask > 0.15) {
+                    vec3 whiten = pow(max(col, vec3(0.0001)), vec3(1.0 - u_skin.x * 0.25)) + vec3(0.03, 0.015, 0.02) * u_skin.x;
+                    col = mix(col, whiten, skinMask * 0.8);
+                }
 
+                // Khử mờ sương (Dehaze): kéo sâu điểm đen nhẹ + tăng độ trong
+                if (u_extra.w > 0.001) {
+                    col = clamp((col - 0.055 * u_extra.w) / (1.0 - 0.055 * u_extra.w), 0.0, 1.0);
+                    col = mix(col, smoothstep(0.0, 1.0, col), u_extra.w * 0.22);
+                }
+
+                // Hết chói đèn (nhắm vào vùng trắng chói ít màu)
                 float luma = dot(col, vec3(0.299,0.587,0.114));
-                if (u_extra.z > 0.001) col *= (1.0 - smoothstep(0.76, 1.0, luma) * u_extra.z * 0.28);
-                if (u_extra.w > 0.001) col = (col - 0.12 * u_extra.w) / max(0.35, 1.0 - 0.16 * u_extra.w);
+                if (u_extra.z > 0.001) {
+                    float satPx = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));
+                    float glareMask = smoothstep(0.74, 1.0, luma) * (1.0 - smoothstep(0.08, 0.35, satPx));
+                    col *= (1.0 - glareMask * u_extra.z * 0.30);
+                }
 
+                // Vùng tối (Shadows) & Điểm nhấn (Highlights) theo tỷ lệ giữ nguyên màu đen sâu!
                 luma = dot(col, vec3(0.299,0.587,0.114));
-                col += vec3(u_bc_sb.w*(4.0*luma*(1.0-luma)) + u_hstt.x*smoothstep(0.55,1.0,luma) + u_hstt.y*smoothstep(0.50,0.0,luma));
-                col.r += u_hstt.z + u_hstt.w*0.4; col.g -= u_hstt.w*0.8; col.b += -u_hstt.z + u_hstt.w*0.4;
+                float shMask = smoothstep(0.52, 0.04, luma) * smoothstep(0.0, 0.06, luma);
+                float hiMask = smoothstep(0.55, 1.0, luma);
+                col *= (1.0 + u_hstt.y * 1.15 * shMask + u_hstt.x * 0.48 * hiMask);
 
+                // Nổi khối (Brilliance) bằng đường cong gamma không làm đục ảnh
+                if (abs(u_bc_sb.w) > 0.001) {
+                    col = mix(col, pow(max(col, vec3(0.0001)), vec3(clamp(1.0 - u_bc_sb.w * 0.9, 0.6, 1.5))), 0.75);
+                }
+
+                col.r += u_hstt.z + u_hstt.w*0.4; col.g -= u_hstt.w*0.8; col.b += -u_hstt.z + u_hstt.w*0.4;
                 float gr = dot(col, vec3(0.2126,0.7152,0.0722));
                 col = mix(vec3(gr), col, u_bc_sb.z);
                 if (u_extra.x > 0.001) {
@@ -1102,9 +1060,9 @@
                     gl.drawArrays(gl.TRIANGLES, 0, 6); return;
                 }
                 const f = filterObj;
-                gl.uniform4f(uni.u_bc_sb, f.b*(1+adj.brightness*0.008), f.c*(1+adj.contrast*0.008+adj.clarity*0.002), f.s*(1+adj.saturation*0.012), adj.brilliance*0.0028);
-                gl.uniform4f(uni.u_hstt, adj.highlights*0.0032, adj.shadows*0.0035, adj.temp*0.0042, adj.tint*0.0032);
-                gl.uniform4f(uni.u_scbv, adj.sharpen*0.01, adj.clarity*0.01, adj.blur*0.02, adj.vignette*0.014);
+                gl.uniform4f(uni.u_bc_sb, f.b*(1+adj.brightness*0.007), f.c*(1+adj.contrast*0.008+adj.clarity*0.002), f.s*(1+adj.saturation*0.011), adj.brilliance*0.005);
+                gl.uniform4f(uni.u_hstt, adj.highlights*0.005, adj.shadows*0.007, adj.temp*0.004, adj.tint*0.003);
+                gl.uniform4f(uni.u_scbv, adj.sharpen*0.01, adj.clarity*0.01, adj.blur*0.02, adj.vignette*0.012);
                 gl.uniform4f(uni.u_extra, f.sepia||0, adj.grain*0.0055, adj.deglare*0.01, adj.dehaze*0.01);
                 gl.uniform4f(uni.u_skin, adj.skinWhiten*0.01, adj.skinSmooth*0.01, 0, 0);
                 gl.uniform4f(uni.u_body, adj.slimBody*0.01, adj.slimArms*0.01, adj.slimThighs*0.01, adj.longLegs*0.01);
@@ -1131,40 +1089,28 @@
     let videoGl = null, videoRenderRaf = 0, lastVideoWarpPoseMs = 0;
     let exportGlCanvas = null, exportGl = null;
 
-    // ====== QUẢN LÝ HẬU KỲ VIDEO (ĐỦ 22 CÔNG CỤ NHƯ ẢNH) ======
+    // ====== QUẢN LÝ HẬU KỲ VIDEO ======
     window.openVideoProEditorSetup = function () {
-        isComparingVideoOrig = false;
-        Object.keys(vAdj).forEach(k => vAdj[k] = 0);
-        if (!camHardwareEvApplied && camEvValue !== 0) vAdj.brightness = Math.round(camEvValue * 18);
-        if (camNightMode) { vAdj.shadows = 28; vAdj.brightness = Math.min(50, vAdj.brightness + 12); }
-        if (camHdrMode) { vAdj.shadows = Math.max(vAdj.shadows, 22); vAdj.highlights = -25; vAdj.clarity = 22; }
+        isComparingVideoOrig = false; Object.keys(vAdj).forEach(k => vAdj[k] = 0);
+        if (!camHardwareEvApplied && camEvValue !== 0) vAdj.brightness = Math.round(camEvValue * 16);
+        if (camNightMode) { vAdj.shadows = 20; vAdj.brightness = Math.min(40, vAdj.brightness + 10); }
+        if (camHdrMode) { vAdj.shadows = Math.max(vAdj.shadows, 16); vAdj.highlights = -22; vAdj.clarity = 16; }
         vFilterIdx = 0; videoPoseUV = null;
         document.getElementById('vRetouchSummary').classList.add('hidden');
-        renderVideoFilterChips();
-        window.switchVideoEditorTab('beauty');
+        renderVideoFilterChips(); window.switchVideoEditorTab('adjust');
     };
-
     window.initVideoWebGLPreview = function () {
         const pv = document.getElementById('previewVideo'), c = document.getElementById('videoPreviewCanvas');
-        if (!pv || !c) return;
-        if (!videoGl) videoGl = createWebGLEngine(c);
+        if (!pv || !c) return; if (!videoGl) videoGl = createWebGLEngine(c);
         window.redrawVideoFrameNow();
     };
-
     window.redrawVideoFrameNow = function () {
         const pv = document.getElementById('previewVideo'), c = document.getElementById('videoPreviewCanvas');
         if (!pv || pv.readyState < 2 || !c) return;
-        const vw = pv.videoWidth || 540, vh = pv.videoHeight || 960;
-        const pw = Math.min(720, vw), ph = Math.round(pw * (vh / vw));
-        if (videoGl) {
-            videoGl.uploadAndSize(pv, pw, ph);
-            videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, isComparingVideoOrig);
-        } else {
-            if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
-            c.getContext('2d').drawImage(pv, 0, 0, pw, ph);
-        }
+        const vw = pv.videoWidth || 540, vh = pv.videoHeight || 960, pw = Math.min(720, vw), ph = Math.round(pw * (vh / vw));
+        if (videoGl) { videoGl.uploadAndSize(pv, pw, ph); videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, isComparingVideoOrig); }
+        else { if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; } c.getContext('2d').drawImage(pv, 0, 0, pw, ph); }
     };
-
     window.startVideoRenderLoop = function () {
         cancelAnimationFrame(videoRenderRaf);
         const pv = document.getElementById('previewVideo');
@@ -1174,10 +1120,7 @@
                 const needPose = (vAdj.slimBody > 0 || vAdj.slimArms > 0 || vAdj.slimThighs > 0 || vAdj.longLegs > 0 || vAdj.slimFace > 0);
                 if (needPose && poseLandmarker && now - lastVideoWarpPoseMs > 160) {
                     lastVideoWarpPoseMs = now;
-                    try {
-                        const res = poseLandmarker.detectForVideo(pv, performance.now());
-                        if (res.landmarks && res.landmarks.length > 0) videoPoseUV = extractFullPoseUV(res.landmarks[0]);
-                    } catch (e) {}
+                    try { const res = poseLandmarker.detectForVideo(pv, performance.now()); if (res.landmarks && res.landmarks.length > 0) videoPoseUV = extractFullPoseUV(res.landmarks[0]); } catch (e) {}
                 }
                 window.redrawVideoFrameNow();
                 videoRenderRaf = requestAnimationFrame(loop);
@@ -1185,20 +1128,12 @@
         };
         videoRenderRaf = requestAnimationFrame(loop);
     };
-
     window.stopVideoRenderLoop = function () { cancelAnimationFrame(videoRenderRaf); };
-
     window.renderVideoFrameToExportCanvas = function (videoEl, dest2dCtx, outW, outH) {
         if (!exportGlCanvas) { exportGlCanvas = document.createElement('canvas'); exportGl = createWebGLEngine(exportGlCanvas); }
-        if (exportGl) {
-            exportGl.uploadAndSize(videoEl, outW, outH);
-            exportGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, false);
-            dest2dCtx.drawImage(exportGlCanvas, 0, 0, outW, outH);
-        } else {
-            dest2dCtx.drawImage(videoEl, 0, 0, outW, outH);
-        }
+        if (exportGl) { exportGl.uploadAndSize(videoEl, outW, outH); exportGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, false); dest2dCtx.drawImage(exportGlCanvas, 0, 0, outW, outH); }
+        else dest2dCtx.drawImage(videoEl, 0, 0, outW, outH);
     };
-
     window.holdCompareVideoOriginal = function (hold) { isComparingVideoOrig = !!hold; window.redrawVideoFrameNow(); };
 
     window.switchVideoEditorTab = function (tab) {
@@ -1211,124 +1146,164 @@
         document.getElementById('vTabAdjust').className = tab === 'adjust' ? 'shrink-0 font-black text-sky-400 border-b-2 border-sky-400 pb-0.5' : 'shrink-0 font-black text-slate-400';
         document.getElementById('vTabFilter').className = tab === 'filter' ? 'shrink-0 font-black text-sky-400 border-b-2 border-sky-400 pb-0.5' : 'shrink-0 font-black text-slate-400';
         if (tab === 'beauty') { if (!BEAUTY_TOOLS.some(t => t.id === vActiveToolId)) vActiveToolId = 'skinWhiten'; renderVideoAdjustButtons(); }
-        else if (tab === 'adjust') { if (!ADJUST_TOOLS.some(t => t.id === vActiveToolId)) vActiveToolId = 'deglare'; renderVideoAdjustButtons(); }
+        else if (tab === 'adjust') { if (!ADJUST_TOOLS.some(t => t.id === vActiveToolId)) vActiveToolId = 'brightness'; renderVideoAdjustButtons(); }
     };
-    let vActiveTab = 'beauty';
-
     function renderVideoAdjustButtons() {
         const list = vActiveTab === 'beauty' ? BEAUTY_TOOLS : ADJUST_TOOLS;
         document.getElementById('vAdjustButtonsRow').innerHTML = list.map(t => {
             const active = t.id === vActiveToolId, changed = vAdj[t.id] !== 0;
             return `<button onclick="selectVideoAdjustTool('${t.id}')" class="shrink-0 flex flex-col items-center space-y-1 px-1.5">
-                <span class="w-12 h-12 rounded-full flex items-center justify-center border-2 ${active ? 'bg-rose-500/25 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}">${t.icon}</span>
-                <span class="font-bold ${active ? 'text-rose-300' : 'text-slate-300'}" style="font-size: 12px !important;">${t.name}${changed ? ' •' : ''}</span>
+                <span class="w-11 h-11 rounded-full flex items-center justify-center border-2 ${active ? 'bg-rose-500/25 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}">${t.icon}</span>
+                <span class="font-bold ${active ? 'text-rose-300' : 'text-slate-300'}" style="font-size: 11px !important;">${t.name}${changed ? ' •' : ''}</span>
             </button>`;
         }).join('');
         const tool = list.find(t => t.id === vActiveToolId) || list[0]; vActiveToolId = tool.id;
-        const slider = document.getElementById('vActiveToolSlider');
-        slider.min = tool.min; slider.max = tool.max; slider.value = vAdj[tool.id];
-        document.getElementById('vActiveToolLabel').innerText = `${tool.icon} ${tool.name}`;
-        document.getElementById('vActiveToolVal').innerText = vAdj[tool.id];
+        const slider = document.getElementById('vActiveToolSlider'); slider.min = tool.min; slider.max = tool.max; slider.value = vAdj[tool.id];
+        document.getElementById('vActiveToolLabel').innerText = `${tool.icon} ${tool.name}`; document.getElementById('vActiveToolVal').innerText = vAdj[tool.id];
     }
     window.selectVideoAdjustTool = function (id) { vActiveToolId = id; renderVideoAdjustButtons(); };
     window.onVideoSingleSliderInput = function (val) { vAdj[vActiveToolId] = Number(val); document.getElementById('vActiveToolVal').innerText = val; window.redrawVideoFrameNow(); };
     window.onVideoSingleSliderCommit = function () { renderVideoAdjustButtons(); window.redrawVideoFrameNow(); };
     window.resetCurrentVideoTool = function () { vAdj[vActiveToolId] = 0; renderVideoAdjustButtons(); window.redrawVideoFrameNow(); };
     window.resetAllVideoAdjustments = function () { Object.keys(vAdj).forEach(k => vAdj[k] = 0); vFilterIdx = 0; document.getElementById('vRetouchSummary').classList.add('hidden'); renderVideoFilterChips(); renderVideoAdjustButtons(); window.redrawVideoFrameNow(); };
-
     function renderVideoFilterChips() {
         document.getElementById('vPanelFilter').innerHTML = AI_FILTERS.map((f, i) => `<button onclick="selectVideoFilter(${i})" class="shrink-0 px-3.5 py-2 rounded-xl font-black border ${i === vFilterIdx ? 'bg-rose-500 text-white border-rose-300' : 'bg-slate-950 text-slate-300 border-slate-700'}">${f.label}</button>`).join('');
     }
     window.selectVideoFilter = function (idx) { vFilterIdx = idx; renderVideoFilterChips(); window.redrawVideoFrameNow(); };
-
     window.applyVideoSmartAutoEnhance = async function () {
-        const pv = document.getElementById('previewVideo');
-        if (!pv || pv.readyState < 2) return;
+        const pv = document.getElementById('previewVideo'); if (!pv || pv.readyState < 2) return;
         const tmp = document.createElement('canvas'); tmp.width = 480; tmp.height = Math.round(480 * ((pv.videoHeight||1280)/(pv.videoWidth||720)));
         tmp.getContext('2d').drawImage(pv, 0, 0, tmp.width, tmp.height);
-        await runSmartEnhanceOnCanvas(tmp, vAdj, 'vSmartEnhanceLabel', 'vRetouchSummary', renderVideoAdjustButtons, window.redrawVideoFrameNow);
+        await runSmartEnhanceOnCanvas(tmp, vAdj, !!videoPoseUV, 'vSmartEnhanceLabel', 'vRetouchSummary', renderVideoAdjustButtons, window.redrawVideoFrameNow);
     };
 
-    // ====== HÀM AI TỰ PHÂN TÍCH & CHỈNH ĐẸP DÙNG CHUNG CHO CẢ ẢNH & VIDEO ======
+    // ====== AI CHỈNH ẢNH CHUYÊN NGHIỆP (PHÂN LOẠI CẢNH TRƯỚC KHI CHỈNH) ======
     function extractFullPoseUV(lm) {
+        if (!lm || lm.length < 29) return null;
         const pt = l => [Math.max(0.02, Math.min(0.98, l.x)), Math.max(0.02, Math.min(0.98, l.y))];
         const lh = pt(lm[23]), rh = pt(lm[24]);
         return { head: pt(lm[0]), waist: [(lh[0]+rh[0])*0.5, (lh[1]+rh[1])*0.5 - 0.05], ls: pt(lm[11]), le: pt(lm[13]), rs: pt(lm[12]), re: pt(lm[14]), lh, lk: pt(lm[25]), la: pt(lm[27]), rh, rk: pt(lm[26]), ra: pt(lm[28]) };
     }
 
-    async function runSmartEnhanceOnCanvas(srcCanvas, targetAdj, labelId, summaryId, refreshUIFn, redrawFn) {
+    async function runSmartEnhanceOnCanvas(srcCanvas, targetAdj, hasDetectedPerson, labelId, summaryId, refreshUIFn, redrawFn) {
         const lbl = document.getElementById(labelId), summaryEl = document.getElementById(summaryId);
         const hasKey = !!(localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
+        Object.keys(targetAdj).forEach(k => targetAdj[k] = 0);
 
         if (hasKey) {
             lbl.innerText = '⏳ Đang soi...';
-            summaryEl.innerText = '🤖 AI đang kiểm tra sáng, chói, da & dáng...'; summaryEl.classList.remove('hidden');
+            summaryEl.innerText = '🤖 AI đang phân loại cảnh & chỉnh chuẩn Lightroom...'; summaryEl.classList.remove('hidden');
             const b64 = srcCanvas.toDataURL('image/jpeg', 0.72).split(',')[1];
-            const prompt = `Phân tích khung hình thô này (chói đèn, ngược sáng, tối, da tối, mờ, thon dáng). Trả về JSON:
-{"summary":"Tóm tắt ngắn tiếng Việt","deglare":(0..80),"shadows":(-20..80),"dehaze":(0..60),"sharpen":(0..60),"clarity":(0..45),"brightness":(-25..30),"contrast":(-15..25),"saturation":(-10..35),"brilliance":(0..35),"highlights":(-60..15),"temp":(-20..20),"skinWhiten":(0..55),"skinSmooth":(0..55),"slimFace":(0..35),"slimBody":(0..35),"slimArms":(0..35),"slimThighs":(0..35),"longLegs":(0..35)}`;
+            const prompt = `Bạn là Colorist & Retoucher chuyên nghiệp (Lightroom/VSCO). Hãy xem bức ảnh thô này và chỉnh TINH TẾ, TỰ NHIÊN, GIỮ CHIỀU SÂU MÀU ĐEN (tuyệt đối KHÔNG làm bạc màu đen, KHÔNG làm quá sáng, KHÔNG làm mờ ảnh).
+QUY TẮC BẮT BUỘC:
+1. Phân loại sceneType: "portrait" (có mặt/người rõ), "food" (đồ ăn/nước uống), "scenery" (quán/đường phố/phong cảnh không có mặt người), "night" (chụp tối).
+2. Nếu là "scenery" hoặc "food" (KHÔNG có mặt người): BẮT BUỘC đặt skinWhiten=0, skinSmooth=0, slimFace=0, slimBody=0, slimArms=0, slimThighs=0, longLegs=0!
+3. Nếu ảnh ban ngày/trong quán đã sáng rõ (ghế tối vẫn có ánh sáng): KHÔNG cộng nhiều brightness (giữ -5..+6), ưu tiên highlights (-10..-35) cứu nắng/đèn, dehaze (5..18) giữ màu đen sâu, contrast (4..14), clarity (10..24), sharpen (12..25).
+4. Chỉ tăng shadows (10..32) nếu chủ thể bị ngược sáng tối mặt thật sự.
+Trả về JSON:
+{"sceneType":"scenery|portrait|food|night","summary":"Giải thích ngắn (VD: Cảnh quán ban ngày: Cứu nắng gắt, giữ đen sâu & sắc nét)","deglare":0..45,"shadows":-10..35,"dehaze":0..25,"sharpen":10..35,"clarity":8..28,"brightness":-12..16,"contrast":0..18,"saturation":0..22,"brilliance":-5..18,"highlights":-45..10,"temp":-15..15,"skinWhiten":0..35,"skinSmooth":0..28}`;
             const res = await callGeminiVisionJSON(b64, prompt);
             lbl.innerText = 'AI Chỉnh Đẹp';
             if (res) {
                 Object.keys(targetAdj).forEach(k => { if (typeof res[k] === 'number') targetAdj[k] = Math.round(res[k]); });
-                summaryEl.innerText = `🤖 ${res.summary || 'AI đã chỉnh đẹp!'}`;
+                if (res.sceneType === 'scenery' || res.sceneType === 'food') {
+                    targetAdj.skinWhiten = 0; targetAdj.skinSmooth = 0;
+                }
+                summaryEl.innerText = `🤖 ${res.summary || 'Đã chỉnh chuẩn nhiếp ảnh!'}`;
                 refreshUIFn(); redrawFn(); return;
             }
         }
 
+        // Bộ phân tích Histogram Offline thông minh theo từng loại ảnh
         const t = document.createElement('canvas'); t.width = 64; t.height = 64;
         t.getContext('2d').drawImage(srcCanvas, 0, 0, 64, 64);
         const d = t.getContext('2d').getImageData(0, 0, 64, 64).data;
-        let sum = 0, glareCnt = 0, darkCnt = 0, skinCnt = 0, skinLumSum = 0, cnt = 0;
-        for (let i = 0; i < d.length; i += 4) {
-            const r = d[i], g = d[i+1], b = d[i+2], lum = 0.299*r + 0.587*g + 0.114*b;
+        let sum = 0, cSum = 0, cCnt = 0, glareCnt = 0, darkCnt = 0, cnt = 0;
+        for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+            const i = (y*64+x)*4, lum = 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
             sum += lum; cnt++;
-            if (lum > 228) glareCnt++; if (lum < 75) darkCnt++;
-            if (r > g && r > b && (r - b) > 18 && r > 55) { skinCnt++; skinLumSum += lum; }
+            if (x>=16 && x<=48 && y>=16 && y<=48) { cSum += lum; cCnt++; }
+            if (lum > 224) glareCnt++;
+            if (lum < 55) darkCnt++;
         }
         let edgeSum = 0;
         for (let y = 1; y < 63; y++) for (let x = 1; x < 63; x++) { const i = (y*64+x)*4; edgeSum += Math.abs(d[i]-d[i+4]) + Math.abs(d[i]-d[i+256]); }
-        const avg = sum / cnt, glarePct = glareCnt / cnt, darkPct = darkCnt / cnt, hasSkin = (skinCnt / cnt) > 0.04, avgSkinLum = skinCnt > 0 ? skinLumSum / skinCnt : 140, avgEdge = edgeSum / (62*62);
+
+        const avg = sum / cnt, centerAvg = cSum / cCnt, glarePct = glareCnt / cnt, darkPct = darkCnt / cnt, avgEdge = edgeSum / (62*62);
+        const curCtx = SCENE_CONTEXTS[sceneCtxIdx].id;
+        const isPortrait = hasDetectedPerson || curCtx === 'pmu';
+        const isFood = curCtx === 'shop' && !hasDetectedPerson;
 
         const fixes = [];
-        targetAdj.brightness = avg < 105 ? 14 : (avg > 175 ? -10 : 4); if (avg < 105) fixes.push('Tăng sáng');
-        if (glarePct > 0.06) { targetAdj.deglare = Math.min(80, Math.round(glarePct * 260)); targetAdj.highlights = -40; fixes.push('Hết chói đèn'); }
-        if (darkPct > 0.25) { targetAdj.shadows = Math.min(75, Math.round(darkPct * 120)); targetAdj.dehaze = 18; fixes.push('Cứu ngược sáng'); }
-        if (avgEdge < 16) { targetAdj.sharpen = 45; targetAdj.clarity = 28; fixes.push('Làm nét'); } else { targetAdj.sharpen = 18; targetAdj.clarity = 15; }
-        targetAdj.contrast = 10; targetAdj.brilliance = 14; targetAdj.saturation = 12;
-        if (hasSkin || capturedPoseUV || videoPoseUV) { targetAdj.skinWhiten = avgSkinLum < 145 ? 36 : 22; targetAdj.skinSmooth = 32; fixes.push('Trắng mịn da'); }
-        if (capturedPoseUV || videoPoseUV) { targetAdj.slimBody = 18; targetAdj.slimArms = 18; targetAdj.slimThighs = 16; targetAdj.longLegs = 16; targetAdj.slimFace = 15; fixes.push('Thon dáng'); }
+        if (!isPortrait) {
+            // ẢNH CẢNH / QUÁN / ĐỒ ĂN: Tuyệt đối không dùng skinSmooth để không bị mờ ảnh!
+            targetAdj.skinWhiten = 0; targetAdj.skinSmooth = 0;
+            if (avg < 92) {
+                targetAdj.brightness = 12; targetAdj.shadows = 22; targetAdj.dehaze = 10;
+                fixes.push('Nâng sáng tối');
+            } else if (avg > 165) {
+                targetAdj.brightness = -8; targetAdj.highlights = -32; targetAdj.dehaze = 16;
+                fixes.push('Giảm cháy sáng');
+            } else {
+                // Ảnh ban ngày đủ sáng (như ảnh quán của bạn): KHÔNG tăng brightness, chỉ cân tương phản & cứu vùng cháy nắng!
+                targetAdj.brightness = 0;
+                targetAdj.highlights = glarePct > 0.08 ? -28 : -12;
+                targetAdj.deglare = glarePct > 0.12 ? 18 : 0;
+                targetAdj.shadows = (darkPct > 0.30 && centerAvg < 105) ? 14 : 4;
+                targetAdj.dehaze = 12;
+                fixes.push('Giữ đen sâu & cứu nắng');
+            }
+            targetAdj.contrast = 8;
+            targetAdj.clarity = 20;
+            targetAdj.sharpen = avgEdge < 18 ? 30 : 18;
+            targetAdj.saturation = isFood ? 14 : 8;
+            if (isFood) targetAdj.temp = 6;
+            fixes.push('Sắc nét chi tiết');
+        } else {
+            // ẢNH CHÂN DUNG / CÓ NGƯỜI / PHUN XĂM
+            const backlit = (centerAvg < 95 && avg - centerAvg > 28);
+            targetAdj.brightness = backlit ? 10 : (avg < 105 ? 10 : 2);
+            targetAdj.shadows = backlit ? 26 : 8;
+            targetAdj.highlights = glarePct > 0.08 ? -24 : -10;
+            targetAdj.dehaze = 8;
+            targetAdj.contrast = 6;
+            targetAdj.clarity = 12;
+            targetAdj.sharpen = 18;
+            targetAdj.saturation = 8;
+            targetAdj.skinWhiten = centerAvg < 135 ? 24 : 14;
+            targetAdj.skinSmooth = 22;
+            fixes.push(backlit ? 'Cứu ngược sáng mặt' : 'Da sáng mịn giữ nét');
+        }
 
-        summaryEl.innerText = `🤖 Đã sửa: ${fixes.length ? fixes.join(', ') : 'Cân bằng màu đẹp'}`;
+        summaryEl.innerText = `🤖 ${fixes.join(', ')}`;
         summaryEl.classList.remove('hidden');
         refreshUIFn(); redrawFn();
     }
 
     // ====== QUẢN LÝ HẬU KỲ ẢNH ======
     function openAiPhotoEditor() {
-        isComparingPhotoOrig = false;
-        Object.keys(pAdj).forEach(k => pAdj[k] = 0);
-        if (!camHardwareEvApplied && camEvValue !== 0) pAdj.brightness = Math.round(camEvValue * 18);
-        if (camNightMode) { pAdj.shadows = 28; pAdj.brightness = Math.min(50, pAdj.brightness + 12); }
-        if (camHdrMode) { pAdj.shadows = Math.max(pAdj.shadows, 22); pAdj.highlights = -25; pAdj.clarity = 22; }
+        isComparingPhotoOrig = false; Object.keys(pAdj).forEach(k => pAdj[k] = 0);
+        if (!camHardwareEvApplied && camEvValue !== 0) pAdj.brightness = Math.round(camEvValue * 16);
+        if (camNightMode) { pAdj.shadows = 20; pAdj.brightness = Math.min(40, pAdj.brightness + 10); }
+        if (camHdrMode) { pAdj.shadows = Math.max(pAdj.shadows, 16); pAdj.highlights = -22; pAdj.clarity = 16; }
         aiFilterIdx = 0;
         document.getElementById('aiRetouchSummary').classList.add('hidden');
         document.getElementById('aiPhotoEditorModal').classList.remove('hidden');
         const wmBadge = document.getElementById('aiWatermarkPreviewBadge');
         wmBadge.innerText = `✨ ${getWatermarkLabel()}`; wmBadge.style.display = aiWatermarkOn ? 'block' : 'none';
 
-        renderEditorFilterChips(); window.switchPhotoEditorTab('beauty');
+        renderEditorFilterChips();
+        // Nếu có người thì mở tab Da & Dáng, nếu là cảnh/quán thì mở tab Ánh sáng & Màu
+        window.switchPhotoEditorTab(capturedPoseUV ? 'beauty' : 'adjust');
+
         const preview = document.getElementById('aiEditedPreviewCanvas');
         if (!photoGl) photoGl = createWebGLEngine(preview);
         if (photoGl) { photoGl.uploadAndSize(aiCapturedCanvas, aiCapturedCanvas.width, aiCapturedCanvas.height); photoGl.draw(pAdj, AI_FILTERS[aiFilterIdx], capturedPoseUV, false); }
         else { preview.width = aiCapturedCanvas.width; preview.height = aiCapturedCanvas.height; preview.getContext('2d').drawImage(aiCapturedCanvas, 0, 0); }
     }
-
     function schedulePhotoDraw() {
         if (photoDrawRaf) return;
-        photoDrawRaf = requestAnimationFrame(() => {
-            photoDrawRaf = 0;
-            if (photoGl) photoGl.draw(pAdj, AI_FILTERS[aiFilterIdx], capturedPoseUV, isComparingPhotoOrig);
-        });
+        photoDrawRaf = requestAnimationFrame(() => { photoDrawRaf = 0; if (photoGl) photoGl.draw(pAdj, AI_FILTERS[aiFilterIdx], capturedPoseUV, isComparingPhotoOrig); });
     }
     window.holdCompareOriginal = function (hold) { isComparingPhotoOrig = !!hold; schedulePhotoDraw(); };
     window.closeAiPhotoEditor = function () { document.getElementById('aiPhotoEditorModal').classList.add('hidden'); };
@@ -1343,25 +1318,21 @@
         document.getElementById('pTabAdjust').className = tab === 'adjust' ? 'shrink-0 font-black text-sky-400 border-b-2 border-sky-400 pb-0.5' : 'shrink-0 font-black text-slate-400';
         document.getElementById('pTabFilter').className = tab === 'filter' ? 'shrink-0 font-black text-sky-400 border-b-2 border-sky-400 pb-0.5' : 'shrink-0 font-black text-slate-400';
         if (tab === 'beauty') { if (!BEAUTY_TOOLS.some(t => t.id === pActiveToolId)) pActiveToolId = 'skinWhiten'; renderPhotoAdjustButtons(); }
-        else if (tab === 'adjust') { if (!ADJUST_TOOLS.some(t => t.id === pActiveToolId)) pActiveToolId = 'deglare'; renderPhotoAdjustButtons(); }
+        else if (tab === 'adjust') { if (!ADJUST_TOOLS.some(t => t.id === pActiveToolId)) pActiveToolId = 'brightness'; renderPhotoAdjustButtons(); }
     };
-
     function renderPhotoAdjustButtons() {
         const list = pActiveTab === 'beauty' ? BEAUTY_TOOLS : ADJUST_TOOLS;
         document.getElementById('pAdjustButtonsRow').innerHTML = list.map(t => {
             const active = t.id === pActiveToolId, changed = pAdj[t.id] !== 0;
             return `<button onclick="selectPhotoAdjustTool('${t.id}')" class="shrink-0 flex flex-col items-center space-y-1 px-1.5">
-                <span class="w-12 h-12 rounded-full flex items-center justify-center border-2 ${active ? 'bg-rose-500/25 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}">${t.icon}</span>
-                <span class="font-bold ${active ? 'text-rose-300' : 'text-slate-300'}" style="font-size: 12px !important;">${t.name}${changed ? ' •' : ''}</span>
+                <span class="w-11 h-11 rounded-full flex items-center justify-center border-2 ${active ? 'bg-rose-500/25 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}">${t.icon}</span>
+                <span class="font-bold ${active ? 'text-rose-300' : 'text-slate-300'}" style="font-size: 11px !important;">${t.name}${changed ? ' •' : ''}</span>
             </button>`;
         }).join('');
         const tool = list.find(t => t.id === pActiveToolId) || list[0]; pActiveToolId = tool.id;
-        const slider = document.getElementById('pActiveToolSlider');
-        slider.min = tool.min; slider.max = tool.max; slider.value = pAdj[tool.id];
-        document.getElementById('pActiveToolLabel').innerText = `${tool.icon} ${tool.name}`;
-        document.getElementById('pActiveToolVal').innerText = pAdj[tool.id];
+        const slider = document.getElementById('pActiveToolSlider'); slider.min = tool.min; slider.max = tool.max; slider.value = pAdj[tool.id];
+        document.getElementById('pActiveToolLabel').innerText = `${tool.icon} ${tool.name}`; document.getElementById('pActiveToolVal').innerText = pAdj[tool.id];
     }
-
     window.selectPhotoAdjustTool = function (id) { pActiveToolId = id; renderPhotoAdjustButtons(); };
     window.onPhotoSingleSliderInput = function (val) { pAdj[pActiveToolId] = Number(val); document.getElementById('pActiveToolVal').innerText = val; schedulePhotoDraw(); };
     window.onPhotoSingleSliderCommit = function () { renderPhotoAdjustButtons(); schedulePhotoDraw(); };
@@ -1371,7 +1342,7 @@
         if (!aiCapturedCanvas) return;
         const tmp = document.createElement('canvas'); tmp.width = 480; tmp.height = Math.round(480 * (aiCapturedCanvas.height / aiCapturedCanvas.width));
         tmp.getContext('2d').drawImage(aiCapturedCanvas, 0, 0, tmp.width, tmp.height);
-        await runSmartEnhanceOnCanvas(tmp, pAdj, 'smartEnhanceLabel', 'aiRetouchSummary', renderPhotoAdjustButtons, schedulePhotoDraw);
+        await runSmartEnhanceOnCanvas(tmp, pAdj, !!capturedPoseUV, 'smartEnhanceLabel', 'aiRetouchSummary', renderPhotoAdjustButtons, schedulePhotoDraw);
     };
     window.toggleAiWatermark = function () {
         aiWatermarkOn = !aiWatermarkOn;
@@ -1386,7 +1357,7 @@
 
     function getWatermarkLabel() {
         const { cat, pmu, dish } = getAppContext();
-        return dish ? `Kim Bling • ${dish}` : (cat && cat.id === 'phun-xam-tham-my' ? (pmu === 'may' ? 'Kim Bling PMU • Phun Mày' : 'Kim Bling PMU • Phun Môi') : 'Kim Bling Studio Pro');
+        return dish ? `Kim Bling • ${dish}` : (cat && cat.id === 'phun-xam-tham-my' ? (pmu === 'may' ? 'Kim Bling PMU • Phun Mày' : 'Kim Bling PMU • Phun Môi') : 'Kim Bling Studio');
     }
     function buildAiPhotoCaptionText() {
         const curCtx = SCENE_CONTEXTS[sceneCtxIdx].id;
@@ -1397,19 +1368,14 @@
         if (dish && typeof descriptionsMap !== 'undefined') {
             const norm = dish.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             for (let k in descriptionsMap) { if (norm.includes(k)) { desc = descriptionsMap[k]; break; } }
-        } else if (cat && cat.id === 'phun-xam-tham-my') {
-            desc = pmu === 'may' ? 'Dáng mày tự nhiên sắc nét tại Kim Bling!' : 'Bờ môi căng mọng trong veo tại Kim Bling!';
-        }
+        } else if (cat && cat.id === 'phun-xam-tham-my') { desc = pmu === 'may' ? 'Dáng mày tự nhiên sắc nét tại Kim Bling!' : 'Bờ môi căng mọng trong veo tại Kim Bling!'; }
         let tags = ['#kimblingcoffeetea', '#xuhuong'];
         if (typeof getDynamicHashtags === 'function' && cat) tags = getDynamicHashtags(dish, cat.name);
         return `${desc}\n\n${tags.join(' ')}`;
     }
-    window.copyAiPhotoCaption = function () {
-        if (typeof copyText === 'function') copyText(buildAiPhotoCaptionText()).then(() => { const b = document.getElementById('aiCopyCapBtn'); b.innerText = '✅ Đã chép!'; setTimeout(() => b.innerText = '📋 Chép', 1500); });
-    };
+    window.copyAiPhotoCaption = function () { if (typeof copyText === 'function') copyText(buildAiPhotoCaptionText()).then(() => { const b = document.getElementById('aiCopyCapBtn'); b.innerText = '✅ Đã chép!'; setTimeout(() => b.innerText = '📋 Chép', 1500); }); };
     window.saveOrShareAiPhoto = function () {
-        isComparingPhotoOrig = false;
-        if (photoGl) photoGl.draw(pAdj, AI_FILTERS[aiFilterIdx], capturedPoseUV, false);
+        isComparingPhotoOrig = false; if (photoGl) photoGl.draw(pAdj, AI_FILTERS[aiFilterIdx], capturedPoseUV, false);
         const preview = document.getElementById('aiEditedPreviewCanvas');
         const outCanvas = document.createElement('canvas'); outCanvas.width = preview.width; outCanvas.height = preview.height;
         const octx = outCanvas.getContext('2d'); octx.drawImage(preview, 0, 0);
@@ -1427,7 +1393,7 @@
         }, 'image/jpeg', 0.95);
     };
 
-    // ====== RADAR QUÉT GÓC TRỰC QUAN TRÊN CAMERA (KHÔNG TỰ ĐỘNG TỐN TOKEN) ======
+    // ====== RADAR QUÉT GÓC TRỰC QUAN ======
     function getAppContext() {
         let cat = null, pmu = 'may', dish = '';
         try { if (typeof categoriesData !== 'undefined' && typeof currentCatIndex !== 'undefined') cat = categoriesData[currentCatIndex]; } catch (e) {}
@@ -1435,47 +1401,30 @@
         try { if (typeof currentCustomDish !== 'undefined') dish = currentCustomDish; } catch (e) {}
         return { cat, pmu, dish };
     }
-
     window.openAiDirector = function (owner) {
         directorOwner = owner;
-        if (owner === 'photo') {
-            const curCtx = SCENE_CONTEXTS[sceneCtxIdx].id;
-            window.setDirectorTarget(curCtx === 'scenery' ? 'scenery' : curCtx === 'travel_wife' ? 'travel_wife' : 'shop');
-        }
+        if (owner === 'photo') { const curCtx = SCENE_CONTEXTS[sceneCtxIdx].id; window.setDirectorTarget(curCtx === 'scenery' ? 'scenery' : curCtx === 'travel_wife' ? 'travel_wife' : 'shop'); }
         updateGeminiKeyStatusUI();
         document.getElementById('aiRadarScanEffects').classList.add('hidden');
         document.getElementById('directorPreScanPrompt').classList.remove('hidden');
         document.getElementById('directorResultBox').classList.add('hidden');
         document.getElementById('aiDirectorModal').classList.remove('hidden');
     };
-    window.closeAiDirector = function () {
-        document.getElementById('aiRadarScanEffects').classList.add('hidden');
-        document.getElementById('aiDirectorModal').classList.add('hidden');
-    };
+    window.closeAiDirector = function () { document.getElementById('aiRadarScanEffects').classList.add('hidden'); document.getElementById('aiDirectorModal').classList.add('hidden'); };
     window.setDirectorTarget = function (t) {
         directorTarget = t;
         document.getElementById('dirTargetWife').className = t === 'travel_wife' ? 'py-2 px-2 rounded-xl bg-rose-500 text-white font-black text-center' : 'py-2 px-2 rounded-xl bg-black/70 border border-white/20 text-slate-200 font-black text-center';
         document.getElementById('dirTargetScenery').className = t === 'scenery' ? 'py-2 px-2 rounded-xl bg-rose-500 text-white font-black text-center' : 'py-2 px-2 rounded-xl bg-black/70 border border-white/20 text-slate-200 font-black text-center';
         document.getElementById('dirTargetShop').className = t === 'shop' ? 'py-2 px-2 rounded-xl bg-rose-500 text-white font-black text-center' : 'py-2 px-2 rounded-xl bg-black/70 border border-white/20 text-slate-200 font-black text-center';
     };
-    window.toggleApiKeyInput = function () {
-        document.getElementById('geminiKeyConfigBox').classList.toggle('hidden');
-        document.getElementById('geminiApiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
-    };
-    window.saveGeminiKey = function () {
-        const v = document.getElementById('geminiApiKeyInput').value.trim();
-        if (v) localStorage.setItem(GEMINI_KEY_STORAGE, v);
-        document.getElementById('geminiKeyConfigBox').classList.add('hidden');
-        updateGeminiKeyStatusUI();
-    };
+    window.toggleApiKeyInput = function () { document.getElementById('geminiKeyConfigBox').classList.toggle('hidden'); document.getElementById('geminiApiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || ''; };
+    window.saveGeminiKey = function () { const v = document.getElementById('geminiApiKeyInput').value.trim(); if (v) localStorage.setItem(GEMINI_KEY_STORAGE, v); document.getElementById('geminiKeyConfigBox').classList.add('hidden'); updateGeminiKeyStatusUI(); };
     window.clearGeminiKey = function () { localStorage.removeItem(GEMINI_KEY_STORAGE); document.getElementById('geminiApiKeyInput').value = ''; updateGeminiKeyStatusUI(); };
     function updateGeminiKeyStatusUI() {
-        const hasKey = !!(localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
-        const el = document.getElementById('geminiKeyStatus');
+        const hasKey = !!(localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim(), el = document.getElementById('geminiKeyStatus');
         el.innerText = hasKey ? '✅ Đã có Key -> Quét 1 ảnh (~380 tokens) trong ~1.5s!' : 'Chưa nhập Key -> Quét ánh sáng Offline (0 token).';
         el.className = hasKey ? 'text-emerald-300 font-bold' : 'text-slate-300 font-semibold';
     }
-
     function captureSmallBase64FromVideo(videoEl, maxW = 640) {
         if (!videoEl || !videoEl.videoWidth) return null;
         const scale = Math.min(1, maxW / videoEl.videoWidth), c = document.createElement('canvas');
@@ -1483,16 +1432,14 @@
         c.getContext('2d').drawImage(videoEl, 0, 0, c.width, c.height);
         return c.toDataURL('image/jpeg', 0.72).split(',')[1];
     }
-
     async function callGeminiVisionJSON(base64Jpeg, promptText) {
-        const apiKey = (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
-        if (!apiKey) return null;
+        const apiKey = (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim(); if (!apiKey) return null;
         const models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash'];
         for (const model of models) {
             try {
                 const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: 'image/jpeg', data: base64Jpeg } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.4 } })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: 'image/jpeg', data: base64Jpeg } }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.35 } })
                 });
                 if (!resp.ok) continue;
                 const data = await resp.json(), txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -1501,178 +1448,91 @@
         }
         return null;
     }
-
-    function shiftPoseX(pts, targetX) {
-        const shift = targetX - 0.5, out = {};
-        Object.keys(pts).forEach(k => { out[k] = [Math.max(0.08, Math.min(0.92, pts[k][0] + shift)), pts[k][1]]; });
-        return out;
-    }
-
+    function shiftPoseX(pts, targetX) { const shift = targetX - 0.5, out = {}; Object.keys(pts).forEach(k => { out[k] = [Math.max(0.08, Math.min(0.92, pts[k][0]+shift)), pts[k][1]]; }); return out; }
     function analyzeOfflineSceneDirections(videoEl) {
-        const c = document.createElement('canvas'); c.width = 48; c.height = 48;
-        const x = c.getContext('2d'); x.drawImage(videoEl, 0, 0, 48, 48);
-        const d = x.getImageData(0, 0, 48, 48).data;
-        let left = 0, right = 0;
+        const c = document.createElement('canvas'); c.width = 48; c.height = 48; const x = c.getContext('2d'); x.drawImage(videoEl, 0, 0, 48, 48);
+        const d = x.getImageData(0, 0, 48, 48).data; let left = 0, right = 0;
         for (let py = 0; py < 48; py++) for (let px = 0; px < 48; px++) { const i = (py*48+px)*4, lum = 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if (px<24) left+=lum; else right+=lum; }
         const brightLeft = left > right, brightSide = brightLeft ? 'bên TRÁI' : 'bên PHẢI', placeX = brightLeft ? 0.66 : 0.34;
-        if (directorTarget === 'scenery') {
-            return { spot: `Ánh sáng thoáng ở ${brightSide}. Đặt đường chân trời vào vạch 1/3.`, cameraAngle: 'Giữ thước ngang xanh lá, zoom 0,5x hoặc 1x.', photoPose: null, videoAction: 'Lia máy cực chậm ngang trong 5s.', matchedModeId: 'scenery_13', voiceSummary: 'Đặt đường chân trời vào vạch 1 phần 3, giữ thẳng máy.' };
-        }
+        if (directorTarget === 'scenery') return { spot: `Ánh sáng thoáng ở ${brightSide}. Đặt đường chân trời vào vạch 1/3.`, cameraAngle: 'Giữ thước ngang xanh lá, zoom 0,5x hoặc 1x.', photoPose: null, videoAction: 'Lia máy cực chậm ngang trong 5s.', matchedModeId: 'scenery_13', voiceSummary: 'Đặt đường chân trời vào vạch 1 phần 3, giữ thẳng máy.' };
         if (directorTarget === 'travel_wife') {
             const basePts = { head:[0.50,0.25], ls:[0.43,0.36], rs:[0.57,0.36], le:[0.39,0.47], re:[0.62,0.46], lw:[0.41,0.57], rw:[0.64,0.33], lh:[0.45,0.56], rh:[0.55,0.56], lk:[0.44,0.73], rk:[0.56,0.73], la:[0.43,0.90], ra:[0.57,0.90] };
             return { spot: `Sáng đẹp từ ${brightSide}. Đặt vợ đứng ở 1/3 ${brightLeft ? 'PHẢI' : 'TRÁI'} (ô Người Mẫu AR) để mặt bắt sáng.`, cameraAngle: 'Cầm máy ngang eo ngước 12° cho chân dài, zoom 1x.', photoPose: { legs:'1 chân bước nhẹ về trước kiễng gót.', hands:'1 tay vén tóc hoặc giơ nón nhẹ.', face:`Xoay vai 30°, hướng mặt về ${brightSide} cười nhẹ.` }, videoAction: 'Giây 1-2 bước vào điểm AR -> Giây 3-5 ngoái nhìn cười và vén tóc.', matchedModeId: 'ai_custom', arPose: shiftPoseX(basePts, placeX), voiceSummary: `Vợ đứng sang ${brightLeft ? 'bên phải' : 'bên trái'} vào hình mẫu AR, mặt quay về phía sáng.` };
         }
         return { spot: `Sáng đẹp từ ${brightSide}. Đặt bàn/mẫu ở góc 1/3 ${brightLeft ? 'PHẢI' : 'TRÁI'}.`, cameraAngle: 'Nghiêng máy 45° cho đồ ăn, ngang ngực cho người.', photoPose: { legs:'Ngồi nghiêng 30°.', hands:'1 tay cầm ly ngang vai.', face:'Nghiêng đầu 10° cười tự nhiên.' }, videoAction: 'Giây 1-2 khuấy ly -> Giây 3-5 ngước lên cười mời.', matchedModeId: 'cafe_sit', voiceSummary: `Đứng hoặc ngồi vào góc ${brightLeft ? 'phải' : 'trái'}, cầm ly ngang vai.` };
     }
-
     window.runAiDirectorScan = async function () {
-        const videoEl = document.getElementById(directorOwner === 'video' ? 'liveVideo' : 'aiPhotoVideo');
-        if (!videoEl || videoEl.readyState < 2) { alert('Camera chưa sẵn sàng.'); return; }
-
-        const radar = document.getElementById('aiRadarScanEffects');
-        const pre = document.getElementById('directorPreScanPrompt');
-        const resBox = document.getElementById('directorResultBox');
-
-        pre.classList.add('hidden');
-        resBox.classList.add('hidden');
-        radar.classList.remove('hidden');
-
-        const t0 = performance.now();
-        const b64 = captureSmallBase64FromVideo(videoEl, 640);
-        const { cat, dish } = getAppContext();
-        const hasKey = !!(localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
-
+        const videoEl = document.getElementById(directorOwner === 'video' ? 'liveVideo' : 'aiPhotoVideo'); if (!videoEl || videoEl.readyState < 2) { alert('Camera chưa sẵn sàng.'); return; }
+        const radar = document.getElementById('aiRadarScanEffects'), pre = document.getElementById('directorPreScanPrompt'), resBox = document.getElementById('directorResultBox');
+        pre.classList.add('hidden'); resBox.classList.add('hidden'); radar.classList.remove('hidden');
+        const t0 = performance.now(), b64 = captureSmallBase64FromVideo(videoEl, 640), { cat, dish } = getAppContext(), hasKey = !!(localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
         let plan = null;
         if (b64 && hasKey) {
-            const targetDesc = directorTarget === 'scenery' ? 'Chụp PHONG CẢNH (không có người)'
-                : directorTarget === 'travel_wife' ? 'Chụp VỢ / NGƯỜI MẪU đi du lịch giữa cảnh đẹp (trả tọa độ arPose 0..1 vào vị trí đẹp nhất trong cảnh)'
-                : `Chụp QUÁN / MÓN / PHUN XĂM (${cat ? cat.name : ''} ${dish})`;
-
-            const prompt = `Bạn là nhiếp ảnh gia & đạo diễn hình ảnh. Hãy quan sát khung cảnh trong ảnh camera này. Mục tiêu: ${targetDesc}.
-Trả về JSON:
-{"spot":"Chỗ đứng đẹp nhất trong cảnh (trái/phải/trước cây...)","cameraAngle":"Cầm máy cao/thấp, zoom 0.5x/1x/2x","photoPose":{"legs":"Tư thế chân","hands":"Tư thế tay","face":"Hướng mặt"},"videoAction":"Chuyển động quay video 5s","matchedModeId":"ai_custom|scenery_13|food_45","arPose":{"head":[x,y],"ls":[x,y],"rs":[x,y],"le":[x,y],"re":[x,y],"lw":[x,y],"rw":[x,y],"lh":[x,y],"rh":[x,y],"lk":[x,y],"rk":[x,y],"la":[x,y],"ra":[x,y]},"voiceSummary":"1-2 câu ngắn tiếng Việt đọc cho mẫu"}`;
+            const targetDesc = directorTarget === 'scenery' ? 'Chụp PHONG CẢNH (không có người)' : directorTarget === 'travel_wife' ? 'Chụp VỢ / NGƯỜI MẪU đi du lịch giữa cảnh đẹp (trả tọa độ arPose 0..1 vào vị trí đẹp nhất trong cảnh)' : `Chụp QUÁN / MÓN / PHUN XĂM (${cat ? cat.name : ''} ${dish})`;
+            const prompt = `Bạn là nhiếp ảnh gia & đạo diễn hình ảnh. Quan sát cảnh trong ảnh camera này. Mục tiêu: ${targetDesc}. Trả về JSON: {"spot":"...","cameraAngle":"...","photoPose":{"legs":"...","hands":"...","face":"..."},"videoAction":"...","matchedModeId":"ai_custom|scenery_13|food_45","arPose":{"head":[x,y],"ls":[x,y],"rs":[x,y],"le":[x,y],"re":[x,y],"lw":[x,y],"rw":[x,y],"lh":[x,y],"rh":[x,y],"lk":[x,y],"rk":[x,y],"la":[x,y],"ra":[x,y]},"voiceSummary":"1-2 câu ngắn tiếng Việt đọc cho mẫu"}`;
             plan = await callGeminiVisionJSON(b64, prompt);
         }
-
-        // Đảm bảo tia Radar quét tối thiểu 900ms để mắt kịp nhìn thấy quá trình quét trực quan
-        const elapsed = performance.now() - t0;
-        if (elapsed < 900) await new Promise(r => setTimeout(r, 900 - elapsed));
+        const elapsed = performance.now() - t0; if (elapsed < 900) await new Promise(r => setTimeout(r, 900 - elapsed));
         if (!plan) plan = analyzeOfflineSceneDirections(videoEl);
-
-        const totalSec = ((performance.now() - t0) / 1000).toFixed(1);
-        lastDirectorPlan = plan;
-
-        // Đặt luôn Người Mẫu AR xem trước ngay trên màn hình Camera phía sau!
+        const totalSec = ((performance.now() - t0) / 1000).toFixed(1); lastDirectorPlan = plan;
         previewDirectorPoseOnCamera(plan);
-
         radar.classList.add('hidden');
         document.getElementById('dirMetricsBadge').innerText = hasKey ? `⚡ Xong trong ${totalSec}s • ~380 tokens` : `⚡ Offline (${totalSec}s) • 0 token`;
-        document.getElementById('dirSpotText').innerText = plan.spot || '';
-        document.getElementById('dirAngleText').innerText = plan.cameraAngle || '';
+        document.getElementById('dirSpotText').innerText = plan.spot || ''; document.getElementById('dirAngleText').innerText = plan.cameraAngle || '';
         const poseCard = document.getElementById('dirPoseCard');
         if (directorTarget === 'scenery' || !plan.photoPose) poseCard.classList.add('hidden');
-        else {
-            poseCard.classList.remove('hidden');
-            document.getElementById('dirPoseLegs').innerText = `🦵 Chân: ${plan.photoPose.legs || ''}`;
-            document.getElementById('dirPoseHands').innerText = `✋ Tay: ${plan.photoPose.hands || ''}`;
-            document.getElementById('dirPoseFace').innerText = `😊 Mặt: ${plan.photoPose.face || ''}`;
-        }
-        document.getElementById('dirVideoAction').innerText = plan.videoAction || '';
-        resBox.classList.remove('hidden');
+        else { poseCard.classList.remove('hidden'); document.getElementById('dirPoseLegs').innerText = `🦵 Chân: ${plan.photoPose.legs || ''}`; document.getElementById('dirPoseHands').innerText = `✋ Tay: ${plan.photoPose.hands || ''}`; document.getElementById('dirPoseFace').innerText = `😊 Mặt: ${plan.photoPose.face || ''}`; }
+        document.getElementById('dirVideoAction').innerText = plan.videoAction || ''; resBox.classList.remove('hidden');
     };
-
     function previewDirectorPoseOnCamera(plan) {
-        if (plan.arPose && plan.arPose.head) {
-            const customMode = AI_MODES.find(m => m.id === 'ai_custom');
-            if (customMode) { customMode.pts = plan.arPose; customMode.tip = plan.spot || 'Đứng vào đúng Người Mẫu AR!'; }
-            aiModeIdx = AI_MODES.findIndex(m => m.id === 'ai_custom');
-        } else if (plan.matchedModeId) {
-            const idx = AI_MODES.findIndex(m => m.id === plan.matchedModeId);
-            if (idx >= 0) aiModeIdx = idx;
-        }
-        if (directorOwner === 'photo') {
-            if (!photoAiEnabled) { photoAiEnabled = true; updatePhotoAiToggleUI(); }
-            renderAiPosePresets();
-        }
+        if (plan.arPose && plan.arPose.head) { const cm = AI_MODES.find(m => m.id === 'ai_custom'); if (cm) { cm.pts = plan.arPose; cm.tip = plan.spot || 'Đứng vào Người Mẫu AR!'; } aiModeIdx = AI_MODES.findIndex(m => m.id === 'ai_custom'); }
+        else if (plan.matchedModeId) { const idx = AI_MODES.findIndex(m => m.id === plan.matchedModeId); if (idx >= 0) aiModeIdx = idx; }
+        if (directorOwner === 'photo') { if (!photoAiEnabled) { photoAiEnabled = true; updatePhotoAiToggleUI(); } renderAiPosePresets(); }
     }
-
-    window.speakDirectorAdvice = function () {
-        if (!lastDirectorPlan) return;
-        try { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(lastDirectorPlan.voiceSummary || lastDirectorPlan.spot); u.lang = 'vi-VN'; u.rate = 1.02; window.speechSynthesis.speak(u); } catch (e) {}
-    };
+    window.speakDirectorAdvice = function () { if (!lastDirectorPlan) return; try { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(lastDirectorPlan.voiceSummary || lastDirectorPlan.spot); u.lang = 'vi-VN'; u.rate = 1.02; window.speechSynthesis.speak(u); } catch (e) {} };
     window.applyDirectorMatchedPose = function () {
-        if (lastDirectorPlan) {
-            previewDirectorPoseOnCamera(lastDirectorPlan);
-            if (directorOwner === 'video' && lastDirectorPlan.videoAction) document.getElementById('videoAiTipText').innerText = `🎬 ${lastDirectorPlan.videoAction}`;
-            else if (lastDirectorPlan.spot) document.getElementById('aiCoachText').innerText = `📍 ${lastDirectorPlan.spot}`;
-        }
-        window.closeAiDirector();
-        window.speakDirectorAdvice();
+        if (lastDirectorPlan) { previewDirectorPoseOnCamera(lastDirectorPlan); if (directorOwner === 'video' && lastDirectorPlan.videoAction) document.getElementById('videoAiTipText').innerText = `🎬 ${lastDirectorPlan.videoAction}`; else if (lastDirectorPlan.spot) document.getElementById('aiCoachText').innerText = `📍 ${lastDirectorPlan.spot}`; }
+        window.closeAiDirector(); window.speakDirectorAdvice();
     };
 
-    // ====== NGƯỜI MẪU AR PHÁT SÁNG ======
+    // ====== NGƯỜI MẪU AR + CAMERA CONTROLS ======
     function drawGhostMannequin(ctx, w, h, preset) {
-        const p = preset.pts; if (!p || !p.head) return;
-        ctx.save();
+        const p = preset.pts; if (!p || !p.head) return; ctx.save();
         const footL = p.la || p.lh, footR = p.ra || p.rh;
         if (footL && footR) {
-            const gx = ((footL[0] + footR[0]) * 0.5) * w, gy = (Math.max(footL[1], footR[1]) + 0.02) * h;
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.22)'; ctx.strokeStyle = 'rgba(251, 191, 36, 0.9)'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.ellipse(gx, gy, w * 0.14, h * 0.025, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-            ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = '#fde68a'; ctx.textAlign = 'center';
-            ctx.fillText('📍 ĐỨNG VÀO ĐÂY', gx, gy + 18);
+            const gx = ((footL[0]+footR[0])*0.5)*w, gy = (Math.max(footL[1],footR[1])+0.02)*h;
+            ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.strokeStyle = 'rgba(251,191,36,0.9)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.ellipse(gx, gy, w*0.14, h*0.025, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = '#fde68a'; ctx.textAlign = 'center'; ctx.fillText('📍 ĐỨNG VÀO ĐÂY', gx, gy+18);
         }
-        const drawCapsule = (a, b, th) => { if (!a || !b) return; ctx.lineCap = 'round'; ctx.lineWidth = th; ctx.beginPath(); ctx.moveTo(a[0]*w, a[1]*h); ctx.lineTo(b[0]*w, b[1]*h); ctx.stroke(); };
-        if (p.ls && p.rs && p.lh && p.rh) {
-            ctx.fillStyle = 'rgba(244, 63, 94, 0.18)'; ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)'; ctx.lineWidth = 2.5;
-            ctx.beginPath(); ctx.moveTo(p.ls[0]*w, p.ls[1]*h); ctx.lineTo(p.rs[0]*w, p.rs[1]*h); ctx.lineTo(p.rh[0]*w, p.rh[1]*h); ctx.lineTo(p.lh[0]*w, p.lh[1]*h); ctx.closePath(); ctx.fill(); ctx.stroke();
-        }
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.52)';
-        const armT = Math.max(10, w*0.032), legT = Math.max(13, w*0.042);
-        drawCapsule(p.ls,p.le,armT); drawCapsule(p.le,p.lw,armT*0.85); drawCapsule(p.rs,p.re,armT); drawCapsule(p.re,p.rw,armT*0.85);
-        drawCapsule(p.lh,p.lk,legT); drawCapsule(p.lk,p.la,legT*0.82); drawCapsule(p.rh,p.rk,legT); drawCapsule(p.rk,p.ra,legT*0.82);
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.22)'; ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)'; ctx.lineWidth = 2.5;
+        const drawCap = (a, b, th) => { if (!a || !b) return; ctx.lineCap = 'round'; ctx.lineWidth = th; ctx.beginPath(); ctx.moveTo(a[0]*w, a[1]*h); ctx.lineTo(b[0]*w, b[1]*h); ctx.stroke(); };
+        if (p.ls && p.rs && p.lh && p.rh) { ctx.fillStyle = 'rgba(244,63,94,0.18)'; ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p.ls[0]*w,p.ls[1]*h); ctx.lineTo(p.rs[0]*w,p.rs[1]*h); ctx.lineTo(p.rh[0]*w,p.rh[1]*h); ctx.lineTo(p.lh[0]*w,p.lh[1]*h); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+        ctx.strokeStyle = 'rgba(255,255,255,0.52)'; const armT = Math.max(10, w*0.032), legT = Math.max(13, w*0.042);
+        drawCap(p.ls,p.le,armT); drawCap(p.le,p.lw,armT*0.85); drawCap(p.rs,p.re,armT); drawCap(p.re,p.rw,armT*0.85);
+        drawCap(p.lh,p.lk,legT); drawCap(p.lk,p.la,legT*0.82); drawCap(p.rh,p.rk,legT); drawCap(p.rk,p.ra,legT*0.82);
+        ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.strokeStyle = 'rgba(251,191,36,0.85)'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.ellipse(p.head[0]*w, p.head[1]*h, Math.min(w,h)*0.055, Math.min(w,h)*0.07, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
         ctx.restore();
     }
 
-    // ====== FLASH, PHƠI SÁNG EV, BAN ĐÊM, HDR & CAMERA LOOP ======
     window.cyclePhotoSceneContext = function () { sceneCtxIdx = (sceneCtxIdx + 1) % SCENE_CONTEXTS.length; applySceneContextUI(); };
-    function applySceneContextUI() {
-        const ctx = SCENE_CONTEXTS[sceneCtxIdx]; document.getElementById('aiSceneCtxBtn').innerText = ctx.label;
-        const firstMatch = AI_MODES.findIndex(m => m.cats.includes(ctx.id)); if (firstMatch >= 0) aiModeIdx = firstMatch;
-        renderAiPosePresets();
-    }
+    function applySceneContextUI() { const ctx = SCENE_CONTEXTS[sceneCtxIdx]; document.getElementById('aiSceneCtxBtn').innerText = ctx.label; const fm = AI_MODES.findIndex(m => m.cats.includes(ctx.id)); if (fm >= 0) aiModeIdx = fm; renderAiPosePresets(); }
     window.togglePhotoAiAssistant = function () { photoAiEnabled = !photoAiEnabled; updatePhotoAiToggleUI(); };
     function updatePhotoAiToggleUI() {
         const btn = document.getElementById('photoAiToggleBtn'), badges = document.getElementById('photoAiBadgesRow'), coach = document.getElementById('photoAiCoachWrap'), presetBar = document.getElementById('aiPosePresetBar'), poseCanvas = document.getElementById('aiPoseCanvas');
         if (photoAiEnabled) { btn.innerText = '🤖 AI: BẬT'; btn.className = 'px-3 py-1 rounded-2xl bg-emerald-500 text-slate-950 font-black shadow'; badges.style.display='flex'; coach.style.display='flex'; presetBar.style.display='flex'; poseCanvas.style.display='block'; }
         else { btn.innerText = '📷 Chụp Thường'; btn.className = 'px-3 py-1 rounded-2xl bg-black/70 border border-white/30 text-white font-black shadow'; badges.style.display='none'; coach.style.display='none'; presetBar.style.display='none'; poseCanvas.style.display='none'; }
     }
-
     window.applyActiveCameraPreviewStyle = function (mode) {
         const video = document.getElementById(mode === 'video' ? 'liveVideo' : 'aiPhotoVideo'); if (!video) return;
         const evFactor = camHardwareEvApplied ? 1.0 : Math.pow(2, camEvValue * 0.32), nightFactor = camNightMode ? 1.22 : 1.0;
         video.style.filter = `brightness(${(evFactor*nightFactor).toFixed(2)}) contrast(${camHdrMode?1.06:1.0}) saturate(${camHdrMode?1.08:1.0})`;
         const evLabel = `EV ${camEvValue >= 0 ? '+' : ''}${camEvValue.toFixed(1).replace('.', ',')}`;
-        const vc = document.getElementById('videoEvCorner'), pc = document.getElementById('photoEvCorner');
-        if (vc) vc.innerText = evLabel; if (pc) pc.innerText = evLabel;
+        const vc = document.getElementById('videoEvCorner'), pc = document.getElementById('photoEvCorner'); if (vc) vc.innerText = evLabel; if (pc) pc.innerText = evLabel;
     };
-
-    function getActiveVideoTrack() {
-        if (sheetOwner === 'video' && typeof mediaStream !== 'undefined' && mediaStream) return mediaStream.getVideoTracks()[0];
-        if (sheetOwner === 'photo' && aiStream) return aiStream.getVideoTracks()[0];
-        return null;
-    }
-    async function applyHardwareTorch(turnOn) {
-        const track = getActiveVideoTrack(); if (!track) return false;
-        try { const caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.torch) { await track.applyConstraints({ advanced: [{ torch: !!turnOn }] }); return true; } } catch (e) {}
-        return false;
-    }
-    async function applyHardwareExposure(ev) {
-        camHardwareEvApplied = false; const track = getActiveVideoTrack(); if (!track) return;
-        try { const caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.exposureCompensation) { await track.applyConstraints({ advanced: [{ exposureCompensation: Math.max(caps.exposureCompensation.min, Math.min(caps.exposureCompensation.max, ev)) }] }); camHardwareEvApplied = true; } } catch (e) { camHardwareEvApplied = false; }
-    }
+    function getActiveVideoTrack() { if (sheetOwner === 'video' && typeof mediaStream !== 'undefined' && mediaStream) return mediaStream.getVideoTracks()[0]; if (sheetOwner === 'photo' && aiStream) return aiStream.getVideoTracks()[0]; return null; }
+    async function applyHardwareTorch(turnOn) { const track = getActiveVideoTrack(); if (!track) return false; try { const caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.torch) { await track.applyConstraints({ advanced: [{ torch: !!turnOn }] }); return true; } } catch (e) {} return false; }
+    async function applyHardwareExposure(ev) { camHardwareEvApplied = false; const track = getActiveVideoTrack(); if (!track) return; try { const caps = track.getCapabilities ? track.getCapabilities() : {}; if (caps.exposureCompensation) { await track.applyConstraints({ advanced: [{ exposureCompensation: Math.max(caps.exposureCompensation.min, Math.min(caps.exposureCompensation.max, ev)) }] }); camHardwareEvApplied = true; } } catch (e) { camHardwareEvApplied = false; } }
 
     window.openCamToolsSheet = function (owner) { sheetOwner = owner; updateCamToolsSheetUI(); document.getElementById('camToolsSheet').classList.remove('hidden'); };
     window.closeCamToolsSheet = function () { document.getElementById('camToolsSheet').classList.add('hidden'); };
@@ -1708,8 +1568,7 @@ Trả về JSON:
     window.toggleSheetGrid = function () { if (sheetOwner==='photo') window.toggleAiGridAndLevel(); else { const lv = document.getElementById('videoLeveler'); lv.style.display = lv.style.display==='none'?'flex':'none'; } window.closeCamToolsSheet(); };
 
     async function ensurePoseModel() {
-        if (poseLandmarker) return true;
-        const badge = document.getElementById('aiPoseScoreBadge');
+        if (poseLandmarker) return true; const badge = document.getElementById('aiPoseScoreBadge');
         try {
             if (badge) badge.innerText = '⏳ Đang tải AI...';
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
@@ -1718,7 +1577,6 @@ Trả về JSON:
             return true;
         } catch (e) { if (badge) badge.innerText = '👻 Khung AR Sẵn sàng'; return false; }
     }
-
     function resizeAiCropFrame() {
         const frame = document.getElementById('aiCropFrame'); if (!frame) return;
         const vw = window.innerWidth, vh = window.innerHeight, ratioStr = AI_ASPECTS[aiAspectIdx];
