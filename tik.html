@@ -1266,12 +1266,52 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
             return { title, engine: 'offline', hasAudio: !!audioTotalDur, shootGroups, scenes };
         }
 
+        function consolidateScenesToMax5(scenes, hasAudio) {
+            if (!Array.isArray(scenes) || scenes.length <= 5) return scenes;
+            const list = scenes.map(s => ({ ...s, sfxList: [...(s.sfxList || [])] }));
+            while (list.length > 5) {
+                let bestIdx = 0, bestScore = Infinity;
+                for (let i = 0; i < list.length - 1; i++) {
+                    const combinedDur = list[i].durationSec + list[i + 1].durationSec;
+                    const sameGroupBonus = (list[i].shootOrder === list[i + 1].shootOrder) ? -2.0 : 0;
+                    const score = combinedDur + sameGroupBonus;
+                    if (score < bestScore) { bestScore = score; bestIdx = i; }
+                }
+                const a = list[bestIdx], b = list[bestIdx + 1];
+                const newStart = a.audioStartSec, newEnd = b.audioEndSec;
+                const newDur = hasAudio
+                    ? Math.max(1.5, Number((newEnd - newStart).toFixed(1)))
+                    : Number((a.durationSec + b.durationSec).toFixed(1));
+                const shiftedB_Sfx = (b.sfxList || []).map(x => ({ ...x, atSec: Number((x.atSec + a.durationSec).toFixed(1)) }));
+                const mergedSpeech = [a.speech, b.speech].filter(Boolean).join(' ').trim();
+                const merged = {
+                    ...a,
+                    audioStartSec: newStart,
+                    audioEndSec: newEnd,
+                    durationSec: newDur,
+                    recSeconds: Math.max(3, Math.ceil(newDur + 2)),
+                    timeRange: hasAudio ? `${newStart.toFixed(1)}s - ${newEnd.toFixed(1)}s` : `${a.timeRange.split('-')[0].trim()} - ${(b.timeRange.split('-')[1] || '').trim()}`,
+                    visualDesc: [a.visualDesc, b.visualDesc].filter(Boolean).join(' → '),
+                    screenText: a.screenText || b.screenText || '',
+                    effectNote: [a.effectNote, b.effectNote].filter(Boolean).join(' | '),
+                    speech: mergedSpeech,
+                    cameraGuide: `${a.cameraGuide} Tiếp nối: ${b.cameraGuide}`,
+                    useOrigAudio: a.useOrigAudio || b.useOrigAudio,
+                    origGainPct: Math.max(a.origGainPct || 100, b.origGainPct || 100),
+                    sfxList: [...(a.sfxList || []), ...shiftedB_Sfx].slice(0, 3),
+                    subtitles: buildSubtitlesForScene(mergedSpeech, newDur)
+                };
+                list.splice(bestIdx, 2, merged);
+            }
+            return list.map((sc, i) => ({ ...sc, sceneNum: i + 1 }));
+        }
+
         async function analyzeScriptWithAI() {
             const raw = document.getElementById('scriptInputTextarea').value.trim();
             if (!raw && !masterAudioData) { alert('Bạn hãy dán kịch bản HOẶC chọn 1 file âm thanh trước nhé!'); return; }
             const btn = document.getElementById('analyzeScriptBtn'), origHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = masterAudioData ? '<span>⏳</span><span>AI đang đo khoảng lặng & khớp lời từng giây...</span>' : '<span>⏳</span><span>AI đang phân tích lịch quay...</span>';
+            btn.innerHTML = masterAudioData ? '<span>⏳</span><span>AI đang chia tối đa 5 cảnh (~10s/đoạn)...</span>' : '<span>⏳</span><span>AI đang phân tích (tối đa 5 cảnh)...</span>';
 
             const hasKey = !!(localStorage.getItem(GEMINI_KEY_KEY) || '').trim(), audioDur = masterAudioData ? masterAudioData.duration : 0;
             let detectedPauses = [];
@@ -1288,31 +1328,33 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
             if (hasKey) {
                 const pauseHint = detectedPauses.length ? `CÁC MỐC KHOẢNG LẶNG NGẮT CÂU ĐO ĐƯỢC TRONG SÓNG ÂM: [${detectedPauses.join(', ')}] giây (tổng dài ${audioDur.toFixed(1)}s). Hãy chọn audioStartSec và audioEndSec TRÙNG KHỚP vào các mốc khoảng lặng này!` : `Tổng độ dài audio: ${audioDur.toFixed(1)}s.`;
                 const audioInstruction = masterAudioData ? `ĐÍNH KÈM FILE AUDIO. ${pauseHint}
-QUY TẮC SỐNG CÒN KHI CẮT AUDIO:
-- Nghe thật kỹ từng câu trong file audio. Mỗi cảnh gồm 1 đến 2 câu trọn vẹn (khoảng 3-7s).
-- Trường "speech" của cảnh PHẢI KHỚP 100% TỪNG CHỮ được nói trong khoảng [audioStartSec, audioEndSec] đó — TUYỆT ĐỐI KHÔNG đưa câu của giây sau vào "speech" của cảnh trước!
-- Các cảnh nối tiếp khít nhau: cảnh sau bắt đầu đúng ngay tại audioEndSec của cảnh trước, cảnh cuối kết thúc tại ~${audioDur.toFixed(1)}s.
-- durationSec = (audioEndSec - audioStartSec). recSeconds = Math.ceil(durationSec + 2).` : `Không có file audio đính kèm.`;
-                const scriptPart = raw ? `THÔNG TIN / KỊCH BẢN ĐẦU VÀO:\n"""\n${raw}\n"""\nNếu có "Lần quay X", giữ nguyên. Nếu chưa có, tự gom nhóm Lần quay thực tế sao cho tiện bày đồ quay nhất.` : `NGƯỜI DÙNG CHỈ GỬI FILE ÂM THANH. Hãy chép lại chính xác từng câu nói làm "speech", tự viết "visualDesc", "screenText" (tiêu đề ngắn nổi bật) và gom nhóm "shootOrder" (Lần quay 1, 2, 3...) hợp lý nhất!`;
+QUY TẮC CẮT AUDIO BẮT BUỘC:
+- BẮT BUỘC chia thành TỐI ĐA 5 CẢNH QUAY (tốt nhất 4-5 cảnh). Tuyệt đối KHÔNG chia quá 5 cảnh!
+- Mỗi cảnh cắt khoảng ~10 giây (từ 7 đến 12 giây) hoặc gom hết 2 câu nói trọn vẹn vào 1 cảnh rồi mới cắt tại mốc khoảng lặng.
+- Trường "speech" của cảnh PHẢI KHỚP 100% TỪNG CHỮ được nói trong khoảng [audioStartSec, audioEndSec] đó — TUYỆT ĐỐI KHÔNG đưa câu của cảnh sau vào cảnh trước!
+- Các cảnh nối tiếp khít nhau: cảnh sau bắt đầu đúng tại audioEndSec của cảnh trước, cảnh cuối kết thúc tại ~${audioDur.toFixed(1)}s.
+- durationSec = (audioEndSec - audioStartSec). recSeconds = Math.ceil(durationSec + 2).` : `Không có file audio đính kèm. BẮT BUỘC chia hoặc gộp thành TỐI ĐA 5 CẢNH QUAY (~8-10s mỗi cảnh, 2 câu mỗi cảnh).`;
+                const scriptPart = raw ? `THÔNG TIN / KỊCH BẢN ĐẦU VÀO:\n"""\n${raw}\n"""\nGom hợp lý thành tối đa 5 cảnh quay và sắp xếp "shootOrder" (Lần quay 1, 2, 3...) sao cho tiện chuẩn bị nguyên liệu nhất.` : `NGƯỜI DÙNG CHỈ GỬI FILE ÂM THANH. Chép lại chính xác lời nói từng đoạn làm "speech" (mỗi đoạn ~2 câu / ~10s), tự viết "visualDesc", "screenText" (tiêu đề ngắn nổi bật) và gom nhóm "shootOrder" (Lần quay 1, 2, 3...) sao cho tối đa 5 cảnh!`;
 
-                const prompt = `Bạn là Đạo diễn Video TikTok/Reels chuyên nghiệp. Tạo JSON lịch quay thực tế chi tiết.
+                const prompt = `Bạn là Đạo diễn Video TikTok/Reels chuyên nghiệp. Tạo JSON lịch quay thực tế chi tiết (TỐI ĐA 5 CẢNH).
 ${audioInstruction}
 ${scriptPart}
 QUY TẮC:
-1. Góc quay: shotType, distance, angleStr, angleDeg (10..90), zoomHint ("0.5x"|"1x"|"1.5x - 2x"), cameraGuide (chỉ dẫn cầm máy, quay trừ hao 1s đầu-đuôi).
-2. Âm thanh & Phụ đề: useOrigAudio (true nếu ASMR/không có audio ngoài, false nếu lồng tiếng), origGainPct (200 ASMR, 100 bình thường, 0 tắt), sfxList (0-2 hiệu ứng từ ["pop","bubble","ding","whoosh","pour_asmr","stir_asmr","ice_clink","crunch","wow","swoosh_in","boing","shutter"], atSec >=0, durSec 0.3..3.0), subtitles (chia "speech" của cảnh thành 1-3 cụm phụ đề ngắn 4-7 từ, startOffset & endOffset từ 0.0 đến durationSec).
-TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":1,"shootOrder":1,"visualDesc":"...","screenText":"...","effectNote":"...","speech":"...","shotType":"...","distance":"...","angleStr":"...","angleDeg":85,"zoomHint":"1x","cameraGuide":"...","audioStartSec":0.0,"audioEndSec":4.5,"durationSec":4.5,"recSeconds":7,"useOrigAudio":false,"origGainPct":100,"sfxList":[{"sfxId":"pop","atSec":0.3,"durSec":0.4}],"subtitles":[{"text":"...","startOffset":0.0,"endOffset":2.2}]}]}`;
+1. TỐI ĐA 5 CẢNH TRONG MẢNG "scenes" (scenes.length <= 5).
+2. Góc quay: shotType, distance, angleStr, angleDeg (10..90), zoomHint ("0.5x"|"1x"|"1.5x - 2x"), cameraGuide (chỉ dẫn cầm máy, quay trừ hao 1s đầu-đuôi).
+3. Âm thanh & Phụ đề: useOrigAudio (true nếu ASMR/không có audio ngoài, false nếu lồng tiếng), origGainPct (200 ASMR, 100 bình thường, 0 tắt), sfxList (0-2 hiệu ứng từ ["pop","bubble","ding","whoosh","pour_asmr","stir_asmr","ice_clink","crunch","wow","swoosh_in","boing","shutter"], atSec >=0, durSec 0.3..3.0), subtitles (chia "speech" của cảnh thành 2-4 cụm phụ đề ngắn 4-6 từ, startOffset & endOffset từ 0.0 đến durationSec).
+TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":1,"shootOrder":1,"visualDesc":"...","screenText":"...","effectNote":"...","speech":"...","shotType":"...","distance":"...","angleStr":"...","angleDeg":85,"zoomHint":"1x","cameraGuide":"...","audioStartSec":0.0,"audioEndSec":9.5,"durationSec":9.5,"recSeconds":12,"useOrigAudio":false,"origGainPct":100,"sfxList":[{"sfxId":"pop","atSec":0.3,"durSec":0.4}],"subtitles":[{"text":"...","startOffset":0.0,"endOffset":2.5}]}]}`;
 
                 const aiRes = await callGeminiScriptAndAudioJSON(prompt, masterAudioData);
                 if (aiRes && Array.isArray(aiRes.scenes) && aiRes.scenes.length > 0) {
                     let prevEnd = 0;
-                    const mappedScenes = aiRes.scenes.map((s, idx) => {
-                        let aS = 0, aE = 0, dur = Math.max(2, Number(s.durationSec) || 4);
+                    let mappedScenes = aiRes.scenes.map((s, idx) => {
+                        let aS = 0, aE = 0, dur = Math.max(2, Number(s.durationSec) || 8);
                         if (masterAudioData) {
                             aS = idx === 0 ? 0.0 : prevEnd;
                             let rawEnd = Number(s.audioEndSec) || (aS + dur);
-                            if (idx === aiRes.scenes.length - 1) rawEnd = audioDur; else rawEnd = snapTimeToPause(rawEnd, detectedPauses, 0.70);
-                            aE = Math.min(audioDur, Math.max(aS + 1.2, rawEnd)); prevEnd = aE; dur = Math.max(1.2, Number((aE - aS).toFixed(1)));
+                            if (idx === aiRes.scenes.length - 1) rawEnd = audioDur; else rawEnd = snapTimeToPause(rawEnd, detectedPauses, 0.75);
+                            aE = Math.min(audioDur, Math.max(aS + 1.5, rawEnd)); prevEnd = aE; dur = Math.max(1.5, Number((aE - aS).toFixed(1)));
                         }
                         const recSec = Math.max(3, Math.ceil(dur + 2));
                         const cleanSfx = Array.isArray(s.sfxList) ? s.sfxList.filter(x => SFX_PRESETS.some(p => p.id === x.sfxId)).map(x => ({ sfxId: x.sfxId, atSec: Math.max(0, Math.min(dur - 0.2, Number(x.atSec) || 0)), durSec: Math.max(0.25, Number(x.durSec) || 0.5) })) : [];
@@ -1327,9 +1369,11 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                             sfxList: cleanSfx, subtitles: buildSubtitlesForScene(s.speech, dur, s.subtitles), done: false
                         };
                     });
+                    // Khóa an toàn: nếu AI lỡ trả > 5 cảnh thì tự gộp gọn về <= 5 cảnh
+                    mappedScenes = consolidateScenesToMax5(mappedScenes, !!masterAudioData);
                     project = { title: aiRes.title || 'Kịch Bản AI Studio', engine: 'gemini', hasAudio: !!masterAudioData, shootGroups: aiRes.shootGroups || {}, scenes: mappedScenes };
                     if (!raw) {
-                        const genLines = ['THỨ TỰ QUAY THỰC TẾ (AI TỰ CHIA)'];
+                        const genLines = ['THỨ TỰ QUAY THỰC TẾ (TỐI ĐA 5 CẢNH)'];
                         Object.keys(project.shootGroups).sort((a,b) => Number(a) - Number(b)).forEach(k => genLines.push(`${k}. Lần quay ${k}: ${project.shootGroups[k]}`));
                         genLines.push('KỊCH BẢN CHI TIẾT ĐÃ KHỚP AUDIO');
                         project.scenes.slice().sort((a,b) => a.sceneNum - b.sceneNum).forEach(s => {
@@ -1348,6 +1392,7 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     if (masterAudioData) { sc.durationSec = Math.max(1.2, Number((sc.audioEndSec - sc.audioStartSec).toFixed(1))); sc.recSeconds = Math.max(3, Math.ceil(sc.durationSec + 2)); sc.timeRange = `${sc.audioStartSec.toFixed(1)}s - ${sc.audioEndSec.toFixed(1)}s`; }
                     sc.subtitles = buildSubtitlesForScene(sc.speech, sc.durationSec);
                 });
+                project.scenes = consolidateScenesToMax5(project.scenes, !!masterAudioData);
             }
             currentProject = project; saveProjectToStorage(); renderScriptBoard();
             document.getElementById('scriptInputBody').classList.add('hidden'); document.getElementById('toggleInputCollapseBtn').innerText = 'Mở ô dán';
@@ -1484,22 +1529,23 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                 else { b.className = 'p-3 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left flex items-center justify-between'; d.className = 'text-slate-600 font-black'; d.innerText = '○'; }
             });
         }
-        async function generateStudioScriptOnly() {
+     async function generateStudioScriptOnly() {
             const productInfo = document.getElementById('studioProductInput').value.trim();
             if (!productInfo) { alert('Bạn hãy dán thông tin món/sản phẩm vào ô trước nhé!'); return null; }
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy bấm nút 🔑 để dán Gemini API Key trước nhé!'); openMainKeyModal(); return null; }
             const styleSpecs = {
-                1: 'Phong cách 1: "Bắt trend / Gây tò mò" (chuyên trị giữ chân người xem 3 giây đầu, mở đầu bằng câu níu chân cực gắt như "<gasp> Khoan lướt qua nha!", năng lượng tươi vui, lôi cuốn).',
-                2: 'Phong cách 2: "Nhẹ nhàng, thủ thỉ / Chill cuối ngày" (hợp quay cận cảnh rót nước, đá rơi, cảm xúc thư giãn, dùng <sigh>, <whispers>...</whispers>, nhịp chậm rãi ấm áp).',
-                3: 'Phong cách 3: "Ngắn gọn, dứt khoát / Chốt đơn thần tốc" (video 15 giây quay nhanh, đi thẳng vào tên món, vị ngon, giá tiền, upsize, topping và chốt đơn).'
+                1: 'Phong cách 1: "Bắt trend / Gây tò mò" (mở đầu níu chân cực gắt như "<gasp> Khoan lướt qua nha!", năng lượng tươi vui, lôi cuốn).',
+                2: 'Phong cách 2: "Nhẹ nhàng, thủ thỉ / Chill cuối ngày" (hợp quay cận cảnh rót nước, đá rơi, dùng <sigh>, <whispers>...</whispers>, ấm áp).',
+                3: 'Phong cách 3: "Ngắn gọn, dứt khoát / Chốt đơn thần tốc" (nhịp nhanh gọn lẹ, tổng khoảng 15-20 giây).'
             };
             const prompt = `Bạn là chuyên gia viết kịch bản voiceover TikTok cho quán Kim Bling (địa chỉ M9 Cư xá Phú Lâm A).
 Viết ĐÚNG 1 KỊCH BẢN LỜI THOẠI theo: ${styleSpecs[studioSelectedStyle]}
 QUY TẮC:
-1. Tiếng Việt tự nhiên miền Nam (nha, nè, tụi mình, sần sật...), đổi số tiền "19.000đ"/"19k" thành "19 ngàn", "1 lít" thành "một lít", "3k" thành "3 ngàn".
-2. Gắn sẵn thẻ cảm xúc cho giọng Leda xen kẽ tự nhiên (CHỈ dùng các thẻ này): <gasp>, <giggle>, <chuckle>, <sigh>, <laugh>, <short pause>, <long pause>, <whispers> ... </whispers>.
-3. Đặt <short pause> hoặc <long pause> rõ ràng giữa các ý để dễ cắt cảnh quay. KHÔNG tiêu đề, KHÔNG giải thích, chỉ trả về lời thoại thuần!
+1. Chia lời thoại thành tối đa 4 đến 5 đoạn nhỏ (riêng Phong cách 3 chia 2-3 đoạn). Mỗi đoạn gồm khoảng 2 câu trọn vẹn (đọc khoảng 7-10 giây), ngăn cách giữa các đoạn bằng <long pause> để dễ cắt thành tối đa 5 cảnh quay.
+2. Tiếng Việt tự nhiên miền Nam (nha, nè, tụi mình, sần sật...), đổi số tiền "19.000đ"/"19k" thành "19 ngàn", "1 lít" thành "một lít", "3k" thành "3 ngàn".
+3. Gắn sẵn thẻ cảm xúc cho giọng Leda: <gasp>, <giggle>, <chuckle>, <sigh>, <laugh>, <short pause>, <long pause>, <whispers> ... </whispers>.
+4. KHÔNG tiêu đề, KHÔNG giải thích, chỉ trả về lời thoại thuần!
 THÔNG TIN:\n"""\n${productInfo}\n"""`;
 
             for (const m of ['gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-3-flash-preview']) {
