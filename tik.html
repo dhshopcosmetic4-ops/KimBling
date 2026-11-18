@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -20,6 +21,18 @@
             -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 999px;
             background: #ffffff; border: 3px solid #38bdf8; margin-top: -9px; box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
+        /* Thanh trượt cắt đầu-đuôi 2 đầu chồng lên nhau */
+        input[type="range"].trim-dual-input {
+            -webkit-appearance: none; appearance: none; position: absolute; inset: 0; width: 100%; height: 100%;
+            background: transparent; pointer-events: none; margin: 0; touch-action: none;
+        }
+        input[type="range"].trim-dual-input::-webkit-slider-runnable-track { background: transparent; height: 100%; }
+        input[type="range"].trim-dual-input::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: grab;
+            width: 22px; height: 34px; border-radius: 8px;
+            background: #fbbf24; border: 2px solid #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        }
+        #trimEndSlider::-webkit-slider-thumb { background: #f43f5e; }
         @keyframes radarSweep {
             0% { top: 18%; opacity: 0.85; }
             50% { top: 60%; opacity: 1; }
@@ -32,18 +45,19 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-28">
 
     <!-- HEADER -->
-    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-4">
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3 py-3.5">
         <div class="max-w-md mx-auto flex items-center justify-between gap-2">
-            <div class="flex items-center space-x-2.5 min-w-0">
-                <div class="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-xl shadow-lg">KB</div>
+            <div class="flex items-center space-x-2 min-w-0">
+                <div class="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg">KB</div>
                 <div class="min-w-0">
-                    <h1 class="font-extrabold leading-tight text-white truncate">Kim Bling Studio Pro</h1>
-                    <p class="text-slate-300 font-semibold truncate">Lê Minh Dũng • 3-20-4s</p>
+                    <h1 class="font-extrabold leading-tight text-white truncate">Kim Bling Pro</h1>
+                    <p class="text-slate-300 font-semibold truncate" style="font-size: 13px !important;">Lê Minh Dũng • 3-20-4s</p>
                 </div>
             </div>
             <div class="flex items-center space-x-1.5 shrink-0">
-                <button onclick="openAiPhotoStudio()" class="px-3 py-2.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400 text-rose-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow-lg"><span>📸</span><span>Ảnh AI</span></button>
-                <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-3 py-2.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border-2 border-sky-400 text-sky-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow-lg"><span>🎬</span><span>CapCut</span></button>
+                <button onclick="openAiPhotoStudio()" class="px-2.5 py-2 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400 text-rose-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow-lg" style="font-size: 14px !important;"><span>📸</span><span>Ảnh AI</span></button>
+                <button onclick="openUploadStudioModal()" class="px-2.5 py-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/35 border-2 border-amber-400 text-amber-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow-lg" style="font-size: 14px !important;"><span>✨</span><span>Sửa</span></button>
+                <button onclick="openCapcutGuideModal(currentStepIndex)" class="px-2.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border-2 border-sky-400 text-sky-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow-lg" style="font-size: 14px !important;"><span>🎬</span></button>
             </div>
         </div>
     </header>
@@ -95,6 +109,44 @@
         </section>
     </main>
 
+    <!-- MODAL CHỈNH SỬA / UP ẢNH & VIDEO TỪ MÁY -->
+    <div id="uploadStudioModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeUploadStudioModal()">
+        <div class="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-3xl p-5 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-lg">✨ Studio Chỉnh Sửa Pro</h2>
+                    <p class="text-slate-400 font-semibold" style="font-size: 13px !important;">Chọn ảnh hoặc video có sẵn từ máy để hậu kỳ</p>
+                </div>
+                <button onclick="closeUploadStudioModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
+            </div>
+
+            <input id="uploadPhotoFileInput" type="file" accept="image/*" class="hidden" onchange="handleUploadedPhotoFile(this)">
+            <input id="uploadVideoFileInput" type="file" accept="video/*" class="hidden" onchange="handleUploadedVideoFile(this)">
+
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="document.getElementById('uploadPhotoFileInput').click()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-2 border-rose-400/70 flex items-center space-x-4 text-left active:scale-98">
+                    <span class="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl shrink-0">🖼️</span>
+                    <div>
+                        <span class="font-black text-white block">Up Ảnh Lên Chỉnh Sửa</span>
+                        <span class="text-slate-300 font-medium" style="font-size: 13px !important;">Làm đẹp da, bóp dáng, cứu sáng & bộ lọc WebGL</span>
+                    </div>
+                </button>
+                <button onclick="document.getElementById('uploadVideoFileInput').click()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-sky-500/25 to-indigo-500/25 border-2 border-sky-400/70 flex items-center space-x-4 text-left active:scale-98">
+                    <span class="w-12 h-12 rounded-2xl bg-sky-500 text-slate-950 flex items-center justify-center text-2xl shrink-0">🎞️</span>
+                    <div>
+                        <span class="font-black text-white block">Up Video Lên Cắt & Chỉnh Màu</span>
+                        <span class="text-slate-300 font-medium" style="font-size: 13px !important;">Thanh trượt cắt đầu-đuôi chống giật & chỉnh màu Pro</span>
+                    </div>
+                </button>
+            </div>
+
+            <div id="recentMediaActions" class="hidden pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
+                <button id="reopenLastPhotoBtn" onclick="reopenLastCapturedPhoto()" class="hidden py-2.5 px-3 rounded-xl bg-slate-800 text-rose-300 font-bold text-center" style="font-size: 13px !important;">↩️ Ảnh vừa chụp</button>
+                <button id="reopenLastVideoBtn" onclick="reopenLastRecordedVideo()" class="hidden py-2.5 px-3 rounded-xl bg-slate-800 text-sky-300 font-bold text-center" style="font-size: 13px !important;">↩️ Video vừa quay</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL HƯỚNG DẪN CAPCUT -->
     <div id="capcutGuideModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div class="flex items-center justify-between p-5 border-b-2 border-slate-800 bg-slate-900 shrink-0">
@@ -106,7 +158,7 @@
         <div class="p-4 bg-slate-900 border-t-2 border-slate-800 shrink-0"><button onclick="closeCapcutGuideModal()" class="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl shadow-xl">Đã hiểu rõ, quay lại ngay</button></div>
     </div>
 
-    <!-- MODAL CAMERA VIDEO CHUẨN IPHONE + ĐẠO DIỄN AI -->
+    <!-- MODAL CAMERA VIDEO CHUẨN IPHONE + TAP-TO-FOCUS + ĐẠO DIỄN AI -->
     <div id="cameraModal" class="fixed inset-0 z-50 bg-black flex flex-col hidden select-none w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div id="videoEvCorner" class="absolute top-2 left-4 z-40 px-2 py-0.5 rounded bg-black/50 text-white font-mono font-bold pointer-events-none" style="font-size: 13px !important;">EV 0,0</div>
 
@@ -124,9 +176,13 @@
         </div>
 
         <div id="cameraViewport" class="relative flex-1 w-full bg-black overflow-hidden flex items-center justify-center">
-            <video id="liveVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover transition-transform"></video>
-            <canvas id="recordCanvas" class="hidden"></canvas>
+            <video id="liveVideo" autoplay playsinline muted class="w-full h-full object-cover transition-transform duration-150"></video>
             <canvas id="videoAiCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
+
+            <!-- Khung lấy nét chạm điểm -->
+            <div id="videoFocusReticle" class="hidden opacity-0 pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border-2 border-amber-400 rounded-xl shadow-[0_0_12px_rgba(251,191,36,0.8)] transition-all duration-200 flex items-start justify-end p-1">
+                <span class="text-amber-300 leading-none" style="font-size: 12px !important;">☀️</span>
+            </div>
 
             <div id="videoAiStatusRow" class="absolute top-24 inset-x-4 z-30 flex items-center justify-between gap-2 pointer-events-none">
                 <span id="videoAiAngleBadge" class="px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow">📐 Góc: --°</span>
@@ -162,11 +218,11 @@
             </div>
 
             <div id="videoAiTipBar" class="absolute bottom-56 inset-x-5 z-30 flex justify-center pointer-events-none">
-                <span id="videoAiTipText" class="px-3.5 py-1.5 rounded-full bg-black/75 border border-emerald-400/40 text-emerald-200 font-bold text-center backdrop-blur-md shadow">🤖 AI đang canh góc & ánh sáng</span>
+                <span id="videoAiTipText" class="px-3.5 py-1.5 rounded-full bg-black/75 border border-emerald-400/40 text-emerald-200 font-bold text-center backdrop-blur-md shadow">🤖 Chạm màn hình để lấy nét • AI sẵn sàng</span>
             </div>
         </div>
 
-        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-5 pb-6 pt-3 flex flex-col items-center space-y-3 z-30">
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-6 pt-3 flex flex-col items-center space-y-3 z-30">
             <div id="videoEvSliderBox" class="hidden w-full max-w-xs bg-slate-900/85 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-2 flex items-center space-x-3 shadow-2xl">
                 <span class="text-amber-300 font-black">±</span>
                 <input id="videoEvRange" type="range" min="-2.0" max="2.0" step="0.1" value="0" class="pro-slider flex-1" oninput="onCameraEvChange(this.value)">
@@ -174,10 +230,12 @@
                 <button onclick="closeCamEvSlider()" class="px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-black">Xong</button>
             </div>
 
-            <div id="videoZoomPill" class="flex items-center space-x-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
-                <button onclick="setZoomLevel(0.5, this)" id="zoomBtn05" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-200">0,5</button>
-                <button onclick="setZoomLevel(1.0, this)" id="zoomBtn1" class="zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow">1x</button>
-                <button onclick="setZoomLevel(2.5, this)" id="zoomBtn25" class="zoom-btn px-3 py-1 rounded-full font-black text-slate-200">2,5</button>
+            <div id="videoZoomPill" class="flex items-center space-x-1 bg-black/55 backdrop-blur-md px-2 py-1 rounded-full border border-white/15">
+                <button onclick="setZoomLevel(0.5, this)" id="vZoomBtn05" class="zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow">0,5</button>
+                <button onclick="setZoomLevel(1.0, this)" id="vZoomBtn1" class="zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">1x</button>
+                <button onclick="setZoomLevel(1.5, this)" id="vZoomBtn15" class="zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">1,5</button>
+                <button onclick="setZoomLevel(2.0, this)" id="vZoomBtn2" class="zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">2x</button>
+                <button onclick="setZoomLevel(2.5, this)" id="vZoomBtn25" class="zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">2,5</button>
             </div>
             
             <div class="w-full flex items-center justify-center">
@@ -197,12 +255,13 @@
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ VIDEO WEBGL PRO (KHÔNG TRÀN KHUNG 100VW + PLAY LẠI & TUA MƯỢT) -->
+    <!-- MODAL HẬU KỲ VIDEO WEBGL PRO + THANH TRƯỢT CẮT ĐẦU-ĐUÔI CHỐNG GIẬT -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
-        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0">
+        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0 gap-1.5">
             <button onclick="closeEditorModal()" class="w-9 h-9 shrink-0 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
-            <h2 class="font-black text-white truncate px-2">🎬 AI Chỉnh Video Pro</h2>
-            <button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="px-3.5 py-2 shrink-0 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl shadow"><span>💾</span><span> Xuất</span></button>
+            <h2 class="font-black text-white truncate px-1 flex-1 text-center">🎬 AI Chỉnh Video Pro</h2>
+            <button onclick="document.getElementById('uploadVideoFileInput').click()" class="px-2.5 py-2 shrink-0 bg-slate-800 border border-slate-600 text-amber-300 font-black rounded-xl" style="font-size: 13px !important;">📁 Up</button>
+            <button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="px-3 py-2 shrink-0 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl shadow"><span>💾</span><span> Xuất</span></button>
         </div>
 
         <div id="previewVideoWrapper" class="relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
@@ -226,13 +285,35 @@
         </div>
 
         <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2 w-full max-w-md mx-auto min-w-0 overflow-hidden">
-            <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 gap-1.5 w-full min-w-0">
-                <span class="font-black text-rose-300 shrink-0" style="font-size: 12px !important;">✂️ Cắt:</span>
-                <button onclick="applyTrimPreset(1)" class="px-2 py-1 rounded-lg bg-rose-600/25 border border-rose-500 text-rose-200 font-black shrink-0" style="font-size: 12px !important;">1s</button>
-                <button onclick="applyTrimPreset(0)" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 font-black shrink-0" style="font-size: 12px !important;">Gốc</button>
-                <input type="number" id="trimStartInput" step="0.1" min="0" value="1.0" class="w-12 bg-slate-900 border border-slate-700 rounded-lg py-0.5 text-white font-bold text-center" onchange="updateTrimTimes()">
-                <input type="number" id="trimEndInput" step="0.1" min="0" value="1.0" class="w-12 bg-slate-900 border border-slate-700 rounded-lg py-0.5 text-white font-bold text-center" onchange="updateTrimTimes()">
-                <span id="trimDurationText" class="text-amber-300 font-bold truncate" style="font-size: 12px !important;">--s</span>
+            <!-- THANH TRƯỢT CẮT ĐẦU - ĐUÔI CHUYÊN NGHIỆP CHỐNG GIẬT LAG -->
+            <div class="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 space-y-1.5 w-full min-w-0">
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="font-black text-rose-300 shrink-0" style="font-size: 12px !important;">✂️ Cắt Đầu-Đuôi:</span>
+                    <div class="flex items-center space-x-1.5 text-center font-mono font-bold" style="font-size: 12px !important;">
+                        <span id="trimStartValText" class="text-amber-300">0.0s</span>
+                        <span class="text-slate-500">•</span>
+                        <span id="trimDurationText" class="text-emerald-300 font-black">Giữ: --s</span>
+                        <span class="text-slate-500">•</span>
+                        <span id="trimEndValText" class="text-rose-300">--s</span>
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="applyTrimPreset(1)" class="px-2 py-0.5 rounded-lg bg-rose-600/25 border border-rose-500 text-rose-200 font-black" style="font-size: 11px !important;">-1s</button>
+                        <button onclick="applyTrimPreset(0)" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-black" style="font-size: 11px !important;">Gốc</button>
+                    </div>
+                </div>
+                <div class="relative h-8 flex items-center select-none">
+                    <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden relative">
+                        <div id="trimActiveBar" class="absolute top-0 bottom-0 bg-gradient-to-r from-amber-400 to-rose-500 rounded-full" style="left: 0%; right: 0%;"></div>
+                    </div>
+                    <input id="trimStartSlider" type="range" min="0" max="10" step="0.1" value="0" class="trim-dual-input"
+                        onpointerdown="startTrimDrag()" ontouchstart="startTrimDrag()"
+                        oninput="onTrimSliderInput('start')"
+                        onchange="endTrimDrag('start')" onpointerup="endTrimDrag('start')" ontouchend="endTrimDrag('start')">
+                    <input id="trimEndSlider" type="range" min="0" max="10" step="0.1" value="10" class="trim-dual-input"
+                        onpointerdown="startTrimDrag()" ontouchstart="startTrimDrag()"
+                        oninput="onTrimSliderInput('end')"
+                        onchange="endTrimDrag('end')" onpointerup="endTrimDrag('end')" ontouchend="endTrimDrag('end')">
+                </div>
             </div>
 
             <div class="flex items-center space-x-3.5 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1.5 w-full">
@@ -273,16 +354,21 @@
         </div>
     </div>
 
-    <!-- MODAL SIÊU MÁY ẢNH AI + RADAR QUÉT CẢNH TRỰC QUAN -->
+    <!-- MODAL SIÊU MÁY ẢNH AI + TAP-TO-FOCUS + ZOOM 0.5..2.5 -->
     <div id="aiPhotoModal" class="fixed inset-0 z-50 bg-black overflow-hidden hidden select-none w-full max-w-[100vw] h-[100dvh]">
         <div id="frontFlashOverlay" class="hidden fixed inset-0 z-[70] bg-white pointer-events-none"></div>
         <div id="photoEvCorner" class="absolute top-2 left-4 z-40 px-2 py-0.5 rounded bg-black/50 text-white font-mono font-bold pointer-events-none" style="font-size: 13px !important;">EV 0,0</div>
 
         <div id="aiCamViewport" class="absolute inset-0 bg-black flex items-center justify-center overflow-hidden">
             <div id="aiCropFrame" class="relative overflow-hidden flex items-center justify-center transition-all duration-200 border border-white/25 bg-slate-950">
-                <video id="aiPhotoVideo" autoplay playsinline muted class="w-full h-full object-cover transition-transform duration-200"></video>
+                <video id="aiPhotoVideo" autoplay playsinline muted class="w-full h-full object-cover transition-transform duration-150"></video>
                 <img id="aiBeforeGhostImg" class="hidden absolute inset-0 w-full h-full object-cover opacity-35 pointer-events-none z-10" alt="Before Ghost">
                 <canvas id="aiPoseCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
+
+                <!-- Khung lấy nét chạm điểm -->
+                <div id="photoFocusReticle" class="hidden opacity-0 pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border-2 border-amber-400 rounded-xl shadow-[0_0_12px_rgba(251,191,36,0.8)] transition-all duration-200 flex items-start justify-end p-1">
+                    <span class="text-amber-300 leading-none" style="font-size: 12px !important;">☀️</span>
+                </div>
 
                 <div id="aiGridLines" class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none z-10">
                     <div class="border-b border-r border-white/20"></div><div class="border-b border-r border-white/20"></div><div class="border-b border-white/20"></div>
@@ -326,10 +412,10 @@
         <div id="aiBaBanner" class="hidden absolute top-44 inset-x-6 z-30 bg-amber-500 text-slate-950 font-black px-4 py-1.5 rounded-full text-center shadow-xl pointer-events-none">Bước 1/2: Chụp ảnh TRƯỚC (Before)</div>
         <div id="aiCountdownOverlay" class="hidden absolute inset-0 z-40 flex items-center justify-center pointer-events-none bg-black/25"><span id="aiCountdownNum" class="text-white font-black drop-shadow-2xl" style="font-size: 96px !important;">3</span></div>
 
-        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-4 pb-5 pt-6 space-y-2.5 z-30 pointer-events-auto">
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-5 pt-6 space-y-2.5 z-30 pointer-events-auto">
             <div id="photoAiCoachWrap" class="flex justify-center pointer-events-none">
                 <div class="bg-black/65 backdrop-blur-md border border-sky-400/45 px-3.5 py-1.5 rounded-2xl text-center max-w-sm shadow-lg">
-                    <p id="aiCoachText" class="text-sky-200 font-extrabold leading-snug">Bấm 🧭 Góc để AI đặt Người Mẫu AR vào chỗ đứng đẹp nhất!</p>
+                    <p id="aiCoachText" class="text-sky-200 font-extrabold leading-snug">Chạm vào màn hình để lấy nét • Bấm 🧭 Góc tìm vị trí đẹp!</p>
                 </div>
             </div>
 
@@ -342,15 +428,16 @@
                 <button onclick="closeCamEvSlider()" class="px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-black">Xong</button>
             </div>
 
-            <div id="photoZoomRow" class="flex items-center justify-between px-1">
-                <button onclick="cycleAiTimer()" id="aiTimerBtn" class="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-slate-100 font-black">⏱️ 0s</button>
-                <div class="flex items-center space-x-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/20">
-                    <button onclick="setAiZoom(0.5, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">0,5</button>
-                    <button onclick="setAiZoom(1.0, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950">1x</button>
-                    <button onclick="setAiZoom(1.5, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">1,5</button>
-                    <button onclick="setAiZoom(2.0, this)" class="ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200">2x</button>
+            <div id="photoZoomRow" class="flex items-center justify-between gap-1 px-0.5">
+                <button onclick="cycleAiTimer()" id="aiTimerBtn" class="px-2.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-slate-100 font-black shrink-0" style="font-size: 13px !important;">⏱️0s</button>
+                <div class="flex items-center space-x-0.5 bg-black/60 backdrop-blur-md px-1.5 py-1 rounded-full border border-white/20">
+                    <button onclick="setAiZoom(0.5, this)" id="pZoomBtn05" class="ai-zoom-btn px-2 py-1 rounded-full font-black bg-amber-400 text-slate-950" style="font-size: 13px !important;">0,5</button>
+                    <button onclick="setAiZoom(1.0, this)" id="pZoomBtn1" class="ai-zoom-btn px-2 py-1 rounded-full font-black text-slate-200" style="font-size: 13px !important;">1x</button>
+                    <button onclick="setAiZoom(1.5, this)" id="pZoomBtn15" class="ai-zoom-btn px-2 py-1 rounded-full font-black text-slate-200" style="font-size: 13px !important;">1,5</button>
+                    <button onclick="setAiZoom(2.0, this)" id="pZoomBtn2" class="ai-zoom-btn px-2 py-1 rounded-full font-black text-slate-200" style="font-size: 13px !important;">2x</button>
+                    <button onclick="setAiZoom(2.5, this)" id="pZoomBtn25" class="ai-zoom-btn px-2 py-1 rounded-full font-black text-slate-200" style="font-size: 13px !important;">2,5</button>
                 </div>
-                <button onclick="toggleAiGridAndLevel()" id="aiGridBtn" class="px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-amber-300 font-black">📐 Lưới</button>
+                <button onclick="toggleAiGridAndLevel()" id="aiGridBtn" class="px-2.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-amber-300 font-black shrink-0" style="font-size: 13px !important;">📐Lưới</button>
             </div>
 
             <div class="flex items-center justify-between px-4">
@@ -361,7 +448,7 @@
         </div>
     </div>
 
-    <!-- LỚP RADAR QUÉT GÓC TRỰC QUAN TRONG SUỐT TRÊN CAMERA -->
+    <!-- LỚP RADAR QUÉT GÓC TRỰC QUAN TRÊN CAMERA -->
     <div id="aiDirectorModal" class="fixed inset-0 z-[65] pointer-events-none hidden flex flex-col justify-between w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div class="bg-gradient-to-b from-black/90 via-black/70 to-transparent px-4 pt-9 pb-4 space-y-2.5 pointer-events-auto">
             <div class="flex items-center justify-between">
@@ -442,12 +529,13 @@
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ ẢNH AI PRO (ĐÃ FIX TRÀN KHUNG IPHONE 100%) -->
+    <!-- MODAL HẬU KỲ ẢNH AI PRO -->
     <div id="aiPhotoEditorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
-        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0">
+        <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0 gap-1.5">
             <button onclick="closeAiPhotoEditor()" class="w-9 h-9 shrink-0 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
-            <h2 class="font-black text-white truncate px-2">✨ AI Làm Đẹp & Chỉnh Ảnh</h2>
-            <button onclick="saveOrShareAiPhoto()" class="px-3.5 py-2 shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow">💾 Lưu</button>
+            <h2 class="font-black text-white truncate px-1 flex-1 text-center">✨ AI Chỉnh Ảnh Pro</h2>
+            <button onclick="document.getElementById('uploadPhotoFileInput').click()" class="px-2.5 py-2 shrink-0 bg-slate-800 border border-slate-600 text-amber-300 font-black rounded-xl" style="font-size: 13px !important;">📁 Up</button>
+            <button onclick="saveOrShareAiPhoto()" class="px-3 py-2 shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow">💾 Lưu</button>
         </div>
 
         <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
@@ -504,14 +592,22 @@
         </div>
     </div>
 
-    <!-- SCRIPT CƠ BẢN -->
+    <!-- SCRIPT PHẦN 1: QUẢN LÝ LUỒNG QUAY MƯỢT, ZOOM 0.5-2.5, UP FILE & THANH TRƯỢT CẮT -->
     <script>
         let currentCatIndex = 0, currentStepIndex = 0, currentHookIndex = 0, currentCustomDish = '', currentPmuType = 'may', currentCapcutTab = 0;
         let recordingMode = 'segment', activeStepIndex = 0, activeSubClipId = 0;
         let mediaStream = null, mediaRecorder = null, recordedChunks = [], isRecording = false, timerInterval = null, recordingSeconds = 0, targetRecordingSeconds = 5;
-        let recordedBlobUrl = null, recordedRawBlob = null, currentZoom = 1.0, videoHardwareZoom = false;
-        let recordingCanvasStream = null, recordingAnimationId = null, currentFacingMode = 'environment';
+        let recordedBlobUrl = null, recordedRawBlob = null, currentZoom = 0.5, videoHardwareZoom = false;
+        let currentFacingMode = 'environment';
         let recordStartTimeMs = 0, lastRecordedDurationSec = 5, isScrubbingVideo = false, vFullscreenActive = false, exportInProgress = false;
+
+        // Trạng thái cắt video bằng thanh trượt & crop xuất video
+        window.trimStartSec = 0;
+        window.trimEndSec = 5;
+        window.isCameraRecordedVideo = true;
+        window.recordedDigitalZoom = 1.0;
+        window.recordedMirror = false;
+        let isDraggingTrim = false, lastTrimSeekMs = 0, trimSeekRaf = 0;
 
         function initApp() {
             if (typeof categoriesData !== 'undefined') { renderCategories(); renderSubControls(); renderStepTabs(); renderStepContent(); renderCaptions(); }
@@ -524,46 +620,123 @@
         }
         function startVideoScrub() { isScrubbingVideo = true; }
         function endVideoScrub() { isScrubbingVideo = false; }
+
         function setupPreviewVideoEvents() {
             const pv = document.getElementById('previewVideo'); if (!pv) return;
-            pv.addEventListener('loadeddata', () => { if (typeof window.initVideoWebGLPreview === 'function') window.initVideoWebGLPreview(); });
+            pv.addEventListener('loadeddata', () => {
+                if (typeof window.initVideoWebGLPreview === 'function') window.initVideoWebGLPreview();
+            });
             pv.addEventListener('timeupdate', () => {
-                if (isScrubbingVideo) return; const dur = getSafeVideoDuration(pv); if (dur <= 0) return;
+                if (isScrubbingVideo || isDraggingTrim) return;
+                const dur = getSafeVideoDuration(pv); if (dur <= 0) return;
+                if (pv.currentTime >= window.trimEndSec - 0.04 && !pv.paused) {
+                    pv.pause();
+                    document.getElementById('vPlayPauseBtn').innerText = '▶️';
+                    try { pv.currentTime = window.trimStartSec; } catch (e) {}
+                }
                 document.getElementById('vScrubRange').value = Math.min(100, Math.max(0, (pv.currentTime / dur) * 100));
                 const s = Math.floor(pv.currentTime); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
             });
             pv.addEventListener('seeked', () => { if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow(); });
             pv.addEventListener('ended', () => {
-                document.getElementById('vPlayPauseBtn').innerText = '▶️'; document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00';
-                try { pv.currentTime = 0; } catch (e) {}
+                document.getElementById('vPlayPauseBtn').innerText = '▶️';
+                try { pv.currentTime = window.trimStartSec || 0; } catch (e) {}
                 setTimeout(() => { if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow(); }, 60);
             });
         }
+
         async function togglePreviewVideoPlay() {
             const pv = document.getElementById('previewVideo'), btn = document.getElementById('vPlayPauseBtn'); if (!pv) return;
-            const dur = getSafeVideoDuration(pv);
             if (pv.paused || pv.ended) {
-                if (pv.ended || pv.currentTime >= dur - 0.12) { try { pv.currentTime = 0; } catch (e) {} document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00'; }
+                if (pv.ended || pv.currentTime < window.trimStartSec || pv.currentTime >= window.trimEndSec - 0.12) {
+                    try { pv.currentTime = window.trimStartSec; } catch (e) {}
+                }
                 try { await pv.play(); btn.innerText = '⏸️'; if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); }
                 catch (err) {
-                    try { pv.load(); await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 450); }); pv.currentTime = 0; await pv.play(); btn.innerText = '⏸️'; if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); } catch (e2) {}
+                    try { pv.load(); await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 450); }); pv.currentTime = window.trimStartSec; await pv.play(); btn.innerText = '⏸️'; if (typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); } catch (e2) {}
                 }
             } else { pv.pause(); btn.innerText = '▶️'; }
         }
+
         function scrubPreviewVideo(pct) {
             const pv = document.getElementById('previewVideo'); if (!pv) return;
             const dur = getSafeVideoDuration(pv); let target = (Number(pct) / 100) * dur;
-            if (pv.seekable && pv.seekable.length > 0) { const s0 = pv.seekable.start(0), s1 = pv.seekable.end(pv.seekable.length - 1); target = Math.max(s0, Math.min(Math.max(s0, s1 - 0.03), target)); }
-            try { pv.currentTime = target; } catch (e) {}
+            target = Math.max(0, Math.min(Math.max(0, dur - 0.03), target));
             const s = Math.floor(target); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-            if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+            throttledSeekVideo(pv, target);
         }
+
+        function throttledSeekVideo(pv, targetSec) {
+            if (!pv) return;
+            const now = performance.now();
+            if (pv.seeking || now - lastTrimSeekMs < 85) {
+                cancelAnimationFrame(trimSeekRaf);
+                trimSeekRaf = requestAnimationFrame(() => {
+                    if (!pv.seeking && performance.now() - lastTrimSeekMs >= 85) {
+                        lastTrimSeekMs = performance.now();
+                        try { pv.currentTime = targetSec; } catch (e) {}
+                    }
+                });
+                return;
+            }
+            lastTrimSeekMs = now;
+            try { pv.currentTime = targetSec; } catch (e) {}
+        }
+
         function toggleVideoPreviewFullscreen() {
             vFullscreenActive = !vFullscreenActive;
             const wrap = document.getElementById('previewVideoWrapper'), exitBtn = document.getElementById('exitVideoZoomBtn');
             if (vFullscreenActive) { wrap.className = 'fixed inset-0 z-[80] bg-black flex flex-col items-center justify-center'; exitBtn.classList.remove('hidden'); }
             else { wrap.className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full'; exitBtn.classList.add('hidden'); }
         }
+
+        // ====== MODAL UPLOAD STUDIO TỪ HEADER CHÍNH ======
+        function openUploadStudioModal() {
+            const hasPhoto = typeof window.hasLastCapturedPhoto === 'function' && window.hasLastCapturedPhoto();
+            const hasVideo = !!(recordedBlobUrl && recordedRawBlob);
+            const recentWrap = document.getElementById('recentMediaActions');
+            document.getElementById('reopenLastPhotoBtn').classList.toggle('hidden', !hasPhoto);
+            document.getElementById('reopenLastVideoBtn').classList.toggle('hidden', !hasVideo);
+            recentWrap.classList.toggle('hidden', !hasPhoto && !hasVideo);
+            document.getElementById('uploadStudioModal').classList.remove('hidden');
+        }
+        function closeUploadStudioModal() { document.getElementById('uploadStudioModal').classList.add('hidden'); }
+        function reopenLastCapturedPhoto() { closeUploadStudioModal(); if (typeof window.reopenAiPhotoEditor === 'function') window.reopenAiPhotoEditor(); }
+        function reopenLastRecordedVideo() { closeUploadStudioModal(); if (recordedBlobUrl) openEditorModal(recordedBlobUrl); }
+
+        function handleUploadedPhotoFile(input) {
+            const file = input.files && input.files[0]; input.value = '';
+            if (!file) return;
+            closeUploadStudioModal();
+            const url = URL.createObjectURL(file), img = new Image();
+            img.onload = async () => {
+                const maxDim = 1800;
+                const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(img.width * scale));
+                c.height = Math.max(1, Math.round(img.height * scale));
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                URL.revokeObjectURL(url);
+                if (typeof window.loadExternalPhotoToEditor === 'function') await window.loadExternalPhotoToEditor(c);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); alert('Không thể đọc file ảnh này.'); };
+            img.src = url;
+        }
+
+        function handleUploadedVideoFile(input) {
+            const file = input.files && input.files[0]; input.value = '';
+            if (!file) return;
+            closeUploadStudioModal();
+            if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
+            recordedRawBlob = file;
+            recordedBlobUrl = URL.createObjectURL(file);
+            window.isCameraRecordedVideo = false;
+            window.recordedDigitalZoom = 1.0;
+            window.recordedMirror = false;
+            lastRecordedDurationSec = 5;
+            openEditorModal(recordedBlobUrl);
+        }
+
         function toggleRecordingModeQuick() {
             if (isRecording) return; recordingMode = recordingMode === 'segment' ? 'unlimited' : 'segment';
             const pill = document.getElementById('modeSwitchPill');
@@ -577,13 +750,13 @@
         async function startCamera(facingMode) {
             try {
                 if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                // Xin cảm biến Full HD chuẩn 30fps, không ép 9:16 hoặc 60fps gây tụt độ phân giải và mờ ảnh
                 mediaStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode,
-                        width: { ideal: 1080 },
-                        height: { ideal: 1920 },
-                        aspectRatio: { ideal: 9 / 16 },
-                        frameRate: { ideal: 30, max: 60 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 30 }
                     },
                     audio: true
                 });
@@ -591,23 +764,46 @@
                 videoElement.srcObject = mediaStream;
                 if (typeof window.applyActiveCameraPreviewStyle === 'function') window.applyActiveCameraPreviewStyle('video');
                 await videoElement.play();
-                setZoomLevel(1.0, document.getElementById('zoomBtn1'));
+                // Mặc định cả camera trước và sau trước khi quay là 0.5
+                setZoomLevel(0.5, document.getElementById('vZoomBtn05'));
             } catch (err) { alert('Không thể mở camera. Vui lòng cấp quyền Safari.'); closeCameraModal(); }
         }
+
         function setZoomLevel(zoom, btn) {
             currentZoom = zoom; videoHardwareZoom = false;
-            document.querySelectorAll('.zoom-btn').forEach(b => b.className = "zoom-btn px-3 py-1 rounded-full font-black text-slate-200");
-            if (btn) btn.className = "zoom-btn px-3 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow";
-            const videoEl = document.getElementById('liveVideo'); videoEl.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scale(1.0)';
+            document.querySelectorAll('.zoom-btn').forEach(b => b.className = "zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200");
+            if (btn) btn.className = "zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950 shadow";
+
+            const videoEl = document.getElementById('liveVideo');
+            const mirror = currentFacingMode === 'user' ? 'scaleX(-1) ' : '';
+            videoEl.classList.remove('object-contain', 'object-cover');
+
             if (mediaStream) {
                 const track = mediaStream.getVideoTracks()[0];
                 if (track) {
                     let caps = {}; try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-                    if (caps.zoom && zoom >= caps.zoom.min && zoom <= caps.zoom.max) { videoHardwareZoom = true; track.applyConstraints({ advanced: [{ zoom }] }).catch(() => { videoHardwareZoom = false; }); }
-                    else { const mirror = currentFacingMode === 'user' ? 'scaleX(-1) ' : ''; videoEl.style.transform = `${mirror}scale(${zoom === 2.5 ? 2.0 : 1.0})`; }
+                    if (caps.zoom && zoom >= caps.zoom.min && zoom <= caps.zoom.max) {
+                        videoHardwareZoom = true;
+                        videoEl.classList.add('object-cover');
+                        videoEl.style.transform = `${mirror}scale(1.0)`;
+                        track.applyConstraints({ advanced: [{ zoom }] }).catch(() => { videoHardwareZoom = false; });
+                        return;
+                    } else if (caps.zoom && zoom < caps.zoom.min) {
+                        track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] }).catch(() => {});
+                    }
                 }
             }
+            // Nếu máy không hỗ trợ zoom quang học 0.5: dùng object-contain để mở rộng hết cảm biến (siêu rõ)
+            // Còn 1x: dùng object-cover scale(1.0) sắc nét tuyệt đối; >1x dùng digital scale trên nguồn 1080p
+            if (zoom <= 0.5) {
+                videoEl.classList.add('object-contain');
+                videoEl.style.transform = `${mirror}scale(1.0)`;
+            } else {
+                videoEl.classList.add('object-cover');
+                videoEl.style.transform = `${mirror}scale(${zoom > 1.0 ? zoom : 1.0})`;
+            }
         }
+
         function renderCategories() {
             document.getElementById('categoryGrid').innerHTML = categoriesData.map((cat, idx) => `<button onclick="selectCategory(${idx})" class="w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center space-x-4 ${idx === currentCatIndex ? 'bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-rose-500 shadow-xl' : 'bg-slate-900 border-slate-800'}"><span class="text-4xl">${cat.icon}</span><div><h3 class="font-black text-white leading-snug">${cat.name}</h3><p class="text-slate-300 font-semibold mt-1">${cat.desc}</p></div></button>`).join('');
         }
@@ -709,89 +905,117 @@
         document.getElementById('closeCameraBtn').addEventListener('click',e=>{e.stopPropagation();closeCameraModal();});
         document.getElementById('toggleArBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('arOverlay').classList.toggle('hidden'); });
 
+        // GHI VIDEO TRỰC TIẾP TỪ LUỒNG CAMERA PHẦN CỨNG -> KHÔNG GIẬT LAG CẢ CAM TRƯỚC & CAM SAU
         function startRecording() {
             if(!mediaStream||!mediaStream.getVideoTracks().length){alert('Camera chưa sẵn sàng.');return;}
             recordStartTimeMs = Date.now();
-            const videoElement = document.getElementById('liveVideo');
-            const vW = videoElement.videoWidth || 1280, vH = videoElement.videoHeight || 720;
-            const isNativeVertical916 = (vH > vW) && Math.abs((vW / vH) - (9 / 16)) < 0.08;
-            const needSoftwareTransform = (currentFacingMode === 'user') || (!videoHardwareZoom && currentZoom > 1.0);
+            window.isCameraRecordedVideo = true;
+            window.recordedDigitalZoom = (!videoHardwareZoom && currentZoom > 1.0) ? currentZoom : 1.0;
+            window.recordedMirror = (currentFacingMode === 'user');
 
             recordedChunks = [];
             const mime = chooseRecorderMime(['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']);
-            const recOpts = mime ? { mimeType: mime, videoBitsPerSecond: 6000000 } : { videoBitsPerSecond: 6000000 };
+            const recOpts = mime ? { mimeType: mime, videoBitsPerSecond: 5500000 } : { videoBitsPerSecond: 5500000 };
 
-            let targetStream = null;
-            if (isNativeVertical916 && !needSoftwareTransform) {
-                // GHI TRỰC TIẾP TỪ LUỒNG CAMERA GỐC (Không qua Canvas -> Siêu mượt như iPhone!)
-                targetStream = mediaStream;
-                recordingCanvasStream = null;
-            } else {
-                // Chỉ dùng Canvas (720x1280) khi cần cắt dọc hoặc lật gương camera trước
-                const canvas = document.getElementById('recordCanvas');
-                canvas.width = 720; canvas.height = 1280;
-                const ctx = canvas.getContext('2d', { alpha: false });
-                const aspect = 9 / 16;
-                let baseSw, baseSh;
-                if (vW / vH > aspect) { baseSh = vH; baseSw = vH * aspect; } else { baseSw = vW; baseSh = vW / aspect; }
-                const softZoom = (!videoHardwareZoom && currentZoom > 1) ? currentZoom : 1.0;
-                const sw = baseSw / softZoom, sh = baseSh / softZoom, sx = (vW - sw) / 2, sy = (vH - sh) / 2;
-
-                const drawFrame = () => {
-                    if (!isRecording) return;
-                    ctx.save();
-                    if (currentFacingMode === 'user') { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-                    ctx.drawImage(videoElement, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-                    ctx.restore();
-                    if (typeof videoElement.requestVideoFrameCallback === 'function') {
-                        recordingAnimationId = videoElement.requestVideoFrameCallback(drawFrame);
-                    } else {
-                        recordingAnimationId = requestAnimationFrame(drawFrame);
-                    }
-                };
-                recordingCanvasStream = canvas.captureStream(30);
-                mediaStream.getAudioTracks().forEach(track => recordingCanvasStream.addTrack(track.clone()));
-                targetStream = recordingCanvasStream;
-                if (typeof videoElement.requestVideoFrameCallback === 'function') {
-                    recordingAnimationId = videoElement.requestVideoFrameCallback(drawFrame);
-                } else {
-                    recordingAnimationId = requestAnimationFrame(drawFrame);
-                }
-            }
-
-            try { mediaRecorder = new MediaRecorder(targetStream, recOpts); }
+            try { mediaRecorder = new MediaRecorder(mediaStream, recOpts); }
             catch (e) {
-                try { mediaRecorder = new MediaRecorder(targetStream, mime ? { mimeType: mime } : {}); }
-                catch (err) {
-                    if (recordingCanvasStream) { recordingCanvasStream.getTracks().forEach(t => t.stop()); recordingCanvasStream = null; }
-                    alert('Safari không hỗ trợ ghi video.'); return;
-                }
+                try { mediaRecorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : {}); }
+                catch (err) { alert('Safari không hỗ trợ ghi video.'); return; }
             }
 
             mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) recordedChunks.push(e.data); };
             mediaRecorder.onstop = () => {
                 lastRecordedDurationSec = Math.max(1, (Date.now() - recordStartTimeMs) / 1000);
-                if (recordingAnimationId) {
-                    if (typeof videoElement.cancelVideoFrameCallback === 'function') videoElement.cancelVideoFrameCallback(recordingAnimationId);
-                    else cancelAnimationFrame(recordingAnimationId);
-                    recordingAnimationId = null;
-                }
                 if (typeof window.stopVideoAiMonitor === 'function') window.stopVideoAiMonitor();
                 recordedRawBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
                 if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
                 recordedBlobUrl = URL.createObjectURL(recordedRawBlob);
-                if (recordingCanvasStream) { recordingCanvasStream.getTracks().forEach(t => t.stop()); recordingCanvasStream = null; }
                 if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
                 document.getElementById('cameraModal').classList.add('hidden');
                 openEditorModal(recordedBlobUrl);
             };
             isRecording = true;
-            mediaRecorder.start(1000); // Gom 1s/lần để giảm giật khung hình
+            mediaRecorder.start(); // Không chia nhỏ timeslice liên tục để tránh khựng khung hình
             startTimer();
             setRecordingUI(true);
         }
         function stopRecording(){ if(!isRecording)return;isRecording=false;stopTimer();setRecordingUI(false); if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop(); else closeCameraModal(); }
         function chooseRecorderMime(types){if(typeof MediaRecorder==='undefined'||typeof MediaRecorder.isTypeSupported!=='function')return '';return types.find(t=>MediaRecorder.isTypeSupported(t))||'';}
+
+        // ====== THANH TRƯỢT CẮT ĐẦU - ĐUÔI CHỐNG GIẬT LAG ======
+        function initTrimSlidersForDuration(dur) {
+            const safeDur = Math.max(1, dur);
+            const sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
+            sSlider.min = 0; sSlider.max = safeDur.toFixed(1);
+            eSlider.min = 0; eSlider.max = safeDur.toFixed(1);
+            if (window.isCameraRecordedVideo && safeDur > 2.6) {
+                window.trimStartSec = 1.0;
+                window.trimEndSec = Number((safeDur - 1.0).toFixed(1));
+            } else {
+                window.trimStartSec = 0;
+                window.trimEndSec = Number(safeDur.toFixed(1));
+            }
+            sSlider.value = window.trimStartSec;
+            eSlider.value = window.trimEndSec;
+            updateTrimVisuals(safeDur);
+        }
+
+        function updateTrimVisuals(dur) {
+            const safeDur = Math.max(0.5, dur || getSafeVideoDuration(document.getElementById('previewVideo')));
+            const leftPct = Math.max(0, Math.min(100, (window.trimStartSec / safeDur) * 100));
+            const rightPct = Math.max(0, Math.min(100, 100 - (window.trimEndSec / safeDur) * 100));
+            const bar = document.getElementById('trimActiveBar');
+            if (bar) { bar.style.left = `${leftPct}%`; bar.style.right = `${rightPct}%`; }
+            document.getElementById('trimStartValText').innerText = `${window.trimStartSec.toFixed(1)}s`;
+            document.getElementById('trimEndValText').innerText = `${window.trimEndSec.toFixed(1)}s`;
+            document.getElementById('trimDurationText').innerText = `Giữ: ${Math.max(0.2, window.trimEndSec - window.trimStartSec).toFixed(1)}s`;
+        }
+
+        function startTrimDrag() {
+            isDraggingTrim = true;
+            const pv = document.getElementById('previewVideo');
+            if (pv && !pv.paused) { pv.pause(); document.getElementById('vPlayPauseBtn').innerText = '▶️'; }
+        }
+
+        function onTrimSliderInput(which) {
+            const pv = document.getElementById('previewVideo');
+            const dur = getSafeVideoDuration(pv);
+            const sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
+            let sVal = Number(sSlider.value), eVal = Number(eSlider.value);
+            const minGap = Math.min(0.4, dur * 0.15);
+            if (which === 'start') {
+                if (sVal > eVal - minGap) { sVal = Math.max(0, eVal - minGap); sSlider.value = sVal.toFixed(1); }
+                window.trimStartSec = sVal;
+                throttledSeekVideo(pv, sVal);
+            } else {
+                if (eVal < sVal + minGap) { eVal = Math.min(dur, sVal + minGap); eSlider.value = eVal.toFixed(1); }
+                window.trimEndSec = eVal;
+                throttledSeekVideo(pv, Math.max(0, eVal - 0.03));
+            }
+            updateTrimVisuals(dur);
+        }
+
+        function endTrimDrag(which) {
+            isDraggingTrim = false;
+            const pv = document.getElementById('previewVideo');
+            const target = which === 'start' ? window.trimStartSec : Math.max(0, window.trimEndSec - 0.03);
+            if (pv) { try { pv.currentTime = target; } catch (e) {} }
+        }
+
+        function applyTrimPreset(preset) {
+            const pv = document.getElementById('previewVideo'), dur = getSafeVideoDuration(pv);
+            if (preset === 1 && dur > 2.4) {
+                window.trimStartSec = 1.0;
+                window.trimEndSec = Number((dur - 1.0).toFixed(1));
+            } else {
+                window.trimStartSec = 0;
+                window.trimEndSec = Number(dur.toFixed(1));
+            }
+            document.getElementById('trimStartSlider').value = window.trimStartSec;
+            document.getElementById('trimEndSlider').value = window.trimEndSec;
+            updateTrimVisuals(dur);
+            if (pv) { try { pv.currentTime = window.trimStartSec; } catch (e) {} }
+        }
 
         function openEditorModal(videoUrl){
             const preview=document.getElementById('previewVideo'); preview.pause(); preview.src=videoUrl; preview.load();
@@ -799,53 +1023,54 @@
             document.getElementById('previewVideoWrapper').className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full';
             document.getElementById('exitVideoZoomBtn').classList.add('hidden');
             document.getElementById('vPlayPauseBtn').innerText = '▶️'; document.getElementById('vScrubRange').value = 0; document.getElementById('vTimeLabel').innerText = '0:00';
-            document.getElementById('trimDurationText').innerText = `${lastRecordedDurationSec.toFixed(1)}s`;
-            document.getElementById('trimStartInput').value='1.0'; document.getElementById('trimEndInput').value='1.0';
-            preview.onloadedmetadata=()=>{ const d = getSafeVideoDuration(preview); document.getElementById('trimDurationText').innerText=`${d.toFixed(1)}s`; updateTrimTimes(); };
+            initTrimSlidersForDuration(lastRecordedDurationSec);
+            preview.onloadedmetadata=()=>{ const d = getSafeVideoDuration(preview); initTrimSlidersForDuration(d); };
             document.getElementById('editorModal').classList.remove('hidden');
             if (typeof window.openVideoProEditorSetup === 'function') window.openVideoProEditorSetup();
         }
         function closeEditorModal(){if(exportInProgress)return;vFullscreenActive=false;if(typeof window.stopVideoRenderLoop==='function')window.stopVideoRenderLoop();document.getElementById('editorModal').classList.add('hidden');document.getElementById('previewVideo').pause();}
-        function applyTrimPreset(preset){document.getElementById('trimStartInput').value=preset===1?'1.0':'0.0';document.getElementById('trimEndInput').value=preset===1?'1.0':'0.0';updateTrimTimes();}
-        function updateTrimTimes(){
-            const pv=document.getElementById('previewVideo'), dur=getSafeVideoDuration(pv), startInput=document.getElementById('trimStartInput'),endInput=document.getElementById('trimEndInput');
-            let start=Math.max(0,Number(startInput.value)||0),end=Math.max(0,Number(endInput.value)||0);
-            if(dur>0){if(start+end>=dur-0.1){end=Math.max(0,dur-start-0.1);endInput.value=end.toFixed(1);}document.getElementById('trimDurationText').innerText=`${Math.max(0,dur-start-end).toFixed(1)}s`;}
-        }
 
         async function downloadFinalVideo(){
             if(!recordedRawBlob||!recordedBlobUrl){alert('Không tìm thấy video gốc.');return;}if(exportInProgress)return;
             exportInProgress=true;const downloadBtn=document.getElementById('downloadVideoBtn');downloadBtn.disabled=true;downloadBtn.style.opacity='0.6';downloadBtn.querySelector('span:last-child').innerText=' Đang xuất...';
             let video=null,canvas=null,stream=null,audioContext=null,source=null,destination=null,recorder=null,raf=0,timeout=0;
             try{
-                const start=Math.max(0,Number(document.getElementById('trimStartInput').value)||0),trimEnd=Math.max(0,Number(document.getElementById('trimEndInput').value)||0);
+                const start=Math.max(0, window.trimStartSec || 0);
                 video=document.createElement('video');video.src=recordedBlobUrl;video.preload='auto';video.playsInline=true;video.crossOrigin='anonymous';
                 await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Không đọc được video gốc.'));});
-                const duration=getSafeVideoDuration(video), end=duration-trimEnd;
+                const duration=getSafeVideoDuration(video), end=Math.min(duration, Math.max(start + 0.2, window.trimEndSec || duration));
                 if(start>=end||end<=0)throw new Error('Thời gian cắt không hợp lệ.');
-                canvas=document.createElement('canvas');canvas.width=720;canvas.height=1280;const ctx=canvas.getContext('2d');if(!ctx||!canvas.captureStream)throw new Error('Trình duyệt không hỗ trợ xuất video.');
-                stream=canvas.captureStream(24);
+
+                let outW = 720, outH = 1280;
+                if (!window.isCameraRecordedVideo && video.videoWidth && video.videoHeight) {
+                    const maxDim = 1080, sc = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+                    outW = Math.max(360, Math.round(video.videoWidth * sc / 2) * 2);
+                    outH = Math.max(360, Math.round(video.videoHeight * sc / 2) * 2);
+                }
+
+                canvas=document.createElement('canvas');canvas.width=outW;canvas.height=outH;const ctx=canvas.getContext('2d');if(!ctx||!canvas.captureStream)throw new Error('Trình duyệt không hỗ trợ xuất video.');
+                stream=canvas.captureStream(30);
                 const AudioContextCtor=window.AudioContext||window.webkitAudioContext;if(!AudioContextCtor)throw new Error('Thiết bị không hỗ trợ âm thanh.');
                 audioContext=new AudioContextCtor();destination=audioContext.createMediaStreamDestination();source=audioContext.createMediaElementSource(video);source.connect(destination);
                 destination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
                 const mime=chooseRecorderMime(['video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']);
-                recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});const chunks=[];
+                recorder=new MediaRecorder(stream,mime?{mimeType:mime, videoBitsPerSecond: 5500000}:{videoBitsPerSecond: 5500000});const chunks=[];
                 const finished=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||'video/webm'}));recorder.onerror=()=>reject(new Error('MediaRecorder gặp lỗi.'));});
                 try { video.currentTime = start; } catch(e){}
                 await new Promise(r => setTimeout(r, 250)); await audioContext.resume();
                 let stopped=false;
                 function draw(){
                     if(stopped||!video||recorder.state==='inactive')return;
-                    if(video.readyState>=2){ if(typeof window.renderVideoFrameToExportCanvas === 'function') window.renderVideoFrameToExportCanvas(video, ctx, 720, 1280); else ctx.drawImage(video, 0, 0, 720, 1280); }
+                    if(video.readyState>=2){ if(typeof window.renderVideoFrameToExportCanvas === 'function') window.renderVideoFrameToExportCanvas(video, ctx, outW, outH); else ctx.drawImage(video, 0, 0, outW, outH); }
                     if(video.currentTime>=end||video.ended){stopped=true;if(recorder.state!=='inactive')recorder.stop();return;}
                     raf=requestAnimationFrame(draw);
                 }
-                recorder.start(250);await video.play();draw();
-                timeout=setTimeout(()=>{if(recorder&&recorder.state!=='inactive'){stopped=true;recorder.stop();}},Math.ceil((end-start)*2000)+12000);
+                recorder.start();await video.play();draw();
+                timeout=setTimeout(()=>{if(recorder&&recorder.state!=='inactive'){stopped=true;recorder.stop();}},Math.ceil((end-start)*2000)+15000);
                 const blob=await finished;clearTimeout(timeout);if(raf)cancelAnimationFrame(raf);video.pause();
                 if(!blob||!blob.size)throw new Error('File xuất ra không có dữ liệu.');
                 const isMp4=blob.type.toLowerCase().includes('mp4'), ext=isMp4?'mp4':'webm';
-                const fileName=activeStepIndex===1?`KimBling-Part2-Segment${activeSubClipId+1}.${ext}`:`KimBling-Part-${activeStepIndex+1}.${ext}`;
+                const fileName=window.isCameraRecordedVideo?(activeStepIndex===1?`KimBling-Part2-Segment${activeSubClipId+1}.${ext}`:`KimBling-Part-${activeStepIndex+1}.${ext}`):`KimBling-Edited-${Date.now()}.${ext}`;
                 const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
                 alert(`Đã xuất video (${ext.toUpperCase()}) với đầy đủ hiệu ứng!`);document.getElementById('editorModal').classList.add('hidden');
             }catch(err){alert('Không thể xuất video: '+(err&&err.message?err.message:'Lỗi'));}
@@ -865,9 +1090,10 @@
         function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
         window.onload=initApp;
     </script>
-    <!-- === HẾT PHẦN 1 === -->
 
-<!-- === PHẦN 2: WEBGL NHIẾP ẢNH + AI PHÂN LOẠI THEO CẢNH + RADAR QUÉT GÓC === -->
+PHẦN 2 (Copy dán nối ngay vào sau dòng </script> của Phần 1)
+
+<!-- === PHẦN 2: WEBGL NHIẾP ẢNH + TAP-TO-FOCUS + ZOOM 0.5..2.5 + UPLOAD AI POSE === -->
     <script type="module">
     import { FilesetResolver, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 
@@ -944,7 +1170,7 @@
     const AI_ASPECTS = ['9:16', '3:4', '4:5', '1:1'];
     const POSE_EDGES = [['head','ls'],['head','rs'],['ls','rs'],['ls','le'],['le','lw'],['rs','re'],['re','rw'],['ls','lh'],['rs','rh'],['lh','rh'],['lh','lk'],['lk','la'],['rh','rk'],['rk','ra']];
 
-    let poseLandmarker = null, aiStream = null, aiFacing = 'environment', aiZoom = 1.0, aiHardwareZoom = false;
+    let poseLandmarker = null, aiStream = null, aiFacing = 'environment', aiZoom = 0.5, aiHardwareZoom = false;
     let aiAspectIdx = 1, aiModeIdx = 0, aiTimerSec = 0, aiAutoSnap = false, aiVoiceOn = false;
     let aiShowGrid = true, aiWatermarkOn = true, photoAiEnabled = true;
     let aiRafId = 0, aiLightInterval = 0, aiLastVideoTime = -1, aiStableMatchCount = 0, aiIsCountingDown = false, aiLastSpeakTime = 0;
@@ -956,7 +1182,87 @@
     let directorOwner = 'photo', directorTarget = 'travel_wife', lastDirectorPlan = null;
     const GEMINI_KEY_STORAGE = 'kimbling_gemini_api_key';
 
-    // ====== WEBGL SHADER CHUẨN NHIẾP ẢNH (KHÔNG BẠC ĐEN, KHÔNG MỜ CẢNH) ======
+    // ====== LẤY NÉT TẠI ĐIỂM CHẠM (TAP-TO-FOCUS) CHO CẢ VIDEO & ẢNH AI ======
+    function triggerTapFocus(event, viewportEl, videoEl, reticleEl, getStreamFn, isFrontFn, tipElId) {
+        if (event.target && event.target.closest('button, input, a')) return;
+        if (!videoEl || !videoEl.videoWidth) return;
+        const vRect = videoEl.getBoundingClientRect();
+        const tapX = event.clientX, tapY = event.clientY;
+        if (tapX < vRect.left || tapX > vRect.right || tapY < vRect.top || tapY > vRect.bottom) return;
+
+        const vpRect = viewportEl.getBoundingClientRect();
+        reticleEl.style.left = `${tapX - vpRect.left}px`;
+        reticleEl.style.top = `${tapY - vpRect.top}px`;
+        reticleEl.classList.remove('hidden', 'opacity-0');
+        reticleEl.classList.add('scale-110');
+        setTimeout(() => reticleEl.classList.remove('scale-110'), 140);
+        clearTimeout(reticleEl._hideTimer);
+        reticleEl._hideTimer = setTimeout(() => {
+            reticleEl.classList.add('opacity-0');
+            setTimeout(() => reticleEl.classList.add('hidden'), 220);
+        }, 1600);
+
+        let nx = (tapX - vRect.left) / Math.max(1, vRect.width);
+        let ny = (tapY - vRect.top) / Math.max(1, vRect.height);
+        if (isFrontFn()) nx = 1 - nx;
+        nx = Math.max(0.05, Math.min(0.95, nx));
+        ny = Math.max(0.05, Math.min(0.95, ny));
+
+        const stream = getStreamFn();
+        const track = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+        if (!track) return;
+        try {
+            const caps = track.getCapabilities ? track.getCapabilities() : {};
+            const adv = {};
+            if (caps.pointsOfInterest || 'pointsOfInterest' in (track.getSettings ? track.getSettings() : {})) {
+                adv.pointsOfInterest = [{ x: nx, y: ny }];
+            }
+            if (Array.isArray(caps.focusMode)) {
+                if (caps.focusMode.includes('single-shot')) adv.focusMode = 'single-shot';
+                else if (caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
+            }
+            if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes('continuous')) {
+                adv.exposureMode = 'continuous';
+            }
+            if (Object.keys(adv).length > 0) {
+                track.applyConstraints({ advanced: [adv] }).then(() => {
+                    if (adv.focusMode === 'single-shot' && Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+                        setTimeout(() => { track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); }, 1600);
+                    }
+                }).catch(() => {});
+            }
+            if (tipElId) {
+                const tipEl = document.getElementById(tipElId);
+                if (tipEl) tipEl.innerText = '🎯 Đã lấy nét tại điểm chạm';
+            }
+        } catch (e) {}
+    }
+
+    document.getElementById('cameraViewport').addEventListener('pointerdown', (e) => {
+        triggerTapFocus(
+            e,
+            document.getElementById('cameraViewport'),
+            document.getElementById('liveVideo'),
+            document.getElementById('videoFocusReticle'),
+            () => (typeof mediaStream !== 'undefined' ? mediaStream : null),
+            () => (typeof currentFacingMode !== 'undefined' && currentFacingMode === 'user'),
+            'videoAiTipText'
+        );
+    });
+
+    document.getElementById('aiCropFrame').addEventListener('pointerdown', (e) => {
+        triggerTapFocus(
+            e,
+            document.getElementById('aiCropFrame'),
+            document.getElementById('aiPhotoVideo'),
+            document.getElementById('photoFocusReticle'),
+            () => aiStream,
+            () => (aiFacing === 'user'),
+            'aiCoachText'
+        );
+    });
+
+    // ====== WEBGL SHADER CHUẨN NHIẾP ẢNH ======
     function createWebGLEngine(canvas) {
         const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true, antialias: false })
                 || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
@@ -995,7 +1301,6 @@
                 float t = 1.0 - dist / radius;
                 return uv + vec2(d.x * t * t * amount, d.y * t * t * amount * 0.3);
             }
-            // Chuẩn YCbCr để chỉ nhận đúng sắc độ da người, loại trừ rèm/gạch/dù cam
             float isSkinTone(vec3 c) {
                 float cb = 0.5 - 0.1687 * c.r - 0.3313 * c.g + 0.5 * c.b;
                 float cr = 0.5 + 0.5 * c.r - 0.4187 * c.g - 0.0813 * c.b;
@@ -1022,7 +1327,6 @@
                 vec3 col = texture2D(u_image, uv).rgb;
                 float skinMask = (u_skin.x > 0.001 || u_skin.y > 0.001) ? isSkinTone(col) : 0.0;
 
-                // Mịn da giữ nét lông mày, mắt, môi
                 if (u_skin.y > 0.001 && skinMask > 0.15) {
                     vec2 sOff = u_texel * (1.2 + u_skin.y * 3.0);
                     vec3 s1 = texture2D(u_image, uv+vec2(sOff.x,0.0)).rgb; float w1 = exp(-dot(s1-col,s1-col)*45.0);
@@ -1036,7 +1340,6 @@
                     vec3 bCol = (col + texture2D(u_image,uv+vec2(off.x,0.0)).rgb + texture2D(u_image,uv-vec2(off.x,0.0)).rgb + texture2D(u_image,uv+vec2(0.0,off.y)).rgb + texture2D(u_image,uv-vec2(0.0,off.y)).rgb + texture2D(u_image,uv+off).rgb + texture2D(u_image,uv-off).rgb + texture2D(u_image,uv+vec2(off.x,-off.y)).rgb + texture2D(u_image,uv+vec2(-off.x,off.y)).rgb)/9.0;
                     col = mix(col, bCol, 0.85);
                 }
-                // Làm sắc nét & Độ rõ nét chuẩn
                 if (u_scbv.x > 0.001 || u_scbv.y > 0.001) {
                     vec2 d = u_texel * 1.15;
                     vec3 lap = col*4.0 - (texture2D(u_image,uv+vec2(d.x,0.0)).rgb + texture2D(u_image,uv-vec2(d.x,0.0)).rgb + texture2D(u_image,uv+vec2(0.0,d.y)).rgb + texture2D(u_image,uv-vec2(0.0,d.y)).rgb);
@@ -1047,32 +1350,23 @@
                     vec3 whiten = pow(max(col, vec3(0.0001)), vec3(1.0 - u_skin.x * 0.25)) + vec3(0.03, 0.015, 0.02) * u_skin.x;
                     col = mix(col, whiten, skinMask * 0.8);
                 }
-
-                // Khử mờ sương (Dehaze): kéo sâu điểm đen nhẹ + tăng độ trong
                 if (u_extra.w > 0.001) {
                     col = clamp((col - 0.055 * u_extra.w) / (1.0 - 0.055 * u_extra.w), 0.0, 1.0);
                     col = mix(col, smoothstep(0.0, 1.0, col), u_extra.w * 0.22);
                 }
-
-                // Hết chói đèn (nhắm vào vùng trắng chói ít màu)
                 float luma = dot(col, vec3(0.299,0.587,0.114));
                 if (u_extra.z > 0.001) {
                     float satPx = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));
                     float glareMask = smoothstep(0.74, 1.0, luma) * (1.0 - smoothstep(0.08, 0.35, satPx));
                     col *= (1.0 - glareMask * u_extra.z * 0.30);
                 }
-
-                // Vùng tối (Shadows) & Điểm nhấn (Highlights) theo tỷ lệ giữ nguyên màu đen sâu!
                 luma = dot(col, vec3(0.299,0.587,0.114));
                 float shMask = smoothstep(0.52, 0.04, luma) * smoothstep(0.0, 0.06, luma);
                 float hiMask = smoothstep(0.55, 1.0, luma);
                 col *= (1.0 + u_hstt.y * 1.15 * shMask + u_hstt.x * 0.48 * hiMask);
-
-                // Nổi khối (Brilliance) bằng đường cong gamma không làm đục ảnh
                 if (abs(u_bc_sb.w) > 0.001) {
                     col = mix(col, pow(max(col, vec3(0.0001)), vec3(clamp(1.0 - u_bc_sb.w * 0.9, 0.6, 1.5))), 0.75);
                 }
-
                 col.r += u_hstt.z + u_hstt.w*0.4; col.g -= u_hstt.w*0.8; col.b += -u_hstt.z + u_hstt.w*0.4;
                 float gr = dot(col, vec3(0.2126,0.7152,0.0722));
                 col = mix(vec3(gr), col, u_bc_sb.z);
@@ -1147,13 +1441,40 @@
     let photoGl = null, photoDrawRaf = 0;
     let videoGl = null, videoRenderRaf = 0, lastVideoWarpPoseMs = 0;
     let exportGlCanvas = null, exportGl = null;
+    const videoCropCanvas = document.createElement('canvas');
+
+    // Crop chuẩn 9:16 + xử lý lật gương/zoom kỹ thuật số cho video quay trực tiếp (giữ mượt khi quay)
+    function prepareVideoSourceCanvas(videoEl, targetW, targetH) {
+        const vw = videoEl.videoWidth || 720, vh = videoEl.videoHeight || 1280;
+        if (videoCropCanvas.width !== targetW || videoCropCanvas.height !== targetH) {
+            videoCropCanvas.width = targetW; videoCropCanvas.height = targetH;
+        }
+        const ctx = videoCropCanvas.getContext('2d');
+        ctx.save();
+        if (window.isCameraRecordedVideo) {
+            const targetAspect = targetW / targetH;
+            let baseSw, baseSh;
+            if (vw / vh > targetAspect) { baseSh = vh; baseSw = vh * targetAspect; }
+            else { baseSw = vw; baseSh = vw / targetAspect; }
+            const dz = Math.max(1.0, window.recordedDigitalZoom || 1.0);
+            const sw = baseSw / dz, sh = baseSh / dz, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+            if (window.recordedMirror) { ctx.translate(targetW, 0); ctx.scale(-1, 1); }
+            ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        } else {
+            ctx.drawImage(videoEl, 0, 0, targetW, targetH);
+        }
+        ctx.restore();
+        return videoCropCanvas;
+    }
 
     // ====== QUẢN LÝ HẬU KỲ VIDEO ======
     window.openVideoProEditorSetup = function () {
         isComparingVideoOrig = false; Object.keys(vAdj).forEach(k => vAdj[k] = 0);
-        if (!camHardwareEvApplied && camEvValue !== 0) vAdj.brightness = Math.round(camEvValue * 16);
-        if (camNightMode) { vAdj.shadows = 20; vAdj.brightness = Math.min(40, vAdj.brightness + 10); }
-        if (camHdrMode) { vAdj.shadows = Math.max(vAdj.shadows, 16); vAdj.highlights = -22; vAdj.clarity = 16; }
+        if (window.isCameraRecordedVideo) {
+            if (!camHardwareEvApplied && camEvValue !== 0) vAdj.brightness = Math.round(camEvValue * 16);
+            if (camNightMode) { vAdj.shadows = 20; vAdj.brightness = Math.min(40, vAdj.brightness + 10); }
+            if (camHdrMode) { vAdj.shadows = Math.max(vAdj.shadows, 16); vAdj.highlights = -22; vAdj.clarity = 16; }
+        }
         vFilterIdx = 0; videoPoseUV = null;
         document.getElementById('vRetouchSummary').classList.add('hidden');
         renderVideoFilterChips(); window.switchVideoEditorTab('adjust');
@@ -1166,9 +1487,16 @@
     window.redrawVideoFrameNow = function () {
         const pv = document.getElementById('previewVideo'), c = document.getElementById('videoPreviewCanvas');
         if (!pv || pv.readyState < 2 || !c) return;
-        const vw = pv.videoWidth || 540, vh = pv.videoHeight || 960, pw = Math.min(720, vw), ph = Math.round(pw * (vh / vw));
-        if (videoGl) { videoGl.uploadAndSize(pv, pw, ph); videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, isComparingVideoOrig); }
-        else { if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; } c.getContext('2d').drawImage(pv, 0, 0, pw, ph); }
+        const vw = pv.videoWidth || 720, vh = pv.videoHeight || 1280;
+        let pw = 720, ph = 1280;
+        if (!window.isCameraRecordedVideo) {
+            const sc = Math.min(1, 720 / Math.max(vw, vh));
+            pw = Math.max(2, Math.round(vw * sc)); ph = Math.max(2, Math.round(vh * sc));
+        }
+        const srcEl = (window.isCameraRecordedVideo && (Math.abs((vw/vh) - (9/16)) > 0.05 || window.recordedDigitalZoom > 1.0 || window.recordedMirror))
+            ? prepareVideoSourceCanvas(pv, pw, ph) : pv;
+        if (videoGl) { videoGl.uploadAndSize(srcEl, pw, ph); videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, isComparingVideoOrig); }
+        else { if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; } c.getContext('2d').drawImage(srcEl, 0, 0, pw, ph); }
     };
     window.startVideoRenderLoop = function () {
         cancelAnimationFrame(videoRenderRaf);
@@ -1190,8 +1518,11 @@
     window.stopVideoRenderLoop = function () { cancelAnimationFrame(videoRenderRaf); };
     window.renderVideoFrameToExportCanvas = function (videoEl, dest2dCtx, outW, outH) {
         if (!exportGlCanvas) { exportGlCanvas = document.createElement('canvas'); exportGl = createWebGLEngine(exportGlCanvas); }
-        if (exportGl) { exportGl.uploadAndSize(videoEl, outW, outH); exportGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, false); dest2dCtx.drawImage(exportGlCanvas, 0, 0, outW, outH); }
-        else dest2dCtx.drawImage(videoEl, 0, 0, outW, outH);
+        const vw = videoEl.videoWidth || outW, vh = videoEl.videoHeight || outH;
+        const srcEl = (window.isCameraRecordedVideo && (Math.abs((vw/vh) - (outW/outH)) > 0.05 || window.recordedDigitalZoom > 1.0 || window.recordedMirror))
+            ? prepareVideoSourceCanvas(videoEl, outW, outH) : videoEl;
+        if (exportGl) { exportGl.uploadAndSize(srcEl, outW, outH); exportGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, false); dest2dCtx.drawImage(exportGlCanvas, 0, 0, outW, outH); }
+        else dest2dCtx.drawImage(srcEl, 0, 0, outW, outH);
     };
     window.holdCompareVideoOriginal = function (hold) { isComparingVideoOrig = !!hold; window.redrawVideoFrameNow(); };
 
@@ -1236,7 +1567,7 @@
         await runSmartEnhanceOnCanvas(tmp, vAdj, !!videoPoseUV, 'vSmartEnhanceLabel', 'vRetouchSummary', renderVideoAdjustButtons, window.redrawVideoFrameNow);
     };
 
-    // ====== AI CHỈNH ẢNH CHUYÊN NGHIỆP (PHÂN LOẠI CẢNH TRƯỚC KHI CHỈNH) ======
+    // ====== AI CHỈNH ẢNH CHUYÊN NGHIỆP ======
     function extractFullPoseUV(lm) {
         if (!lm || lm.length < 29) return null;
         const pt = l => [Math.max(0.02, Math.min(0.98, l.x)), Math.max(0.02, Math.min(0.98, l.y))];
@@ -1253,27 +1584,23 @@
             lbl.innerText = '⏳ Đang soi...';
             summaryEl.innerText = '🤖 AI đang phân loại cảnh & chỉnh chuẩn Lightroom...'; summaryEl.classList.remove('hidden');
             const b64 = srcCanvas.toDataURL('image/jpeg', 0.72).split(',')[1];
-            const prompt = `Bạn là Colorist & Retoucher chuyên nghiệp (Lightroom/VSCO). Hãy xem bức ảnh thô này và chỉnh TINH TẾ, TỰ NHIÊN, GIỮ CHIỀU SÂU MÀU ĐEN (tuyệt đối KHÔNG làm bạc màu đen, KHÔNG làm quá sáng, KHÔNG làm mờ ảnh).
-QUY TẮC BẮT BUỘC:
-1. Phân loại sceneType: "portrait" (có mặt/người rõ), "food" (đồ ăn/nước uống), "scenery" (quán/đường phố/phong cảnh không có mặt người), "night" (chụp tối).
-2. Nếu là "scenery" hoặc "food" (KHÔNG có mặt người): BẮT BUỘC đặt skinWhiten=0, skinSmooth=0, slimFace=0, slimBody=0, slimArms=0, slimThighs=0, longLegs=0!
-3. Nếu ảnh ban ngày/trong quán đã sáng rõ (ghế tối vẫn có ánh sáng): KHÔNG cộng nhiều brightness (giữ -5..+6), ưu tiên highlights (-10..-35) cứu nắng/đèn, dehaze (5..18) giữ màu đen sâu, contrast (4..14), clarity (10..24), sharpen (12..25).
-4. Chỉ tăng shadows (10..32) nếu chủ thể bị ngược sáng tối mặt thật sự.
+            const prompt = `Bạn là Colorist & Retoucher chuyên nghiệp (Lightroom/VSCO). Hãy xem bức ảnh thô này và chỉnh TINH TẾ, TỰ NHIÊN, GIỮ CHIỀU SÂU MÀU ĐEN (KHÔNG làm bạc màu đen, KHÔNG làm quá sáng, KHÔNG làm mờ ảnh).
+QUY TẮC:
+1. Phân loại sceneType: "portrait" (có mặt/người rõ), "food" (đồ ăn/nước uống), "scenery" (quán/phong cảnh không có mặt người), "night" (chụp tối).
+2. Nếu là "scenery" hoặc "food": đặt skinWhiten=0, skinSmooth=0!
+3. Nếu ảnh ban ngày đã sáng rõ: giữ brightness -5..+6, ưu tiên highlights (-10..-35), dehaze (5..18), contrast (4..14), clarity (10..24), sharpen (12..25).
 Trả về JSON:
-{"sceneType":"scenery|portrait|food|night","summary":"Giải thích ngắn (VD: Cảnh quán ban ngày: Cứu nắng gắt, giữ đen sâu & sắc nét)","deglare":0..45,"shadows":-10..35,"dehaze":0..25,"sharpen":10..35,"clarity":8..28,"brightness":-12..16,"contrast":0..18,"saturation":0..22,"brilliance":-5..18,"highlights":-45..10,"temp":-15..15,"skinWhiten":0..35,"skinSmooth":0..28}`;
+{"sceneType":"scenery|portrait|food|night","summary":"Giải thích ngắn","deglare":0..45,"shadows":-10..35,"dehaze":0..25,"sharpen":10..35,"clarity":8..28,"brightness":-12..16,"contrast":0..18,"saturation":0..22,"brilliance":-5..18,"highlights":-45..10,"temp":-15..15,"skinWhiten":0..35,"skinSmooth":0..28}`;
             const res = await callGeminiVisionJSON(b64, prompt);
             lbl.innerText = 'AI Chỉnh Đẹp';
             if (res) {
                 Object.keys(targetAdj).forEach(k => { if (typeof res[k] === 'number') targetAdj[k] = Math.round(res[k]); });
-                if (res.sceneType === 'scenery' || res.sceneType === 'food') {
-                    targetAdj.skinWhiten = 0; targetAdj.skinSmooth = 0;
-                }
+                if (res.sceneType === 'scenery' || res.sceneType === 'food') { targetAdj.skinWhiten = 0; targetAdj.skinSmooth = 0; }
                 summaryEl.innerText = `🤖 ${res.summary || 'Đã chỉnh chuẩn nhiếp ảnh!'}`;
                 refreshUIFn(); redrawFn(); return;
             }
         }
 
-        // Bộ phân tích Histogram Offline thông minh theo từng loại ảnh
         const t = document.createElement('canvas'); t.width = 64; t.height = 64;
         t.getContext('2d').drawImage(srcCanvas, 0, 0, 64, 64);
         const d = t.getContext('2d').getImageData(0, 0, 64, 64).data;
@@ -1295,16 +1622,10 @@ Trả về JSON:
 
         const fixes = [];
         if (!isPortrait) {
-            // ẢNH CẢNH / QUÁN / ĐỒ ĂN: Tuyệt đối không dùng skinSmooth để không bị mờ ảnh!
             targetAdj.skinWhiten = 0; targetAdj.skinSmooth = 0;
-            if (avg < 92) {
-                targetAdj.brightness = 12; targetAdj.shadows = 22; targetAdj.dehaze = 10;
-                fixes.push('Nâng sáng tối');
-            } else if (avg > 165) {
-                targetAdj.brightness = -8; targetAdj.highlights = -32; targetAdj.dehaze = 16;
-                fixes.push('Giảm cháy sáng');
-            } else {
-                // Ảnh ban ngày đủ sáng (như ảnh quán của bạn): KHÔNG tăng brightness, chỉ cân tương phản & cứu vùng cháy nắng!
+            if (avg < 92) { targetAdj.brightness = 12; targetAdj.shadows = 22; targetAdj.dehaze = 10; fixes.push('Nâng sáng tối'); }
+            else if (avg > 165) { targetAdj.brightness = -8; targetAdj.highlights = -32; targetAdj.dehaze = 16; fixes.push('Giảm cháy sáng'); }
+            else {
                 targetAdj.brightness = 0;
                 targetAdj.highlights = glarePct > 0.08 ? -28 : -12;
                 targetAdj.deglare = glarePct > 0.12 ? 18 : 0;
@@ -1312,39 +1633,49 @@ Trả về JSON:
                 targetAdj.dehaze = 12;
                 fixes.push('Giữ đen sâu & cứu nắng');
             }
-            targetAdj.contrast = 8;
-            targetAdj.clarity = 20;
-            targetAdj.sharpen = avgEdge < 18 ? 30 : 18;
-            targetAdj.saturation = isFood ? 14 : 8;
-            if (isFood) targetAdj.temp = 6;
+            targetAdj.contrast = 8; targetAdj.clarity = 20; targetAdj.sharpen = avgEdge < 18 ? 30 : 18;
+            targetAdj.saturation = isFood ? 14 : 8; if (isFood) targetAdj.temp = 6;
             fixes.push('Sắc nét chi tiết');
         } else {
-            // ẢNH CHÂN DUNG / CÓ NGƯỜI / PHUN XĂM
             const backlit = (centerAvg < 95 && avg - centerAvg > 28);
             targetAdj.brightness = backlit ? 10 : (avg < 105 ? 10 : 2);
             targetAdj.shadows = backlit ? 26 : 8;
             targetAdj.highlights = glarePct > 0.08 ? -24 : -10;
-            targetAdj.dehaze = 8;
-            targetAdj.contrast = 6;
-            targetAdj.clarity = 12;
-            targetAdj.sharpen = 18;
-            targetAdj.saturation = 8;
-            targetAdj.skinWhiten = centerAvg < 135 ? 24 : 14;
-            targetAdj.skinSmooth = 22;
+            targetAdj.dehaze = 8; targetAdj.contrast = 6; targetAdj.clarity = 12; targetAdj.sharpen = 18;
+            targetAdj.saturation = 8; targetAdj.skinWhiten = centerAvg < 135 ? 24 : 14; targetAdj.skinSmooth = 22;
             fixes.push(backlit ? 'Cứu ngược sáng mặt' : 'Da sáng mịn giữ nét');
         }
-
         summaryEl.innerText = `🤖 ${fixes.join(', ')}`;
         summaryEl.classList.remove('hidden');
         refreshUIFn(); redrawFn();
     }
 
-    // ====== QUẢN LÝ HẬU KỲ ẢNH ======
-    function openAiPhotoEditor() {
+    // ====== QUẢN LÝ HẬU KỲ ẢNH & NẠP ẢNH TỪ MÁY ======
+    window.hasLastCapturedPhoto = () => !!aiCapturedCanvas;
+    window.reopenAiPhotoEditor = () => { if (aiCapturedCanvas) openAiPhotoEditor(true); };
+    window.loadExternalPhotoToEditor = async function (canvas) {
+        aiCapturedCanvas = canvas;
+        capturedPoseUV = null;
+        try {
+            if (await ensurePoseModel()) {
+                await poseLandmarker.setOptions({ runningMode: "IMAGE" });
+                const res = poseLandmarker.detect(canvas);
+                if (res && res.landmarks && res.landmarks.length > 0) capturedPoseUV = extractFullPoseUV(res.landmarks[0]);
+                await poseLandmarker.setOptions({ runningMode: "VIDEO" });
+            }
+        } catch (e) {
+            try { if (poseLandmarker) await poseLandmarker.setOptions({ runningMode: "VIDEO" }); } catch (e2) {}
+        }
+        openAiPhotoEditor(true);
+    };
+
+    function openAiPhotoEditor(fromUpload = false) {
         isComparingPhotoOrig = false; Object.keys(pAdj).forEach(k => pAdj[k] = 0);
-        if (!camHardwareEvApplied && camEvValue !== 0) pAdj.brightness = Math.round(camEvValue * 16);
-        if (camNightMode) { pAdj.shadows = 20; pAdj.brightness = Math.min(40, pAdj.brightness + 10); }
-        if (camHdrMode) { pAdj.shadows = Math.max(pAdj.shadows, 16); pAdj.highlights = -22; pAdj.clarity = 16; }
+        if (!fromUpload) {
+            if (!camHardwareEvApplied && camEvValue !== 0) pAdj.brightness = Math.round(camEvValue * 16);
+            if (camNightMode) { pAdj.shadows = 20; pAdj.brightness = Math.min(40, pAdj.brightness + 10); }
+            if (camHdrMode) { pAdj.shadows = Math.max(pAdj.shadows, 16); pAdj.highlights = -22; pAdj.clarity = 16; }
+        }
         aiFilterIdx = 0;
         document.getElementById('aiRetouchSummary').classList.add('hidden');
         document.getElementById('aiPhotoEditorModal').classList.remove('hidden');
@@ -1352,7 +1683,6 @@ Trả về JSON:
         wmBadge.innerText = `✨ ${getWatermarkLabel()}`; wmBadge.style.display = aiWatermarkOn ? 'block' : 'none';
 
         renderEditorFilterChips();
-        // Nếu có người thì mở tab Da & Dáng, nếu là cảnh/quán thì mở tab Ánh sáng & Màu
         window.switchPhotoEditorTab(capturedPoseUV ? 'beauty' : 'adjust');
 
         const preview = document.getElementById('aiEditedPreviewCanvas');
@@ -1465,7 +1795,7 @@ Trả về JSON:
         if (owner === 'photo') { const curCtx = SCENE_CONTEXTS[sceneCtxIdx].id; window.setDirectorTarget(curCtx === 'scenery' ? 'scenery' : curCtx === 'travel_wife' ? 'travel_wife' : 'shop'); }
         updateGeminiKeyStatusUI();
         document.getElementById('aiRadarScanEffects').classList.add('hidden');
-        document.getElementById('directorPreScanPrompt').classList.remove('hidden');
+       document.getElementById('directorPreScanPrompt').classList.remove('hidden');
         document.getElementById('directorResultBox').classList.add('hidden');
         document.getElementById('aiDirectorModal').classList.remove('hidden');
     };
@@ -1516,7 +1846,7 @@ Trả về JSON:
         if (directorTarget === 'scenery') return { spot: `Ánh sáng thoáng ở ${brightSide}. Đặt đường chân trời vào vạch 1/3.`, cameraAngle: 'Giữ thước ngang xanh lá, zoom 0,5x hoặc 1x.', photoPose: null, videoAction: 'Lia máy cực chậm ngang trong 5s.', matchedModeId: 'scenery_13', voiceSummary: 'Đặt đường chân trời vào vạch 1 phần 3, giữ thẳng máy.' };
         if (directorTarget === 'travel_wife') {
             const basePts = { head:[0.50,0.25], ls:[0.43,0.36], rs:[0.57,0.36], le:[0.39,0.47], re:[0.62,0.46], lw:[0.41,0.57], rw:[0.64,0.33], lh:[0.45,0.56], rh:[0.55,0.56], lk:[0.44,0.73], rk:[0.56,0.73], la:[0.43,0.90], ra:[0.57,0.90] };
-            return { spot: `Sáng đẹp từ ${brightSide}. Đặt vợ đứng ở 1/3 ${brightLeft ? 'PHẢI' : 'TRÁI'} (ô Người Mẫu AR) để mặt bắt sáng.`, cameraAngle: 'Cầm máy ngang eo ngước 12° cho chân dài, zoom 1x.', photoPose: { legs:'1 chân bước nhẹ về trước kiễng gót.', hands:'1 tay vén tóc hoặc giơ nón nhẹ.', face:`Xoay vai 30°, hướng mặt về ${brightSide} cười nhẹ.` }, videoAction: 'Giây 1-2 bước vào điểm AR -> Giây 3-5 ngoái nhìn cười và vén tóc.', matchedModeId: 'ai_custom', arPose: shiftPoseX(basePts, placeX), voiceSummary: `Vợ đứng sang ${brightLeft ? 'bên phải' : 'bên trái'} vào hình mẫu AR, mặt quay về phía sáng.` };
+            return { spot: `Sáng đẹp từ ${brightSide}. Đặt vợ đứng ở 1/3 ${brightLeft ? 'PHẢI' : 'TRÁI'} (ô Người Mẫu AR) để mặt bắt sáng.`, cameraAngle: 'Cầm máy ngang eo ngước 12° cho chân dài, zoom 0,5x hoặc 1x.', photoPose: { legs:'1 chân bước nhẹ về trước kiễng gót.', hands:'1 tay vén tóc hoặc giơ nón nhẹ.', face:`Xoay vai 30°, hướng mặt về ${brightSide} cười nhẹ.` }, videoAction: 'Giây 1-2 bước vào điểm AR -> Giây 3-5 ngoái nhìn cười và vén tóc.', matchedModeId: 'ai_custom', arPose: shiftPoseX(basePts, placeX), voiceSummary: `Vợ đứng sang ${brightLeft ? 'bên phải' : 'bên trái'} vào hình mẫu AR, mặt quay về phía sáng.` };
         }
         return { spot: `Sáng đẹp từ ${brightSide}. Đặt bàn/mẫu ở góc 1/3 ${brightLeft ? 'PHẢI' : 'TRÁI'}.`, cameraAngle: 'Nghiêng máy 45° cho đồ ăn, ngang ngực cho người.', photoPose: { legs:'Ngồi nghiêng 30°.', hands:'1 tay cầm ly ngang vai.', face:'Nghiêng đầu 10° cười tự nhiên.' }, videoAction: 'Giây 1-2 khuấy ly -> Giây 3-5 ngước lên cười mời.', matchedModeId: 'cafe_sit', voiceSummary: `Đứng hoặc ngồi vào góc ${brightLeft ? 'phải' : 'trái'}, cầm ly ngang vai.` };
     }
@@ -1585,7 +1915,8 @@ Trả về JSON:
     window.applyActiveCameraPreviewStyle = function (mode) {
         const video = document.getElementById(mode === 'video' ? 'liveVideo' : 'aiPhotoVideo'); if (!video) return;
         const evFactor = camHardwareEvApplied ? 1.0 : Math.pow(2, camEvValue * 0.32), nightFactor = camNightMode ? 1.22 : 1.0;
-        video.style.filter = `brightness(${(evFactor*nightFactor).toFixed(2)}) contrast(${camHdrMode?1.06:1.0}) saturate(${camHdrMode?1.08:1.0})`;
+        const f = `brightness(${(evFactor*nightFactor).toFixed(2)}) contrast(${camHdrMode?1.06:1.0}) saturate(${camHdrMode?1.08:1.0})`;
+        video.style.filter = (evFactor === 1.0 && nightFactor === 1.0 && !camHdrMode) ? 'none' : f;
         const evLabel = `EV ${camEvValue >= 0 ? '+' : ''}${camEvValue.toFixed(1).replace('.', ',')}`;
         const vc = document.getElementById('videoEvCorner'), pc = document.getElementById('photoEvCorner'); if (vc) vc.innerText = evLabel; if (pc) pc.innerText = evLabel;
     };
@@ -1659,25 +1990,30 @@ Trả về JSON:
         requestGyroPermission(); ensurePoseModel(); window.applyActiveCameraPreviewStyle('video');
         clearInterval(videoAiLightTimer); cancelAnimationFrame(videoAiRafId);
         videoAiLightTimer = setInterval(() => {
-            if (!videoAiEnabled || (typeof isRecording !== 'undefined' && isRecording)) return; // Tạm nghỉ đo sáng khi đang quay
+            if (!videoAiEnabled || (typeof isRecording !== 'undefined' && isRecording)) return;
             const v = document.getElementById('liveVideo');
             if (v && v.readyState >= 2) document.getElementById('videoAiLightBadge').innerText = computeLightStatus(v);
-        }, 800);
+        }, 900);
+        let lastBadgeMs = 0;
         const loop = (now) => {
             if (document.getElementById('cameraModal').classList.contains('hidden')) return;
-            // Khi đang bấm ĐỎ quay video: Tạm dừng AI nhận diện xương để quay mượt 100%, chỉ giữ đo góc gyro!
             const recordingNow = (typeof isRecording !== 'undefined' && isRecording);
             if (videoAiEnabled) {
-                const angleOk = Math.abs(Math.round(aiGyroBeta) - videoTargetAngleNum) <= 12, ab = document.getElementById('videoAiAngleBadge');
-                ab.innerText = `📐 Góc: ${Math.round(aiGyroBeta)}° / ${videoTargetAngleNum}°`;
-                ab.className = angleOk ? 'px-3 py-1 rounded-full bg-emerald-500/80 text-slate-950 font-black backdrop-blur-md shadow' : 'px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow';
+                // Giảm tần suất cập nhật DOM khi đang quay để giữ khung hình mượt tuyệt đối
+                if (now - lastBadgeMs > (recordingNow ? 400 : 120)) {
+                    lastBadgeMs = now;
+                    const angleOk = Math.abs(Math.round(aiGyroBeta) - videoTargetAngleNum) <= 12, ab = document.getElementById('videoAiAngleBadge');
+                    ab.innerText = `📐 Góc: ${Math.round(aiGyroBeta)}° / ${videoTargetAngleNum}°`;
+                    ab.className = angleOk ? 'px-3 py-1 rounded-full bg-emerald-500/80 text-slate-950 font-black backdrop-blur-md shadow' : 'px-3 py-1 rounded-full bg-black/70 border border-sky-400/50 text-sky-200 font-black backdrop-blur-md shadow';
+                }
                 const v = document.getElementById('liveVideo'), c = document.getElementById('videoAiCanvas');
-                if (!recordingNow && c && v && v.readyState >= 2 && poseLandmarker && now - videoLastPoseTime > 170) {
+                if (!recordingNow && c && v && v.readyState >= 2 && poseLandmarker && now - videoLastPoseTime > 180) {
                     videoLastPoseTime = now; const rect = c.getBoundingClientRect();
                     if (c.width !== Math.round(rect.width) || c.height !== Math.round(rect.height)) { c.width = Math.max(1, Math.round(rect.width)); c.height = Math.max(1, Math.round(rect.height)); }
                     const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height);
                     try {
                         const res = poseLandmarker.detectForVideo(v, performance.now());
+                        const angleOk = Math.abs(Math.round(aiGyroBeta) - videoTargetAngleNum) <= 12;
                         if (res.landmarks && res.landmarks.length > 0) {
                             const nose = res.landmarks[0][0], cx = (typeof currentFacingMode !== 'undefined' && currentFacingMode === 'user') ? (1 - nose.x) : nose.x;
                             ctx.fillStyle = 'rgba(52,211,153,0.85)'; ctx.beginPath(); ctx.arc(cx*c.width, nose.y*c.height, 6, 0, Math.PI*2); ctx.fill();
@@ -1686,6 +2022,8 @@ Trả về JSON:
                             document.getElementById('videoAiTipText').innerText = msg;
                         } else { document.getElementById('videoAiTipText').innerText = angleOk ? '🔥 Góc máy chuẩn! Bấm quay thôi!' : `📐 Nghiêng máy về khoảng ${videoTargetAngleNum}°`; }
                     } catch (e) {}
+                } else if (recordingNow && c) {
+                    c.getContext('2d').clearRect(0, 0, c.width, c.height);
                 }
             }
             videoAiRafId = requestAnimationFrame(loop);
@@ -1710,23 +2048,40 @@ Trả về JSON:
         try {
             aiStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
             const video = document.getElementById('aiPhotoVideo'); video.srcObject = aiStream; window.applyActiveCameraPreviewStyle('photo'); await video.play();
-            const btn1x = document.querySelectorAll('.ai-zoom-btn')[1]; window.setAiZoom(1.0, btn1x);
+            // Mặc định 0.5 cho cả camera trước và sau khi vào Chụp Ảnh AI
+            window.setAiZoom(0.5, document.getElementById('pZoomBtn05'));
         } catch (err) { alert('Không thể mở camera. Vui lòng cấp quyền Camera.'); window.closeAiPhotoStudio(); }
     }
     window.switchAiCamera = async function () { aiFacing = aiFacing === 'environment' ? 'user' : 'environment'; await startAiCamera(aiFacing); };
     window.setAiZoom = function (z, btn) {
         aiZoom = z; aiHardwareZoom = false;
-        document.querySelectorAll('.ai-zoom-btn').forEach(b => b.className = 'ai-zoom-btn px-2.5 py-1 rounded-full font-black text-slate-200');
-        if (btn) btn.className = 'ai-zoom-btn px-2.5 py-1 rounded-full font-black bg-amber-400 text-slate-950';
+        document.querySelectorAll('.ai-zoom-btn').forEach(b => b.className = 'ai-zoom-btn px-2 py-1 rounded-full font-black text-slate-200');
+        if (btn) btn.className = 'ai-zoom-btn px-2 py-1 rounded-full font-black bg-amber-400 text-slate-950';
+
         const video = document.getElementById('aiPhotoVideo'), mirror = aiFacing === 'user' ? 'scaleX(-1) ' : '';
-        video.style.transform = `${mirror}scale(1.0)`;
+        video.classList.remove('object-contain', 'object-cover');
+
         if (aiStream) {
             const track = aiStream.getVideoTracks()[0];
             if (track) {
                 let caps = {}; try { caps = track.getCapabilities ? track.getCapabilities() : {}; } catch (e) {}
-                if (caps.zoom && z >= caps.zoom.min && z <= caps.zoom.max) { aiHardwareZoom = true; track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { aiHardwareZoom = false; }); }
-                else { video.style.transform = `${mirror}scale(${z > 1.0 ? z : 1.0})`; }
+                if (caps.zoom && z >= caps.zoom.min && z <= caps.zoom.max) {
+                    aiHardwareZoom = true;
+                    video.classList.add('object-cover');
+                    video.style.transform = `${mirror}scale(1.0)`;
+                    track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => { aiHardwareZoom = false; });
+                    return;
+                } else if (caps.zoom && z < caps.zoom.min) {
+                    track.applyConstraints({ advanced: [{ zoom: caps.zoom.min }] }).catch(() => {});
+                }
             }
+        }
+        if (z <= 0.5) {
+            video.classList.add('object-contain');
+            video.style.transform = `${mirror}scale(1.0)`;
+        } else {
+            video.classList.add('object-cover');
+            video.style.transform = `${mirror}scale(${z > 1.0 ? z : 1.0})`;
         }
     };
     function renderAiPosePresets() {
@@ -1747,7 +2102,7 @@ Trả về JSON:
     }
     window.cycleAiAspect = function () { aiAspectIdx = (aiAspectIdx + 1) % AI_ASPECTS.length; applyAiAspectUI(); };
     function applyAiAspectUI() { document.getElementById('aiAspectBtn').innerText = AI_ASPECTS[aiAspectIdx]; resizeAiCropFrame(); }
-    window.cycleAiTimer = function () { const seq = [0, 3, 5]; aiTimerSec = seq[(seq.indexOf(aiTimerSec) + 1) % seq.length]; document.getElementById('aiTimerBtn').innerText = `⏱️ ${aiTimerSec}s`; };
+    window.cycleAiTimer = function () { const seq = [0, 3, 5]; aiTimerSec = seq[(seq.indexOf(aiTimerSec) + 1) % seq.length]; document.getElementById('aiTimerBtn').innerText = `⏱️${aiTimerSec}s`; };
     window.toggleAiAutoSnap = function () { aiAutoSnap = !aiAutoSnap; const b = document.getElementById('aiAutoSnapBtn'); b.innerText = aiAutoSnap ? 'Tự chụp: BẬT' : 'Tự chụp: TẮT'; b.className = aiAutoSnap ? 'px-2.5 py-1 rounded-2xl bg-emerald-500 text-slate-950 border border-emerald-300 font-black' : 'px-2.5 py-1 rounded-2xl bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/50 font-black'; };
     window.toggleAiVoice = function () { aiVoiceOn = !aiVoiceOn; document.getElementById('aiVoiceBtn').innerText = aiVoiceOn ? '🔊' : '🔇'; };
     window.toggleAiGridAndLevel = function () { aiShowGrid = !aiShowGrid; document.getElementById('aiGridLines').style.display = aiShowGrid ? 'grid' : 'none'; document.getElementById('aiLeveler').style.display = aiShowGrid ? 'flex' : 'none'; };
@@ -1917,10 +2272,10 @@ Trả về JSON:
                 mctx.fillStyle = '#ffffff'; mctx.fillRect(halfW - 2, 0, 4, h); mctx.font = 'bold 28px sans-serif'; mctx.fillStyle = 'rgba(0,0,0,0.65)';
                 mctx.fillRect(20, 20, 140, 44); mctx.fillRect(halfW + 20, 20, 110, 44);
                 mctx.fillStyle = '#fbbf24'; mctx.fillText('TRƯỚC', 38, 52); mctx.fillText('SAU', halfW + 44, 52);
-                aiBeforeCanvas = null; updateBaUI(); capturedPoseUV = null; aiCapturedCanvas = merged; openAiPhotoEditor(); return;
+                aiBeforeCanvas = null; updateBaUI(); capturedPoseUV = null; aiCapturedCanvas = merged; openAiPhotoEditor(false); return;
             }
         }
-        aiCapturedCanvas = c; openAiPhotoEditor();
+        aiCapturedCanvas = c; openAiPhotoEditor(false);
     }
     </script>
 </body>
