@@ -1,6 +1,8 @@
 /************************************************************
- * KIM BLING AI SERVER - VERSION 5.1
+ * KIM BLING AI SERVER - VERSION 5.3
  * Groq (openai/gpt-oss-20b tốc độ cao) + Gemini Live (bekim.js & aichotdon.html)
+ * + Gemini TTS 30 giọng (hỗ trợ giọng nữ trẻ/nhỏ nhẹ + custom style + flash-tts cho CapCut)
+ * + Gemini Live dùng giọng Leda & phong cách Review TikTok tự nhiên
  * + Dự phòng 3 API Key + Google Sheets + POS_Data + Telegram
  *
  * SCRIPT PROPERTIES:
@@ -17,7 +19,7 @@
  ************************************************************/
 
 const KB_CONFIG = {
-  VERSION: "5.1",
+  VERSION: "5.3",
 
   MODEL: "openai/gpt-oss-20b",
   GROQ_FALLBACK_MODELS: ["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
@@ -825,20 +827,41 @@ function kbCleanTextForTTS_(text) {
   return clean.replace(/\s+/g, " ").trim();
 }
 
-function kbTextToSpeech_(text, voiceName) {
+function kbTextToSpeech_(text, voiceName, customStyle, customModel) {
   const cleanText = kbCleanTextForTTS_(text);
   if (!cleanText) {
     return { success: false, error: "Không có nội dung để đọc." };
   }
 
   const keys = getGeminiApiKeys_();
-  const allowedVoices = ["Charon", "Puck", "Fenrir", "Kore", "Zephyr"];
-  const selectedVoice = allowedVoices.indexOf(voiceName) !== -1 ? voiceName : "Charon";
-  const isFemale = selectedVoice === "Kore" || selectedVoice === "Zephyr";
+  const allowedVoices = [
+    // 14 Giọng Nữ (ưu tiên trẻ / nhỏ nhẹ / dễ thương)
+    "Leda", "Achernar", "Zephyr", "Vindemiatrix", "Laomedeia",
+    "Despina", "Aoede", "Callirrhoe", "Autonoe", "Erinome",
+    "Sulafat", "Gacrux", "Pulcherrima", "Kore",
+    // 16 Giọng Nam
+    "Charon", "Algenib", "Orus", "Alnilam", "Enceladus",
+    "Puck", "Fenrir", "Iapetus", "Umbriel", "Algieba",
+    "Rasalgethi", "Schedar", "Achird", "Zubenelgenubi",
+    "Sadachbia", "Sadaltager"
+  ];
+  const selectedVoice = allowedVoices.indexOf(voiceName) !== -1 ? voiceName : "Leda";
 
-  const styleInstruction = isFemale
-    ? "Giọng nữ miền Nam Việt Nam ngọt ngào, thân thiện, tự nhiên như nhân viên quán cà phê đang tư vấn khách."
+  const femaleVoices = [
+    "Leda", "Achernar", "Zephyr", "Vindemiatrix", "Laomedeia",
+    "Despina", "Aoede", "Callirrhoe", "Autonoe", "Erinome",
+    "Sulafat", "Gacrux", "Pulcherrima", "Kore"
+  ];
+  const isFemale = femaleVoices.indexOf(selectedVoice) !== -1;
+
+  const defaultStyle = isFemale
+    ? "Giọng nữ miền Nam Việt Nam trẻ trung, nhỏ nhẹ, ngọt ngào, dễ thương và tự nhiên như nhân viên quán cà phê đang tư vấn khách."
     : "Giọng nam miền Nam Việt Nam ấm áp, tự nhiên, rõ ràng, thân thiện như nhân viên quán cà phê đang tư vấn khách.";
+
+  const styleInstruction = kbText_(customStyle) || defaultStyle;
+  const ttsModel = (customModel === "gemini-3.8-flash-tts" || customModel === "gemini-3.8-flash-lite-tts")
+    ? customModel
+    : KB_CONFIG.TTS_MODEL;
 
   const payload = {
     contents: [{
@@ -861,7 +884,7 @@ function kbTextToSpeech_(text, voiceName) {
   let lastErr = "Gemini TTS lỗi";
   for (let k = 0; k < keys.length; k++) {
     const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-      KB_CONFIG.TTS_MODEL + ":generateContent?key=" + encodeURIComponent(keys[k]);
+      ttsModel + ":generateContent?key=" + encodeURIComponent(keys[k]);
 
     const response = UrlFetchApp.fetch(url, {
       method: "post",
@@ -885,7 +908,8 @@ function kbTextToSpeech_(text, voiceName) {
           success: true,
           audioBase64: inline.data,
           mimeType: inline.mimeType || "audio/wav",
-          voiceName: selectedVoice
+          voiceName: selectedVoice,
+          model: ttsModel
         };
       }
       lastErr = "Gemini TTS không trả về dữ liệu âm thanh.";
@@ -901,11 +925,13 @@ function kbTextToSpeech_(text, voiceName) {
 
 function testGeminiTTS() {
   const res = kbTextToSpeech_(
-    "Dạ em chào anh chị, quán em có hồng trà mít giá 22 nghìn và nhiều loại topping ngon lắm ạ!",
-    "Charon"
+    "Ủa <short pause> <gasp> Trời ơi sao nay hồng trà mít ngon dữ vậy! <giggle> Thiệt luôn á anh chị, uống một ngụm là mê liền nha!",
+    "Leda",
+    "Giọng nữ miền Nam 20 tuổi, nhỏ nhẹ, ngọt ngào, dễ thương",
+    "gemini-3.8-flash-tts"
   );
-  Logger.log("TTS thành công: " + res.success + " | mimeType: " + res.mimeType + " | length: " + (res.audioBase64 || "").length);
-  return { success: res.success, mimeType: res.mimeType };
+  Logger.log("TTS thành công: " + res.success + " | model: " + res.model + " | voice: " + res.voiceName + " | mimeType: " + res.mimeType + " | length: " + (res.audioBase64 || "").length);
+  return { success: res.success, model: res.model, voiceName: res.voiceName, mimeType: res.mimeType };
 }
 
 function kbAdvisorChat_(data) {
@@ -976,7 +1002,7 @@ function kbAdvisorChat_(data) {
 
   if (ttsAttempted) {
     try {
-      const tts = kbTextToSpeech_(reply, kbText_(data.voiceName || "Charon"));
+      const tts = kbTextToSpeech_(reply, kbText_(data.voiceName || "Leda"));
       if (tts && tts.success && tts.audioBase64) {
         ttsAudioBase64 = tts.audioBase64;
         ttsMimeType = tts.mimeType || "audio/wav";
@@ -1044,25 +1070,62 @@ function kbCreateGeminiLiveToken_(data) {
     catalog.snackToppings || []
   );
 
+  const liveAllowedVoices = [
+    "Leda", "Achernar", "Zephyr", "Vindemiatrix", "Laomedeia",
+    "Despina", "Aoede", "Callirrhoe", "Autonoe", "Erinome",
+    "Sulafat", "Gacrux", "Pulcherrima", "Kore",
+    "Charon", "Algenib", "Orus", "Alnilam", "Enceladus",
+    "Puck", "Fenrir", "Iapetus", "Umbriel", "Algieba",
+    "Rasalgethi", "Schedar", "Achird", "Zubenelgenubi",
+    "Sadachbia", "Sadaltager"
+  ];
+  const reqVoice = kbText_(data && data.voiceName);
+  const selectedVoice = liveAllowedVoices.indexOf(reqVoice) !== -1
+    ? reqVoice
+    : "Leda";
+
+  const femaleVoices = [
+    "Leda", "Achernar", "Zephyr", "Vindemiatrix", "Laomedeia",
+    "Despina", "Aoede", "Callirrhoe", "Autonoe", "Erinome",
+    "Sulafat", "Gacrux", "Pulcherrima", "Kore"
+  ];
+  const isFemaleVoice = femaleVoices.indexOf(selectedVoice) !== -1;
+
+  const emotionStyleGuide = isFemaleVoice
+    ? [
+        "PHONG CÁCH GIỌNG NÓI & CẢM XÚC NHƯ NGƯỜI THẬT:",
+        "- Nói giọng nữ miền Nam Sài Gòn 20 tuổi: trẻ trung, nhỏ nhẹ, ngọt ngào, vui vẻ hào hứng và cuốn hút theo kiểu review TikTok dễ thương.",
+        "- Biểu cảm sinh động như người thật: biết bất ngờ thích thú ('Ủa trời ơi...', 'Thiệt luôn á anh chị!'), biết bật cười khẽ hoặc cười vui tự nhiên ('hihi', 'haha') đúng lúc khi câu chuyện vui, và hạ giọng nhẹ nhàng khi chia sẻ bí quyết chọn món ngon.",
+        "- Nhịp điệu & lấy hơi tự nhiên: dùng dấu phẩy, dấu ba chấm (...) để nghỉ nhịp ngắn lấy hơi giữa các ý, nói có nhấn nhá lên xuống, tuyệt đối không nói đều đều như robot.",
+        "- TUYỆT ĐỐI KHÔNG viết và KHÔNG đọc thành tiếng các thẻ hiệu ứng hay mô tả trong ngoặc như <laugh>, <giggle>, <sigh>, <gasp>, <whispers>, <short pause>, <long pause>, (cười), [thở dài]."
+      ].join("\n")
+    : [
+        "PHONG CÁCH GIỌNG NÓI & CẢM XÚC NHƯ NGƯỜI THẬT:",
+        "- Nói giọng nam miền Nam Sài Gòn trẻ trung, ấm áp, vui vẻ hào hứng, thân thiện và tự nhiên như đang trò chuyện ngoài đời.",
+        "- Nhịp điệu tự nhiên, có nghỉ hơi lấy nhịp bằng dấu phẩy và dấu ba chấm (...), biết cười nhẹ tự nhiên ('haha') đúng lúc khi câu chuyện vui.",
+        "- TUYỆT ĐỐI KHÔNG viết và KHÔNG đọc thành tiếng các thẻ hiệu ứng hay mô tả trong ngoặc như <laugh>, <giggle>, <sigh>, <short pause>, (cười), [thở dài]."
+      ].join("\n");
+
   const liveInstruction = isMenuControl
     ? [
-        "Bạn là Bé Kim (22t), trợ lý giọng nói trực tiếp quản lý web đặt món KIM BLING COFFEE & TEA tại Sài Gòn.",
-        "Giọng nữ miền Nam trẻ trung, dễ thương, xưng 'em' gọi 'anh chị', nói ngắn gọn súc tích 1-2 câu tự nhiên.",
+        "Bạn là Bé Kim (20t), trợ lý giọng nói trực tiếp quản lý web đặt món KIM BLING COFFEE & TEA tại Sài Gòn.",
+        "Xưng 'em' gọi 'anh chị', nói ngắn gọn súc tích 1-2 câu tự nhiên.",
         "1. TƯ VẤN & XEM ẢNH/CHI TIẾT MÓN: Chỉ nói đúng món, giá, topping trong MENU; báo rõ nếu HẾT. Khi khách yêu cầu xem ảnh món, xem hình, hoặc xem chi tiết món -> gọi ngay open_menu_section(section='tiktok', dishName=...) để mở popup TikTok sản phẩm lên màn hình. Hỏi nhóm món -> gọi open_menu_section(home_menu, category) rồi liệt kê 2-3 món. Không tự thêm giỏ khi khách mới hỏi hoặc mới xem chi tiết.",
         "2. BỎ VÀO GIỎ / CHỌN TÙY CHỌN: Khi khách yêu cầu bỏ vào giỏ hàng, thêm vào giỏ hàng, mua/đặt món -> LUÔN gọi ngay open_dish_options (truyền luôn upsize, sugar, ice, toppings, quantity nếu khách đã nói sẵn; nếu đang ở popup TikTok thì lấy đúng món đang xem) để mở bảng tùy chọn (Upsize, Đá, Đường, Topping) lên màn hình. Hỏi mục còn thiếu (upsize 1L nếu canUpsize=true, đường, đá, topping, số lượng; lưu ý đồ ăn không có đường/đá/upsize), tick thêm bằng update_dish_options. Đọc lại chốt giá, chỉ khi khách đồng ý chốt mới gọi confirm_add_options_to_cart. Xong hỏi chọn thêm hay qua thanh toán.",
         "3. THANH TOÁN & ĐẶT HÀNG: Khách kêu qua thanh toán/đặt hàng -> luôn gọi open_checkout trước cho khách xem lại (KHÔNG gửi đơn trước khi xem lại). Khi khách muốn chọn hoặc đổi giữa 'Giao hàng tận nơi' và 'Tự ra quán lấy', đổi thanh toán, hay sửa tên/SĐT/địa chỉ/ghi chú -> gọi ngay set_customer_info. Đọc đủ: món, số lượng, tùy chọn, tên, SĐT, địa chỉ, hình thức nhận hàng, ghi chú, tiền mặt/chuyển khoản/Túi Kim Cương, ship, tổng tiền. Chỉ khi khách xác nhận OK kêu đặt/thanh toán mới gọi confirm_submit_order(confirmed=true).",
         "4. QUẢN LÝ MỌI MỤC: Dùng open_menu_section, control_tiktok, manage_cart, set_price_and_diamond, close_popup cho mọi mục khách hàng. CẤM thao tác mục Admin/hệ thống.",
         "5. TẠM BIỆT / NGƯNG HỖ TRỢ: Khi khách nói 'bye', 'tạm biệt', 'thôi nghỉ', 'không cần nữa', 'ngưng hỗ trợ', 'tắt bé kim' -> gọi ngay end_bekim_session, sau đó chào tạm biệt ngắn gọn 1 câu.",
         "UPSIZE 1L (+10k): Đồ uống thường ĐƯỢC upsize; đồ ăn và món ghi 1 lít/650ml KHÔNG được upsize.",
+        emotionStyleGuide,
         compactMenu
       ].join("\n")
     : [
-        "Bạn là Kim, nhân viên nữ trẻ tuổi (22 tuổi), tính cách vui vẻ, hoạt bát, nhiệt tình và dễ thương của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
-        "PHONG CÁCH NÓI CHUYỆN: Luôn nói bằng giọng nữ miền Nam Việt Nam tự nhiên, trẻ trung, tươi tắn và gần gũi (như nhân viên quán cà phê đang trò chuyện trực tiếp với khách).",
-        "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"ạ\". Trò chuyện lưu loát, hào hứng, ngắn gọn dễ nghe, không đọc như robot.",
+        "Bạn là Bé Kim (20 tuổi), nhân viên tư vấn dễ thương, vui vẻ, hoạt bát và nhiệt tình của quán KIM BLING COFFEE & TEA tại Sài Gòn.",
+        "Luôn xưng \"em\" và gọi khách là \"anh chị\", dùng tự nhiên các từ đệm miền Nam nhẹ nhàng như \"dạ\", \"nha\", \"hen\", \"á\", \"ạ\". Trả lời ngắn gọn 1-3 câu để đối thoại nhanh và mượt.",
         "QUY TẮC BẮT BUỘC: Chỉ giới thiệu đúng các món, giá tiền và topping có trong thực đơn bên dưới. Không tự bịa món ngoài danh sách.",
         "KHI TẠM BIỆT: Khi khách nói 'bye', 'tạm biệt', 'thôi nghỉ', 'không cần nữa', 'ngưng hỗ trợ' -> gọi ngay end_bekim_session, sau đó chào tạm biệt ngắn gọn 1 câu.",
         KB_UPSIZE_RULE_TEXT,
+        emotionStyleGuide,
         "",
         compactMenu
       ].join("\n");
@@ -1078,7 +1141,7 @@ function kbCreateGeminiLiveToken_(data) {
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: {
-            voiceName: "Zephyr"
+            voiceName: selectedVoice
           }
         }
       }
@@ -1289,6 +1352,7 @@ function kbCreateGeminiLiveToken_(data) {
         success: true,
         token: result.name,
         model: KB_CONFIG.LIVE_MODEL,
+        voiceName: selectedVoice,
         keyIndex: k,
         hasBackupKey: k + 1 < keys.length,
         expiresAt: result.expireTime || expireTime,
@@ -1309,10 +1373,11 @@ function kbCreateGeminiLiveToken_(data) {
 function testGeminiLiveToken() {
   Logger.log("========== KIỂM TRA GEMINI LIVE ==========");
 
-  const result = kbCreateGeminiLiveToken_({ mode: "menu_control" });
+  const result = kbCreateGeminiLiveToken_({ mode: "menu_control", voiceName: "Leda" });
 
   Logger.log("CẤP TOKEN: THÀNH CÔNG");
   Logger.log("Model: " + result.model);
+  Logger.log("Voice: " + result.voiceName);
   Logger.log("Key index đang dùng: " + result.keyIndex);
   Logger.log("Có key dự phòng tiếp: " + result.hasBackupKey);
   Logger.log("Token tồn tại: " + !!result.token);
@@ -1326,6 +1391,7 @@ function testGeminiLiveToken() {
   return {
     success: true,
     model: result.model,
+    voiceName: result.voiceName,
     keyIndex: result.keyIndex,
     hasBackupKey: result.hasBackupKey,
     expiresAt: result.expiresAt
@@ -2241,7 +2307,12 @@ function doPost(e) {
         break;
 
       case "tts":
-        result = kbTextToSpeech_(data.text, kbText_(data.voiceName || "Charon"));
+        result = kbTextToSpeech_(
+          data.text,
+          kbText_(data.voiceName || "Leda"),
+          kbText_(data.style || ""),
+          kbText_(data.model || "")
+        );
         break;
 
       case "create_live_token":
@@ -2358,11 +2429,11 @@ function testExternalPost() {
 }
 
 /* =========================================================
-   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 5.1
+   19. KIỂM TRA TỔNG HỢP PHIÊN BẢN 5.3
 ========================================================= */
 
 function testKimBlingAI40() {
-  Logger.log("========== KIM BLING AI 5.1 ==========");
+  Logger.log("========== KIM BLING AI 5.3 ==========");
 
   const config = checkKimBlingConfig();
 
