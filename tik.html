@@ -2131,6 +2131,8 @@ function handleUploadedVideoFile(input) {
 
         function setupPreviewVideoEvents() {
             const pv = document.getElementById('previewVideo'); if (!pv) return;
+            pv.addEventListener('play', () => { startTextAnimLoop(); });
+            pv.addEventListener('pause', () => { cancelAnimationFrame(textOverlayAnimRaf); window.redrawTextOverlayPreview(); });
             pv.addEventListener('loadeddata', () => {
                 const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.add('hidden');
                 const c = window.getActiveVideoClip();
@@ -2144,7 +2146,7 @@ function handleUploadedVideoFile(input) {
                 if (pv.currentTime >= clip.trimEnd - 0.18 && pv.currentTime < clip.trimEnd && !pv.paused) captureCurrentPreviewFrameTo(previewLastFrameCanvas);
                 if (pv.currentTime >= clip.trimEnd - 0.04 && !pv.paused) { advanceToNextTimelineClipOrStop(); return; }
                 updatePlaybackProgressUI();
-                if (pv.paused) window.redrawTextOverlayPreview();
+                window.redrawTextOverlayPreview();
             });
             pv.addEventListener('seeked', () => {
                 const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.add('hidden');
@@ -2548,16 +2550,16 @@ async function probeMediaFileDurationFast(file, url) {
                 if (c.type === 'image') {
                     if (imagePlayElapsed >= c.duration - 0.05) imagePlayElapsed = 0;
                     isTimelinePlaying = true; btn.innerText = '⏸️';
-                    startPreviewAudioTracks(getGlobalTimelineTime()); startUnifiedPreviewLoop();
+                    startPreviewAudioTracks(getGlobalTimelineTime()); startUnifiedPreviewLoop(); startTextAnimLoop();
                 } else if (pv) {
                     if (pv.ended || pv.currentTime < c.trimStart || pv.currentTime >= c.trimEnd - 0.12) { try { pv.currentTime = c.trimStart; } catch (e) {} }
                     pv.playbackRate = c.speed || 1.0;
                     const gT = getGlobalTimelineTime();
-                    try { await pv.play(); isTimelinePlaying = true; btn.innerText = '⏸️'; startPreviewAudioTracks(gT); startUnifiedPreviewLoop(); }
-                    catch (err) { try { pv.currentTime = c.trimStart; await pv.play(); isTimelinePlaying = true; btn.innerText = '⏸️'; startPreviewAudioTracks(getGlobalTimelineTime()); startUnifiedPreviewLoop(); } catch (e2) {} }
+                    try { await pv.play(); isTimelinePlaying = true; btn.innerText = '⏸️'; startPreviewAudioTracks(gT); startUnifiedPreviewLoop(); startTextAnimLoop(); }
+                    catch (err) { try { pv.currentTime = c.trimStart; await pv.play(); isTimelinePlaying = true; btn.innerText = '⏸️'; startPreviewAudioTracks(getGlobalTimelineTime()); startUnifiedPreviewLoop(); startTextAnimLoop(); } catch (e2) {} }
                 }
             } else {
-                isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf);
+                isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf); cancelAnimationFrame(textOverlayAnimRaf);
                 if (pv && !pv.paused) pv.pause();
                 stopPreviewAudioTracks(); btn.innerText = '▶️'; window.redrawTextOverlayPreview();
             }
@@ -2907,8 +2909,30 @@ async function probeMediaFileDurationFast(file, url) {
                 }
             }
         }
+
+
+        let textOverlayAnimRaf = 0;
+        function startTextAnimLoop() {
+            cancelAnimationFrame(textOverlayAnimRaf);
+            const loop = () => {
+                const modal = document.getElementById('editorModal');
+                const pv = document.getElementById('previewVideo');
+                const playing = (typeof isTimelinePlaying !== 'undefined' && isTimelinePlaying) || (pv && !pv.paused && !pv.ended);
+                if (!modal || modal.classList.contains('hidden') || !playing) {
+                    window.redrawTextOverlayPreview();
+                    return;
+                }
+                window.redrawTextOverlayPreview();
+                textOverlayAnimRaf = requestAnimationFrame(loop);
+            };
+            textOverlayAnimRaf = requestAnimationFrame(loop);
+        }
+
         window.redrawTextOverlayPreview = function () {
-            const txtCan = document.getElementById('videoTextOverlayCanvas'); if (!txtCan) return;
+            const txtCan = document.getElementById('videoTextOverlayCanvas'), pv = document.getElementById('previewVideo');
+            if (!txtCan) return;
+            if (!txtCan.width || !txtCan.height) syncVideoCanvasStageSize();
+            txtCan.style.zIndex = '20';
             const ctx = txtCan.getContext('2d'); ctx.clearRect(0, 0, txtCan.width, txtCan.height);
             if (!videoTextOverlays.length) return;
             renderTextOverlaysTo2dCtx(ctx, txtCan.width, txtCan.height, getGlobalTimelineTime(), getTotalTimelineDuration(), true);
