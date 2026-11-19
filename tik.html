@@ -286,7 +286,7 @@
                 <button onclick="closeUploadStudioModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
             </div>
             <input id="uploadPhotoFileInput" type="file" accept="image/*" class="hidden" onchange="handleUploadedPhotoFile(this)">
-            <input id="uploadVideoFileInput" type="file" accept="video/*" class="hidden" onchange="handleUploadedVideoFile(this)">
+         <input id="uploadVideoFileInput" type="file" accept="video/*,image/*" multiple class="hidden" onchange="handleUploadedVideoFile(this)">
             <div class="grid grid-cols-1 gap-3">
                 <button onclick="document.getElementById('uploadPhotoFileInput').click()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-rose-500/25 to-amber-500/25 border-2 border-rose-400/70 flex items-center space-x-4 text-left active:scale-98">
                     <span class="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl shrink-0">🖼️</span>
@@ -411,7 +411,7 @@
         <div id="previewVideoWrapper" class="relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
             <div id="videoCanvasStage" class="relative flex items-center justify-center overflow-hidden rounded-xl bg-black">
                 <video id="previewVideo" playsinline preload="auto" class="w-full h-full object-contain"></video>
-                <canvas id="videoPreviewCanvas" class="hidden absolute inset-0 w-full h-full block rounded-xl pointer-events-none"></canvas>
+             <canvas id="videoPreviewCanvas" class="hidden absolute inset-0 w-full h-full block rounded-xl pointer-events-none z-[5]"></canvas>
                 <canvas id="videoTextOverlayCanvas" class="absolute inset-0 w-full h-full z-10 rounded-xl touch-none"></canvas>
                 <div id="videoLoadSpinner" class="hidden absolute inset-0 z-10 bg-black/60 flex items-center justify-center pointer-events-none">
                     <span class="px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-sky-400/50 text-sky-200 font-bold" style="font-size: 13px !important;">⏳ Đang nạp khung hình...</span>
@@ -482,7 +482,8 @@
                         <span id="trimDurationText" class="text-emerald-300 font-black">Giữ: --s</span><span class="text-slate-500">•</span>
                         <span id="trimEndValText" class="text-rose-300">--s</span>
                     </div>
-                    <div class="flex items-center space-x-1 shrink-0">
+               <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="commitActiveClipTrimBounds()" id="btnCommitTrimBounds" class="hidden px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black" style="font-size: 11px !important;">✂️ Cắt bỏ thừa</button>
                         <button onclick="splitActiveVideoClipAtPlayhead()" class="px-2 py-0.5 rounded-lg bg-sky-500/25 border border-sky-400 text-sky-200 font-black" style="font-size: 11px !important;">✂️ Tách</button>
                         <button onclick="deleteActiveVideoClip()" id="btnDeleteVideoClip" class="hidden px-2 py-0.5 rounded-lg bg-rose-950 border border-rose-500/40 text-rose-300 font-black" style="font-size: 11px !important;">🗑️</button>
                     </div>
@@ -1207,6 +1208,9 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
             window.addEventListener('resize', () => { syncVideoCanvasStageSize(); window.redrawTextOverlayPreview(); });
         }
 
+
+
+
         // ====== API KEY ======
         function openMainKeyModal() { updateMainKeyUI(); document.getElementById('mainGeminiKeyInput').value = localStorage.getItem(GEMINI_KEY_KEY) || ''; document.getElementById('mainKeyModal').classList.remove('hidden'); }
         function closeMainKeyModal() { document.getElementById('mainKeyModal').classList.add('hidden'); }
@@ -1912,7 +1916,14 @@ ${productInfo}
             };
             img.onerror = () => { URL.revokeObjectURL(url); alert('Không thể đọc file ảnh này.'); }; img.src = url;
         }
-        function handleUploadedVideoFile(input) {
+        
+
+
+
+
+
+
+function handleUploadedVideoFile(input) {
             const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
             closeUploadStudioModal(); activeScriptScene = null;
             if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
@@ -2096,11 +2107,18 @@ ${productInfo}
         function startVideoScrub() { isScrubbingVideo = true; stopPreviewAudioTracks(); }
         function endVideoScrub() { isScrubbingVideo = false; }
 
+
+
+
+
+
+
         function updatePreviewCanvasVisibility() {
-            const c = window.getActiveVideoClip(), glCan = document.getElementById('videoPreviewCanvas');
+            const c = window.getActiveVideoClip(), glCan = document.getElementById('videoPreviewCanvas'), pv = document.getElementById('previewVideo');
             if (!glCan || !c) return;
             const need2D = (c.type === 'image') || window.hasClipActiveEffects(c) || window.isTimelineInActiveTransition();
             glCan.classList.toggle('hidden', !need2D);
+            if (pv) pv.classList.toggle('hidden', need2D);
             if (need2D && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
         }
 
@@ -2123,12 +2141,8 @@ ${productInfo}
             pv.addEventListener('timeupdate', () => {
                 if (isScrubbingVideo || isDraggingTrim) return;
                 const clip = window.getActiveVideoClip(); if (!clip || clip.type === 'image') return;
-                if (pv.currentTime >= clip.trimEnd - 0.18 && pv.currentTime < clip.trimEnd && !pv.paused) {
-                    captureCurrentPreviewFrameTo(previewLastFrameCanvas);
-                }
-                if (pv.currentTime >= clip.trimEnd - 0.04 && !pv.paused) {
-                    advanceToNextTimelineClipOrStop(); return;
-                }
+                if (pv.currentTime >= clip.trimEnd - 0.18 && pv.currentTime < clip.trimEnd && !pv.paused) captureCurrentPreviewFrameTo(previewLastFrameCanvas);
+                if (pv.currentTime >= clip.trimEnd - 0.04 && !pv.paused) { advanceToNextTimelineClipOrStop(); return; }
                 updatePlaybackProgressUI();
                 if (pv.paused) window.redrawTextOverlayPreview();
             });
@@ -2139,8 +2153,7 @@ ${productInfo}
                 window.redrawTextOverlayPreview(); updateAudioTimelinePlayhead(getGlobalTimelineTime());
             });
             pv.addEventListener('ended', () => {
-                const clip = window.getActiveVideoClip();
-                if (!clip || clip.type === 'image') return;
+                const clip = window.getActiveVideoClip(); if (!clip || clip.type === 'image') return;
                 advanceToNextTimelineClipOrStop();
             });
         }
@@ -2148,9 +2161,7 @@ ${productInfo}
         async function advanceToNextTimelineClipOrStop() {
             const pv = document.getElementById('previewVideo');
             captureCurrentPreviewFrameTo(previewPrevEndCanvas);
-            if (previewLastFrameCanvas.width && previewPrevEndCanvas.width) {
-                previewPrevEndCanvas.getContext('2d').drawImage(previewLastFrameCanvas, 0, 0, previewPrevEndCanvas.width, previewPrevEndCanvas.height);
-            }
+            if (previewLastFrameCanvas.width && previewPrevEndCanvas.width) previewPrevEndCanvas.getContext('2d').drawImage(previewLastFrameCanvas, 0, 0, previewPrevEndCanvas.width, previewPrevEndCanvas.height);
             if (window.activeClipIdx + 1 < window.videoClips.length) {
                 const trans = window.videoTransitions[window.activeClipIdx] || { type: 'none', dur: 0.4 };
                 activeTransitionPreview = trans.type !== 'none' ? { clipIdx: window.activeClipIdx + 1, type: trans.type, dur: trans.dur } : null;
@@ -2171,25 +2182,25 @@ ${productInfo}
                 if (!isTimelinePlaying || document.getElementById('editorModal').classList.contains('hidden')) return;
                 const dt = Math.min(0.1, Math.max(0, (now - unifiedLastTickMs) / 1000));
                 unifiedLastTickMs = now;
-                const c = window.getActiveVideoClip();
+                const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'), glCan = document.getElementById('videoPreviewCanvas');
                 if (!c) return;
                 if (c.type === 'image') {
                     imagePlayElapsed += dt;
-                    if (imagePlayElapsed >= c.duration - 0.12 && imagePlayElapsed < c.duration) {
-                        captureCurrentPreviewFrameTo(previewLastFrameCanvas);
-                    }
+                    if (imagePlayElapsed >= c.duration - 0.12 && imagePlayElapsed < c.duration) captureCurrentPreviewFrameTo(previewLastFrameCanvas);
+                    if (glCan && glCan.classList.contains('hidden')) glCan.classList.remove('hidden');
+                    if (pv && !pv.classList.contains('hidden')) pv.classList.add('hidden');
                     if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
                     updatePlaybackProgressUI();
                     if (imagePlayElapsed >= c.duration) { advanceToNextTimelineClipOrStop(); return; }
                 } else {
                     const inTrans = window.isTimelineInActiveTransition(), hasFx = window.hasClipActiveEffects(c);
                     if (inTrans || hasFx) {
-                        const glCan = document.getElementById('videoPreviewCanvas');
                         if (glCan && glCan.classList.contains('hidden')) glCan.classList.remove('hidden');
+                        if (pv && !pv.classList.contains('hidden')) pv.classList.add('hidden');
                         if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
                     } else {
-                        const glCan = document.getElementById('videoPreviewCanvas');
                         if (glCan && !glCan.classList.contains('hidden')) glCan.classList.add('hidden');
+                        if (pv && pv.classList.contains('hidden')) pv.classList.remove('hidden');
                         if (typeof window.redrawTextOverlayPreview === 'function') window.redrawTextOverlayPreview();
                     }
                 }
@@ -2203,13 +2214,10 @@ ${productInfo}
             let html = '';
             window.videoClips.forEach((c, idx) => {
                 const active = idx === window.activeClipIdx, durTxt = getClipPlayDuration(c).toFixed(1) + 's';
-                const spdTxt = (c.type !== 'image' && c.speed !== 1.0) ? ` • ${c.speed}x` : '';
-                const icon = c.type === 'image' ? '🖼️' : '🎞️';
+                const spdTxt = (c.type !== 'image' && c.speed !== 1.0) ? ` • ${c.speed}x` : '', icon = c.type === 'image' ? '🖼️' : '🎞️';
                 html += `<button onclick="selectVideoClip(${idx}, false)" class="shrink-0 px-2.5 py-1.5 rounded-xl border-2 font-black flex items-center space-x-1 ${active ? 'bg-rose-500/30 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}" style="font-size: 12px !important;"><span>${icon} ${idx + 1} (${durTxt}${spdTxt})</span></button>`;
                 if (idx < window.videoClips.length - 1) {
-                    const tr = window.videoTransitions[idx] || { type: 'none', dur: 0.4 };
-                    const preset = TRANSITION_PRESETS.find(p => p.id === tr.type) || TRANSITION_PRESETS[0];
-                    const hasTr = tr.type !== 'none';
+                    const tr = window.videoTransitions[idx] || { type: 'none', dur: 0.4 }, preset = TRANSITION_PRESETS.find(p => p.id === tr.type) || TRANSITION_PRESETS[0], hasTr = tr.type !== 'none';
                     html += `<button onclick="openClipTransitionPopup(${idx})" class="shrink-0 w-7 h-7 rounded-full border font-black flex items-center justify-center ${hasTr ? 'bg-indigo-500 text-white border-indigo-300' : 'bg-slate-800 text-slate-400 border-slate-600'}" style="font-size: 12px !important;" title="Chuyển cảnh">${preset.icon}</button>`;
                 }
             });
@@ -2227,8 +2235,7 @@ ${productInfo}
             if (target < 0 || target >= window.videoClips.length) return;
             closeClipTransitionPopup();
             const tmp = window.videoClips[idx]; window.videoClips[idx] = window.videoClips[target]; window.videoClips[target] = tmp;
-            selectVideoClip(target, false, false);
-            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+            selectVideoClip(target, false, false); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
         function duplicateActiveClip() {
@@ -2237,34 +2244,27 @@ ${productInfo}
             const clone = { ...c, id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), adj: { ...c.adj } };
             window.videoClips.splice(window.activeClipIdx + 1, 0, clone);
             window.videoTransitions.splice(window.activeClipIdx, 0, { type: 'none', dur: 0.4 });
-            selectVideoClip(window.activeClipIdx + 1, false, false);
-            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+            selectVideoClip(window.activeClipIdx + 1, false, false); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
         function renderClipSpeedPills() {
             const c = window.getActiveVideoClip(), row = document.getElementById('clipSpeedPillsRow'); if (!c || !row || c.type === 'image') return;
-            row.innerHTML = `<span class="text-slate-400 font-bold shrink-0 mr-0.5" style="font-size: 11px !important;">⚡</span>` + CLIP_SPEEDS.map(sp => {
-                const active = Math.abs((c.speed || 1.0) - sp) < 0.01;
-                return `<button onclick="setActiveClipSpeed(${sp})" class="shrink-0 px-2 py-0.5 rounded-lg font-black ${active ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}" style="font-size: 11px !important;">${sp}x</button>`;
-            }).join('');
+            row.innerHTML = `<span class="text-slate-400 font-bold shrink-0 mr-0.5" style="font-size: 11px !important;">⚡</span>` + CLIP_SPEEDS.map(sp => `<button onclick="setActiveClipSpeed(${sp})" class="shrink-0 px-2 py-0.5 rounded-lg font-black ${Math.abs((c.speed || 1.0) - sp) < 0.01 ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}" style="font-size: 11px !important;">${sp}x</button>`).join('');
         }
 
         function setActiveClipSpeed(spd) {
             const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c || c.type === 'image') return;
             c.speed = spd; if (pv) pv.playbackRate = spd;
-            renderVideoClipsStrip(); renderClipSpeedPills(); updateTrimVisuals(c.duration); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+            renderVideoClipsStrip(); renderClipSpeedPills(); updateTrimVisuals(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
         function onImageClipDurationInput(val) {
             const c = window.getActiveVideoClip(); if (!c || c.type !== 'image') return;
-            c.duration = Number(val); c.trimEnd = c.duration;
+            c.duration = Number(val); c.trimEnd = c.duration; c.boundEnd = c.duration;
             document.getElementById('imageDurValText').innerText = `${c.duration.toFixed(1)}s`;
             renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
-        function setImageClipDurationPreset(sec) {
-            const sEl = document.getElementById('imageDurSlider'); if (sEl) sEl.value = sec;
-            onImageClipDurationInput(sec);
-        }
+        function setImageClipDurationPreset(sec) { const sEl = document.getElementById('imageDurSlider'); if (sEl) sEl.value = sec; onImageClipDurationInput(sec); }
 
         async function selectVideoClip(idx, autoPlay = false, keepAudioRunning = false) {
             if (idx < 0 || idx >= window.videoClips.length) return;
@@ -2285,17 +2285,22 @@ ${productInfo}
 
             if (isImg) {
                 imagePlayElapsed = 0;
-                if (pv && !pv.paused) pv.pause();
+                if (pv) { if (!pv.paused) pv.pause(); pv.classList.add('hidden'); }
                 document.getElementById('imageClipBadge').innerText = `🖼️ Ảnh ${idx + 1} • Thời gian hiện:`;
                 document.getElementById('imageDurSlider').value = c.duration;
                 document.getElementById('imageDurValText').innerText = `${c.duration.toFixed(1)}s`;
+                const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.add('hidden');
             } else {
+                const bStart = c.boundStart ?? 0, bEnd = c.boundEnd ?? c.duration;
+                c.boundStart = bStart; c.boundEnd = bEnd;
+                c.trimStart = Math.max(bStart, Math.min(bEnd - 0.2, c.trimStart));
+                c.trimEnd = Math.min(bEnd, Math.max(c.trimStart + 0.2, c.trimEnd));
                 window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
                 document.getElementById('activeClipBadge').innerText = `✂️ Clip ${idx + 1}:`;
                 const sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
-                sSlider.min = 0; sSlider.max = c.duration.toFixed(1); sSlider.value = c.trimStart;
-                eSlider.min = 0; eSlider.max = c.duration.toFixed(1); eSlider.value = c.trimEnd;
-                updateTrimVisuals(c.duration); renderClipSpeedPills();
+                sSlider.min = bStart.toFixed(1); sSlider.max = bEnd.toFixed(1); sSlider.value = c.trimStart;
+                eSlider.min = bStart.toFixed(1); eSlider.max = bEnd.toFixed(1); eSlider.value = c.trimEnd;
+                updateTrimVisuals(); renderClipSpeedPills();
             }
 
             renderVideoClipsStrip(); renderAudioHeaderControls();
@@ -2314,12 +2319,12 @@ ${productInfo}
                 }
                 pv.playbackRate = c.speed || 1.0;
                 if (pvOrigGain) pvOrigGain.gain.value = c.useOrigAudio ? ((c.origGainPct || 100) / 100) : 0;
-                if (Math.abs((pv.currentTime || 0) - c.trimStart) > 0.05) {
-                    try { pv.currentTime = c.trimStart; } catch (e) {}
-                }
+                if (Math.abs((pv.currentTime || 0) - c.trimStart) > 0.05) { try { pv.currentTime = c.trimStart > 0 ? c.trimStart : 0.001; } catch (e) {} }
             }
 
-            updatePreviewCanvasVisibility(); syncVideoCanvasStageSize(); window.redrawTextOverlayPreview(); updatePlaybackProgressUI();
+            updatePreviewCanvasVisibility(); syncVideoCanvasStageSize();
+            if (isImg && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+            window.redrawTextOverlayPreview(); updatePlaybackProgressUI();
             if (autoPlay) {
                 isTimelinePlaying = true;
                 document.getElementById('vPlayPauseBtn').innerText = '⏸️';
@@ -2336,14 +2341,24 @@ ${productInfo}
             if (splitT <= c.trimStart + 0.35 || splitT >= c.trimEnd - 0.35) splitT = (c.trimStart + c.trimEnd) / 2;
             if (c.trimEnd - c.trimStart < 0.7) { alert('Clip quá ngắn (< 0.7s) không thể tách thêm.'); return; }
             splitT = Number(splitT.toFixed(1));
-            const oldEnd = c.trimEnd; c.trimEnd = splitT;
+            const oldTrimEnd = c.trimEnd, oldBoundEnd = c.boundEnd ?? c.duration;
+            // CẮT RỜI KHÓA CHẶT PHẠM VI 2 ĐOẠN NHƯ CAPCUT (KHÔNG TRƯỢT LẠI ĐƯỢC)
+            c.trimEnd = splitT; c.boundEnd = splitT;
             const secondClip = {
                 ...c, id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
-                name: c.name + ' (2)', trimStart: splitT, trimEnd: oldEnd, adj: { ...c.adj }
+                name: c.name + ' (2)', boundStart: splitT, boundEnd: oldBoundEnd,
+                trimStart: splitT, trimEnd: oldTrimEnd, adj: { ...c.adj }
             };
             window.videoClips.splice(window.activeClipIdx + 1, 0, secondClip);
             window.videoTransitions.splice(window.activeClipIdx, 0, { type: 'none', dur: 0.4 });
             selectVideoClip(window.activeClipIdx + 1, false, false);
+            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        function commitActiveClipTrimBounds() {
+            const c = window.getActiveVideoClip(); if (!c || c.type === 'image') return;
+            c.boundStart = c.trimStart; c.boundEnd = c.trimEnd;
+            selectVideoClip(window.activeClipIdx, false, false);
             syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
@@ -2358,66 +2373,77 @@ ${productInfo}
             syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
-        async function probeMediaFileDurationFast(file, url) {
-            try {
-                const MB = await loadMediabunnyLib();
-                if (MB) {
-                    const inp = new MB.Input({ source: new MB.BlobSource(file), formats: MB.ALL_FORMATS });
-                    const d = await inp.computeDuration();
-                    if (Number.isFinite(d) && d > 0.2) return d;
-                }
-            } catch (e) {}
-            return new Promise(res => {
-                const v = document.createElement('video'); v.preload = 'metadata';
-                v.onloadedmetadata = () => res(Number.isFinite(v.duration) && v.duration > 0.2 ? v.duration : 5);
-                v.onerror = () => res(5); v.src = url;
-            });
-        }
-
-        async function appendExtraVideoFiles(files) {
+        async function appendExtraMediaFiles(files) {
             if (!files || !files.length) return;
             for (const file of files) {
                 const url = URL.createObjectURL(file);
-                const dur = await probeMediaFileDurationFast(file, url);
-                window.videoClips.push({
-                    id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'video',
-                    blob: file, url, name: file.name, duration: dur, trimStart: 0, trimEnd: Number(dur.toFixed(1)),
-                    speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0, useOrigAudio: true, origGainPct: 100,
-                    isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
-                });
-                window.videoTransitions.push({ type: 'fade', dur: 0.4 });
+                if (file.type && file.type.startsWith('image/')) {
+                    const imgEl = await loadClipImageElement(url);
+                    if (!imgEl) continue;
+                    window.videoClips.push({
+                        id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'image',
+                        imgEl, url, blob: file, name: file.name, naturalW: imgEl.naturalWidth, naturalH: imgEl.naturalHeight,
+                        duration: 3.0, boundStart: 0, boundEnd: 3.0, trimStart: 0, trimEnd: 3.0, speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
+                        useOrigAudio: false, origGainPct: 0, isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
+                    });
+                    window.videoTransitions.push({ type: 'fade', dur: 0.4 });
+                } else {
+                    const dur = await probeMediaFileDurationFast(file, url);
+                    window.videoClips.push({
+                        id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'video',
+                        blob: file, url, name: file.name, duration: dur, boundStart: 0, boundEnd: Number(dur.toFixed(1)),
+                        trimStart: 0, trimEnd: Number(dur.toFixed(1)), speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
+                        useOrigAudio: true, origGainPct: 100, isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
+                    });
+                    window.videoTransitions.push({ type: 'fade', dur: 0.4 });
+                }
             }
             renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        async function loadClipImageElement(url) {
+            const im = new Image();
+            const loaded = await new Promise(res => { im.onload = () => res(true); im.onerror = () => res(false); im.src = url; });
+            if (!loaded) return null;
+            try { if (im.decode) await im.decode(); } catch (e) {}
+            // Thu nhỏ ảnh quá lớn (>1440px) 1 lần để Preview & WebGL siêu mượt trên iPhone
+            if (Math.max(im.naturalWidth, im.naturalHeight) > 1440) {
+                const sc = 1440 / Math.max(im.naturalWidth, im.naturalHeight);
+                const c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * sc); c.height = Math.round(im.naturalHeight * sc);
+                c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+                c.naturalWidth = c.width; c.naturalHeight = c.height; c.complete = true;
+                return c;
+            }
+            return im;
         }
 
         async function handleAddMoreVideoClipFile(input) {
             const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
             const prevLen = window.videoClips.length;
-            await appendExtraVideoFiles(files);
+            await appendExtraMediaFiles(files);
             await selectVideoClip(prevLen, false, false);
         }
 
         async function handleAddMoreImageClipFiles(input) {
             const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
+            const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.remove('hidden');
             const prevLen = window.videoClips.length;
             for (const file of files) {
-                const url = URL.createObjectURL(file);
-                const imgEl = await new Promise(res => {
-                    const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url;
-                });
+                const url = URL.createObjectURL(file), imgEl = await loadClipImageElement(url);
                 if (!imgEl) continue;
                 window.videoClips.push({
                     id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'image',
                     imgEl, url, blob: file, name: file.name, naturalW: imgEl.naturalWidth, naturalH: imgEl.naturalHeight,
-                    duration: 3.0, trimStart: 0, trimEnd: 3.0, speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
+                    duration: 3.0, boundStart: 0, boundEnd: 3.0, trimStart: 0, trimEnd: 3.0, speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
                     useOrigAudio: false, origGainPct: 0, isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
                 });
                 window.videoTransitions.push({ type: 'fade', dur: 0.4 });
             }
+            if (sp) sp.classList.add('hidden');
             if (window.videoClips.length > prevLen) {
                 await selectVideoClip(prevLen, false, false);
                 syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
-            }
+            } else alert('Không đọc được định dạng ảnh này.');
         }
 
         function openClipTransitionPopup(tIdx) {
@@ -2425,10 +2451,7 @@ ${productInfo}
             const pop = document.getElementById('clipTransitionPopup'), tr = window.videoTransitions[tIdx] || { type: 'none', dur: 0.4 };
             document.getElementById('transPopupTitle').innerText = `◐ Chuyển cảnh Clip ${tIdx + 1} → ${tIdx + 2}`;
             document.getElementById('transTypesRow').innerHTML = TRANSITION_PRESETS.map(p => `<button onclick="setSelectedTransitionType('${p.id}')" class="shrink-0 px-2.5 py-1 rounded-lg font-bold border ${tr.type === p.id ? 'bg-indigo-500 text-white border-indigo-300' : 'bg-slate-900 text-slate-300 border-slate-700'}" style="font-size: 11px !important;">${p.icon} ${p.label}</button>`).join('');
-            [0.3, 0.5, 0.8].forEach(d => {
-                const b = document.getElementById(`transDurBtn${String(d).replace('.', '')}`);
-                if (b) b.className = Math.abs(tr.dur - d) < 0.05 ? 'px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black' : 'px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold';
-            });
+            [0.3, 0.5, 0.8].forEach(d => { const b = document.getElementById(`transDurBtn${String(d).replace('.', '')}`); if (b) b.className = Math.abs(tr.dur - d) < 0.05 ? 'px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black' : 'px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold'; });
             pop.classList.remove('hidden');
         }
         function closeClipTransitionPopup() { document.getElementById('clipTransitionPopup').classList.add('hidden'); }
@@ -2436,38 +2459,44 @@ ${productInfo}
         function setSelectedTransitionDur(dur) { if (window.selectedTransIdx < 0) return; window.videoTransitions[window.selectedTransIdx].dur = dur; openClipTransitionPopup(window.selectedTransIdx); }
         async function previewSelectedTransition() {
             const tIdx = window.selectedTransIdx; if (tIdx < 0 || tIdx + 1 >= window.videoClips.length) return;
-            const c = window.videoClips[tIdx], dur = getClipPlayDuration(c);
-            const preOffset = Math.max(0, dur - 0.65);
+            const c = window.videoClips[tIdx], dur = getClipPlayDuration(c), preOffset = Math.max(0, dur - 0.65);
             await selectVideoClip(tIdx, false, false);
-            if (c.type === 'image') { imagePlayElapsed = preOffset; }
+            if (c.type === 'image') imagePlayElapsed = preOffset;
             else { const pv = document.getElementById('previewVideo'); if (pv) try { pv.currentTime = c.trimStart + preOffset * (c.speed || 1); } catch (e) {} }
             await togglePreviewVideoPlay();
         }
 
-        function updateTrimVisuals(dur) {
+        function updateTrimVisuals() {
             const c = window.getActiveVideoClip(); if (!c || c.type === 'image') return;
-            const safeDur = Math.max(0.5, dur || c.duration), bar = document.getElementById('trimActiveBar');
-            if (bar) { bar.style.left = `${Math.max(0, Math.min(100, (c.trimStart / safeDur) * 100))}%`; bar.style.right = `${Math.max(0, Math.min(100, 100 - (c.trimEnd / safeDur) * 100))}%`; }
-            document.getElementById('trimStartValText').innerText = `${c.trimStart.toFixed(1)}s`; document.getElementById('trimEndValText').innerText = `${c.trimEnd.toFixed(1)}s`;
+            const bStart = c.boundStart ?? 0, bEnd = c.boundEnd ?? c.duration, span = Math.max(0.2, bEnd - bStart), bar = document.getElementById('trimActiveBar');
+            if (bar) { bar.style.left = `${Math.max(0, Math.min(100, ((c.trimStart - bStart) / span) * 100))}%`; bar.style.right = `${Math.max(0, Math.min(100, 100 - ((c.trimEnd - bStart) / span) * 100))}%`; }
+            document.getElementById('trimStartValText').innerText = `${(c.trimStart - bStart).toFixed(1)}s`;
+            document.getElementById('trimEndValText').innerText = `${(c.trimEnd - bStart).toFixed(1)}s`;
             document.getElementById('trimDurationText').innerText = `Giữ: ${getClipPlayDuration(c).toFixed(1)}s`;
+            const commitBtn = document.getElementById('btnCommitTrimBounds');
+            if (commitBtn) commitBtn.classList.toggle('hidden', (c.trimStart <= bStart + 0.05 && c.trimEnd >= bEnd - 0.05));
         }
         function startTrimDrag() { isDraggingTrim = true; isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf); const pv = document.getElementById('previewVideo'); if (pv && !pv.paused) { pv.pause(); stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️'; } }
         function onTrimSliderInput(which) {
             const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'), sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
             if (!c || c.type === 'image') return;
-            let sVal = Number(sSlider.value), eVal = Number(eSlider.value); const minGap = Math.min(0.4, c.duration * 0.15);
-            if (which === 'start') { if (sVal > eVal - minGap) { sVal = Math.max(0, eVal - minGap); sSlider.value = sVal.toFixed(1); } c.trimStart = sVal; window.trimStartSec = sVal; throttledSeekVideo(pv, sVal); }
-            else { if (eVal < sVal + minGap) { eVal = Math.min(c.duration, sVal + minGap); eSlider.value = eVal.toFixed(1); } c.trimEnd = eVal; window.trimEndSec = eVal; throttledSeekVideo(pv, Math.max(0, eVal - 0.03)); }
-            updateTrimVisuals(c.duration); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+            const bStart = c.boundStart ?? 0, bEnd = c.boundEnd ?? c.duration, minGap = Math.min(0.4, (bEnd - bStart) * 0.15);
+            let sVal = Number(sSlider.value), eVal = Number(eSlider.value);
+            if (which === 'start') { if (sVal > eVal - minGap) { sVal = Math.max(bStart, eVal - minGap); sSlider.value = sVal.toFixed(1); } c.trimStart = sVal; window.trimStartSec = sVal; throttledSeekVideo(pv, sVal); }
+            else { if (eVal < sVal + minGap) { eVal = Math.min(bEnd, sVal + minGap); eSlider.value = eVal.toFixed(1); } c.trimEnd = eVal; window.trimEndSec = eVal; throttledSeekVideo(pv, Math.max(bStart, eVal - 0.03)); }
+            updateTrimVisuals(); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
-        function endTrimDrag(which) { isDraggingTrim = false; const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (pv && c && c.type !== 'image') { try { pv.currentTime = which === 'start' ? c.trimStart : Math.max(0, c.trimEnd - 0.03); } catch (e) {} } }
+        function endTrimDrag(which) { isDraggingTrim = false; const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (pv && c && c.type !== 'image') { try { pv.currentTime = which === 'start' ? c.trimStart : Math.max(c.boundStart ?? 0, c.trimEnd - 0.03); } catch (e) {} } }
         function applyTrimPreset(preset) {
             const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c || c.type === 'image') return;
-            if (preset === 1 && c.duration > 2.4) { c.trimStart = 1.0; c.trimEnd = Number((c.duration - 1.0).toFixed(1)); } else { c.trimStart = 0; c.trimEnd = Number(c.duration.toFixed(1)); }
+            const bStart = c.boundStart ?? 0, bEnd = c.boundEnd ?? c.duration;
+            if (preset === 1 && (bEnd - bStart) > 2.4) { c.trimStart = Number((bStart + 1.0).toFixed(1)); c.trimEnd = Number((bEnd - 1.0).toFixed(1)); } else { c.trimStart = bStart; c.trimEnd = bEnd; }
             window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
             document.getElementById('trimStartSlider').value = c.trimStart; document.getElementById('trimEndSlider').value = c.trimEnd;
-            updateTrimVisuals(c.duration); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly(); if (pv) { try { pv.currentTime = c.trimStart; } catch (e) {} }
+            updateTrimVisuals(); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly(); if (pv) { try { pv.currentTime = c.trimStart; } catch (e) {} }
         }
+
+
 
 async function probeMediaFileDurationFast(file, url) {
             return new Promise(res => {
@@ -2904,7 +2933,13 @@ async function probeMediaFileDurationFast(file, url) {
         }
 
         // ====== MỞ EDITOR CAPCUT MINI (LOAD TỨC THÌ + HỖ TRỢ NHIỀU VIDEO/ẢNH + XUẤT WEBCODECS/MEDIABUNNY) ======
-        async function openEditorModal(videoUrl, extraFiles = []) {
+
+
+
+
+
+
+        async function openEditorModal(videoUrl, extraFiles = [], firstIsImage = false) {
             stopPreviewAudioTracks(); isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf); activeTransitionPreview = null;
             const preview = document.getElementById('previewVideo');
             preview.pause(); preview._clipSrcUrl = ''; preview.onloadedmetadata = null; preview.onloadeddata = null; preview.oncanplay = null;
@@ -2916,48 +2951,64 @@ async function probeMediaFileDurationFast(file, url) {
             const sp = document.getElementById('videoLoadSpinner');
             if (sp) sp.classList.remove('hidden');
 
-            const firstClip = {
-                id: 'clip_' + Date.now(), type: 'video', blob: recordedRawBlob, url: videoUrl, name: activeScriptScene ? `Cảnh ${activeScriptScene.sceneNum}` : 'Clip 1',
-                duration: lastRecordedDurationSec || 5, trimStart: 0, trimEnd: lastRecordedDurationSec || 5, speed: 1.0,
-                adj: createEmptyClipAdj(), filterIdx: 0, useOrigAudio: activeScriptScene ? !!activeScriptScene.useOrigAudio : true,
-                origGainPct: activeScriptScene ? (activeScriptScene.origGainPct || 100) : 100,
-                isCameraRecorded: !!window.isCameraRecordedVideo, digitalZoom: window.recordedDigitalZoom || 1.0, mirror: !!window.recordedMirror, poseUV: null, _metaDone: false
-            };
+            let firstClip = null;
+            if (firstIsImage) {
+                const imgEl = await loadClipImageElement(videoUrl);
+                firstClip = {
+                    id: 'img_' + Date.now(), type: 'image', imgEl, url: videoUrl, blob: recordedRawBlob, name: 'Ảnh 1',
+                    naturalW: imgEl ? imgEl.naturalWidth : 720, naturalH: imgEl ? imgEl.naturalHeight : 1280,
+                    duration: 3.0, boundStart: 0, boundEnd: 3.0, trimStart: 0, trimEnd: 3.0, speed: 1.0,
+                    adj: createEmptyClipAdj(), filterIdx: 0, useOrigAudio: false, origGainPct: 0,
+                    isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
+                };
+            } else {
+                firstClip = {
+                    id: 'clip_' + Date.now(), type: 'video', blob: recordedRawBlob, url: videoUrl, name: activeScriptScene ? `Cảnh ${activeScriptScene.sceneNum}` : 'Clip 1',
+                    duration: lastRecordedDurationSec || 5, boundStart: 0, boundEnd: lastRecordedDurationSec || 5, trimStart: 0, trimEnd: lastRecordedDurationSec || 5, speed: 1.0,
+                    adj: createEmptyClipAdj(), filterIdx: 0, useOrigAudio: activeScriptScene ? !!activeScriptScene.useOrigAudio : true,
+                    origGainPct: activeScriptScene ? (activeScriptScene.origGainPct || 100) : 100,
+                    isCameraRecorded: !!window.isCameraRecordedVideo, digitalZoom: window.recordedDigitalZoom || 1.0, mirror: !!window.recordedMirror, poseUV: null, _metaDone: false
+                };
+            }
             window.videoClips = [firstClip]; window.videoTransitions = []; window.activeClipIdx = 0;
 
-            // Mở giao diện ngay lập tức, gắn sự kiện TRƯỚC khi nạp src
             document.getElementById('editorModal').classList.remove('hidden');
             if (typeof window.openVideoProEditorSetup === 'function') window.openVideoProEditorSetup(firstClip);
 
-            const onFirstReady = () => {
-                if (sp) sp.classList.add('hidden');
-                const c = window.videoClips[0];
-                if (c && !c._metaDone && preview.readyState >= 1) {
-                    c._metaDone = true; const dur = getSafeVideoDuration(preview); c.duration = dur;
-                    if (preview.videoWidth && preview.videoHeight) { c.naturalW = preview.videoWidth; c.naturalH = preview.videoHeight; }
-                    const targetAudioDur = (activeScriptScene && activeScriptScene.durationSec) ? activeScriptScene.durationSec : 0;
-                    if (c.isCameraRecorded && dur > 2.2) { c.trimStart = 1.0; c.trimEnd = targetAudioDur > 0 ? Number(Math.min(dur - 0.2, 1.0 + targetAudioDur).toFixed(1)) : Number((dur - 1.0).toFixed(1)); }
-                    else { c.trimStart = 0; c.trimEnd = (targetAudioDur > 0 && dur > targetAudioDur + 0.3) ? Number(targetAudioDur.toFixed(1)) : Number(dur.toFixed(1)); }
-                    if (window.activeClipIdx === 0) {
-                        window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
-                        const sS = document.getElementById('trimStartSlider'), eS = document.getElementById('trimEndSlider');
-                        sS.max = dur.toFixed(1); sS.value = c.trimStart; eS.max = dur.toFixed(1); eS.value = c.trimEnd;
-                        updateTrimVisuals(dur);
+            if (!firstIsImage) {
+                const onFirstReady = () => {
+                    if (sp) sp.classList.add('hidden');
+                    const c = window.videoClips[0];
+                    if (c && c.type !== 'image' && !c._metaDone && preview.readyState >= 1) {
+                        c._metaDone = true; const dur = getSafeVideoDuration(preview); c.duration = dur; c.boundStart = 0; c.boundEnd = Number(dur.toFixed(1));
+                        if (preview.videoWidth && preview.videoHeight) { c.naturalW = preview.videoWidth; c.naturalH = preview.videoHeight; }
+                        const targetAudioDur = (activeScriptScene && activeScriptScene.durationSec) ? activeScriptScene.durationSec : 0;
+                        if (c.isCameraRecorded && dur > 2.2) { c.trimStart = 1.0; c.trimEnd = targetAudioDur > 0 ? Number(Math.min(dur - 0.2, 1.0 + targetAudioDur).toFixed(1)) : Number((dur - 1.0).toFixed(1)); }
+                        else { c.trimStart = 0; c.trimEnd = (targetAudioDur > 0 && dur > targetAudioDur + 0.3) ? Number(targetAudioDur.toFixed(1)) : Number(dur.toFixed(1)); }
+                        if (window.activeClipIdx === 0) {
+                            window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
+                            const sS = document.getElementById('trimStartSlider'), eS = document.getElementById('trimEndSlider');
+                            sS.min = 0; sS.max = c.boundEnd.toFixed(1); sS.value = c.trimStart;
+                            eS.min = 0; eS.max = c.boundEnd.toFixed(1); eS.value = c.trimEnd;
+                            updateTrimVisuals();
+                        }
+                        try { preview.currentTime = c.trimStart > 0 ? c.trimStart : 0.001; } catch (e) {}
+                        renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
                     }
-                    try { preview.currentTime = c.trimStart > 0 ? c.trimStart : 0.001; } catch (e) {}
-                    renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
-                }
-                syncVideoCanvasStageSize(); window.redrawTextOverlayPreview();
-            };
-            preview.onloadedmetadata = onFirstReady;
-            preview.onloadeddata = () => { if (sp) sp.classList.add('hidden'); onFirstReady(); };
-            preview.oncanplay = () => { if (sp) sp.classList.add('hidden'); };
-            setTimeout(() => { if (sp) sp.classList.add('hidden'); }, 1500);
+                    syncVideoCanvasStageSize(); window.redrawTextOverlayPreview();
+                };
+                preview.onloadedmetadata = onFirstReady;
+                preview.onloadeddata = () => { if (sp) sp.classList.add('hidden'); onFirstReady(); };
+                preview.oncanplay = () => { if (sp) sp.classList.add('hidden'); };
+                setTimeout(() => { if (sp) sp.classList.add('hidden'); }, 1500);
+            } else {
+                if (sp) sp.classList.add('hidden');
+            }
 
             await selectVideoClip(0, false, false);
             initTextOverlaysForEditor();
             initAudioStudioForEditor();
-            if (extraFiles && extraFiles.length) appendExtraVideoFiles(extraFiles);
+            if (extraFiles && extraFiles.length) appendExtraMediaFiles(extraFiles);
         }
         function closeEditorModal() { if (exportInProgress) return; isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf); stopPreviewAudioTracks(); vFullscreenActive = false; if (typeof window.stopVideoRenderLoop === 'function') window.stopVideoRenderLoop(); document.getElementById('editorModal').classList.add('hidden'); document.getElementById('previewVideo').pause(); }
 
@@ -3596,24 +3647,68 @@ async function probeMediaFileDurationFast(file, url) {
         window.redrawVideoFrameNow();
     };
 
+
+
+
     window.redrawVideoFrameNow = function () {
         const pv = document.getElementById('previewVideo'), c = document.getElementById('videoPreviewCanvas');
         const clip = (typeof window.getActiveVideoClip === 'function') ? window.getActiveVideoClip() : null;
-        if (!pv || pv.readyState < 2 || !c) return;
-        if (clip && typeof window.hasClipActiveEffects === 'function' && !window.hasClipActiveEffects(clip) && !isComparingVideoOrig) {
-            c.classList.add('hidden'); return;
+        if (!c || !clip) return;
+        const isImg = clip.type === 'image';
+        const srcEl = isImg ? clip.imgEl : pv;
+        if (!srcEl) return;
+        if (!isImg && (!pv || pv.readyState < 2)) return;
+        if (isImg && srcEl.tagName === 'IMG' && !srcEl.complete) return;
+
+        const inTrans = (typeof window.isTimelineInActiveTransition === 'function') ? window.isTimelineInActiveTransition() : false;
+        const hasFx = (typeof window.hasClipActiveEffects === 'function') ? window.hasClipActiveEffects(clip) : false;
+
+        // Nếu là Video thường (không hiệu ứng, không chuyển cảnh): hiện <video>, ẩn canvas
+        if (!isImg && !hasFx && !inTrans && !isComparingVideoOrig) {
+            c.classList.add('hidden');
+            if (pv) pv.classList.remove('hidden');
+            return;
         }
+
+        // Nếu là Ảnh hoặc đang có hiệu ứng / chuyển cảnh: hiện canvas lên trên, ẩn hẳn <video> đi để khỏi che ảnh
         c.classList.remove('hidden');
-        const vw = pv.videoWidth || 720, vh = pv.videoHeight || 1280;
+        if (pv) pv.classList.add('hidden');
+
+        const sw = isImg ? (srcEl.naturalWidth || srcEl.width || 720) : (pv.videoWidth || 720);
+        const sh = isImg ? (srcEl.naturalHeight || srcEl.height || 1280) : (pv.videoHeight || 1280);
         let pw = 720, ph = 1280;
-        if (!clip || !clip.isCameraRecorded) { const sc = Math.min(1, 720 / Math.max(vw, vh)); pw = Math.max(2, Math.round(vw * sc)); ph = Math.max(2, Math.round(vh * sc)); }
-        const srcEl = (clip && clip.isCameraRecorded && (Math.abs((vw/vh) - (9/16)) > 0.05 || clip.digitalZoom > 1.0 || clip.mirror))
-            ? prepareVideoSourceCanvas(pv, clip, pw, ph) : pv;
-        if (videoGl) { videoGl.uploadAndSize(srcEl, pw, ph); videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, isComparingVideoOrig); }
-        else { if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; } c.getContext('2d').drawImage(srcEl, 0, 0, pw, ph); }
+        if (!clip.isCameraRecorded) {
+            if (isImg && typeof window.getStageBaseAspect === 'function') {
+                const asp = window.getStageBaseAspect(); pw = 720; ph = Math.max(2, Math.round(720 / asp));
+            } else {
+                const sc = Math.min(1, 720 / Math.max(1, sw, sh));
+                pw = Math.max(2, Math.round(sw * sc)); ph = Math.max(2, Math.round(sh * sc));
+            }
+        }
+        if (c.width !== pw || c.height !== ph) { c.width = pw; c.height = ph; }
+        const ctx2d = c.getContext('2d');
+
+        const needCropCanvas = isImg || (clip.isCameraRecorded && (Math.abs((sw/sh) - (pw/ph)) > 0.05 || clip.digitalZoom > 1.0 || clip.mirror));
+        const finalSrc = needCropCanvas ? prepareVideoSourceCanvas(srcEl, clip, pw, ph) : srcEl;
+
+        if (hasFx && !isComparingVideoOrig) {
+            if (!videoGlCanvas) { videoGlCanvas = document.createElement('canvas'); videoGl = createWebGLEngine(videoGlCanvas); }
+            if (videoGl) { videoGl.uploadAndSize(finalSrc, pw, ph); videoGl.draw(vAdj, AI_FILTERS[vFilterIdx], videoPoseUV, false); ctx2d.drawImage(videoGlCanvas, 0, 0, pw, ph); }
+            else ctx2d.drawImage(finalSrc, 0, 0, pw, ph);
+        } else {
+            ctx2d.drawImage(finalSrc, 0, 0, pw, ph);
+        }
+
+        if (typeof window.applyLiveTransitionToPreviewCanvas === 'function') {
+            window.applyLiveTransitionToPreviewCanvas(ctx2d, pw, ph);
+        }
         if (typeof syncVideoCanvasStageSize === 'function') syncVideoCanvasStageSize();
         if (typeof window.redrawTextOverlayPreview === 'function') window.redrawTextOverlayPreview();
     };
+
+
+
+
 
     window.startVideoRenderLoop = function () {
         cancelAnimationFrame(videoRenderRaf);
