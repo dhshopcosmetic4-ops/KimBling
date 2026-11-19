@@ -396,7 +396,7 @@
         </div>
     </div>
 
-    <!-- MODAL HẬU KỲ VIDEO CAPCUT MINI (ĐA CLIP + CHUYỂN CẢNH + TỐC ĐỘ + CẮT AUDIO + WEBCODECS) -->
+    <!-- MODAL HẬU KỲ VIDEO CAPCUT MINI (ĐA CLIP VIDEO/ẢNH + CHUYỂN CẢNH + TỐC ĐỘ + CẮT AUDIO + WEBCODECS) -->
     <div id="editorModal" class="fixed inset-0 z-50 bg-slate-950 flex flex-col hidden w-full max-w-[100vw] h-[100dvh] overflow-hidden">
         <div class="flex items-center justify-between px-3 py-2 bg-slate-900 border-b border-slate-800 shrink-0 w-full min-w-0 gap-1.5">
             <button onclick="closeEditorModal()" class="w-9 h-9 shrink-0 rounded-full bg-slate-800 text-white font-black flex items-center justify-center">✕</button>
@@ -405,13 +405,17 @@
             <button id="downloadVideoBtn" onclick="downloadFinalVideo()" class="px-3 py-2 shrink-0 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-xl shadow"><span>💾</span><span> Xuất</span></button>
         </div>
 
-        <input id="addMoreVideoClipInput" type="file" accept="video/*" class="hidden" onchange="handleAddMoreVideoClipFile(this)">
+        <input id="addMoreVideoClipInput" type="file" accept="video/*" multiple class="hidden" onchange="handleAddMoreVideoClipFile(this)">
+        <input id="addMoreImageClipInput" type="file" accept="image/*" multiple class="hidden" onchange="handleAddMoreImageClipFiles(this)">
 
         <div id="previewVideoWrapper" class="relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full">
             <div id="videoCanvasStage" class="relative flex items-center justify-center overflow-hidden rounded-xl bg-black">
-                <video id="previewVideo" playsinline preload="metadata" class="w-full h-full object-contain"></video>
+                <video id="previewVideo" playsinline preload="auto" class="w-full h-full object-contain"></video>
                 <canvas id="videoPreviewCanvas" class="hidden absolute inset-0 w-full h-full block rounded-xl pointer-events-none"></canvas>
                 <canvas id="videoTextOverlayCanvas" class="absolute inset-0 w-full h-full z-10 rounded-xl touch-none"></canvas>
+                <div id="videoLoadSpinner" class="hidden absolute inset-0 z-10 bg-black/60 flex items-center justify-center pointer-events-none">
+                    <span class="px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-sky-400/50 text-sky-200 font-bold" style="font-size: 13px !important;">⏳ Đang nạp khung hình...</span>
+                </div>
             </div>
             <button onmousedown="holdCompareVideoOriginal(true)" onmouseup="holdCompareVideoOriginal(false)" onmouseleave="holdCompareVideoOriginal(false)" ontouchstart="holdCompareVideoOriginal(true)" ontouchend="holdCompareVideoOriginal(false)"
                 class="absolute top-2.5 left-2.5 z-20 px-2.5 py-1 rounded-full bg-black/75 border border-white/25 text-white font-black shadow select-none" style="font-size: 12px !important;">👁️ Gốc</button>
@@ -437,13 +441,27 @@
         </div>
 
         <div class="shrink-0 bg-slate-900 border-t border-slate-800 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2 w-full max-w-md mx-auto min-w-0 max-h-[52dvh] overflow-y-auto no-scrollbar">
-            <!-- DẢI ĐA CLIP & CHUYỂN CẢNH GIỐNG CAPCUT -->
+            <!-- DẢI ĐA CLIP (VIDEO + ẢNH) & CHUYỂN CẢNH GIỐNG CAPCUT -->
             <div class="space-y-1.5 w-full min-w-0">
+                <div class="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="document.getElementById('addMoreVideoClipInput').click()" class="px-2.5 py-1 rounded-xl bg-sky-500/20 border border-sky-400 text-sky-200 font-black" style="font-size: 12px !important;">+ 🎞️ Video</button>
+                        <button onclick="document.getElementById('addMoreImageClipInput').click()" class="px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-200 font-black" style="font-size: 12px !important;">+ 🖼️ Ảnh</button>
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="moveActiveClip(-1)" id="btnMoveClipPrev" class="px-2 py-1 rounded-xl bg-slate-800 border border-slate-600 text-slate-200 font-black disabled:opacity-40" style="font-size: 11px !important;">⬅️ Trước</button>
+                        <button onclick="moveActiveClip(1)" id="btnMoveClipNext" class="px-2 py-1 rounded-xl bg-slate-800 border border-slate-600 text-slate-200 font-black disabled:opacity-40" style="font-size: 11px !important;">Sau ➡️</button>
+                        <button onclick="duplicateActiveClip()" class="px-2 py-1 rounded-xl bg-slate-800 border border-slate-600 text-emerald-300 font-black" style="font-size: 11px !important;" title="Nhân đôi đoạn này">📑</button>
+                    </div>
+                </div>
                 <div id="videoClipsStrip" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
                 <div id="clipTransitionPopup" class="hidden bg-slate-950 rounded-xl p-2.5 border border-indigo-500/60 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span id="transPopupTitle" class="font-black text-indigo-300" style="font-size: 12px !important;">◐ Chuyển cảnh Clip 1 → 2</span>
-                        <button onclick="closeClipTransitionPopup()" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold" style="font-size: 11px !important;">Xong</button>
+                    <div class="flex items-center justify-between gap-2">
+                        <span id="transPopupTitle" class="font-black text-indigo-300 truncate" style="font-size: 12px !important;">◐ Chuyển cảnh Clip 1 → 2</span>
+                        <div class="flex items-center space-x-1.5 shrink-0">
+                            <button onclick="previewSelectedTransitionb u.  Gh()" class="px-2 py-0.5 rounded-lg bg-emerald-500/25 border border-emerald-400 text-emerald-200 font-black" style="font-size: 11px !important;">▶️ Xem thử</button>
+                            <button onclick="closeClipTransitionPopup()" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold" style="font-size: 11px !important;">Xong</button>
+                        </div>
                     </div>
                     <div id="transTypesRow" class="flex space-x-1.5 overflow-x-auto no-scrollbar"></div>
                     <div class="flex items-center space-x-1.5">
@@ -455,8 +473,8 @@
                 </div>
             </div>
 
-            <!-- BẢNG CẮT & TỐC ĐỘ CLIP ĐANG CHỌN -->
-            <div class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 space-y-1.5 w-full min-w-0">
+            <!-- BẢNG CẮT & TỐC ĐỘ CLIP VIDEO -->
+            <div id="videoTrimControlsBox" class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 space-y-1.5 w-full min-w-0">
                 <div class="flex items-center justify-between gap-1">
                     <span id="activeClipBadge" class="font-black text-rose-300 shrink-0" style="font-size: 12px !important;">✂️ Clip 1:</span>
                     <div class="flex items-center space-x-1 text-center font-mono font-bold" style="font-size: 11px !important;">
@@ -483,6 +501,27 @@
                     <div class="flex items-center space-x-1 shrink-0">
                         <button onclick="applyTrimPreset(1)" class="px-1.5 py-0.5 rounded-lg bg-rose-600/25 border border-rose-500 text-rose-200 font-black" style="font-size: 11px !important;">-1s</button>
                         <button onclick="applyTrimPreset(0)" class="px-1.5 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-black" style="font-size: 11px !important;">Gốc</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG THANH TRƯỢT THỜI LƯỢNG KHI CHỌN CLIP ẢNH -->
+            <div id="imageClipControlsBox" class="hidden bg-slate-950 px-3 py-2 rounded-xl border border-amber-400/50 space-y-1.5 w-full min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                    <span id="imageClipBadge" class="font-black text-amber-300 truncate" style="font-size: 12px !important;">🖼️ Ảnh 1 • Thời gian hiện:</span>
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <span id="imageDurValText" class="font-mono text-emerald-300 font-black" style="font-size: 13px !important;">3.0s</span>
+                        <button onclick="deleteActiveVideoClip()" id="btnDeleteImageClip" class="px-2 py-0.5 rounded-lg bg-rose-950 border border-rose-500/40 text-rose-300 font-black" style="font-size: 11px !important;">🗑️</button>
+                    </div>
+                </div>
+                <input id="imageDurSlider" type="range" min="0.5" max="15.0" step="0.1" value="3.0" class="pro-slider w-full" oninput="onImageClipDurationInput(this.value)">
+                <div class="flex items-center justify-between gap-1.5">
+                    <span class="text-slate-400 font-bold" style="font-size: 11px !important;">Chọn nhanh:</span>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="setImageClipDurationPreset(1.5)" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold" style="font-size: 11px !important;">1.5s</button>
+                        <button onclick="setImageClipDurationPreset(3.0)" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold" style="font-size: 11px !important;">3s</button>
+                        <button onclick="setImageClipDurationPreset(5.0)" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold" style="font-size: 11px !important;">5s</button>
+                        <button onclick="setImageClipDurationPreset(8.0)" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold" style="font-size: 11px !important;">8s</button>
                     </div>
                 </div>
             </div>
@@ -554,7 +593,6 @@
                             <input id="selAudioStartSlider" type="range" min="0" max="10" step="0.1" value="0" class="pro-slider flex-1" oninput="onSelAudioStartChange(this.value)">
                             <span id="selAudioStartVal" class="font-mono text-amber-300 font-bold w-11 text-right" style="font-size: 11px !important;">0.0s</span>
                         </div>
-                        <!-- CẮT ĐẦU/ĐUÔI & TỐC ĐỘ AUDIO CHÈN (CHO FILE DÀI 1-5 PHÚT) -->
                         <div id="selInsAudioCutBox" class="hidden space-y-1.5 pt-1 border-t border-slate-800">
                             <div class="flex items-center space-x-2">
                                 <span class="text-emerald-300 font-bold shrink-0" style="font-size: 11px !important;">✂️ Cắt đầu:</span>
@@ -1875,12 +1913,13 @@ ${productInfo}
             img.onerror = () => { URL.revokeObjectURL(url); alert('Không thể đọc file ảnh này.'); }; img.src = url;
         }
         function handleUploadedVideoFile(input) {
-            const file = input.files && input.files[0]; input.value = ''; if (!file) return; closeUploadStudioModal(); activeScriptScene = null;
+            const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
+            closeUploadStudioModal(); activeScriptScene = null;
             if (recordedBlobUrl) URL.revokeObjectURL(recordedBlobUrl);
-            recordedRawBlob = file; recordedBlobUrl = URL.createObjectURL(file);
-            window.isCameraRecordedVideo = false; window.recordedDigitalZoom = 1.0; window.recordedMirror = false; lastRecordedDurationSec = 5; openEditorModal(recordedBlobUrl);
+            recordedRawBlob = files[0]; recordedBlobUrl = URL.createObjectURL(files[0]);
+            window.isCameraRecordedVideo = false; window.recordedDigitalZoom = 1.0; window.recordedMirror = false; lastRecordedDurationSec = 5;
+            openEditorModal(recordedBlobUrl, files.slice(1));
         }
-
 // ====== CAMERA VIDEO ======
         async function openCameraModal(sceneId = null) {
             stopActiveCardAudio();
@@ -1977,7 +2016,13 @@ ${productInfo}
         function startTimer() { recordingSeconds = 0; const timerEl = document.getElementById('camTimer'); const tick = () => { const m = Math.floor(recordingSeconds/60).toString().padStart(2,'0'), s = (recordingSeconds%60).toString().padStart(2,'0'); timerEl.innerText = recordingMode === 'segment' ? `${m}:${s} / ${targetRecordingSeconds}s` : `${m}:${s} • Vô hạn`; }; tick(); timerInterval = setInterval(() => { recordingSeconds++; tick(); if (recordingMode === 'segment' && recordingSeconds >= targetRecordingSeconds) stopRecording(false); }, 1000); }
         function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
 
-        // ====== CAPCUT MINI MULTI-CLIP TIMELINE + SMART WEBGL BYPASS ======
+        // ====== CAPCUT MINI MULTI-CLIP (VIDEO + ẢNH + DI CHUYỂN + CHUYỂN CẢNH LIVE + LOAD NHANH) ======
+        let isTimelinePlaying = false, imagePlayElapsed = 0, unifiedPreviewRaf = 0, unifiedLastTickMs = 0;
+        let activeTransitionPreview = null; // { clipIdx, type, dur }
+        const previewPrevEndCanvas = document.createElement('canvas');
+        const previewLastFrameCanvas = document.createElement('canvas');
+        const transSlideTmpCanvas = document.createElement('canvas');
+
         function createEmptyClipAdj() {
             return { skinWhiten:0, skinSmooth:0, slimFace:0, slimBody:0, slimArms:0, slimThighs:0, longLegs:0, deglare:0, shadows:0, dehaze:0, sharpen:0, brightness:0, contrast:0, saturation:0, brilliance:0, clarity:0, highlights:0, temp:0, tint:0, blur:0, vignette:0, grain:0 };
         }
@@ -1988,62 +2033,169 @@ ${productInfo}
             if (clip.isCameraRecorded && (clip.digitalZoom > 1.01 || clip.mirror)) return true;
             return Object.values(clip.adj || {}).some(v => v !== 0);
         };
-        function getClipPlayDuration(c) { return c ? Math.max(0.2, (c.trimEnd - c.trimStart) / Math.max(0.25, c.speed || 1.0)) : 0; }
+        function getClipPlayDuration(c) {
+            if (!c) return 0;
+            if (c.type === 'image') return Math.max(0.5, Number(c.duration) || 3.0);
+            return Math.max(0.2, (c.trimEnd - c.trimStart) / Math.max(0.25, c.speed || 1.0));
+        }
         function getTotalTimelineDuration() { return Math.max(0.5, window.videoClips.reduce((acc, c) => acc + getClipPlayDuration(c), 0)); }
         function getKeptClipDuration() { return getTotalTimelineDuration(); }
         function getClipTimelineOffset(idx) { let off = 0; for (let i = 0; i < idx && i < window.videoClips.length; i++) off += getClipPlayDuration(window.videoClips[i]); return off; }
-        function getGlobalTimelineTime() {
-            const pv = document.getElementById('previewVideo'), c = window.getActiveVideoClip();
-            if (!pv || !c) return 0;
-            const localPlay = Math.max(0, (pv.currentTime - c.trimStart) / Math.max(0.25, c.speed || 1.0));
-            return Math.min(getTotalTimelineDuration(), getClipTimelineOffset(window.activeClipIdx) + localPlay);
+        function getActiveClipLocalPlayTime() {
+            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo');
+            if (!c) return 0;
+            if (c.type === 'image') return imagePlayElapsed;
+            if (!pv) return 0;
+            return Math.max(0, (pv.currentTime - c.trimStart) / Math.max(0.25, c.speed || 1.0));
         }
+        function getGlobalTimelineTime() {
+            return Math.min(getTotalTimelineDuration(), getClipTimelineOffset(window.activeClipIdx) + getActiveClipLocalPlayTime());
+        }
+        window.getStageBaseAspect = function () {
+            const c0 = window.videoClips[0];
+            if (c0 && c0.isCameraRecorded) return 9 / 16;
+            if (c0 && c0.naturalW && c0.naturalH) return c0.naturalW / c0.naturalH;
+            const pv = document.getElementById('previewVideo');
+            if (pv && pv.videoWidth && pv.videoHeight) return pv.videoWidth / pv.videoHeight;
+            return 9 / 16;
+        };
+        window.isTimelineInActiveTransition = function () {
+            if (!activeTransitionPreview || activeTransitionPreview.clipIdx !== window.activeClipIdx) return false;
+            if (activeTransitionPreview.type === 'none') return false;
+            return getActiveClipLocalPlayTime() < activeTransitionPreview.dur;
+        };
+        window.applyLiveTransitionToPreviewCanvas = function (ctx2d, w, h) {
+            if (!window.isTimelineInActiveTransition() || !previewPrevEndCanvas.width) return;
+            const p = Math.max(0, Math.min(1, getActiveClipLocalPlayTime() / Math.max(0.1, activeTransitionPreview.dur)));
+            drawTransitionBlend2D(ctx2d, previewPrevEndCanvas, w, h, activeTransitionPreview.type, p);
+        };
+
+        function captureCurrentPreviewFrameTo(targetCan) {
+            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'), glCan = document.getElementById('videoPreviewCanvas');
+            if (!c) return;
+            const w = (glCan && !glCan.classList.contains('hidden') && glCan.width) ? glCan.width : 720;
+            const h = (glCan && !glCan.classList.contains('hidden') && glCan.height) ? glCan.height : Math.round(720 / window.getStageBaseAspect());
+            if (targetCan.width !== w || targetCan.height !== h) { targetCan.width = w; targetCan.height = h; }
+            const tctx = targetCan.getContext('2d');
+            if (glCan && !glCan.classList.contains('hidden') && glCan.width) {
+                tctx.drawImage(glCan, 0, 0, w, h);
+            } else if (c.type === 'image' && c.imgEl && c.imgEl.complete) {
+                tctx.fillStyle = '#000000'; tctx.fillRect(0, 0, w, h);
+                const sc = Math.min(w / Math.max(1, c.imgEl.naturalWidth), h / Math.max(1, c.imgEl.naturalHeight));
+                const dw = c.imgEl.naturalWidth * sc, dh = c.imgEl.naturalHeight * sc;
+                tctx.drawImage(c.imgEl, (w - dw) / 2, (h - dh) / 2, dw, dh);
+            } else if (pv && pv.readyState >= 2) {
+                tctx.fillStyle = '#000000'; tctx.fillRect(0, 0, w, h);
+                const sc = Math.min(w / Math.max(1, pv.videoWidth), h / Math.max(1, pv.videoHeight));
+                const dw = pv.videoWidth * sc, dh = pv.videoHeight * sc;
+                tctx.drawImage(pv, (w - dw) / 2, (h - dh) / 2, dw, dh);
+            }
+        }
+
         function getSafeVideoDuration(pv) { if (pv && Number.isFinite(pv.duration) && pv.duration > 0.1 && pv.duration < 36000) return pv.duration; if (pv && pv.seekable && pv.seekable.length > 0) { const end = pv.seekable.end(pv.seekable.length - 1); if (Number.isFinite(end) && end > 0.1) return end; } return lastRecordedDurationSec || 5; }
         function startVideoScrub() { isScrubbingVideo = true; stopPreviewAudioTracks(); }
         function endVideoScrub() { isScrubbingVideo = false; }
 
         function updatePreviewCanvasVisibility() {
             const c = window.getActiveVideoClip(), glCan = document.getElementById('videoPreviewCanvas');
-            if (!glCan) return;
-            const needGl = window.hasClipActiveEffects(c);
-            glCan.classList.toggle('hidden', !needGl);
-            if (needGl && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+            if (!glCan || !c) return;
+            const need2D = (c.type === 'image') || window.hasClipActiveEffects(c) || window.isTimelineInActiveTransition();
+            glCan.classList.toggle('hidden', !need2D);
+            if (need2D && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+        }
+
+        function updatePlaybackProgressUI() {
+            const totalDur = getTotalTimelineDuration(), globalT = getGlobalTimelineTime();
+            document.getElementById('vScrubRange').value = Math.min(100, Math.max(0, (globalT / totalDur) * 100));
+            const s = Math.floor(globalT); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+            updateAudioTimelinePlayhead(globalT);
         }
 
         function setupPreviewVideoEvents() {
             const pv = document.getElementById('previewVideo'); if (!pv) return;
             pv.addEventListener('loadeddata', () => {
+                const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.add('hidden');
+                const c = window.getActiveVideoClip();
+                if (c && c.type !== 'image' && pv.videoWidth && pv.videoHeight) { c.naturalW = pv.videoWidth; c.naturalH = pv.videoHeight; }
                 if (typeof window.initVideoWebGLPreview === 'function') window.initVideoWebGLPreview();
                 syncVideoCanvasStageSize(); updatePreviewCanvasVisibility(); window.redrawTextOverlayPreview();
             });
             pv.addEventListener('timeupdate', () => {
                 if (isScrubbingVideo || isDraggingTrim) return;
-                const clip = window.getActiveVideoClip(); if (!clip) return;
-                if (pv.currentTime >= clip.trimEnd - 0.04 && !pv.paused) {
-                    if (window.activeClipIdx + 1 < window.videoClips.length) {
-                        selectVideoClip(window.activeClipIdx + 1, true, true);
-                        return;
-                    } else {
-                        pv.pause(); stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️';
-                        selectVideoClip(0, false, false);
-                        return;
-                    }
+                const clip = window.getActiveVideoClip(); if (!clip || clip.type === 'image') return;
+                if (pv.currentTime >= clip.trimEnd - 0.18 && pv.currentTime < clip.trimEnd && !pv.paused) {
+                    captureCurrentPreviewFrameTo(previewLastFrameCanvas);
                 }
-                const totalDur = getTotalTimelineDuration(), globalT = getGlobalTimelineTime();
-                document.getElementById('vScrubRange').value = Math.min(100, Math.max(0, (globalT / totalDur) * 100));
-                const s = Math.floor(globalT); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-                updateAudioTimelinePlayhead(globalT); if (pv.paused) window.redrawTextOverlayPreview();
+                if (pv.currentTime >= clip.trimEnd - 0.04 && !pv.paused) {
+                    advanceToNextTimelineClipOrStop(); return;
+                }
+                updatePlaybackProgressUI();
+                if (pv.paused) window.redrawTextOverlayPreview();
             });
             pv.addEventListener('seeked', () => {
-                if (window.hasClipActiveEffects(window.getActiveVideoClip()) && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+                const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.add('hidden');
+                const clip = window.getActiveVideoClip();
+                if (clip && (window.hasClipActiveEffects(clip) || window.isTimelineInActiveTransition()) && typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
                 window.redrawTextOverlayPreview(); updateAudioTimelinePlayhead(getGlobalTimelineTime());
             });
             pv.addEventListener('ended', () => {
                 const clip = window.getActiveVideoClip();
-                if (window.activeClipIdx + 1 < window.videoClips.length) { selectVideoClip(window.activeClipIdx + 1, true, true); return; }
-                stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️';
-                selectVideoClip(0, false, false);
+                if (!clip || clip.type === 'image') return;
+                advanceToNextTimelineClipOrStop();
             });
+        }
+
+        async function advanceToNextTimelineClipOrStop() {
+            const pv = document.getElementById('previewVideo');
+            captureCurrentPreviewFrameTo(previewPrevEndCanvas);
+            if (previewLastFrameCanvas.width && previewPrevEndCanvas.width) {
+                previewPrevEndCanvas.getContext('2d').drawImage(previewLastFrameCanvas, 0, 0, previewPrevEndCanvas.width, previewPrevEndCanvas.height);
+            }
+            if (window.activeClipIdx + 1 < window.videoClips.length) {
+                const trans = window.videoTransitions[window.activeClipIdx] || { type: 'none', dur: 0.4 };
+                activeTransitionPreview = trans.type !== 'none' ? { clipIdx: window.activeClipIdx + 1, type: trans.type, dur: trans.dur } : null;
+                await selectVideoClip(window.activeClipIdx + 1, true, true);
+            } else {
+                isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf);
+                if (pv && !pv.paused) pv.pause();
+                stopPreviewAudioTracks(); activeTransitionPreview = null;
+                document.getElementById('vPlayPauseBtn').innerText = '▶️';
+                await selectVideoClip(0, false, false);
+            }
+        }
+
+        function startUnifiedPreviewLoop() {
+            cancelAnimationFrame(unifiedPreviewRaf);
+            unifiedLastTickMs = performance.now();
+            const loop = (now) => {
+                if (!isTimelinePlaying || document.getElementById('editorModal').classList.contains('hidden')) return;
+                const dt = Math.min(0.1, Math.max(0, (now - unifiedLastTickMs) / 1000));
+                unifiedLastTickMs = now;
+                const c = window.getActiveVideoClip();
+                if (!c) return;
+                if (c.type === 'image') {
+                    imagePlayElapsed += dt;
+                    if (imagePlayElapsed >= c.duration - 0.12 && imagePlayElapsed < c.duration) {
+                        captureCurrentPreviewFrameTo(previewLastFrameCanvas);
+                    }
+                    if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+                    updatePlaybackProgressUI();
+                    if (imagePlayElapsed >= c.duration) { advanceToNextTimelineClipOrStop(); return; }
+                } else {
+                    const inTrans = window.isTimelineInActiveTransition(), hasFx = window.hasClipActiveEffects(c);
+                    if (inTrans || hasFx) {
+                        const glCan = document.getElementById('videoPreviewCanvas');
+                        if (glCan && glCan.classList.contains('hidden')) glCan.classList.remove('hidden');
+                        if (typeof window.redrawVideoFrameNow === 'function') window.redrawVideoFrameNow();
+                    } else {
+                        const glCan = document.getElementById('videoPreviewCanvas');
+                        if (glCan && !glCan.classList.contains('hidden')) glCan.classList.add('hidden');
+                        if (typeof window.redrawTextOverlayPreview === 'function') window.redrawTextOverlayPreview();
+                    }
+                }
+                unifiedPreviewRaf = requestAnimationFrame(loop);
+            };
+            unifiedPreviewRaf = requestAnimationFrame(loop);
         }
 
         function renderVideoClipsStrip() {
@@ -2051,8 +2203,9 @@ ${productInfo}
             let html = '';
             window.videoClips.forEach((c, idx) => {
                 const active = idx === window.activeClipIdx, durTxt = getClipPlayDuration(c).toFixed(1) + 's';
-                const spdTxt = c.speed !== 1.0 ? ` • ${c.speed}x` : '';
-                html += `<button onclick="selectVideoClip(${idx}, false)" class="shrink-0 px-2.5 py-1.5 rounded-xl border-2 font-black flex items-center space-x-1 ${active ? 'bg-rose-500/30 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}" style="font-size: 12px !important;"><span>🎞️ ${idx + 1} (${durTxt}${spdTxt})</span></button>`;
+                const spdTxt = (c.type !== 'image' && c.speed !== 1.0) ? ` • ${c.speed}x` : '';
+                const icon = c.type === 'image' ? '🖼️' : '🎞️';
+                html += `<button onclick="selectVideoClip(${idx}, false)" class="shrink-0 px-2.5 py-1.5 rounded-xl border-2 font-black flex items-center space-x-1 ${active ? 'bg-rose-500/30 border-rose-400 text-white' : 'bg-slate-950 border-slate-700 text-slate-300'}" style="font-size: 12px !important;"><span>${icon} ${idx + 1} (${durTxt}${spdTxt})</span></button>`;
                 if (idx < window.videoClips.length - 1) {
                     const tr = window.videoTransitions[idx] || { type: 'none', dur: 0.4 };
                     const preset = TRANSITION_PRESETS.find(p => p.id === tr.type) || TRANSITION_PRESETS[0];
@@ -2060,13 +2213,36 @@ ${productInfo}
                     html += `<button onclick="openClipTransitionPopup(${idx})" class="shrink-0 w-7 h-7 rounded-full border font-black flex items-center justify-center ${hasTr ? 'bg-indigo-500 text-white border-indigo-300' : 'bg-slate-800 text-slate-400 border-slate-600'}" style="font-size: 12px !important;" title="Chuyển cảnh">${preset.icon}</button>`;
                 }
             });
-            html += `<button onclick="document.getElementById('addMoreVideoClipInput').click()" class="shrink-0 px-2.5 py-1.5 rounded-xl bg-sky-500/20 border border-sky-400 text-sky-200 font-black" style="font-size: 12px !important;">+ 🎞️ Thêm Video</button>`;
             strip.innerHTML = html;
-            document.getElementById('btnDeleteVideoClip').classList.toggle('hidden', window.videoClips.length <= 1);
+            const prevBtn = document.getElementById('btnMoveClipPrev'), nextBtn = document.getElementById('btnMoveClipNext');
+            if (prevBtn) prevBtn.disabled = window.activeClipIdx <= 0;
+            if (nextBtn) nextBtn.disabled = window.activeClipIdx >= window.videoClips.length - 1;
+            const delV = document.getElementById('btnDeleteVideoClip'), delI = document.getElementById('btnDeleteImageClip');
+            if (delV) delV.classList.toggle('hidden', window.videoClips.length <= 1);
+            if (delI) delI.classList.toggle('hidden', window.videoClips.length <= 1);
+        }
+
+        function moveActiveClip(delta) {
+            const idx = window.activeClipIdx, target = idx + delta;
+            if (target < 0 || target >= window.videoClips.length) return;
+            closeClipTransitionPopup();
+            const tmp = window.videoClips[idx]; window.videoClips[idx] = window.videoClips[target]; window.videoClips[target] = tmp;
+            selectVideoClip(target, false, false);
+            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        function duplicateActiveClip() {
+            const c = window.getActiveVideoClip(); if (!c) return;
+            closeClipTransitionPopup();
+            const clone = { ...c, id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), adj: { ...c.adj } };
+            window.videoClips.splice(window.activeClipIdx + 1, 0, clone);
+            window.videoTransitions.splice(window.activeClipIdx, 0, { type: 'none', dur: 0.4 });
+            selectVideoClip(window.activeClipIdx + 1, false, false);
+            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
         function renderClipSpeedPills() {
-            const c = window.getActiveVideoClip(), row = document.getElementById('clipSpeedPillsRow'); if (!c || !row) return;
+            const c = window.getActiveVideoClip(), row = document.getElementById('clipSpeedPillsRow'); if (!c || !row || c.type === 'image') return;
             row.innerHTML = `<span class="text-slate-400 font-bold shrink-0 mr-0.5" style="font-size: 11px !important;">⚡</span>` + CLIP_SPEEDS.map(sp => {
                 const active = Math.abs((c.speed || 1.0) - sp) < 0.01;
                 return `<button onclick="setActiveClipSpeed(${sp})" class="shrink-0 px-2 py-0.5 rounded-lg font-black ${active ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}" style="font-size: 11px !important;">${sp}x</button>`;
@@ -2074,89 +2250,174 @@ ${productInfo}
         }
 
         function setActiveClipSpeed(spd) {
-            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c) return;
+            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c || c.type === 'image') return;
             c.speed = spd; if (pv) pv.playbackRate = spd;
             renderVideoClipsStrip(); renderClipSpeedPills(); updateTrimVisuals(c.duration); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        function onImageClipDurationInput(val) {
+            const c = window.getActiveVideoClip(); if (!c || c.type !== 'image') return;
+            c.duration = Number(val); c.trimEnd = c.duration;
+            document.getElementById('imageDurValText').innerText = `${c.duration.toFixed(1)}s`;
+            renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+        function setImageClipDurationPreset(sec) {
+            const sEl = document.getElementById('imageDurSlider'); if (sEl) sEl.value = sec;
+            onImageClipDurationInput(sec);
         }
 
         async function selectVideoClip(idx, autoPlay = false, keepAudioRunning = false) {
             if (idx < 0 || idx >= window.videoClips.length) return;
             const pv = document.getElementById('previewVideo');
-            if (!keepAudioRunning && pv && !pv.paused && !autoPlay) { pv.pause(); stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️'; }
+            if (!keepAudioRunning && !autoPlay) {
+                isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf);
+                if (pv && !pv.paused) pv.pause();
+                stopPreviewAudioTracks(); activeTransitionPreview = null;
+                document.getElementById('vPlayPauseBtn').innerText = '▶️';
+            }
             window.activeClipIdx = idx;
             const c = window.videoClips[idx];
-            window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
-            window.isCameraRecordedVideo = c.isCameraRecorded; window.recordedDigitalZoom = c.digitalZoom; window.recordedMirror = c.mirror;
-            document.getElementById('activeClipBadge').innerText = `✂️ Clip ${idx + 1}:`;
-            const sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
-            sSlider.min = 0; sSlider.max = c.duration.toFixed(1); sSlider.value = c.trimStart;
-            eSlider.min = 0; eSlider.max = c.duration.toFixed(1); eSlider.value = c.trimEnd;
-            updateTrimVisuals(c.duration); renderVideoClipsStrip(); renderClipSpeedPills(); renderAudioHeaderControls();
+            window.isCameraRecordedVideo = !!c.isCameraRecorded; window.recordedDigitalZoom = c.digitalZoom || 1.0; window.recordedMirror = !!c.mirror;
+
+            const isImg = c.type === 'image';
+            document.getElementById('videoTrimControlsBox').classList.toggle('hidden', isImg);
+            document.getElementById('imageClipControlsBox').classList.toggle('hidden', !isImg);
+
+            if (isImg) {
+                imagePlayElapsed = 0;
+                if (pv && !pv.paused) pv.pause();
+                document.getElementById('imageClipBadge').innerText = `🖼️ Ảnh ${idx + 1} • Thời gian hiện:`;
+                document.getElementById('imageDurSlider').value = c.duration;
+                document.getElementById('imageDurValText').innerText = `${c.duration.toFixed(1)}s`;
+            } else {
+                window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
+                document.getElementById('activeClipBadge').innerText = `✂️ Clip ${idx + 1}:`;
+                const sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
+                sSlider.min = 0; sSlider.max = c.duration.toFixed(1); sSlider.value = c.trimStart;
+                eSlider.min = 0; eSlider.max = c.duration.toFixed(1); eSlider.value = c.trimEnd;
+                updateTrimVisuals(c.duration); renderClipSpeedPills();
+            }
+
+            renderVideoClipsStrip(); renderAudioHeaderControls();
             if (typeof window.syncEditorModuleToActiveClip === 'function') window.syncEditorModuleToActiveClip(c);
 
-            if (pv) {
+            if (!isImg && pv) {
                 const sameUrl = (pv._clipSrcUrl === c.url);
                 if (!sameUrl) {
-                    pv.src = c.url; pv._clipSrcUrl = c.url; pv.load();
-                    await new Promise(res => { const done = () => { pv.removeEventListener('loadedmetadata', done); res(); }; pv.addEventListener('loadedmetadata', done); setTimeout(done, 400); });
+                    const sp = document.getElementById('videoLoadSpinner'); if (sp) sp.classList.remove('hidden');
+                    pv._clipSrcUrl = c.url; pv.src = c.url;
+                    await new Promise(res => {
+                        const done = () => { pv.removeEventListener('loadeddata', done); pv.removeEventListener('loadedmetadata', done); res(); };
+                        pv.addEventListener('loadeddata', done); pv.addEventListener('loadedmetadata', done);
+                        setTimeout(done, 450);
+                    });
                 }
                 pv.playbackRate = c.speed || 1.0;
                 if (pvOrigGain) pvOrigGain.gain.value = c.useOrigAudio ? ((c.origGainPct || 100) / 100) : 0;
-                try { pv.currentTime = c.trimStart; } catch (e) {}
-                updatePreviewCanvasVisibility();
-                if (autoPlay) {
-                    try { await pv.play(); document.getElementById('vPlayPauseBtn').innerText = '⏸️'; if (window.hasClipActiveEffects(c) && typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); } catch (e) {}
+                if (Math.abs((pv.currentTime || 0) - c.trimStart) > 0.05) {
+                    try { pv.currentTime = c.trimStart; } catch (e) {}
                 }
+            }
+
+            updatePreviewCanvasVisibility(); syncVideoCanvasStageSize(); window.redrawTextOverlayPreview(); updatePlaybackProgressUI();
+            if (autoPlay) {
+                isTimelinePlaying = true;
+                document.getElementById('vPlayPauseBtn').innerText = '⏸️';
+                if (!isImg && pv) { try { await pv.play(); } catch (e) {} }
+                startUnifiedPreviewLoop();
             }
         }
 
         function splitActiveVideoClipAtPlayhead() {
             const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo');
-            if (!c || !pv) return;
+            if (!c || c.type === 'image' || !pv) return;
+            closeClipTransitionPopup();
             let splitT = pv.currentTime;
             if (splitT <= c.trimStart + 0.35 || splitT >= c.trimEnd - 0.35) splitT = (c.trimStart + c.trimEnd) / 2;
             if (c.trimEnd - c.trimStart < 0.7) { alert('Clip quá ngắn (< 0.7s) không thể tách thêm.'); return; }
             splitT = Number(splitT.toFixed(1));
             const oldEnd = c.trimEnd; c.trimEnd = splitT;
             const secondClip = {
-                id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
-                blob: c.blob, url: c.url, name: c.name + ' (2)', duration: c.duration,
-                trimStart: splitT, trimEnd: oldEnd, speed: c.speed, adj: { ...c.adj }, filterIdx: c.filterIdx,
-                useOrigAudio: c.useOrigAudio, origGainPct: c.origGainPct, isCameraRecorded: c.isCameraRecorded,
-                digitalZoom: c.digitalZoom, mirror: c.mirror, poseUV: c.poseUV
+                ...c, id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5),
+                name: c.name + ' (2)', trimStart: splitT, trimEnd: oldEnd, adj: { ...c.adj }
             };
             window.videoClips.splice(window.activeClipIdx + 1, 0, secondClip);
             window.videoTransitions.splice(window.activeClipIdx, 0, { type: 'none', dur: 0.4 });
-            selectVideoClip(window.activeClipIdx + 1, false);
+            selectVideoClip(window.activeClipIdx + 1, false, false);
             syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
         function deleteActiveVideoClip() {
             if (window.videoClips.length <= 1) return;
+            closeClipTransitionPopup();
             const idx = window.activeClipIdx;
             window.videoClips.splice(idx, 1);
             if (idx < window.videoTransitions.length) window.videoTransitions.splice(idx, 1);
             else if (window.videoTransitions.length > 0) window.videoTransitions.pop();
-            selectVideoClip(Math.max(0, idx - 1), false);
+            selectVideoClip(Math.max(0, idx - 1), false, false);
             syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
 
-        async function handleAddMoreVideoClipFile(input) {
-            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
-            const url = URL.createObjectURL(file);
-            const dur = await new Promise(res => {
+        async function probeMediaFileDurationFast(file, url) {
+            try {
+                const MB = await loadMediabunnyLib();
+                if (MB) {
+                    const inp = new MB.Input({ source: new MB.BlobSource(file), formats: MB.ALL_FORMATS });
+                    const d = await inp.computeDuration();
+                    if (Number.isFinite(d) && d > 0.2) return d;
+                }
+            } catch (e) {}
+            return new Promise(res => {
                 const v = document.createElement('video'); v.preload = 'metadata';
                 v.onloadedmetadata = () => res(Number.isFinite(v.duration) && v.duration > 0.2 ? v.duration : 5);
                 v.onerror = () => res(5); v.src = url;
             });
-            window.videoClips.push({
-                id: 'clip_' + Date.now(), blob: file, url, name: file.name, duration: dur,
-                trimStart: 0, trimEnd: Number(dur.toFixed(1)), speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
-                useOrigAudio: true, origGainPct: 100, isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null
-            });
-            window.videoTransitions.push({ type: 'fade', dur: 0.4 });
-            await selectVideoClip(window.videoClips.length - 1, false);
-            syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        async function appendExtraVideoFiles(files) {
+            if (!files || !files.length) return;
+            for (const file of files) {
+                const url = URL.createObjectURL(file);
+                const dur = await probeMediaFileDurationFast(file, url);
+                window.videoClips.push({
+                    id: 'clip_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'video',
+                    blob: file, url, name: file.name, duration: dur, trimStart: 0, trimEnd: Number(dur.toFixed(1)),
+                    speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0, useOrigAudio: true, origGainPct: 100,
+                    isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
+                });
+                window.videoTransitions.push({ type: 'fade', dur: 0.4 });
+            }
+            renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+        }
+
+        async function handleAddMoreVideoClipFile(input) {
+            const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
+            const prevLen = window.videoClips.length;
+            await appendExtraVideoFiles(files);
+            await selectVideoClip(prevLen, false, false);
+        }
+
+        async function handleAddMoreImageClipFiles(input) {
+            const files = Array.from(input.files || []); input.value = ''; if (!files.length) return;
+            const prevLen = window.videoClips.length;
+            for (const file of files) {
+                const url = URL.createObjectURL(file);
+                const imgEl = await new Promise(res => {
+                    const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url;
+                });
+                if (!imgEl) continue;
+                window.videoClips.push({
+                    id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,5), type: 'image',
+                    imgEl, url, blob: file, name: file.name, naturalW: imgEl.naturalWidth, naturalH: imgEl.naturalHeight,
+                    duration: 3.0, trimStart: 0, trimEnd: 3.0, speed: 1.0, adj: createEmptyClipAdj(), filterIdx: 0,
+                    useOrigAudio: false, origGainPct: 0, isCameraRecorded: false, digitalZoom: 1.0, mirror: false, poseUV: null, _metaDone: true
+                });
+                window.videoTransitions.push({ type: 'fade', dur: 0.4 });
+            }
+            if (window.videoClips.length > prevLen) {
+                await selectVideoClip(prevLen, false, false);
+                syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
+            }
         }
 
         function openClipTransitionPopup(tIdx) {
@@ -2173,92 +2434,39 @@ ${productInfo}
         function closeClipTransitionPopup() { document.getElementById('clipTransitionPopup').classList.add('hidden'); }
         function setSelectedTransitionType(typeId) { if (window.selectedTransIdx < 0) return; window.videoTransitions[window.selectedTransIdx].type = typeId; openClipTransitionPopup(window.selectedTransIdx); renderVideoClipsStrip(); }
         function setSelectedTransitionDur(dur) { if (window.selectedTransIdx < 0) return; window.videoTransitions[window.selectedTransIdx].dur = dur; openClipTransitionPopup(window.selectedTransIdx); }
+        async function previewSelectedTransition() {
+            const tIdx = window.selectedTransIdx; if (tIdx < 0 || tIdx + 1 >= window.videoClips.length) return;
+            const c = window.videoClips[tIdx], dur = getClipPlayDuration(c);
+            const preOffset = Math.max(0, dur - 0.65);
+            await selectVideoClip(tIdx, false, false);
+            if (c.type === 'image') { imagePlayElapsed = preOffset; }
+            else { const pv = document.getElementById('previewVideo'); if (pv) try { pv.currentTime = c.trimStart + preOffset * (c.speed || 1); } catch (e) {} }
+            await togglePreviewVideoPlay();
+        }
 
         function updateTrimVisuals(dur) {
-            const c = window.getActiveVideoClip(); if (!c) return;
+            const c = window.getActiveVideoClip(); if (!c || c.type === 'image') return;
             const safeDur = Math.max(0.5, dur || c.duration), bar = document.getElementById('trimActiveBar');
             if (bar) { bar.style.left = `${Math.max(0, Math.min(100, (c.trimStart / safeDur) * 100))}%`; bar.style.right = `${Math.max(0, Math.min(100, 100 - (c.trimEnd / safeDur) * 100))}%`; }
             document.getElementById('trimStartValText').innerText = `${c.trimStart.toFixed(1)}s`; document.getElementById('trimEndValText').innerText = `${c.trimEnd.toFixed(1)}s`;
             document.getElementById('trimDurationText').innerText = `Giữ: ${getClipPlayDuration(c).toFixed(1)}s`;
         }
-        function startTrimDrag() { isDraggingTrim = true; const pv = document.getElementById('previewVideo'); if (pv && !pv.paused) { pv.pause(); stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️'; } }
+        function startTrimDrag() { isDraggingTrim = true; isTimelinePlaying = false; cancelAnimationFrame(unifiedPreviewRaf); const pv = document.getElementById('previewVideo'); if (pv && !pv.paused) { pv.pause(); stopPreviewAudioTracks(); document.getElementById('vPlayPauseBtn').innerText = '▶️'; } }
         function onTrimSliderInput(which) {
             const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'), sSlider = document.getElementById('trimStartSlider'), eSlider = document.getElementById('trimEndSlider');
-            if (!c) return;
+            if (!c || c.type === 'image') return;
             let sVal = Number(sSlider.value), eVal = Number(eSlider.value); const minGap = Math.min(0.4, c.duration * 0.15);
             if (which === 'start') { if (sVal > eVal - minGap) { sVal = Math.max(0, eVal - minGap); sSlider.value = sVal.toFixed(1); } c.trimStart = sVal; window.trimStartSec = sVal; throttledSeekVideo(pv, sVal); }
             else { if (eVal < sVal + minGap) { eVal = Math.min(c.duration, sVal + minGap); eSlider.value = eVal.toFixed(1); } c.trimEnd = eVal; window.trimEndSec = eVal; throttledSeekVideo(pv, Math.max(0, eVal - 0.03)); }
             updateTrimVisuals(c.duration); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly();
         }
-        function endTrimDrag(which) { isDraggingTrim = false; const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (pv && c) { try { pv.currentTime = which === 'start' ? c.trimStart : Math.max(0, c.trimEnd - 0.03); } catch (e) {} } }
+        function endTrimDrag(which) { isDraggingTrim = false; const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (pv && c && c.type !== 'image') { try { pv.currentTime = which === 'start' ? c.trimStart : Math.max(0, c.trimEnd - 0.03); } catch (e) {} } }
         function applyTrimPreset(preset) {
-            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c) return;
+            const c = window.getActiveVideoClip(), pv = document.getElementById('previewVideo'); if (!c || c.type === 'image') return;
             if (preset === 1 && c.duration > 2.4) { c.trimStart = 1.0; c.trimEnd = Number((c.duration - 1.0).toFixed(1)); } else { c.trimStart = 0; c.trimEnd = Number(c.duration.toFixed(1)); }
             window.trimStartSec = c.trimStart; window.trimEndSec = c.trimEnd;
             document.getElementById('trimStartSlider').value = c.trimStart; document.getElementById('trimEndSlider').value = c.trimEnd;
             updateTrimVisuals(c.duration); renderVideoClipsStrip(); syncTextTimingSlidersBounds(); renderAudioTimelineOnly(); if (pv) { try { pv.currentTime = c.trimStart; } catch (e) {} }
-        }
-
-        function ensurePreviewAudioGraph() {
-            const pv = document.getElementById('previewVideo'), ctx = getSharedAudioCtx(), c = window.getActiveVideoClip(); if (!ctx || !pv) return null;
-            if (!pvMediaSource) { pvMediaSource = ctx.createMediaElementSource(pv); pvOrigGain = ctx.createGain(); pvMediaSource.connect(pvOrigGain); pvOrigGain.connect(ctx.destination); }
-            pvOrigGain.gain.value = (c && c.useOrigAudio) ? ((c.origGainPct || 100) / 100) : 0; return ctx;
-        }
-        function stopPreviewAudioTracks() { activeScheduledNodes.forEach(n => { try { n.stop(); } catch (e) {} }); activeScheduledNodes = []; }
-        function getInsClipPlayDur(ic) { return Math.max(0.2, (ic.sliceEnd - ic.sliceStart) / Math.max(0.75, ic.speed || 1.0)); }
-        function getStretchedInsBuffer(ctx, ic) {
-            if (!ic || !ic.buffer) return null;
-            const sp = ic.speed || 1.0, key = `${ic.sliceStart.toFixed(2)}_${ic.sliceEnd.toFixed(2)}_${sp.toFixed(2)}`;
-            if (ic._stKey === key && ic._stBuf) return ic._stBuf;
-            ic._stBuf = createPitchPreservedAudioBuffer(ctx, ic.buffer, ic.sliceStart, ic.sliceEnd, sp);
-            ic._stKey = key; return ic._stBuf;
-        }
-        function startPreviewAudioTracks(globalTimeSec) {
-            stopPreviewAudioTracks(); const ctx = ensurePreviewAudioGraph(); if (!ctx) return;
-            const now = ctx.currentTime, totalDur = getTotalTimelineDuration();
-            if (vAudioState.insEnabled) {
-                vAudioState.insClips.forEach(ic => {
-                    const playDur = getInsClipPlayDur(ic), insStart = Math.max(0, ic.startInVideo), insEnd = insStart + playDur;
-                    if (globalTimeSec < insEnd && globalTimeSec < totalDur) {
-                        const buf = getStretchedInsBuffer(ctx, ic); if (!buf) return;
-                        const delay = Math.max(0, insStart - globalTimeSec), offset = Math.max(0, globalTimeSec - insStart);
-                        const dur = Math.max(0.1, Math.min(buf.duration - offset, totalDur - Math.max(globalTimeSec, insStart)));
-                        const src = ctx.createBufferSource(); src.buffer = buf; const g = ctx.createGain(); g.gain.value = (ic.gainPct ?? vAudioState.insGainPct) / 100;
-                        src.connect(g); g.connect(ctx.destination); src.start(now + delay, offset, dur); activeScheduledNodes.push(src);
-                    }
-                });
-            }
-            vAudioState.sfxList.forEach(sfx => { if (sfx.atSec >= globalTimeSec - 0.05 && sfx.atSec < totalDur) activeScheduledNodes.push(...scheduleSynthSfx(ctx, ctx.destination, sfx, now + Math.max(0, sfx.atSec - globalTimeSec))); });
-        }
-        async function togglePreviewVideoPlay() {
-            const pv = document.getElementById('previewVideo'), btn = document.getElementById('vPlayPauseBtn'), c = window.getActiveVideoClip(); if (!pv || !c) return;
-            if (pv.paused || pv.ended) {
-                const ctx = ensurePreviewAudioGraph(); if (ctx && ctx.state === 'suspended') await ctx.resume();
-                if (pv.ended || pv.currentTime < c.trimStart || pv.currentTime >= c.trimEnd - 0.12) { try { pv.currentTime = c.trimStart; } catch (e) {} }
-                pv.playbackRate = c.speed || 1.0;
-                const gT = getGlobalTimelineTime();
-                try { await pv.play(); btn.innerText = '⏸️'; startPreviewAudioTracks(gT); if (window.hasClipActiveEffects(c) && typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); }
-                catch (err) { try { pv.load(); await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 450); }); pv.currentTime = c.trimStart; await pv.play(); btn.innerText = '⏸️'; startPreviewAudioTracks(getGlobalTimelineTime()); if (window.hasClipActiveEffects(c) && typeof window.startVideoRenderLoop === 'function') window.startVideoRenderLoop(); } catch (e2) {} }
-            } else { pv.pause(); stopPreviewAudioTracks(); btn.innerText = '▶️'; window.redrawTextOverlayPreview(); }
-        }
-        async function scrubPreviewVideo(pct) {
-            const totalDur = getTotalTimelineDuration(), targetG = (Number(pct) / 100) * totalDur;
-            let acc = 0, targetIdx = 0;
-            for (let i = 0; i < window.videoClips.length; i++) { const d = getClipPlayDuration(window.videoClips[i]); if (targetG <= acc + d || i === window.videoClips.length - 1) { targetIdx = i; break; } acc += d; }
-            const c = window.videoClips[targetIdx], seekT = Math.min(c.trimEnd - 0.03, c.trimStart + Math.max(0, targetG - acc) * (c.speed || 1.0));
-            const s = Math.floor(targetG); document.getElementById('vTimeLabel').innerText = `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-            if (targetIdx !== window.activeClipIdx) await selectVideoClip(targetIdx, false, false);
-            throttledSeekVideo(document.getElementById('previewVideo'), seekT);
-        }
-        function throttledSeekVideo(pv, targetSec) {
-            if (!pv) return; const now = performance.now();
-            if (pv.seeking || now - lastTrimSeekMs < 85) { cancelAnimationFrame(trimSeekRaf); trimSeekRaf = requestAnimationFrame(() => { if (!pv.seeking && performance.now() - lastTrimSeekMs >= 85) { lastTrimSeekMs = performance.now(); try { pv.currentTime = targetSec; } catch (e) {} } }); return; }
-            lastTrimSeekMs = now; try { pv.currentTime = targetSec; } catch (e) {}
-        }
-        function toggleVideoPreviewFullscreen() {
-            vFullscreenActive = !vFullscreenActive; const wrap = document.getElementById('previewVideoWrapper'), exitBtn = document.getElementById('exitVideoZoomBtn');
-            if (vFullscreenActive) { wrap.className = 'fixed inset-0 z-[80] bg-black flex flex-col items-center justify-center'; exitBtn.classList.remove('hidden'); } else { wrap.className = 'relative flex-1 bg-black flex flex-col items-center justify-center overflow-hidden p-2 min-h-0 min-w-0 w-full'; exitBtn.classList.add('hidden'); }
-            setTimeout(() => { syncVideoCanvasStageSize(); window.redrawTextOverlayPreview(); }, 30);
         }
 
         // ====== STUDIO ÂM THANH 3 LỚP + CẮT ĐẦU/ĐUÔI & TÁCH & TỐC ĐỘ AUDIO DÀI (1-5 PHÚT) ======
