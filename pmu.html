@@ -336,7 +336,8 @@
                     <button onclick="insertStudioTag('<sigh>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 font-bold" style="font-size: 12px !important;">😩 Thở nhẹ</button>
                     <button onclick="insertStudioTag('<whispering>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-sky-500/40 text-sky-200 font-bold" style="font-size: 12px !important;">🤫 Thủ thỉ</button>
                     <button onclick="insertStudioTag('<short pause>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">⏸️ Nghỉ ngắn</button>
-                    <button onclick="insertStudioTag('<long pause>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-emerald-500/60 text-emerald-300 font-bold" style="font-size: 12px !important;">✂️ Nghỉ dài (Mốc cắt)</button>
+                    <button onclick="insertStudioTag('<breath>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">😮‍💨 Lấy hơi</button>
+<button onclick="enrichTranscriptWithEmotions()" id="btnEnrichEmotion" class="px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-black shadow" style="font-size: 12px !important;">🎭 AI Thổi cảm xúc</button>
                 </div>
 
                 <div class="space-y-2 pt-1">
@@ -1612,7 +1613,7 @@ Cảnh 3 (11s - 16s) (Quay ở Lần 3)
 
         // ====== ĐO KHOẢNG LẶNG SÓNG ÂM (<long pause> >= 0.75s) ======
         function detectAudioPauses(audioBuffer) {
-            if (!audioBuffer) return { longPauses: [], allPauses: [] };
+            if (!audioBuffer) return { longPauses: [], allPauses: [], rawRuns: [] };
             const ch = audioBuffer.getChannelData(0), sr = audioBuffer.sampleRate, winSec = 0.04, winSamples = Math.max(1, Math.floor(sr * winSec));
             const rmsList = [], windows = [];
             for (let i = 0; i < ch.length; i += winSamples) {
@@ -1635,6 +1636,39 @@ Cảnh 3 (11s - 16s) (Quay ở Lần 3)
             }
             return { longPauses: rawRuns.filter(r => r.dur >= 0.75).map(r => r.t), allPauses: rawRuns.map(r => r.t), rawRuns };
         }
+
+        function matchExactLongPausesForSegments(studioSegs, rawRuns, totalDur) {
+            const need = studioSegs.length - 1;
+            if (need <= 0 || !totalDur) return [];
+            const weights = studioSegs.map(s => Math.max(10, s.text.length));
+            const totalW = weights.reduce((a, b) => a + b, 0) || 1;
+            const cuts = []; let cumW = 0;
+            const maxWin = Math.max(3.2, totalDur * 0.28);
+            for (let i = 0; i < need; i++) {
+                cumW += weights[i];
+                const expectedT = (cumW / totalW) * totalDur;
+                const minT = i === 0 ? 0.6 : cuts[i - 1] + 0.8;
+                const maxT = totalDur - Math.max(0.6, ((totalW - cumW) / totalW) * totalDur * 0.35);
+                let bestT = Number(Math.max(minT, Math.min(maxT, expectedT)).toFixed(1));
+                let bestScore = -999;
+                for (const r of (rawRuns || [])) {
+                    if (r.t < minT || r.t > maxT || Math.abs(r.t - expectedT) > maxWin) continue;
+                    const score = (r.dur >= 0.60 ? r.dur * 2.6 : r.dur * 0.8) - Math.abs(r.t - expectedT) * 0.35;
+                    if (score > bestScore) { bestScore = score; bestT = Number(r.t.toFixed(1)); }
+                }
+                cuts.push(bestT);
+            }
+            return cuts;
+        }
+
+        function snapTimeToPause(t, pauses, maxDist = 0.85) {
+            if (!pauses || !pauses.length) return Number(t.toFixed(1));
+            let best = t, bestDiff = maxDist;
+            for (const p of pauses) { const diff = Math.abs(p - t); if (diff < bestDiff) { bestDiff = diff; best = p; } }
+            return Number(best.toFixed(1));
+        }
+
+
         function snapTimeToPause(t, pauses, maxDist = 0.85) {
             if (!pauses || !pauses.length) return Number(t.toFixed(1));
             let best = t, bestDiff = maxDist;
@@ -1646,6 +1680,8 @@ Cảnh 3 (11s - 16s) (Quay ở Lần 3)
             for (const line of lines) { const m = line.trim().match(/^Đoạn\s+(\d+)\s*:\s*(.+)/i); if (m) segs.push({ idx: Number(m[1]), text: m[2].trim().replace(/^["“]|["”]$/g, '') }); }
             return segs;
         }
+
+
         function buildSubtitlesForScene(speechText, durSec, aiSubs) {
             const dur = Math.max(1.0, Number(durSec) || 3);
             if (Array.isArray(aiSubs) && aiSubs.length > 0) {
@@ -1804,7 +1840,12 @@ Cảnh 3 (11s - 16s) (Quay ở Lần 3)
             if (masterAudioData) { if (!masterAudioBuffer) masterAudioBuffer = await decodeAudioBufSafe(masterAudioData.arrayBuffer); if (masterAudioBuffer) pauseInfo = detectAudioPauses(masterAudioBuffer); }
             if (!raw && masterAudioData && !hasKey) { btn.disabled = false; btn.innerHTML = origHtml; alert('Để AI tự nghe file âm thanh và viết thành kịch bản PMU chi tiết, bạn hãy bấm nút 🔑 dán Gemini Key trước nhé!'); openMainKeyModal(); return; }
 
-            const studioSegs = extractStudioSegmentsFromText(raw), hasExactPauseMap = masterAudioData && studioSegs.length > 0 && pauseInfo.longPauses.length === studioSegs.length - 1;
+            const studioSegs = extractStudioSegmentsFromText(raw);
+            if (masterAudioData && studioSegs.length >= 2 && pauseInfo.rawRuns && pauseInfo.rawRuns.length) {
+                const matched = matchExactLongPausesForSegments(studioSegs, pauseInfo.rawRuns, audioDur);
+                if (matched.length === studioSegs.length - 1) pauseInfo.longPauses = matched;
+            }
+            const hasExactPauseMap = masterAudioData && studioSegs.length > 0 && pauseInfo.longPauses.length === studioSegs.length - 1;
             let project = null;
             if (hasKey) {
                 let pauseHint = `Tổng độ dài audio: ${audioDur.toFixed(1)}s.`;
@@ -1986,49 +2027,107 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                 else { b.className = 'p-3 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left flex items-center justify-between'; d.className = 'text-slate-600 font-black'; d.innerText = '○'; }
             });
         }
+
+
+
         async function generateStudioScriptOnly() {
             const productInfo = document.getElementById('studioProductInput').value.trim();
             if (!productInfo) { alert('Bạn hãy nhập dịch vụ hoặc nội dung phun xăm vào ô trước nhé!'); return null; }
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy bấm nút 🔑 để dán Gemini API Key trước nhé!'); openMainKeyModal(); return null; }
             const styleSpecs = {
-                1: 'Phong cách 1: Kéo khách đặt lịch (mở đầu 3 giây bằng câu hỏi đánh trúng nỗi sợ đau / sợ già / sợ trổ xanh đỏ, nhấn mạnh sự tự nhiên nhẹ nhàng tại KimBling Beauty - Master Nguyễn Hiền).',
-                2: 'Phong cách 2: Chia sẻ chuyên môn / Giáo trình (giọng Master Nguyễn Hiền phân tích dễ hiểu về kỹ thuật đi hạt, trung hòa sắc tố, giữ nét sau bong chuẩn y khoa).',
-                3: 'Phong cách 3: Tuyển sinh học viên nghề Phun Xăm (dứt khoát, truyền cảm hứng, nhấn mạnh thực hành kèm sát 1:1 trên da giả & mẫu thật cùng Master Nguyễn Hiền).',
-                4: 'Phong cách 4: Storytelling lột xác nhan sắc (thủ thỉ tâm sự gần gũi, kể ca xử lý thành công giúp chị em tự tin mặt mộc).'
+                1: 'Phong cách 1: Kéo khách đặt lịch (mở đầu 3 giây bằng <gasp> đánh trúng nỗi sợ đau/trổ xanh đỏ, xen <whispering> trấn an nhẹ nhàng tại KimBling Beauty - Master Nguyễn Hiền).',
+                2: 'Phong cách 2: Chia sẻ chuyên môn / Giáo trình (giọng Master Nguyễn Hiền tâm huyết, dùng <breath> và <short pause> nhấn mạnh kỹ thuật tầng thượng bì, giữ hạt tự nhiên).',
+                3: 'Phong cách 3: Tuyển sinh học viên nghề Phun Xăm (nhiệt huyết, <chuckle> thân thiện gần gũi, truyền lửa kèm 1:1).',
+                4: 'Phong cách 4: Storytelling lột xác nhan sắc (mở đầu bằng <sigh> đồng cảm nỗi tự ti môi thâm/mày lỗi, rồi vỡ òa hạnh phúc với <gasp> và <giggle> nhẹ).'
             };
-            const prompt = `Bạn là chuyên gia nội dung ngành Phun Xăm Thẩm Mỹ cho thương hiệu KimBling Beauty - Master Nguyễn Hiền.
-Hãy viết ĐÚNG 1 BẢN KỊCH BẢN LỜI THOẠI HOÀN CHỈNH theo: ${styleSpecs[studioSelectedStyle]}
+            const prompt = `Bạn là chuyên gia nội dung Phun Xăm Thẩm Mỹ cho KimBling Beauty - Master Nguyễn Hiền.
+Viết ĐÚNG 1 BẢN LỜI THOẠI GIÀU CẢM XÚC, CÓ HỒN NHƯ NGƯỜI THẬT TÂM SỰ theo: ${styleSpecs[studioSelectedStyle]}
 
 QUY TẮC BẮT BUỘC:
-1. Đưa ĐẦY ĐỦ 100% thông tin kỹ thuật/dịch vụ từ phần ĐẦU VÀO, tuyệt đối không nói sai kiến thức chuyên môn phun xăm.
-2. CHIA CỤM ĐỂ CẮT AUDIO CHUẨN:
-   - Nhóm thành 4-6 cụm cảnh quay (mỗi cụm 2-3 câu).
-   - Sau câu cuối mỗi cụm (trừ cụm cuối cùng), xuống dòng đặt đúng 1 thẻ <long pause> làm mốc cắt cảnh!
-   - Không đặt <long pause> giữa các câu trong cùng 1 cụm.
-3. Giọng văn tiếng Việt tự nhiên, sang trọng, ấm áp. Đổi số/đơn vị sang chữ để AI đọc chuẩn.
-4. CHỈ DÙNG thẻ hợp lệ: <gasp>, <giggle>, <chuckle>, <sigh>, <whispering>, <short pause>, <long pause>. Không viết tiêu đề hay đánh số đoạn.
+1. Đưa ĐẦY ĐỦ thông tin kỹ thuật từ đầu vào, đúng chuyên môn phun xăm. Đổi số/đơn vị sang chữ để AI đọc chuẩn.
+2. BẮT BUỘC CHIA CỤM 2-3 CÂU + <long pause> ĐỂ CẮT AUDIO CHUẨN:
+   - Chia lời thoại thành 4-6 cụm cảnh quay.
+   - MỖI CỤM PHẢI GỒM ĐÚNG 2 CÂU (nếu câu dài) HOẶC 3 CÂU (nếu câu ngắn).
+   - Chỉ sau câu cuối của mỗi cụm (trừ cụm chốt đơn cuối) mới xuống dòng đặt đúng 1 thẻ <long pause>.
+   - TUYỆT ĐỐI KHÔNG đặt <long pause> ở giữa 2-3 câu trong cùng 1 cụm!
+3. BẮT BUỘC ĐƯA CẢM XÚC VÀO TỪNG CỤM (KHÔNG VIẾT ĐỀU ĐỀU):
+   - Rải đều ít nhất 5-7 thẻ cảm xúc tiếng Anh trong ngoặc nhọn: <gasp>, <sigh>, <chuckle>, <giggle>, <whispering>, <breath>, <short pause>.
+   - Dùng dấu "..." để ngắt nhịp lấy hơi tự nhiên, và VIẾT HOA nhẹ 1-2 từ khóa cần nhấn (VD: KHÔNG SƯNG ĐAU, MẢNH TƠI NHƯ THẬT).
+   - TUYỆT ĐỐI KHÔNG viết chú thích trong ngoặc tròn (cười), (thì thầm) vì máy sẽ đọc thành chữ! Không đánh số đoạn.
+   - Ví dụ mẫu: "<sigh> Chị em nào từng tự ti vì nền môi thâm xỉn màu... <short pause> đừng vội buồn nha! <whispering> Bí quyết nằm ở bước khử thâm tầng thượng bì siêu nhẹ này nè..."
 
 NỘI DUNG ĐẦU VÀO:
-"""
-${productInfo}
-"""`;
-            for (const m of ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-flash']) {
-                try {
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 2048 } })
-                    });
-                    if (!resp.ok) continue;
-                    const data = await resp.json(), text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                    if (text) {
-                        const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
-                        document.getElementById('studioTtsTranscript').value = cleanText; updateStudioCharCount(); return cleanText;
-                    }
-                } catch (e) {}
+"""${productInfo}"""`;
+
+            let text = null;
+            if (typeof window.callGeminiApiSmart === 'function') {
+                text = await window.callGeminiApiSmart(prompt, [], { temp: 0.72, maxTokens: 2048, timeoutMs: 20000 });
+            } else {
+                for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
+                    try {
+                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.72, maxOutputTokens: 2048 } })
+                        });
+                        if (!r.ok) continue;
+                        const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                        if (t) { text = t; break; }
+                    } catch (e) {}
+                }
+            }
+            if (text) {
+                const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
+                document.getElementById('studioTtsTranscript').value = cleanText;
+                updateStudioCharCount();
+                return cleanText;
             }
             return null;
         }
+
+        async function enrichTranscriptWithEmotions() {
+            const ta = document.getElementById('studioTtsTranscript'), raw = (ta.value || '').trim();
+            if (!raw) { alert('Ô lời thoại đang trống! Hãy viết thoại trước rồi bấm nút này.'); return; }
+            const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
+            if (!apiKey) { alert('Hãy dán Gemini API Key trước nhé!'); openMainKeyModal(); return; }
+            const btn = document.getElementById('btnEnrichEmotion'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
+            btn.disabled = true; btn.innerText = '⏳ Đang thổi hồn...'; st.innerText = '🎭 AI đang chèn cảm xúc & giữ nguyên mốc <long pause>...';
+            try {
+                const prompt = `Bạn là đạo diễn giọng đọc Gemini 3.8 TTS cho thương hiệu KimBling Beauty - Master Nguyễn Hiền. Giữ nguyên NGUYÊN Ý lời thoại tiếng Việt dưới đây và chỉ chèn thêm các thẻ cảm xúc (<gasp>, <chuckle>, <giggle>, <sigh>, <whispering>, <breath>, <short pause>), dấu "..." và VIẾT HOA nhẹ từ cần nhấn mạnh.
+QUY TẮC SỐNG CÒN:
+- GIỮ NGUYÊN Y ĐÚNG VỊ TRÍ VÀ SỐ LƯỢNG thẻ <long pause> đang có (TUYỆT ĐỐI KHÔNG thêm bớt <long pause>).
+- Không dùng ngoặc đơn (). Chỉ trả về thuần văn bản lời thoại.
+LỜI THOẠI GỐC:
+"""${raw}"""`;
+                let out = null;
+                if (typeof window.callGeminiApiSmart === 'function') {
+                    out = await window.callGeminiApiSmart(prompt, [], { temp: 0.55, maxTokens: 2048, timeoutMs: 18000 });
+                } else {
+                    for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
+                        try {
+                            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.55, maxOutputTokens: 2048 } })
+                            });
+                            if (!r.ok) continue;
+                            const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                            if (t) { out = t; break; }
+                        } catch (e) {}
+                    }
+                }
+                if (out) {
+                    ta.value = out.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
+                    updateStudioCharCount();
+                    st.innerText = '🎭 Đã thổi hồn cảm xúc xong! Chọn "Đọc Full" và bấm Tạo & Nghe thử.';
+                } else {
+                    st.innerText = `❌ Không thêm được cảm xúc (${window.lastGeminiError || 'kiểm tra Key'}).`;
+                }
+            } finally {
+                btn.disabled = false; btn.innerText = orig;
+            }
+        }
+
+
         async function runStudioScriptOnlyBtn() {
             const btn = document.getElementById('btnStudioScriptOnly'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
             btn.disabled = true; btn.innerText = '⏳ Đang viết...'; st.innerText = '✍️ AI đang viết thoại chuyên ngành PMU kèm mốc <long pause>...';

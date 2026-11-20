@@ -224,7 +224,8 @@
                     <button onclick="insertStudioTag('<sigh>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 font-bold" style="font-size: 12px !important;">😩 Thở dài</button>
                     <button onclick="insertStudioTag('<whispering>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-sky-500/40 text-sky-200 font-bold" style="font-size: 12px !important;">🤫 Thì thầm</button>
                     <button onclick="insertStudioTag('<short pause>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">⏸️ Nghỉ ngắn</button>
-                    <button onclick="insertStudioTag('<long pause>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-emerald-500/60 text-emerald-300 font-bold" style="font-size: 12px !important;">✂️ Nghỉ dài (Mốc cắt)</button>
+                <button onclick="insertStudioTag('<breath>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">😮‍💨 Lấy hơi</button>
+<button onclick="enrichTranscriptWithEmotions()" id="btnEnrichEmotion" class="px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-black shadow" style="font-size: 12px !important;">🎭 AI Thổi cảm xúc</button>
                 </div>
 
                 <div class="space-y-2 pt-1">
@@ -1315,7 +1316,7 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
 
         // ====== ĐO KHOẢNG LẶNG SÓNG ÂM (PHÂN BIỆT <long pause> >= 0.75s) ======
         function detectAudioPauses(audioBuffer) {
-            if (!audioBuffer) return { longPauses: [], allPauses: [] };
+            if (!audioBuffer) return { longPauses: [], allPauses: [], rawRuns: [] };
             const ch = audioBuffer.getChannelData(0), sr = audioBuffer.sampleRate, winSec = 0.04, winSamples = Math.max(1, Math.floor(sr * winSec));
             const rmsList = [], windows = [];
             for (let i = 0; i < ch.length; i += winSamples) {
@@ -1338,12 +1339,41 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
             }
             return { longPauses: rawRuns.filter(r => r.dur >= 0.75).map(r => r.t), allPauses: rawRuns.map(r => r.t), rawRuns };
         }
+
+        function matchExactLongPausesForSegments(studioSegs, rawRuns, totalDur) {
+            const need = studioSegs.length - 1;
+            if (need <= 0 || !totalDur) return [];
+            const weights = studioSegs.map(s => Math.max(10, s.text.length));
+            const totalW = weights.reduce((a, b) => a + b, 0) || 1;
+            const cuts = []; let cumW = 0;
+            const maxWin = Math.max(3.2, totalDur * 0.28);
+            for (let i = 0; i < need; i++) {
+                cumW += weights[i];
+                const expectedT = (cumW / totalW) * totalDur;
+                const minT = i === 0 ? 0.6 : cuts[i - 1] + 0.8;
+                const maxT = totalDur - Math.max(0.6, ((totalW - cumW) / totalW) * totalDur * 0.35);
+                let bestT = Number(Math.max(minT, Math.min(maxT, expectedT)).toFixed(1));
+                let bestScore = -999;
+                for (const r of (rawRuns || [])) {
+                    if (r.t < minT || r.t > maxT || Math.abs(r.t - expectedT) > maxWin) continue;
+                    const score = (r.dur >= 0.60 ? r.dur * 2.6 : r.dur * 0.8) - Math.abs(r.t - expectedT) * 0.35;
+                    if (score > bestScore) { bestScore = score; bestT = Number(r.t.toFixed(1)); }
+                }
+                cuts.push(bestT);
+            }
+            return cuts;
+        }
+
         function snapTimeToPause(t, pauses, maxDist = 0.85) {
             if (!pauses || !pauses.length) return Number(t.toFixed(1));
             let best = t, bestDiff = maxDist;
             for (const p of pauses) { const diff = Math.abs(p - t); if (diff < bestDiff) { bestDiff = diff; best = p; } }
             return Number(best.toFixed(1));
         }
+
+
+
+
         function extractStudioSegmentsFromText(rawText) {
             const lines = String(rawText || '').split(/\r?\n/), segs = [];
             for (const line of lines) { const m = line.trim().match(/^Đoạn\s+(\d+)\s*:\s*(.+)/i); if (m) segs.push({ idx: Number(m[1]), text: m[2].trim().replace(/^["“]|["”]$/g, '') }); }
@@ -1508,7 +1538,12 @@ Cảnh 8 (34s - 38s) (Quay ở Lần 5)
             if (masterAudioData) { if (!masterAudioBuffer) masterAudioBuffer = await decodeAudioBufSafe(masterAudioData.arrayBuffer); if (masterAudioBuffer) pauseInfo = detectAudioPauses(masterAudioBuffer); }
             if (!raw && masterAudioData && !hasKey) { btn.disabled = false; btn.innerHTML = origHtml; alert('Để AI tự nghe file âm thanh và viết thành kịch bản chi tiết, bạn hãy bấm nút 🔑 dán Gemini Key trước nhé!'); openMainKeyModal(); return; }
 
-            const studioSegs = extractStudioSegmentsFromText(raw), hasExactPauseMap = masterAudioData && studioSegs.length > 0 && pauseInfo.longPauses.length === studioSegs.length - 1;
+            const studioSegs = extractStudioSegmentsFromText(raw);
+            if (masterAudioData && studioSegs.length >= 2 && pauseInfo.rawRuns && pauseInfo.rawRuns.length) {
+                const matched = matchExactLongPausesForSegments(studioSegs, pauseInfo.rawRuns, audioDur);
+                if (matched.length === studioSegs.length - 1) pauseInfo.longPauses = matched;
+            }
+            const hasExactPauseMap = masterAudioData && studioSegs.length > 0 && pauseInfo.longPauses.length === studioSegs.length - 1;
             let project = null;
             if (hasKey) {
                 let pauseHint = `Tổng độ dài audio: ${audioDur.toFixed(1)}s.`;
@@ -1724,52 +1759,94 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy bấm nút 🔑 để dán Gemini API Key trước nhé!'); openMainKeyModal(); return null; }
             const styleSpecs = {
-                1: 'Phong cách 1: "Bắt trend / Gây tò mò" (mở đầu bằng hook níu chân như "<gasp> Khoan lướt qua nha!", năng lượng tươi vui, lôi cuốn, nêu đủ hết mọi chi tiết món).',
-                2: 'Phong cách 2: "Nhẹ nhàng, thủ thỉ / Chill" (ấm áp, dễ thương, hợp quay cận cảnh rót nước, đá rơi, có thể dùng <sigh> hoặc <whispering> nhẹ ở đầu câu, nêu đủ mọi chi tiết món).',
-                3: 'Phong cách 3: "Ngắn gọn, dứt khoát / Chốt đơn nhanh" (câu ngắn gọn gãy gọn, nhịp nhanh, gom 3 câu ngắn thành 1 cụm nhưng VẪN PHẢI NÊU ĐỦ hết giá, upsize, từng topping và chốt đơn!).',
-                4: `Phong cách 4: "Đổ gục / Storytelling — Xưng 'anh', gọi 'mấy con vợ'":
-   - Xưng hô BẮT BUỘC: Người nói tự xưng "anh", gọi người nghe là "mấy con vợ" (lém lỉnh, hài hước, thân mật kiểu Gen Z TikTok).
-   - Cấu trúc 4 bước Storytelling:
-     + Mở đầu (Hook): Đặt câu hỏi thách thức/thả thính trực diện gây tò mò ngay 3 giây đầu (kiểu "<gasp> Mấy con vợ có tin vào tình yêu sét đánh không? Nhìn ly [Tên món] này xem...").
-     + Thân bài (Pha chế & Giác quan): Đi từng lớp nguyên liệu, kích thích thị giác/vị giác/khứu giác với động từ sống động ("sữa đặc làm nền, khuấy đều tay, đá ngập ly đóng băng nỗi buồn, hai tông màu ôm lấy nhau phân tầng chất phát ngất, siêu béo ngậy, thơm ngất ngây...").
-     + Cao trào (Giá, Upsize & Topping trùm cuối): Đẩy nhịp dồn dập khi khoe giá, upsize 1 lít hay topping ("quẩy banh nóc cho anh", "chấn động", giữ đủ 100% giá & từng topping của món).
-     + Kết thúc (Chữa lành & Chốt đơn): Khoảnh khắc "hút một ngụm thật sâu" dịu mát tâm hồn, "chữa lành mọi sự cọc cằn" rồi chốt ghé quán!`
+                1: 'Phong cách 1: Bắt trend / Gây tò mò (mở đầu bằng <gasp> giật mình lôi cuốn, năng lượng vui tươi, nhấn mạnh vào giá hời & topping).',
+                2: 'Phong cách 2: Nhẹ nhàng, thủ thỉ / Chill (ấm áp, mở đầu bằng <sigh> thư giãn, xen <whispering> đầy quyến rũ vị giác).',
+                3: 'Phong cách 3: Dứt khoát / Chốt đơn nhanh (nhịp gọn gàng, dùng <short pause> trước giá tiền để nhấn mạnh, <chuckle> nhẹ khi mời gọi).',
+                4: 'Phong cách 4: Đổ gục / Storytelling — Xưng "anh", gọi "mấy con vợ" (lém lỉnh, trêu ghẹo duyên dáng với <chuckle> / <giggle>, <sigh> đóng băng nỗi buồn, <whispering> thì thầm rủ rê).'
             };
-            const prompt = `Bạn là chuyên gia viết kịch bản voiceover TikTok cho quán Kim Bling (địa chỉ M9 Cư xá Phú Lâm A).
-Hãy viết ĐÚNG 1 BẢN KỊCH BẢN LỜI THOẠI HOÀN CHỈNH (FULL Ý) theo: ${styleSpecs[studioSelectedStyle]}
+            const prompt = `Bạn là biên kịch voiceover TikTok chuyên nghiệp cho quán Kim Bling (M9 Cư xá Phú Lâm A).
+Hãy viết ĐÚNG 1 BẢN LỜI THOẠI GIÀU CẢM XÚC NHƯ NGƯỜI THẬT NÓI theo: ${styleSpecs[studioSelectedStyle]}
 
-QUY TẮC BẮT BUỘC (KHÔNG ĐƯỢC VI PHẠM):
-1. PHẢI ĐƯA ĐẦY ĐỦ 100% MỌI THÔNG TIN từ phần "THÔNG TIN MÓN" bên dưới (không được lược bỏ tên món, giá gốc, upsize, từng loại topping, mô tả hương vị hay lời chốt đơn cuối cùng!). Không giới hạn cứng số đoạn hay số giây — viết đủ hết toàn bộ ý.
-2. CHIA CỤM ĐỂ CẮT AUDIO CHUẨN (CỰC KỲ QUAN TRỌNG):
-   - Nhóm lời thoại thành từng cụm cảnh quay (có thể 4, 5, 6 hoặc 7 cụm tùy độ dài thông tin).
-   - Mỗi cụm gồm **2 câu** (nếu câu dài/nhiều ý) HOẶC **3 câu** (nếu câu ngắn, gọn).
-   - Sau câu cuối của mỗi cụm (trừ cụm chốt đơn cuối cùng), BẮT BUỘC xuống dòng và đặt đúng 1 thẻ <long pause> để tạo khoảng lặng ~2 giây làm mốc cắt cảnh!
-   - TUYỆT ĐỐI KHÔNG đặt <long pause> ở giữa 2-3 câu trong cùng 1 cụm! Trong nội bộ cùng 1 cụm chỉ dùng dấu phẩy, dấu chấm hoặc tối đa <short pause>.
-3. Văn phong tiếng Việt miền Nam tự nhiên, lôi cuốn. Đổi toàn bộ số tiền/đơn vị sang chữ để AI đọc chuẩn: "19.000đ" hoặc "19k" -> "19 ngàn", "3k" -> "3 ngàn", "1 lít" -> "một lít", "M9" -> "M9".
-4. CHỈ DÙNG các thẻ inline hợp lệ của Gemini 3.8 TTS: <gasp>, <giggle>, <chuckle>, <laugh>, <sigh>, <whispering>, <short pause>, <long pause>. TUYỆT ĐỐI KHÔNG dùng thẻ đóng kiểu </whispers> hay </whispering>.
-5. KHÔNG viết tiêu đề, KHÔNG đánh số đoạn, KHÔNG giải thích — chỉ trả về thuần văn bản lời thoại để đưa vào máy thu âm!
+QUY TẮC BẮT BUỘC:
+1. GIỮ ĐỦ 100% thông tin (tên món, giá, upsize, từng loại topping, lời chốt). Đổi tiền sang chữ ("19k" -> "19 ngàn", "1 lít" -> "một lít").
+2. BẮT BUỘC ĐƯA CẢM XÚC VÀO TỪNG ĐOẠN (TUYỆT ĐỐI KHÔNG ĐƯỢC VIẾT KHÔ KHAN):
+   - Phải rải đều ít nhất 5-7 thẻ cảm xúc tiếng Anh trong ngoặc nhọn: <gasp>, <chuckle>, <giggle>, <sigh>, <whispering>, <breath>, <short pause>.
+   - Dùng dấu "..." để ngắt giọng tự nhiên, và VIẾT HOA nhẹ 1-2 từ khóa muốn nhấn (VD: SIÊU BÉO, CHỈ 19 NGÀN).
+   - TUYỆT ĐỐI KHÔNG dùng dấu ngoặc đơn kiểu (cười) hay (thì thầm) vì máy đọc sẽ đọc thành chữ!
+   - Ví dụ chuẩn: "<gasp> Khoan lướt qua nha! <short pause> Nhìn ly trà sữa này xem... <chuckle> mới nhìn thôi là thấy mê rồi đúng không?"
+   - Ví dụ nhấn giá/bí mật: "<whispering> Bật mí nhỏ nè... <short pause> ly chuẩn giá chỉ MƯỜI CHÍN NGÀN thôi đó! <giggle>"
+3. CHIA CỤM CẮT CẢNH: Gom 2-3 câu thành 1 cụm, cuối mỗi cụm (trừ cụm cuối) xuống dòng đặt đúng 1 thẻ <long pause>. Không viết tiêu đề hay đánh số.
 
-THÔNG TIN MÓN CẦN VIẾT FULL:
-"""
-${productInfo}
-"""`;
+THÔNG TIN MÓN:
+"""${productInfo}"""`;
 
-            for (const m of ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-flash']) {
-                try {
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.65, maxOutputTokens: 2048 } })
-                    });
-                    if (!resp.ok) continue;
-                    const data = await resp.json(), text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                    if (text) {
-                        const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
-                        document.getElementById('studioTtsTranscript').value = cleanText; updateStudioCharCount(); return cleanText;
-                    }
-                } catch (e) {}
+            const runCall = async (p) => {
+                if (typeof window.callGeminiApiSmart === 'function') return await window.callGeminiApiSmart(p, [], { temp: 0.75, maxTokens: 2048, timeoutMs: 20000 });
+                for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
+                    try {
+                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.75, maxOutputTokens: 2048 } })
+                        });
+                        if (!r.ok) continue;
+                        const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                        if (t) return t;
+                    } catch (e) {}
+                }
+                return null;
+            };
+            const text = await runCall(prompt);
+            if (text) {
+                const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
+                document.getElementById('studioTtsTranscript').value = cleanText; updateStudioCharCount(); return cleanText;
             }
             return null;
         }
+
+
+async function enrichTranscriptWithEmotions() {
+            const ta = document.getElementById('studioTtsTranscript'), raw = (ta.value || '').trim();
+            if (!raw) { alert('Ô lời thoại đang trống! Hãy viết thoại trước rồi bấm nút này để AI thổi cảm xúc vào.'); return; }
+            const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
+            if (!apiKey) { alert('Hãy dán Gemini API Key trước nhé!'); openMainKeyModal(); return; }
+            const btn = document.getElementById('btnEnrichEmotion'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
+            btn.disabled = true; btn.innerText = '⏳ Đang thổi hồn...'; st.innerText = '🎭 AI đang chèn cảm xúc & nhịp thở vào lời thoại...';
+            try {
+                const prompt = `Bạn là đạo diễn giọng đọc Gemini 3.8 TTS. Hãy giữ nguyên NGUYÊN Ý lời thoại tiếng Việt dưới đây và chỉ thêm các thẻ cảm xúc (<gasp>, <chuckle>, <giggle>, <sigh>, <whispering>, <breath>, <short pause>), dấu "..." ngắt nhịp, và VIẾT HOA nhẹ từ cần nhấn mạnh để giọng đọc sống động như người thật.
+QUY TẮC:
+- GIỮ NGUYÊN toàn bộ thẻ <long pause> đang có để không lệch mốc cắt cảnh.
+- Không thêm lời giải thích, không dùng ngoặc đơn (). Chỉ trả về thuần lời thoại đã gắn cảm xúc.
+LỜI THOẠI GỐC:
+"""${raw}"""`;
+                let out = null;
+                if (typeof window.callGeminiApiSmart === 'function') {
+                    out = await window.callGeminiApiSmart(prompt, [], { temp: 0.55, maxTokens: 2048, timeoutMs: 18000 });
+                } else {
+                    for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
+                        try {
+                            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.55, maxOutputTokens: 2048 } })
+                            });
+                            if (!r.ok) continue;
+                            const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                            if (t) { out = t; break; }
+                        } catch (e) {}
+                    }
+                }
+                if (out) {
+                    ta.value = out.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
+                    updateStudioCharCount();
+                    st.innerText = '🎭 Đã thổi hồn cảm xúc xong! Chọn "Đọc Full" và bấm Nghe thử ngay.';
+                } else {
+                    st.innerText = `❌ Không thêm được cảm xúc (${window.lastGeminiError || 'kiểm tra Key'}).`;
+                }
+            } finally {
+                btn.disabled = false; btn.innerText = orig;
+            }
+        }
+
+
         async function runStudioScriptOnlyBtn() {
             const btn = document.getElementById('btnStudioScriptOnly'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
             btn.disabled = true; btn.innerText = '⏳ Đang viết...'; st.innerText = '✍️ AI đang viết FULL thoại theo cụm 2-3 câu...';
