@@ -1,0 +1,2829 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KimBling Sketch PMU Pro - Master Nguyễn Hiền</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100dvh; overflow: hidden;
+            background: #09090b; color: #f8fafc;
+            overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* GPU Layer Container */
+        #docTransformWrap {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform-origin: center center;
+            will-change: transform;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.85);
+            background: #18181b;
+        }
+        .doc-layer-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: block;
+        }
+
+        /* Thanh trượt dọc kiểu Procreate */
+        .procreate-vslider-wrap {
+            position: relative; width: 32px; height: 102px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        input[type="range"].v-slider {
+            -webkit-appearance: none; appearance: none;
+            width: 96px; height: 28px;
+            transform: rotate(-90deg);
+            background: transparent; cursor: pointer; touch-action: none;
+        }
+        input[type="range"].v-slider::-webkit-slider-runnable-track {
+            height: 7px; border-radius: 999px; background: rgba(255,255,255,0.22);
+        }
+        input[type="range"].v-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 22px; height: 22px; border-radius: 7px;
+            background: #ffffff; border: 2px solid #f43f5e;
+            margin-top: -7.5px; box-shadow: 0 2px 8px rgba(0,0,0,0.65);
+        }
+        input[type="range"].h-slider {
+            -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; touch-action: none;
+        }
+        input[type="range"].h-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: #334155; }
+        input[type="range"].h-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 999px;
+            background: #fb7185; border: 2px solid #fff; margin-top: -7px;
+        }
+    </style>
+</head>
+<body class="flex flex-col select-none">
+
+    <!-- THANH CÔNG CỤ TRÊN CÙNG -->
+    <header class="shrink-0 z-30 bg-zinc-900/95 backdrop-blur-md border-b border-zinc-800 px-2 pt-[max(6px,env(safe-area-inset-top))] pb-1.5 space-y-1.5">
+        <div class="flex items-center justify-between gap-1">
+            <div class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
+                <button onclick="openModal('photoModal')" class="px-2 py-1.5 rounded-xl bg-zinc-800 border border-zinc-600 text-amber-300 font-extrabold text-[11px] shrink-0 active:scale-95">🖼️ Ảnh</button>
+                <button onclick="requestNewPage()" class="px-2 py-1.5 rounded-xl bg-zinc-800 border border-zinc-700 text-sky-300 font-extrabold text-[11px] shrink-0 active:scale-95">📄 Mới</button>
+                <button onclick="openLayerModal()" id="btnLayerDrawer" class="px-2 py-1.5 rounded-xl bg-zinc-800 border border-zinc-700 text-white font-extrabold text-[11px] shrink-0 active:scale-95 flex items-center space-x-1">
+                    <span>🗂️</span><span id="activeLayerChip">Sợi</span>
+                </button>
+                <button onclick="openModal('tutorModal')" id="btnTutorMenu" class="px-2 py-1.5 rounded-xl bg-indigo-600/30 border border-indigo-400/60 text-indigo-200 font-extrabold text-[11px] shrink-0 active:scale-95">🎓 Trợ giảng</button>
+                <button onclick="openDraftsModal()" class="px-2 py-1.5 rounded-xl bg-zinc-800 border border-zinc-700 text-emerald-300 font-bold text-[11px] shrink-0 active:scale-95">📚 Nháp</button>
+            </div>
+
+            <div class="flex items-center space-x-1 shrink-0">
+                <button onclick="openModal('deviceModal')" id="btnDeviceMode" class="px-2 py-1.5 rounded-xl bg-zinc-800 border border-zinc-600 text-slate-200 font-bold text-[11px] active:scale-95" title="Chế độ thiết bị">📱</button>
+                <button onclick="toggleRecordLesson()" id="btnRecordLesson" class="px-2 py-1.5 rounded-xl bg-rose-600 text-white font-black text-[11px] flex items-center space-x-1 shadow active:scale-95">
+                    <span id="recDotIcon">🔴</span><span id="recBtnLabel">Quay</span>
+                </button>
+                <button onclick="openTimelapseModal()" class="px-2 py-1.5 rounded-xl bg-amber-500 text-zinc-950 font-black text-[11px] shadow active:scale-95" title="Xuất video tua nhanh siêu tốc">⚡Tua</button>
+                <button onclick="saveAnnotatedImage()" class="px-2 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 font-black text-[11px] shadow active:scale-95">💾 Lưu</button>
+            </div>
+        </div>
+
+        <!-- HÀNG ZOOM, KHÓA TRONG KHUNG & BẢNG MÀU NHANH -->
+        <div class="flex items-center justify-between gap-1.5">
+            <div class="flex items-center space-x-1 shrink-0">
+                <div class="flex items-center space-x-0.5 bg-zinc-950 px-1 py-0.5 rounded-xl border border-zinc-800">
+                    <button onclick="zoomByStep(-0.35)" class="w-6 h-6 rounded-lg bg-zinc-800 text-white font-black text-xs flex items-center justify-center">－</button>
+                    <button onclick="resetViewport()" id="zoomPctLabel" class="px-1 text-amber-300 font-mono font-black text-[11px]">100%</button>
+                    <button onclick="zoomByStep(0.35)" class="w-6 h-6 rounded-lg bg-zinc-800 text-white font-black text-xs flex items-center justify-center">＋</button>
+                </div>
+                <button onclick="togglePanMode()" id="btnPanMode" class="px-2 py-1 rounded-xl bg-zinc-800 border border-zinc-700 text-slate-200 font-bold text-[11px] active:scale-95">✋Kéo</button>
+                <button onclick="toggleClipInsideFrame()" id="btnClipFrame" class="px-2 py-1 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-400 font-bold text-[11px] active:scale-95" title="Đánh máy không lem ra ngoài khung">🔓Tự do</button>
+            </div>
+            <div id="colorPaletteRow" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 justify-end"></div>
+        </div>
+    </header>
+
+    <!-- KHU VỰC BẢNG VẼ CHÍNH (GPU STACKED LAYERS) -->
+    <main id="canvasWrap" class="relative flex-1 bg-zinc-950 overflow-hidden touch-none">
+
+        <!-- KHUNG CHỨA 5 LỚP CANVAS XẾP CHỒNG TRÊN GPU -->
+        <div id="docTransformWrap">
+            <canvas id="bgLayer" class="doc-layer-canvas"></canvas>
+            <canvas id="shadingLayer" class="doc-layer-canvas"></canvas>
+            <canvas id="hairLayer" class="doc-layer-canvas"></canvas>
+            <canvas id="frameLayer" class="doc-layer-canvas"></canvas>
+            <canvas id="activeLayer" class="doc-layer-canvas"></canvas>
+        </div>
+
+        <!-- LỚP OVERLAY CHỈ DẪN (LƯỚI, TRỤC MẶT, LASER ĐỎ, VÒNG KIM) -->
+        <canvas id="overlayCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+
+        <!-- THANH KÉO SO SÁNH TRƯỚC / SAU (BEFORE - AFTER) -->
+        <div id="splitCurtainBar" class="hidden absolute top-0 bottom-0 z-20 w-8 -ml-4 flex items-center justify-center cursor-ew-resize touch-none">
+            <div class="w-0.5 h-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.9)]"></div>
+            <div class="absolute w-9 h-9 rounded-full bg-amber-400 text-zinc-950 font-black text-xs flex items-center justify-center shadow-xl border-2 border-white">↔️</div>
+            <div class="absolute top-2 -left-16 px-2 py-0.5 rounded bg-black/75 text-[10px] font-bold text-slate-200 pointer-events-none">Trước</div>
+            <div class="absolute top-2 left-6 px-2 py-0.5 rounded bg-rose-600/90 text-[10px] font-bold text-white pointer-events-none">Sau sửa</div>
+        </div>
+
+        <!-- NHÃN THƯƠNG HIỆU & TRẠNG THÁI LƯU TẠM -->
+        <div class="absolute top-2 right-2 z-10 pointer-events-none flex flex-col items-end space-y-1">
+            <div class="px-2.5 py-1 rounded-lg bg-black/55 border border-white/10 text-[10px] font-bold text-amber-300/95 backdrop-blur-sm">
+                ✨ KimBling Beauty • Master Nguyễn Hiền
+            </div>
+            <div id="formulaHudBadge" class="hidden px-2 py-0.5 rounded-md bg-black/65 border border-emerald-400/30 text-[10px] font-semibold text-emerald-300 backdrop-blur-sm max-w-[230px] truncate"></div>
+            <div id="autoSaveBadge" class="hidden px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[10px] font-bold text-emerald-300">💾 Đã lưu tạm máy</div>
+        </div>
+
+        <!-- THANH ĐIỀU KHIỂN CHẤM ĐIỂM NỐI KHUNG (HIỆN KHI CHỌN BÚT CHẤM KHUNG) -->
+        <div id="pointFrameBar" class="hidden absolute top-2 left-12 right-2 sm:right-auto z-20 bg-zinc-900/95 backdrop-blur-md border border-rose-400/50 rounded-2xl p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-2xl">
+            <button onclick="spawnTemplatePoints('brow')" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-amber-300 font-bold text-[11px]">🪶 Mày 6đ</button>
+            <button onclick="spawnTemplatePoints('lip')" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-pink-300 font-bold text-[11px]">💋 Môi 6đ</button>
+            <button onclick="togglePointCurveMode()" id="btnPointCurve" class="shrink-0 px-2 py-1 rounded-xl bg-sky-500/20 border border-sky-400 text-sky-200 font-bold text-[11px]">〰️ Nối Cong</button>
+            <button onclick="togglePointClosedMode()" id="btnPointClosed" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 border border-zinc-600 text-slate-200 font-bold text-[11px]">⭕ Khép kín</button>
+            <button onclick="undoLastFramePoint()" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-slate-200 font-bold text-[11px]">↩️ Bỏ điểm</button>
+            <button onclick="clearFramePoints()" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-rose-300 font-bold text-[11px]">✕ Hủy</button>
+            <button onclick="commitPointFrame()" class="shrink-0 px-2.5 py-1 rounded-xl bg-emerald-500 text-zinc-950 font-black text-[11px]">✅ Chốt Khung</button>
+        </div>
+
+        <!-- THANH ĐIỀU KHIỂN TRỤC ĐỐI XỨNG (HIỆN KHI BẬT TRỤC / ĐỐI XỨNG) -->
+        <div id="axisControlBar" class="hidden absolute bottom-2 left-12 right-2 sm:right-auto z-20 bg-zinc-900/90 backdrop-blur-md border border-indigo-400/50 rounded-2xl px-2.5 py-1.5 flex items-center gap-2 overflow-x-auto no-scrollbar shadow-xl">
+            <button onclick="toggleSymmetryDraw()" id="btnSymmetryQuick" class="shrink-0 px-2 py-1 rounded-xl bg-indigo-500 text-white font-black text-[11px]">🪞 Vẽ Đối Xứng: BẬT</button>
+            <div class="flex items-center space-x-1 shrink-0">
+                <span class="text-[10px] text-slate-300 font-bold">Nghiêng trục:</span>
+                <input id="axisAngleSlider" type="range" min="-25" max="25" step="0.5" value="0" class="w-20 accent-amber-400" oninput="onAxisAngleChange(this.value)">
+                <span id="axisAngleVal" class="text-[10px] font-mono text-amber-300 w-7">0°</span>
+            </div>
+            <button onclick="resetFaceAxis()" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-slate-200 font-bold text-[11px]">Giữa mặt</button>
+            <button onclick="toggleFaceAxis()" class="shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-rose-300 font-bold text-[11px]">Ẩn trục</button>
+        </div>
+
+        <!-- THANH TRƯỢT DỌC PROCREATE BÊN TRÁI -->
+        <aside class="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 bg-zinc-900/85 backdrop-blur-md border border-white/15 rounded-2xl py-2 px-1 flex flex-col items-center space-y-1.5 shadow-2xl">
+            <div class="flex flex-col items-center">
+                <div class="w-6 h-6 rounded-full bg-zinc-950 border border-zinc-700 flex items-center justify-center mb-0.5">
+                    <div id="brushPreviewDot" class="rounded-full bg-white" style="width: 6px; height: 6px;"></div>
+                </div>
+                <span id="brushSizeVal" class="text-[10px] font-mono font-black text-amber-300">5px</span>
+                <div class="procreate-vslider-wrap">
+                    <input id="brushSizeSlider" type="range" min="1" max="48" step="1" value="5" class="v-slider" oninput="onBrushSizeChange(this.value)">
+                </div>
+            </div>
+
+            <div class="w-6 h-px bg-white/15"></div>
+
+            <div class="flex flex-col items-center">
+                <span class="text-[10px] font-bold text-slate-300">Đậm</span>
+                <span id="brushOpacityVal" class="text-[10px] font-mono font-black text-sky-300">100%</span>
+                <div class="procreate-vslider-wrap">
+                    <input id="brushOpacitySlider" type="range" min="10" max="100" step="5" value="100" class="v-slider" oninput="onBrushOpacityChange(this.value)">
+                </div>
+            </div>
+
+            <div class="w-6 h-px bg-white/15"></div>
+
+            <button onclick="undoAction()" id="btnUndoTop" class="w-8 h-8 rounded-xl bg-zinc-800 text-white font-black text-sm flex items-center justify-center active:scale-90 disabled:opacity-30" title="Hoàn tác (Ctrl+Z)">↩️</button>
+            <button onclick="redoAction()" id="btnRedoTop" class="w-8 h-8 rounded-xl bg-zinc-800 text-white font-black text-sm flex items-center justify-center active:scale-90 disabled:opacity-30" title="Làm lại (Ctrl+Y)">↪️</button>
+        </aside>
+
+        <!-- TOAST THÔNG BÁO NHẸ KHÔNG CHẶN MÀN HÌNH -->
+        <div id="toastBox" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-zinc-900/95 border border-amber-400/60 text-amber-200 font-bold text-xs shadow-2xl pointer-events-none transition-opacity"></div>
+    </main>
+
+    <!-- THANH CÔNG CỤ BÚT PMU BÊN DƯỚI -->
+    <footer class="shrink-0 z-30 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 px-2 pt-1.5 pb-[max(8px,env(safe-area-inset-bottom))]">
+        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar">
+            <button onclick="selectBrushTool('pointframe')" id="brushTool_pointframe" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[60px]">
+                <span class="text-base">📍</span><span>Chấm Khung</span>
+            </button>
+            <button onclick="selectBrushTool('ruler')" id="brushTool_ruler" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[54px]">
+                <span class="text-base">📏</span><span>Thước</span>
+            </button>
+            <button onclick="selectBrushTool('smooth')" id="brushTool_smooth" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[58px]">
+                <span class="text-base">〰️</span><span>Vẽ Khung</span>
+            </button>
+            <button onclick="selectBrushTool('hairstroke')" id="brushTool_hairstroke" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border-2 border-rose-400 bg-rose-500/25 text-white font-black text-[11px] flex flex-col items-center min-w-[60px]">
+                <span class="text-base">🪶</span><span>Sợi Mảnh</span>
+            </button>
+            <button onclick="selectBrushTool('shading')" id="brushTool_shading" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[60px]">
+                <span class="text-base">🌫️</span><span>Đánh Máy</span>
+            </button>
+            <button onclick="selectBrushTool('lip')" id="brushTool_lip" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[58px]">
+                <span class="text-base">💋</span><span>Phun Môi</span>
+            </button>
+            <button onclick="selectBrushTool('laser')" id="brushTool_laser" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[54px]">
+                <span class="text-base">🔦</span><span>Laser</span>
+            </button>
+            <button onclick="selectBrushTool('arrow')" id="brushTool_arrow" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[54px]">
+                <span class="text-base">➡️</span><span>Mũi Tên</span>
+            </button>
+            <button onclick="selectBrushTool('number')" id="brushTool_number" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[52px]">
+                <span class="text-base">🔢</span><span>Số <b id="numberStampBadge">1</b></span>
+            </button>
+            <button onclick="selectBrushTool('text')" id="brushTool_text" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[52px]">
+                <span class="text-base">🏷️</span><span>Chữ</span>
+            </button>
+            <button onclick="selectBrushTool('eraser')" id="brushTool_eraser" class="tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[50px]">
+                <span class="text-base">🧽</span><span>Tẩy</span>
+            </button>
+            <button onclick="requestClearCurrentLayer()" class="shrink-0 px-2 py-1.5 rounded-xl border border-amber-500/40 bg-amber-950/40 text-amber-300 font-bold text-[11px] flex flex-col items-center min-w-[58px]">
+                <span class="text-base">🧹</span><span>Xóa lớp</span>
+            </button>
+            <button onclick="requestClearAllLayers()" class="shrink-0 px-2 py-1.5 rounded-xl border border-rose-500/40 bg-rose-950/50 text-rose-300 font-bold text-[11px] flex flex-col items-center min-w-[58px]">
+                <span class="text-base">🗑️</span><span>Xóa hết</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- INPUT ẨN CHỌN ẢNH -->
+    <input id="bgPhotoInput" type="file" accept="image/*" class="hidden" onchange="handleBgPhotoSelected(this)">
+    <input id="bgCameraInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleBgPhotoSelected(this)">
+
+    <!-- 1. MODAL ẢNH MẪU & PHÔI DA GIẢ -->
+    <div id="photoModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeModal('photoModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-4 space-y-3.5 shadow-2xl max-h-[88dvh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-base">🖼️ Ảnh Khách & Phôi Da Giả</h2>
+                    <p class="text-slate-400 text-xs">Thay ảnh nền giữ nguyên nét vẽ hoặc chọn phôi tập</p>
+                </div>
+                <button onclick="closeModal('photoModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="document.getElementById('bgPhotoInput').click()" class="py-2.5 px-3 rounded-2xl bg-rose-600 text-white font-black text-xs shadow active:scale-95">📁 Chọn Ảnh Máy</button>
+                <button onclick="document.getElementById('bgCameraInput').click()" class="py-2.5 px-3 rounded-2xl bg-sky-500 text-zinc-950 font-black text-xs shadow active:scale-95">📸 Chụp Trực Tiếp</button>
+            </div>
+
+            <div class="space-y-1.5">
+                <span class="text-xs font-black text-amber-300 block">📄 Phôi Da Giả Tích Hợp (Hỏi xác nhận nếu đang có nét):</span>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="requestLoadTemplate('brow')" class="py-2 px-2 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-200 font-bold text-xs">🪶 Mày Mẫu</button>
+                    <button onclick="requestLoadTemplate('lip')" class="py-2 px-2 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-200 font-bold text-xs">💋 Môi Mẫu</button>
+                    <button onclick="requestLoadTemplate('blank')" class="py-2 px-2 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-200 font-bold text-xs">📄 Da Trắng</button>
+                    <button onclick="requestLoadTemplate('spine')" class="py-2 px-2 rounded-xl bg-zinc-950 border border-indigo-500/50 text-indigo-200 font-bold text-xs col-span-2">🕸️ Phôi Spine Tập Sợi</button>
+                    <button onclick="requestLoadTemplate('ombre')" class="py-2 px-2 rounded-xl bg-zinc-950 border border-amber-500/50 text-amber-200 font-bold text-xs">🌫️ Chia 3 Vùng</button>
+                </div>
+            </div>
+
+            <div class="bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-300">Độ sáng ảnh nền (hạ xuống để thấy rõ nét):</span>
+                    <span id="bgOpacityVal" class="text-xs font-mono font-black text-amber-300">100%</span>
+                </div>
+                <input id="bgOpacitySlider" type="range" min="20" max="100" step="5" value="100" class="h-slider" oninput="onBgOpacityChange(this.value)">
+                <div class="grid grid-cols-3 gap-1.5 pt-1">
+                    <button onclick="rotateDocument90()" class="py-2 px-2 rounded-xl bg-zinc-800 text-slate-200 font-bold text-[11px]">🔄 Xoay 90°</button>
+                    <button onclick="flipBackgroundHorizontal()" class="py-2 px-2 rounded-xl bg-zinc-800 text-slate-200 font-bold text-[11px]">🪞 Lật Ảnh</button>
+                    <button onclick="resetNumberStamp()" class="py-2 px-2 rounded-xl bg-zinc-800 text-amber-300 font-bold text-[11px]">🔢 Số = 1</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="toggleWatermarkOption()" id="watermarkToggleBtn" class="py-2 px-3 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold text-xs">🏷️ Tem Lưu Ảnh: BẬT</button>
+                <button onclick="togglePointerRingOption()" id="pointerRingToggleBtn" class="py-2 px-3 rounded-xl bg-sky-500/20 border border-sky-400 text-sky-300 font-bold text-xs">🔵 Vòng Kim Quay: BẬT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MODAL QUẢN LÝ 4 LỚP (LAYERS) -->
+    <div id="layerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeModal('layerModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-4 space-y-3 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-base">🗂️ Quản Lý 4 Lớp Tách Biệt</h2>
+                    <p class="text-slate-400 text-xs">Chạm vào lớp để vẽ/tẩy riêng lớp đó không dính lớp khác</p>
+                </div>
+                <button onclick="closeModal('layerModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+
+            <div class="flex items-center justify-between bg-zinc-950 px-3 py-2 rounded-2xl border border-zinc-800">
+                <span class="text-xs font-bold text-slate-200">Tự động chuyển lớp theo cây bút:</span>
+                <button onclick="toggleAutoLayerSwitch()" id="btnAutoLayer" class="px-3 py-1 rounded-xl bg-emerald-500 text-zinc-950 font-black text-xs">BẬT</button>
+            </div>
+
+            <!-- LỚP 4: KHUNG -->
+            <div onclick="setActiveLayer('frame')" id="layerCard_frame" class="p-3 rounded-2xl border bg-zinc-950 border-zinc-800 space-y-2 cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">📐</span>
+                        <div>
+                            <div class="font-black text-xs text-white">Lớp 4: Khung, Thước, Số & Chữ</div>
+                            <div class="text-[10px] text-slate-400">Nằm trên cùng • Dễ ẩn/hiện & làm mờ</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                        <button onclick="toggleLayerVis('frame')" id="visBtn_frame" class="w-8 h-8 rounded-xl bg-zinc-800 text-sm">👁️</button>
+                        <button onclick="toggleFrameLock()" id="lockBtn_frame" class="w-8 h-8 rounded-xl bg-zinc-800 text-sm" title="Khóa chống tẩy/vẽ nhầm vào khung">🔓</button>
+                        <button onclick="requestClearLayer('frame')" class="w-8 h-8 rounded-xl bg-rose-950/70 text-rose-300 text-xs font-bold">🗑️</button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2" onclick="event.stopPropagation()">
+                    <span class="text-[10px] font-bold text-slate-400 shrink-0">Độ rõ khung:</span>
+                    <input id="frameOpacitySlider" type="range" min="15" max="100" step="5" value="100" class="h-slider" oninput="onLayerOpacity('frame', this.value)">
+                    <span id="frameOpacityVal" class="text-[11px] font-mono text-amber-300 w-9 text-right">100%</span>
+                </div>
+            </div>
+
+            <!-- LỚP 3: SỢI -->
+            <div onclick="setActiveLayer('hair')" id="layerCard_hair" class="p-3 rounded-2xl border-2 border-rose-400 bg-rose-500/10 space-y-1 cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">🪶</span>
+                        <div>
+                            <div class="font-black text-xs text-white">Lớp 3: Sợi Mảnh (Hairstroke)</div>
+                            <div class="text-[10px] text-slate-400">Tẩy sửa sợi không mất khung hay đánh máy</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                        <button onclick="toggleLayerVis('hair')" id="visBtn_hair" class="w-8 h-8 rounded-xl bg-zinc-800 text-sm">👁️</button>
+                        <button onclick="requestClearLayer('hair')" class="w-8 h-8 rounded-xl bg-rose-950/70 text-rose-300 text-xs font-bold">🗑️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LỚP 2: ĐÁNH MÁY -->
+            <div onclick="setActiveLayer('shading')" id="layerCard_shading" class="p-3 rounded-2xl border bg-zinc-950 border-zinc-800 space-y-1 cursor-pointer">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">🌫️</span>
+                        <div>
+                            <div class="font-black text-xs text-white">Lớp 2: Đánh Máy & Phun Môi</div>
+                            <div class="text-[10px] text-slate-400">Nằm dưới sợi • Xóa đánh máy không mất sợi</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1" onclick="event.stopPropagation()">
+                        <button onclick="toggleLayerVis('shading')" id="visBtn_shading" class="w-8 h-8 rounded-xl bg-zinc-800 text-sm">👁️</button>
+                        <button onclick="requestClearLayer('shading')" class="w-8 h-8 rounded-xl bg-rose-950/70 text-rose-300 text-xs font-bold">🗑️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LỚP 1: ẢNH NỀN -->
+            <div class="p-2.5 rounded-2xl border border-zinc-800 bg-zinc-950/70 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="text-base">🖼️</span>
+                    <span class="font-bold text-xs text-slate-300">Lớp 1: Ảnh nền / Da giả</span>
+                </div>
+                <button onclick="closeModal('layerModal'); openModal('photoModal')" class="px-2.5 py-1 rounded-xl bg-zinc-800 text-amber-300 font-bold text-xs">Chỉnh ảnh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL BỘ 6 MÓN TRỢ GIẢNG -->
+    <div id="tutorModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeModal('tutorModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-indigo-500/60 rounded-3xl p-4 space-y-3 shadow-2xl max-h-[88dvh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-base">🎓 Bộ 6 Món Trợ Giảng Master</h2>
+                    <p class="text-slate-400 text-xs">Hỗ trợ giảng dạy trực tiếp, quay clip & sửa bài học viên</p>
+                </div>
+                <button onclick="closeModal('tutorModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="closeModal('tutorModal'); selectBrushTool('laser')" class="p-3 rounded-2xl bg-rose-600/20 border border-rose-400/60 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-rose-300">🔦 1. Bút Laser Đỏ</div>
+                    <div class="text-[10px] text-slate-300">Chỉ điểm tự tan sau 2s</div>
+                </button>
+
+                <button onclick="toggleSplitCompare(); closeModal('tutorModal')" id="btnTutorSplit" class="p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-amber-300">↔️ 3. So sánh Trước/Sau</div>
+                    <div class="text-[10px] text-slate-300">Thanh kéo bài gốc & sửa</div>
+                </button>
+
+                <button onclick="toggleFaceAxis()" id="btnTutorAxis" class="p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-indigo-300">📐 2a. Trục Giữa Mặt</div>
+                    <div class="text-[10px] text-slate-300">Thước trục tỷ lệ vàng</div>
+                </button>
+
+                <button onclick="toggleSymmetryDraw()" id="btnTutorSymmetry" class="p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-sky-300">🪞 2b. Vẽ Đối Xứng</div>
+                    <div class="text-[10px] text-slate-300">Vẽ 1 bên tự ra bên kia</div>
+                </button>
+
+                <button onclick="toggleMirrorFlipView(); closeModal('tutorModal')" id="btnTutorFlipView" class="p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-emerald-300">👀 2c. Soi Gương Lệch</div>
+                    <div class="text-[10px] text-slate-300">Lật màn hình bắt lỗi lệch</div>
+                </button>
+
+                <button onclick="toggleGridOverlay()" id="btnTutorGrid" class="p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95">
+                    <div class="font-black text-xs text-slate-200">🕸️ 5. Lưới Chia Ô</div>
+                    <div class="text-[10px] text-slate-400">Căn đều khoảng cách sợi</div>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="closeModal('tutorModal'); selectBrushTool('text')" class="py-2.5 px-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-amber-200 font-bold text-xs">🏷️ 4. Nhãn Chữ Nhanh</button>
+                <button onclick="closeModal('tutorModal'); openModal('photoModal')" class="py-2.5 px-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-indigo-200 font-bold text-xs">🕸️ 5b. Phôi Spine/Ombre</button>
+            </div>
+
+            <!-- 6. CÔNG THỨC MỰC & THÔNG SỐ MÁY -->
+            <div class="bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2">
+                <label class="text-xs font-black text-emerald-300 block">📝 6. Công Thức Mực & Thông Số Máy (In lên ảnh lưu):</label>
+                <input id="formulaInput" type="text" placeholder="VD: Kim 1RL 0.25 • 6.5V • Nâu tây + Khử đỏ" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white text-xs focus:outline-none focus:border-emerald-400" oninput="onFormulaChange(this.value)">
+                <div class="flex flex-wrap gap-1">
+                    <button onclick="appendFormulaPreset('Kim 1RL 0.25')" class="px-2 py-1 rounded-lg bg-zinc-800 text-[10px] text-slate-300 font-bold">+ Kim 1RL</button>
+                    <button onclick="appendFormulaPreset('Kim 3RL')" class="px-2 py-1 rounded-lg bg-zinc-800 text-[10px] text-slate-300 font-bold">+ Kim 3RL</button>
+                    <button onclick="appendFormulaPreset('6.5V')" class="px-2 py-1 rounded-lg bg-zinc-800 text-[10px] text-slate-300 font-bold">+ 6.5V</button>
+                    <button onclick="appendFormulaPreset('Nâu Tây + Cam')" class="px-2 py-1 rounded-lg bg-zinc-800 text-[10px] text-slate-300 font-bold">+ Nâu Tây</button>
+                    <button onclick="appendFormulaPreset('Hồng Đào + Cam Tươi')" class="px-2 py-1 rounded-lg bg-zinc-800 text-[10px] text-slate-300 font-bold">+ Môi Hồng Cam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. MODAL CHỌN THIẾT BỊ -->
+    <div id="deviceModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeModal('deviceModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-4 space-y-3 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-base">⚙️ Chế Độ Thiết Bị Đang Dùng</h2>
+                    <p class="text-slate-400 text-xs">Tối ưu chống rung, chống tỳ tay & lực nhấn theo máy của bạn</p>
+                </div>
+                <button onclick="closeModal('deviceModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+            <div class="space-y-2">
+                <button onclick="setDeviceMode('finger')" id="devOpt_finger" class="w-full p-3 rounded-2xl border text-left flex items-center space-x-3">
+                    <span class="text-2xl">📱</span>
+                    <div>
+                        <div class="font-black text-sm text-white">Điện thoại (Vẽ bằng Ngón tay)</div>
+                        <div class="text-[11px] text-slate-400">Tăng bộ lọc chống rung ngón tay, chống chạm nhầm 2 ngón</div>
+                    </div>
+                </button>
+                <button onclick="setDeviceMode('pencil')" id="devOpt_pencil" class="w-full p-3 rounded-2xl border text-left flex items-center space-x-3">
+                    <span class="text-2xl">✏️</span>
+                    <div>
+                        <div class="font-black text-sm text-white">iPad / Tablet + Bút Cảm Ứng (Apple Pencil)</div>
+                        <div class="text-[11px] text-slate-400">Bật chống tỳ tay (tay chỉ dùng zoom/kéo, chỉ đầu bút mới vẽ!)</div>
+                    </div>
+                </button>
+                <button onclick="setDeviceMode('pc')" id="devOpt_pc" class="w-full p-3 rounded-2xl border text-left flex items-center space-x-3">
+                    <span class="text-2xl">💻</span>
+                    <div>
+                        <div class="font-black text-sm text-white">Máy tính (Chuột / Bảng vẽ)</div>
+                        <div class="text-[11px] text-slate-400">Cuộn chuột zoom, chuột phải kéo ảnh, Ctrl+Z hoàn tác</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. MODAL TRANG MỚI -->
+    <div id="newPageModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeModal('newPageModal')">
+        <div class="w-full max-w-sm bg-zinc-900 border-2 border-sky-500/60 rounded-3xl p-4 space-y-3 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <h2 class="font-black text-white text-base">📄 Tạo Trang Mới (Xóa Trắng)</h2>
+                <button onclick="closeModal('newPageModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+            <p class="text-xs text-amber-300 font-semibold">⚠️ Toàn bộ nét vẽ hiện tại sẽ được xóa sạch để làm bài mới:</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="createFreshPage('blank')" class="py-3 px-2 rounded-2xl bg-zinc-950 border border-zinc-700 text-white font-bold text-xs">📄 Da Trắng Tinh</button>
+                <button onclick="createFreshPage('brow')" class="py-3 px-2 rounded-2xl bg-zinc-950 border border-zinc-700 text-amber-200 font-bold text-xs">🪶 Phôi Mày Mẫu</button>
+                <button onclick="createFreshPage('lip')" class="py-3 px-2 rounded-2xl bg-zinc-950 border border-zinc-700 text-pink-200 font-bold text-xs">💋 Phôi Môi Mẫu</button>
+                <button onclick="createFreshPage('spine')" class="py-3 px-2 rounded-2xl bg-zinc-950 border border-zinc-700 text-indigo-200 font-bold text-xs">🕸️ Phôi Spine Sợi</button>
+                <button onclick="createFreshPage('ombre')" class="py-3 px-2 rounded-2xl bg-zinc-950 border border-zinc-700 text-emerald-200 font-bold text-xs col-span-2">🌫️ Phôi Mày Chia 3 Vùng Ombre</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL CHÈN NHÃN CHỮ NHANH -->
+    <div id="textPromptModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeModal('textPromptModal')">
+        <div class="w-full max-w-sm bg-zinc-900 border-2 border-amber-400/60 rounded-3xl p-4 space-y-3 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <h2 class="font-black text-white text-sm">🏷️ Chèn Nhãn Chú Thích Bài Sửa</h2>
+                <button onclick="closeModal('textPromptModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+            <input id="customTextInput" type="text" placeholder="Nhập chữ ngắn (VD: Nâng đỉnh 1mm)..." class="w-full px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700 text-white text-sm focus:outline-none focus:border-amber-400">
+            <div class="flex flex-wrap gap-1.5">
+                <button onclick="commitTextBadge('Sợi chính')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-amber-200 font-bold text-xs">Sợi chính</button>
+                <button onclick="commitTextBadge('Sợi phụ')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-amber-200 font-bold text-xs">Sợi phụ</button>
+                <button onclick="commitTextBadge('Nâng đỉnh')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-rose-300 font-bold text-xs">Nâng đỉnh</button>
+                <button onclick="commitTextBadge('Hạ đuôi')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-rose-300 font-bold text-xs">Hạ đuôi</button>
+                <button onclick="commitTextBadge('Góc kim 90°')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-sky-300 font-bold text-xs">Góc kim 90°</button>
+                <button onclick="commitTextBadge('Thưa hạt')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-emerald-300 font-bold text-xs">Thưa hạt</button>
+                <button onclick="commitTextBadge('Mềm viền')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-pink-300 font-bold text-xs">Mềm viền</button>
+                <button onclick="commitTextBadge('Khử thâm')" class="px-2.5 py-1.5 rounded-xl bg-zinc-800 text-orange-300 font-bold text-xs">Khử thâm</button>
+            </div>
+            <button onclick="commitTextBadge(document.getElementById('customTextInput').value)" class="w-full py-2.5 rounded-2xl bg-amber-400 text-zinc-950 font-black text-sm">Dán Nhãn Lên Ảnh</button>
+        </div>
+    </div>
+
+    <!-- 7. MODAL KHO NHÁP TRÊN MÁY (INDEXEDDB) -->
+    <div id="draftsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeModal('draftsModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-emerald-500/50 rounded-3xl p-4 space-y-3 shadow-2xl max-h-[85dvh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between shrink-0">
+                <div>
+                    <h2 class="font-black text-white text-base">📚 Kho Nháp Lưu Trên Máy</h2>
+                    <p class="text-slate-400 text-xs">Giữ nguyên 4 lớp riêng biệt • Không cần mạng</p>
+                </div>
+                <button onclick="closeModal('draftsModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+            <div class="flex space-x-2 shrink-0">
+                <input id="draftTitleInput" type="text" placeholder="Tên bài (VD: Mày sáng T2)..." class="flex-1 px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-700 text-white text-xs">
+                <button onclick="saveNamedDraft()" class="px-3 py-2 rounded-xl bg-emerald-500 text-zinc-950 font-black text-xs shrink-0">+ Lưu Bài Này</button>
+            </div>
+            <div id="draftsListWrap" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+        </div>
+    </div>
+
+    <!-- 8. MODAL XUẤT VIDEO TUA NHANH SIÊU TỐC (TIMELAPSE MP4) -->
+    <div id="timelapseModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeModal('timelapseModal')">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-amber-400/60 rounded-3xl p-4 space-y-3 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white text-base">⚡ Xuất Video Tua Nhanh (Timelapse)</h2>
+                    <p class="text-slate-400 text-xs">Dựng lại quá trình vẽ cực nhanh để đăng TikTok / Facebook</p>
+                </div>
+                <button onclick="closeModal('timelapseModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+
+            <div id="tlConfigPanel" class="space-y-3">
+                <div class="text-xs text-slate-300 font-semibold">Số bước vẽ đã ghi nhận: <b id="tlOpsCount" class="text-amber-300">0</b> thao tác</div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectTlDuration(10)" id="tlDur_10" class="py-2.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-xs">10 Giây</button>
+                    <button onclick="selectTlDuration(15)" id="tlDur_15" class="py-2.5 rounded-xl border-2 border-amber-400 bg-amber-400/20 text-amber-200 font-black text-xs">15 Giây</button>
+                    <button onclick="selectTlDuration(30)" id="tlDur_30" class="py-2.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-xs">30 Giây</button>
+                </div>
+                <button onclick="startTimelapseExport()" id="btnStartTl" class="w-full py-3 rounded-2xl bg-amber-400 text-zinc-950 font-black text-sm shadow-lg active:scale-95">🚀 Xuất Video MP4 Siêu Nhanh</button>
+            </div>
+
+            <div id="tlProgressWrap" class="hidden space-y-2 py-2">
+                <div class="flex justify-between text-xs font-bold">
+                    <span id="tlStatusText" class="text-amber-300">Đang xử lý khung hình bằng chip máy...</span>
+                    <span id="tlPctText" class="font-mono text-white">0%</span>
+                </div>
+                <div class="w-full h-3 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                    <div id="tlProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-rose-500 w-0 transition-all"></div>
+                </div>
+            </div>
+
+            <div id="tlResultWrap" class="hidden space-y-2.5">
+                <video id="tlPreviewVideo" controls playsinline loop class="w-full max-h-[45dvh] rounded-2xl bg-black border border-zinc-800"></video>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadTimelapse()" class="py-2.5 rounded-2xl bg-emerald-500 text-zinc-950 font-black text-xs">⬇️ Tải Video</button>
+                    <button onclick="shareTimelapse()" class="py-2.5 rounded-2xl bg-rose-600 text-white font-black text-xs">📤 Chia Sẻ Ngay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. MODAL XEM LẠI VIDEO QUAY GIẢNG TRỰC TIẾP -->
+    <div id="lessonPreviewModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-zinc-900 border-2 border-rose-500/50 rounded-3xl p-4 space-y-3 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h2 class="font-black text-white text-base">🎬 Video Giảng Dạy Vừa Quay</h2>
+                <button onclick="closeLessonPreview()" class="w-8 h-8 rounded-full bg-zinc-800 text-white font-black">✕</button>
+            </div>
+            <video id="lessonPreviewVideo" controls playsinline class="w-full max-h-[55dvh] rounded-2xl bg-black border border-zinc-800"></video>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="downloadRecordedLesson()" class="py-3 rounded-2xl bg-emerald-500 text-zinc-950 font-black text-sm shadow">⬇️ Tải Video</button>
+                <button onclick="shareRecordedLesson()" class="py-3 rounded-2xl bg-rose-600 text-white font-black text-sm shadow">📤 Chia Sẻ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. HỘP THOẠI XÁC NHẬN AN TOÀN (KHÔNG DÙNG CONFIRM MẶC ĐỊNH) -->
+    <div id="confirmModal" class="fixed inset-0 z-[60] bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-xs bg-zinc-900 border-2 border-rose-500/60 rounded-3xl p-5 space-y-4 shadow-2xl text-center">
+            <div class="text-3xl" id="confirmIcon">⚠️</div>
+            <h3 class="font-black text-white text-base" id="confirmTitle">Xác nhận thao tác</h3>
+            <p class="text-slate-300 text-xs leading-relaxed" id="confirmMsg">Bạn có chắc chắn muốn thực hiện không?</p>
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <button onclick="resolveConfirm(false)" class="py-2.5 rounded-2xl bg-zinc-800 text-slate-200 font-bold text-sm active:scale-95">Hủy bỏ</button>
+                <button onclick="resolveConfirm(true)" id="confirmOkBtn" class="py-2.5 rounded-2xl bg-rose-600 text-white font-black text-sm shadow active:scale-95">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================================================
+// 1. BỘ LỌC CHỐNG RUNG 1€ FILTER (ONE-EURO FILTER) + SEEDED RANDOM
+// ============================================================================
+class LowPassFilter {
+    constructor(alpha) { this.y = null; this.s = null; this.setAlpha(alpha); }
+    setAlpha(alpha) { this.alpha = alpha; }
+    filter(val) {
+        if (this.y === null) { this.s = val; }
+        else { this.s = this.alpha * val + (1 - this.alpha) * this.s; }
+        this.y = val;
+        return this.s;
+    }
+    hasLast() { return this.y !== null; }
+    lastVal() { return this.y; }
+}
+class OneEuroFilter {
+    constructor(minCutoff = 1.4, beta = 0.02, dCutoff = 1.0) {
+        this.minCutoff = minCutoff; this.beta = beta; this.dCutoff = dCutoff;
+        this.x = new LowPassFilter(1); this.dx = new LowPassFilter(1);
+        this.lastTime = null;
+    }
+    alpha(cutoff, dt) {
+        const tau = 1.0 / (2 * Math.PI * Math.max(0.001, cutoff));
+        return 1.0 / (1.0 + tau / Math.max(0.0001, dt));
+    }
+    filter(val, tSec) {
+        if (this.lastTime === null) { this.lastTime = tSec; return this.x.filter(val); }
+        const dt = Math.max(0.001, tSec - this.lastTime);
+        this.lastTime = tSec;
+        const dVal = this.x.hasLast() ? (val - this.x.lastVal()) / dt : 0;
+        this.dx.setAlpha(this.alpha(this.dCutoff, dt));
+        const edVal = this.dx.filter(dVal);
+        const cutoff = this.minCutoff + this.beta * Math.abs(edVal);
+        this.x.setAlpha(this.alpha(cutoff, dt));
+        return this.x.filter(val);
+    }
+    reset() { this.x.y = null; this.dx.y = null; this.lastTime = null; }
+}
+function mulberry32(a) {
+    return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+// ============================================================================
+// 2. BIẾN TOÀN CỤC & QUẢN LÝ 4 LỚP CANVAS
+// ============================================================================
+const PMU_COLORS = [
+    { hex: '#ffffff', name: 'Trắng trục' },
+    { hex: '#fbbf24', name: 'Vàng tỷ lệ' },
+    { hex: '#f43f5e', name: 'Đỏ chỉ lỗi' },
+    { hex: '#78350f', name: 'Nâu tây' },
+    { hex: '#18181b', name: 'Đen sợi' },
+    { hex: '#fb923c', name: 'Cam khử thâm' },
+    { hex: '#f472b6', name: 'Hồng đào' },
+    { hex: '#38bdf8', name: 'Xanh dẫn' }
+];
+
+const canvasWrap = document.getElementById('canvasWrap');
+const docTransformWrap = document.getElementById('docTransformWrap');
+const overlayCanvas = document.getElementById('overlayCanvas');
+const overlayCtx = overlayCanvas.getContext('2d');
+
+const bgLayer = document.getElementById('bgLayer');
+const shadingLayer = document.getElementById('shadingLayer');
+const hairLayer = document.getElementById('hairLayer');
+const frameLayer = document.getElementById('frameLayer');
+const activeLayer = document.getElementById('activeLayer');
+
+const LAYER_MAP = {
+    bg: { el: bgLayer, ctx: bgLayer.getContext('2d'), label: 'Ảnh nền' },
+    shading: { el: shadingLayer, ctx: shadingLayer.getContext('2d'), label: 'Đánh máy', vis: true, op: 1.0 },
+    hair: { el: hairLayer, ctx: hairLayer.getContext('2d'), label: 'Sợi', vis: true, op: 1.0 },
+    frame: { el: frameLayer, ctx: frameLayer.getContext('2d'), label: 'Khung', vis: true, op: 1.0 }
+};
+const activeCtx = activeLayer.getContext('2d');
+
+let docW = 1080, docH = 1440;
+let fitScale = 1.0, userZoom = 1.0, viewPanX = 0, viewPanY = 0;
+let bgOpacity = 1.0, watermarkOn = true, pointerRingOn = true;
+
+let activeLayerKey = 'hair';
+let autoLayerSwitch = true;
+let frameLocked = false;
+let clipInsideFrame = false;
+let savedFramePolys = []; // [{ pts, curved, closed }]
+
+let activeTool = 'hairstroke';
+let activeColor = '#ffffff';
+let brushSize = 5;
+let brushOpacity = 1.0;
+let panModeOnly = false;
+let numberCounter = 1;
+let deviceMode = localStorage.getItem('kb_device_mode') || 'finger';
+
+// Trạng thái 6 món Trợ giảng
+let faceAxis = { visible: false, symmetry: false, x: 540, y: 720, angleDeg: 0 };
+let viewMirrorFlip = false;
+let gridVisible = false;
+let splitCompare = { active: false, ratio: 0.5 };
+let formulaText = localStorage.getItem('kb_formula_text') || '';
+let laserStrokes = []; // [{ pts: [{x, y, t}] }]
+let laserRafId = 0;
+let pendingTextDocPt = null;
+
+// Chấm điểm nối khung thông minh
+let framePoints = []; // [{ x, y }]
+let framePointCurved = true;
+let framePointClosed = false;
+let draggingPointIdx = -1;
+let draggingAllPointsStart = null;
+
+// Lịch sử Undo/Redo + Timelapse Ops
+const MAX_HISTORY = 16;
+let undoStack = []; // [{ layerKey, snapCanvas, savedPolysJson, tlCount }]
+let redoStack = [];
+let baselineCanvases = {}; // Lưu bản sao GPU mới nhất của shading/hair/frame để hoàn tác 0.5ms
+let timelapseOps = [];
+let undoneTimelapseOps = [];
+
+// Bộ lọc chống rung
+let filterX = new OneEuroFilter();
+let filterY = new OneEuroFilter();
+let currentStampColor = '';
+let softStampCanvas = document.createElement('canvas');
+
+// Đa điểm chạm
+const activePointers = new Map();
+let isDrawing = false, justPinched = false, isSpaceDown = false;
+let strokePts = [], lastDrawPt = null, lastMoveTime = 0, currentStrokeSeed = 1;
+let pinchState = null, panDragState = null, axisDragState = null, splitDragActive = false;
+let livePointerDocPt = null;
+let confirmResolver = null;
+let autoSaveTimer = null;
+
+// Quay giảng & Timelapse
+let isRecordingLesson = false, lessonRecorder = null, lessonChunks = [], lessonMicStream = null;
+let lessonTimerIv = null, lessonSeconds = 0, lessonRecRaf = 0, lessonBlob = null, lessonUrl = null;
+const recordCanvas = document.createElement('canvas');
+const recordCtx = recordCanvas.getContext('2d');
+let tlTargetDuration = 15, tlBlob = null, tlUrl = null;
+
+// ============================================================================
+// 3. KHỞI TẠO & CÀI ĐẶT THIẾT BỊ
+// ============================================================================
+async function initApp() {
+    renderColorPalette();
+    setDeviceMode(deviceMode, true);
+    updateFormulaUI();
+    updateBrushDotPreview();
+    setDocumentDimensions(1080, 1440);
+    renderTemplateBg('brow');
+    syncBaselines();
+    resizeOverlayAndTransform();
+    window.addEventListener('resize', resizeOverlayAndTransform);
+    setupInputListeners();
+
+    // Khôi phục bài vẽ dở từ bộ nhớ máy (IndexedDB) nếu có
+    try {
+        const restored = await loadAutoSaveFromIDB();
+        if (restored) showToast('💾 Đã khôi phục bài vẽ gần nhất trên máy!');
+    } catch (e) {}
+}
+
+function setDeviceMode(mode, silent = false) {
+    deviceMode = mode;
+    localStorage.setItem('kb_device_mode', mode);
+    const icons = { finger: '📱Tay', pencil: '✏️Bút', pc: '💻PC' };
+    document.getElementById('btnDeviceMode').innerText = icons[mode] || '📱Tay';
+    ['finger', 'pencil', 'pc'].forEach(m => {
+        const el = document.getElementById(`devOpt_${m}`);
+        if (!el) return;
+        el.className = m === mode
+            ? 'w-full p-3 rounded-2xl border-2 border-rose-400 bg-rose-500/15 text-left flex items-center space-x-3'
+            : 'w-full p-3 rounded-2xl border border-zinc-700 bg-zinc-950 text-left flex items-center space-x-3';
+    });
+    if (mode === 'finger') { filterX = new OneEuroFilter(1.1, 0.015, 1.0); filterY = new OneEuroFilter(1.1, 0.015, 1.0); }
+    else if (mode === 'pencil') { filterX = new OneEuroFilter(2.5, 0.045, 1.0); filterY = new OneEuroFilter(2.5, 0.045, 1.0); }
+    else { filterX = new OneEuroFilter(1.6, 0.025, 1.0); filterY = new OneEuroFilter(1.6, 0.025, 1.0); }
+
+    if (!silent) {
+        closeModal('deviceModal');
+        showToast(mode === 'pencil' ? '✏️ Đã bật chống tỳ tay cho Bút cảm ứng!' : mode === 'finger' ? '📱 Đã tối ưu vẽ ngón tay chống rung!' : '💻 Đã bật chế độ Chuột / Máy tính!');
+    }
+}
+
+// ============================================================================
+// 4. HỆ THỐNG LỚP (4 LAYERS) & MÀU SẮC
+// ============================================================================
+function renderColorPalette() {
+    document.getElementById('colorPaletteRow').innerHTML = PMU_COLORS.map(c => `
+        <button onclick="selectColor('${c.hex}')" title="${c.name}"
+            class="w-6 h-6 rounded-full shrink-0 border-2 transition-transform ${activeColor === c.hex ? 'border-rose-400 scale-115 ring-2 ring-white/75' : 'border-white/35'}"
+            style="background:${c.hex};"></button>
+    `).join('');
+}
+function selectColor(hex) {
+    activeColor = hex;
+    if (activeTool === 'eraser') selectBrushTool('hairstroke');
+    renderColorPalette();
+    updateBrushDotPreview();
+}
+function onBrushSizeChange(v) {
+    brushSize = Number(v);
+    document.getElementById('brushSizeVal').innerText = `${brushSize}px`;
+    updateBrushDotPreview();
+}
+function onBrushOpacityChange(v) {
+    brushOpacity = Number(v) / 100;
+    document.getElementById('brushOpacityVal').innerText = `${v}%`;
+    updateBrushDotPreview();
+}
+function updateBrushDotPreview() {
+    const dot = document.getElementById('brushPreviewDot');
+    const d = Math.max(3, Math.min(20, Math.round(brushSize * 0.55)));
+    dot.style.width = d + 'px'; dot.style.height = d + 'px';
+    dot.style.backgroundColor = activeTool === 'eraser' ? '#94a3b8' : activeTool === 'laser' ? '#f43f5e' : activeColor;
+    dot.style.opacity = brushOpacity;
+}
+
+function setActiveLayer(key) {
+    activeLayerKey = key;
+    document.getElementById('activeLayerChip').innerText = LAYER_MAP[key].label;
+    ['frame', 'hair', 'shading'].forEach(k => {
+        const card = document.getElementById(`layerCard_${k}`);
+        if (!card) return;
+        card.className = k === key
+            ? 'p-3 rounded-2xl border-2 border-rose-400 bg-rose-500/10 space-y-1.5 cursor-pointer'
+            : 'p-3 rounded-2xl border border-zinc-800 bg-zinc-950 space-y-1.5 cursor-pointer';
+    });
+}
+function openLayerModal() { setActiveLayer(activeLayerKey); openModal('layerModal'); }
+function toggleAutoLayerSwitch() {
+    autoLayerSwitch = !autoLayerSwitch;
+    const b = document.getElementById('btnAutoLayer');
+    b.innerText = autoLayerSwitch ? 'BẬT' : 'TẮT';
+    b.className = autoLayerSwitch ? 'px-3 py-1 rounded-xl bg-emerald-500 text-zinc-950 font-black text-xs' : 'px-3 py-1 rounded-xl bg-zinc-800 text-slate-400 font-bold text-xs';
+}
+function toggleLayerVis(key) {
+    const l = LAYER_MAP[key];
+    l.vis = !l.vis;
+    l.el.style.visibility = l.vis ? 'visible' : 'hidden';
+    const b = document.getElementById(`visBtn_${key}`);
+    b.innerText = l.vis ? '👁️' : '🙈';
+    b.className = l.vis ? 'w-8 h-8 rounded-xl bg-zinc-800 text-sm' : 'w-8 h-8 rounded-xl bg-rose-950 text-sm opacity-60';
+}
+function onLayerOpacity(key, val) {
+    const l = LAYER_MAP[key];
+    l.op = Number(val) / 100;
+    l.el.style.opacity = l.op;
+    if (key === 'frame') document.getElementById('frameOpacityVal').innerText = `${val}%`;
+}
+function toggleFrameLock() {
+    frameLocked = !frameLocked;
+    const b = document.getElementById('lockBtn_frame');
+    b.innerText = frameLocked ? '🔒' : '🔓';
+    b.className = frameLocked ? 'w-8 h-8 rounded-xl bg-amber-400 text-zinc-950 text-sm' : 'w-8 h-8 rounded-xl bg-zinc-800 text-sm';
+    showToast(frameLocked ? '🔒 Đã khóa Lớp Khung (chống vẽ/tẩy nhầm)' : '🔓 Đã mở khóa Lớp Khung');
+}
+function toggleClipInsideFrame() {
+    if (!clipInsideFrame && savedFramePolys.length === 0) {
+        showToast('📍 Hãy dùng "Chấm Khung" (hoặc Mẫu 6đ) và bấm "Chốt Khung" khép kín trước nhé!');
+        return;
+    }
+    clipInsideFrame = !clipInsideFrame;
+    const b = document.getElementById('btnClipFrame');
+    b.innerText = clipInsideFrame ? '🔒Trong khung' : '🔓Tự do';
+    b.className = clipInsideFrame
+        ? 'px-2 py-1 rounded-xl bg-emerald-500 text-zinc-950 font-black text-[11px] active:scale-95'
+        : 'px-2 py-1 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-400 font-bold text-[11px] active:scale-95';
+}
+
+function selectBrushTool(tool) {
+    activeTool = tool;
+    if (panModeOnly) togglePanMode();
+    document.querySelectorAll('.tool-btn').forEach(b => {
+        b.className = 'tool-btn shrink-0 px-2 py-1.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-[11px] flex flex-col items-center min-w-[56px]';
+    });
+    const activeBtn = document.getElementById(`brushTool_${tool}`);
+    if (activeBtn) {
+        activeBtn.className = 'tool-btn shrink-0 px-2 py-1.5 rounded-xl border-2 border-rose-400 bg-rose-500/25 text-white font-black text-[11px] flex flex-col items-center min-w-[58px]';
+    }
+    // Tự động chuyển đúng Lớp theo cây bút
+    if (autoLayerSwitch) {
+        if (['pointframe', 'ruler', 'smooth', 'arrow', 'number', 'text'].includes(tool)) setActiveLayer('frame');
+        else if (tool === 'hairstroke') setActiveLayer('hair');
+        else if (tool === 'shading' || tool === 'lip') setActiveLayer('shading');
+    }
+    if (tool === 'lip' && (activeColor === '#ffffff' || activeColor === '#18181b')) selectColor('#fb923c');
+    document.getElementById('pointFrameBar').classList.toggle('hidden', tool !== 'pointframe');
+    if (tool === 'pointframe') redrawActivePointFrame();
+    else { activeCtx.clearRect(0, 0, docW, docH); }
+    updateBrushDotPreview();
+}
+
+// ============================================================================
+// 5. KÍCH THƯỚC DOCUMENT & GPU VIEWPORT TRANSFORM
+// ============================================================================
+function setDocumentDimensions(w, h) {
+    docW = w; docH = h;
+    [bgLayer, shadingLayer, hairLayer, frameLayer, activeLayer].forEach(c => { c.width = w; c.height = h; });
+    docTransformWrap.style.width = w + 'px';
+    docTransformWrap.style.height = h + 'px';
+    faceAxis.x = w / 2; faceAxis.y = h / 2;
+    resetViewport();
+}
+function resizeOverlayAndTransform() {
+    const r = canvasWrap.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    overlayCanvas.width = Math.max(2, Math.round(r.width * dpr));
+    overlayCanvas.height = Math.max(2, Math.round(r.height * dpr));
+    fitScale = Math.min((r.width - 14) / Math.max(1, docW), (r.height - 14) / Math.max(1, docH));
+    applyTransformCSS();
+    renderOverlay();
+}
+function applyTransformCSS() {
+    const s = fitScale * userZoom;
+    const sx = viewMirrorFlip ? -s : s;
+    docTransformWrap.style.transform = `translate3d(calc(-50% + ${viewPanX}px), calc(-50% + ${viewPanY}px), 0) scale(${sx}, ${s})`;
+    updateSplitCurtainClip();
+}
+function resetViewport() {
+    userZoom = 1.0; viewPanX = 0; viewPanY = 0;
+    document.getElementById('zoomPctLabel').innerText = '100%';
+    resizeOverlayAndTransform();
+}
+function zoomByStep(delta, centerClientX = null, centerClientY = null) {
+    const nextZ = Math.max(0.4, Math.min(6.0, Number((userZoom + delta).toFixed(2))));
+    const ratio = nextZ / userZoom;
+    if (centerClientX !== null && centerClientY !== null) {
+        const r = canvasWrap.getBoundingClientRect();
+        const cx = centerClientX - (r.left + r.width / 2);
+        const cy = centerClientY - (r.top + r.height / 2);
+        viewPanX = cx - (cx - viewPanX) * ratio;
+        viewPanY = cy - (cy - viewPanY) * ratio;
+    } else {
+        viewPanX *= ratio; viewPanY *= ratio;
+    }
+    userZoom = nextZ;
+    document.getElementById('zoomPctLabel').innerText = `${Math.round(userZoom * 100)}%`;
+    applyTransformCSS();
+    renderOverlay();
+}
+function clientToDoc(clientX, clientY) {
+    const r = canvasWrap.getBoundingClientRect();
+    const s = fitScale * userZoom;
+    const sx = viewMirrorFlip ? -s : s;
+    const dx = clientX - (r.left + r.width / 2 + viewPanX);
+    const dy = clientY - (r.top + r.height / 2 + viewPanY);
+    return { x: docW / 2 + dx / sx, y: docH / 2 + dy / s };
+}
+function docToWrapCss(dx, dy) {
+    const r = canvasWrap.getBoundingClientRect();
+    const s = fitScale * userZoom;
+    const sx = viewMirrorFlip ? -s : s;
+    return { x: r.width / 2 + viewPanX + (dx - docW / 2) * sx, y: r.height / 2 + viewPanY + (dy - docH / 2) * s };
+}
+function togglePanMode() {
+    panModeOnly = !panModeOnly;
+    const b = document.getElementById('btnPanMode');
+    b.className = panModeOnly
+        ? 'px-2 py-1 rounded-xl bg-amber-400 border border-amber-200 text-zinc-950 font-black text-[11px] active:scale-95'
+        : 'px-2 py-1 rounded-xl bg-zinc-800 border border-zinc-700 text-slate-200 font-bold text-[11px] active:scale-95';
+    b.innerText = panModeOnly ? '✋Đang kéo' : '✋Kéo';
+}
+
+// ============================================================================
+// 6. LỊCH SỬ UNDO / REDO SIÊU NHANH (KHÔNG DÙNG GETIMAGEDATA!)
+// ============================================================================
+function cloneLayerCanvas(srcCanvas) {
+    const c = document.createElement('canvas');
+    c.width = docW; c.height = docH;
+    c.getContext('2d').drawImage(srcCanvas, 0, 0);
+    return c;
+}
+function syncBaselines() {
+    ['shading', 'hair', 'frame'].forEach(k => {
+        if (baselineCanvases[k]) { baselineCanvases[k].width = 0; baselineCanvases[k].height = 0; }
+        baselineCanvases[k] = cloneLayerCanvas(LAYER_MAP[k].el);
+    });
+    undoStack = []; redoStack = [];
+    updateUndoRedoButtons();
+}
+function pushUndoForLayer(layerKey, tlCountAdded = 1) {
+    const prevCanvas = baselineCanvases[layerKey];
+    undoStack.push({
+        layerKey,
+        prevCanvas,
+        prevPolys: JSON.stringify(savedFramePolys),
+        tlCountAdded
+    });
+    if (undoStack.length > MAX_HISTORY) {
+        const old = undoStack.shift();
+        if (old.prevCanvas) { old.prevCanvas.width = 0; old.prevCanvas.height = 0; }
+    }
+    baselineCanvases[layerKey] = cloneLayerCanvas(LAYER_MAP[layerKey].el);
+    redoStack.forEach(item => { if (item.nextCanvas) { item.nextCanvas.width = 0; item.nextCanvas.height = 0; } });
+    redoStack = [];
+    undoneTimelapseOps = [];
+    updateUndoRedoButtons();
+    scheduleAutoSave();
+}
+function undoAction() {
+    if (!undoStack.length) return;
+    const item = undoStack.pop();
+    const curPolys = JSON.stringify(savedFramePolys);
+    const nextCanvas = cloneLayerCanvas(LAYER_MAP[item.layerKey].el);
+    redoStack.push({ layerKey: item.layerKey, nextCanvas, nextPolys: curPolys, tlCountAdded: item.tlCountAdded });
+
+    const ctx = LAYER_MAP[item.layerKey].ctx;
+    ctx.clearRect(0, 0, docW, docH);
+    ctx.drawImage(item.prevCanvas, 0, 0);
+    if (baselineCanvases[item.layerKey]) { baselineCanvases[item.layerKey].width = 0; baselineCanvases[item.layerKey].height = 0; }
+    baselineCanvases[item.layerKey] = item.prevCanvas;
+    savedFramePolys = JSON.parse(item.prevPolys || '[]');
+
+    for (let i = 0; i < item.tlCountAdded; i++) {
+        if (timelapseOps.length) undoneTimelapseOps.push(timelapseOps.pop());
+    }
+    updateUndoRedoButtons();
+    scheduleAutoSave();
+}
+function redoAction() {
+    if (!redoStack.length) return;
+    const item = redoStack.pop();
+    undoStack.push({
+        layerKey: item.layerKey,
+        prevCanvas: baselineCanvases[item.layerKey],
+        prevPolys: JSON.stringify(savedFramePolys),
+        tlCountAdded: item.tlCountAdded
+    });
+    const ctx = LAYER_MAP[item.layerKey].ctx;
+    ctx.clearRect(0, 0, docW, docH);
+    ctx.drawImage(item.nextCanvas, 0, 0);
+    baselineCanvases[item.layerKey] = item.nextCanvas;
+    savedFramePolys = JSON.parse(item.nextPolys || '[]');
+
+    for (let i = 0; i < item.tlCountAdded; i++) {
+        if (undoneTimelapseOps.length) timelapseOps.push(undoneTimelapseOps.pop());
+    }
+    updateUndoRedoButtons();
+    scheduleAutoSave();
+}
+function updateUndoRedoButtons() {
+    document.getElementById('btnUndoTop').disabled = undoStack.length === 0;
+    document.getElementById('btnRedoTop').disabled = redoStack.length === 0;
+}
+
+// ============================================================================
+// 7. SỰ KIỆN ĐA ĐIỂM CHẠM + PALM REJECTION + GETCOALESCEDEVENTS
+// ============================================================================
+function setupInputListeners() {
+    canvasWrap.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('#splitCurtainBar') || e.target.closest('#pointFrameBar') || e.target.closest('#axisControlBar') || e.target.closest('aside')) return;
+        e.preventDefault();
+        canvasWrap.setPointerCapture(e.pointerId);
+
+        const r = canvasWrap.getBoundingClientRect();
+        const ptCss = { x: e.clientX - r.left, y: e.clientY - r.top, type: e.pointerType };
+        activePointers.set(e.pointerId, ptCss);
+
+        // Nếu 2 ngón tay -> hủy nét 1 ngón vừa chạm nhầm và chuyển sang Zoom/Pan
+        if (activePointers.size === 2) {
+            cancelActiveStrokeImmediately();
+            const pts = Array.from(activePointers.values());
+            const midCss = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+            pinchState = {
+                dist0: Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)),
+                zoom0: userZoom,
+                docAtMid: clientToDoc(r.left + midCss.x, r.top + midCss.y)
+            };
+            justPinched = true;
+            return;
+        }
+        if (activePointers.size > 2) return;
+
+        // Chế độ iPad + Apple Pencil: ngón tay ('touch') chỉ dùng kéo màn hình (Pan), chỉ 'pen' hoặc 'mouse' mới vẽ!
+        if (deviceMode === 'pencil' && e.pointerType === 'touch') {
+            panDragState = { startX: e.clientX, startY: e.clientY, pan0X: viewPanX, pan0Y: viewPanY };
+            return;
+        }
+
+        // Kéo màn hình trên PC (chuột phải / giữ Space) hoặc đang bật nút Kéo
+        if (panModeOnly || isSpaceDown || e.button === 2 || e.button === 1) {
+            panDragState = { startX: e.clientX, startY: e.clientY, pan0X: viewPanX, pan0Y: viewPanY };
+            return;
+        }
+
+        const dp = clientToDoc(e.clientX, e.clientY);
+
+        // Kiểm tra nếu đang kéo tay cầm Trục giữa mặt
+        if (faceAxis.visible) {
+            const handlePos = docToWrapCss(faceAxis.x, faceAxis.y);
+            if (Math.hypot(ptCss.x - handlePos.x, ptCss.y - handlePos.y) < 26) {
+                axisDragState = { startDoc: dp, ax0: faceAxis.x, ay0: faceAxis.y };
+                return;
+            }
+        }
+
+        // Bút Laser Đỏ (chỉ điểm tự tan)
+        if (activeTool === 'laser') {
+            isDrawing = true;
+            laserStrokes.push({ pts: [{ x: dp.x, y: dp.y, t: performance.now() }] });
+            startLaserLoop();
+            return;
+        }
+
+        // Công cụ Chấm Khung 1-2-3...
+        if (activeTool === 'pointframe') {
+            handlePointFrameDown(dp);
+            return;
+        }
+
+        // Kiểm tra Khóa Khung
+        if (activeLayerKey === 'frame' && frameLocked) {
+            showToast('🔒 Lớp Khung đang khóa! Hãy mở khóa hoặc chọn bút Sợi / Đánh máy.');
+            return;
+        }
+
+        // Công cụ Đóng Dấu Số
+        if (activeTool === 'number') {
+            commitNumberStamp(dp);
+            return;
+        }
+
+        // Công cụ Nhãn Chữ
+        if (activeTool === 'text') {
+            pendingTextDocPt = dp;
+            document.getElementById('customTextInput').value = '';
+            openModal('textPromptModal');
+            setTimeout(() => document.getElementById('customTextInput').focus(), 100);
+            return;
+        }
+
+        // Bắt đầu nét vẽ thực thụ (tức thì, không trễ!)
+        isDrawing = true;
+        filterX.reset(); filterY.reset();
+        const tSec = performance.now() / 1000;
+        const smoothed = { x: filterX.filter(dp.x, tSec), y: filterY.filter(dp.y, tSec), p: e.pointerType === 'pen' ? Math.max(0.15, e.pressure || 0.5) : 1.0 };
+        strokePts = [smoothed];
+        lastDrawPt = smoothed;
+        lastMoveTime = performance.now();
+        currentStrokeSeed = (Math.random() * 999999) | 0;
+        livePointerDocPt = smoothed;
+
+        if (activeTool === 'shading' || activeTool === 'lip' || activeTool === 'eraser') {
+            applyDirectStep(smoothed, smoothed, 0);
+        }
+        renderOverlay();
+    });
+
+    canvasWrap.addEventListener('pointermove', (e) => {
+        if (!activePointers.has(e.pointerId)) return;
+        e.preventDefault();
+        const r = canvasWrap.getBoundingClientRect();
+        activePointers.set(e.pointerId, { x: e.clientX - r.left, y: e.clientY - r.top, type: e.pointerType });
+
+        // 2 ngón Pinch-Zoom & Pan
+        if (activePointers.size === 2 && pinchState) {
+            const pts = Array.from(activePointers.values());
+            const midCss = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+            const newDist = Math.max(10, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
+            userZoom = Math.max(0.4, Math.min(6.0, pinchState.zoom0 * (newDist / pinchState.dist0)));
+            const s = fitScale * userZoom;
+            const sx = viewMirrorFlip ? -s : s;
+            viewPanX = midCss.x - r.width / 2 - (pinchState.docAtMid.x - docW / 2) * sx;
+            viewPanY = midCss.y - r.height / 2 - (pinchState.docAtMid.y - docH / 2) * s;
+            document.getElementById('zoomPctLabel').innerText = `${Math.round(userZoom * 100)}%`;
+            applyTransformCSS();
+            renderOverlay();
+            return;
+        }
+
+        if (panDragState) {
+            viewPanX = panDragState.pan0X + (e.clientX - panDragState.startX);
+            viewPanY = panDragState.pan0Y + (e.clientY - panDragState.startY);
+            applyTransformCSS();
+            renderOverlay();
+            return;
+        }
+
+        if (axisDragState) {
+            const dp = clientToDoc(e.clientX, e.clientY);
+            faceAxis.x = axisDragState.ax0 + (dp.x - axisDragState.startDoc.x);
+            faceAxis.y = axisDragState.ay0 + (dp.y - axisDragState.startDoc.y);
+            renderOverlay();
+            return;
+        }
+
+        if (activeTool === 'pointframe' && (draggingPointIdx >= 0 || draggingAllPointsStart)) {
+            const dp = clientToDoc(e.clientX, e.clientY);
+            handlePointFrameMove(dp);
+            return;
+        }
+
+        if (!isDrawing || activePointers.size !== 1) return;
+
+        // Đọc toàn bộ điểm cảm ứng 120Hz/240Hz để nét cong siêu mượt
+        const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+        const now = performance.now();
+        const dtMs = Math.max(4, now - lastMoveTime);
+        lastMoveTime = now;
+
+        for (let i = 0; i < events.length; i++) {
+            const ev = events[i];
+            const raw = clientToDoc(ev.clientX, ev.clientY);
+            const tSec = (ev.timeStamp || now) / 1000;
+            const pt = {
+                x: filterX.filter(raw.x, tSec),
+                y: filterY.filter(raw.y, tSec),
+                p: ev.pointerType === 'pen' ? Math.max(0.15, ev.pressure || 0.5) : 1.0
+            };
+            livePointerDocPt = pt;
+
+            if (activeTool === 'laser') {
+                const curLaser = laserStrokes[laserStrokes.length - 1];
+                if (curLaser) curLaser.pts.push({ x: pt.x, y: pt.y, t: performance.now() });
+                continue;
+            }
+
+            if (activeTool === 'shading' || activeTool === 'lip' || activeTool === 'eraser') {
+                const dist = Math.hypot(pt.x - lastDrawPt.x, pt.y - lastDrawPt.y);
+                const speed = dist / (dtMs / events.length);
+                applyDirectStep(lastDrawPt, pt, speed);
+                lastDrawPt = pt;
+                strokePts.push(pt);
+            } else {
+                strokePts.push(pt);
+            }
+        }
+
+        if (activeTool === 'ruler' || activeTool === 'arrow' || activeTool === 'smooth' || activeTool === 'hairstroke') {
+            drawPreviewStroke();
+        }
+        renderOverlay();
+    });
+
+    const onPointerEnd = (e) => {
+        activePointers.delete(e.pointerId);
+        panDragState = null;
+        axisDragState = null;
+        draggingPointIdx = -1;
+        draggingAllPointsStart = null;
+        if (activePointers.size < 2) pinchState = null;
+
+        if (isDrawing && activePointers.size === 0) {
+            isDrawing = false;
+            if (activeTool === 'laser') { strokePts = []; livePointerDocPt = null; renderOverlay(); return; }
+            finalizeActiveStroke();
+        }
+        if (activePointers.size === 0) {
+            justPinched = false;
+            livePointerDocPt = null;
+            renderOverlay();
+        }
+    };
+    canvasWrap.addEventListener('pointerup', onPointerEnd);
+    canvasWrap.addEventListener('pointercancel', onPointerEnd);
+    canvasWrap.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Lăn chuột phóng to thu nhỏ trên PC + phím tắt
+    canvasWrap.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        zoomByStep(e.deltaY < 0 ? 0.18 : -0.18, e.clientX, e.clientY);
+    }, { passive: false });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (e.code === 'Space') isSpaceDown = true;
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) redoAction(); else undoAction();
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+            e.preventDefault(); redoAction();
+        }
+    });
+    window.addEventListener('keyup', (e) => { if (e.code === 'Space') isSpaceDown = false; });
+
+    // Kéo thanh So sánh Trước/Sau
+    const splitBar = document.getElementById('splitCurtainBar');
+    splitBar.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); e.preventDefault();
+        splitBar.setPointerCapture(e.pointerId);
+        splitDragActive = true;
+    });
+    splitBar.addEventListener('pointermove', (e) => {
+        if (!splitDragActive) return;
+        e.stopPropagation();
+        const r = canvasWrap.getBoundingClientRect();
+        splitCompare.ratio = Math.max(0.06, Math.min(0.94, (e.clientX - r.left) / Math.max(1, r.width)));
+        updateSplitCurtainClip();
+    });
+    splitBar.addEventListener('pointerup', () => { splitDragActive = false; });
+    splitBar.addEventListener('pointercancel', () => { splitDragActive = false; });
+}
+
+function cancelActiveStrokeImmediately() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    activeCtx.clearRect(0, 0, docW, docH);
+    if (activeTool === 'shading' || activeTool === 'lip' || activeTool === 'eraser') {
+        const ctx = LAYER_MAP[activeLayerKey].ctx;
+        ctx.clearRect(0, 0, docW, docH);
+        ctx.drawImage(baselineCanvases[activeLayerKey], 0, 0);
+    }
+    strokePts = [];
+    livePointerDocPt = null;
+}
+
+// ============================================================================
+// 8. ĐỐI XỨNG GƯƠNG, KHÓA TRONG KHUNG & THUẬT TOÁN VẼ CHUYÊN PMU
+// ============================================================================
+function mirrorDocPt(pt) {
+    const rad = (faceAxis.angleDeg * Math.PI) / 180;
+    const nx = Math.cos(rad), ny = Math.sin(rad);
+    const dx = pt.x - faceAxis.x, dy = pt.y - faceAxis.y;
+    const d = dx * nx + dy * ny;
+    return { x: pt.x - 2 * d * nx, y: pt.y - 2 * d * ny, p: pt.p };
+}
+function isSymmetryActive() { return faceAxis.visible && faceAxis.symmetry; }
+
+function buildPolySubpath(ctx, pts, curved, closed) {
+    if (pts.length < 2) return;
+    ctx.moveTo(pts[0].x, pts[0].y);
+    if (!curved || pts.length === 2) {
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        if (closed) ctx.closePath();
+        return;
+    }
+    if (closed) {
+        const n = pts.length;
+        const m0 = { x: (pts[n - 1].x + pts[0].x) / 2, y: (pts[n - 1].y + pts[0].y) / 2 };
+        ctx.moveTo(m0.x, m0.y);
+        for (let i = 0; i < n; i++) {
+            const next = pts[(i + 1) % n];
+            const mx = (pts[i].x + next.x) / 2, my = (pts[i].y + next.y) / 2;
+            ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+        }
+        ctx.closePath();
+    } else {
+        for (let i = 1; i < pts.length - 1; i++) {
+            const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+            ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    }
+}
+function applyFrameClip(ctx, polys = savedFramePolys) {
+    if (!polys || !polys.length) return false;
+    ctx.beginPath();
+    polys.forEach(p => buildPolySubpath(ctx, p.pts, p.curved, true));
+    ctx.clip('nonzero');
+    return true;
+}
+
+function getSoftStamp(color) {
+    if (currentStampColor === color) return softStampCanvas;
+    currentStampColor = color;
+    softStampCanvas.width = 64; softStampCanvas.height = 64;
+    const sctx = softStampCanvas.getContext('2d');
+    const g = sctx.createRadialGradient(32, 32, 2, 32, 32, 31);
+    g.addColorStop(0, color);
+    g.addColorStop(0.45, color);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    sctx.clearRect(0, 0, 64, 64);
+    sctx.fillStyle = g;
+    sctx.fillRect(0, 0, 64, 64);
+    return softStampCanvas;
+}
+
+function applyDirectStep(p1, p2, speed = 0) {
+    const ctx = LAYER_MAP[activeLayerKey].ctx;
+    const mirrorOn = isSymmetryActive();
+    const useClip = clipInsideFrame && activeTool !== 'eraser' && savedFramePolys.length > 0;
+
+    const runStep = (a, b, seedOffset) => {
+        ctx.save();
+        if (useClip) applyFrameClip(ctx);
+        if (activeTool === 'eraser') {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = 'rgba(0,0,0,1)';
+            ctx.lineWidth = brushSize * 2.3;
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        } else if (activeTool === 'lip') {
+            const stamp = getSoftStamp(activeColor);
+            const dist = Math.hypot(b.x - a.x, b.y - a.y);
+            const rad = Math.max(8, brushSize * 2.1 * (a.p || 1));
+            const steps = Math.max(1, Math.ceil(dist / Math.max(2, rad * 0.25)));
+            ctx.globalAlpha = Math.min(0.18, brushOpacity * 0.14);
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+                ctx.drawImage(stamp, x - rad, y - rad, rad * 2, rad * 2);
+            }
+        } else if (activeTool === 'shading') {
+            // Đánh máy Nano theo tốc độ tay (Whip Shading): đi nhanh hạt thưa rộng, đi chậm hạt khít đậm
+            const rand = mulberry32(currentStrokeSeed + seedOffset + strokePts.length * 131);
+            const dist = Math.hypot(b.x - a.x, b.y - a.y);
+            const speedNorm = Math.min(1, speed / 1.8);
+            const radius = Math.max(4, brushSize * (1.2 + speedNorm * 0.65));
+            const steps = Math.max(1, Math.ceil(dist / 3.5));
+            const baseDots = Math.max(3, Math.round(brushSize * 0.75 * brushOpacity * (1.15 - speedNorm * 0.55) * (a.p || 1)));
+            ctx.fillStyle = activeColor;
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                const cx = a.x + (b.x - a.x) * t, cy = a.y + (b.y - a.y) * t;
+                for (let d = 0; d < baseDots; d++) {
+                    const ang = rand() * Math.PI * 2;
+                    const r = Math.sqrt(rand()) * radius;
+                    const dotR = Math.max(0.85, brushSize * 0.11 * (0.7 + rand() * 0.6));
+                    ctx.globalAlpha = brushOpacity * (0.18 + 0.55 * (1 - r / radius)) * (1 - speedNorm * 0.25);
+                    ctx.beginPath();
+                    ctx.arc(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, dotR, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        ctx.restore();
+    };
+
+    runStep(p1, p2, 0);
+    if (mirrorOn) runStep(mirrorDocPt(p1), mirrorDocPt(p2), 7777);
+}
+
+function drawPreviewStroke() {
+    activeCtx.clearRect(0, 0, docW, docH);
+    if (!strokePts.length) return;
+    const p0 = strokePts[0], pLast = strokePts[strokePts.length - 1];
+    const mirrorOn = isSymmetryActive();
+    const renderOne = (pts) => {
+        if (activeTool === 'ruler') drawRulerLine(activeCtx, pts[0], pts[pts.length - 1], brushSize, activeColor, brushOpacity, true);
+        else if (activeTool === 'arrow') drawArrowLine(activeCtx, pts[0], pts[pts.length - 1], brushSize, activeColor, brushOpacity);
+        else if (activeTool === 'smooth') drawSmoothCurve(activeCtx, pts, brushSize, activeColor, brushOpacity);
+        else if (activeTool === 'hairstroke') drawTaperedHairstroke(activeCtx, pts, brushSize, activeColor, brushOpacity);
+    };
+    renderOne(strokePts);
+    if (mirrorOn) renderOne(strokePts.map(mirrorDocPt));
+}
+
+function finalizeActiveStroke() {
+    activeCtx.clearRect(0, 0, docW, docH);
+    if (!strokePts.length) { livePointerDocPt = null; return; }
+
+    const mirrorOn = isSymmetryActive();
+    const ctx = LAYER_MAP[activeLayerKey].ctx;
+    const useClip = clipInsideFrame && (activeTool === 'shading' || activeTool === 'lip') && savedFramePolys.length > 0;
+
+    if (activeTool === 'ruler' || activeTool === 'arrow' || activeTool === 'smooth' || activeTool === 'hairstroke') {
+        const p0 = strokePts[0], pEnd = strokePts[strokePts.length - 1];
+        const drawOnLayer = (pts) => {
+            ctx.save();
+            if (useClip) applyFrameClip(ctx);
+            if (activeTool === 'ruler') drawRulerLine(ctx, pts[0], pts[pts.length - 1], brushSize, activeColor, brushOpacity, false);
+            else if (activeTool === 'arrow') drawArrowLine(ctx, pts[0], pts[pts.length - 1], brushSize, activeColor, brushOpacity);
+            else if (activeTool === 'smooth') drawSmoothCurve(ctx, pts, brushSize, activeColor, brushOpacity);
+            else if (activeTool === 'hairstroke') drawTaperedHairstroke(ctx, pts, brushSize, activeColor, brushOpacity);
+            ctx.restore();
+        };
+        drawOnLayer(strokePts);
+        if (mirrorOn) drawOnLayer(strokePts.map(mirrorDocPt));
+    }
+
+    // Ghi nhận vào lịch sử Timelapse (nhẹ, lưu dạng tọa độ)
+    const compactPts = compactPoints(strokePts, 2.5);
+    timelapseOps.push({
+        type: 'stroke',
+        tool: activeTool,
+        layer: activeLayerKey,
+        color: activeColor,
+        size: brushSize,
+        opacity: brushOpacity,
+        pts: compactPts,
+        mirrorPts: mirrorOn ? compactPts.map(mirrorDocPt) : null,
+        seed: currentStrokeSeed,
+        clipPolys: useClip ? JSON.parse(JSON.stringify(savedFramePolys)) : null
+    });
+
+    pushUndoForLayer(activeLayerKey, 1);
+    strokePts = [];
+    livePointerDocPt = null;
+    renderOverlay();
+}
+
+function compactPoints(pts, minDist = 2.5) {
+    if (pts.length <= 2) return pts.map(p => ({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, p: p.p || 1 }));
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) {
+        const last = out[out.length - 1];
+        if (Math.hypot(pts[i].x - last.x, pts[i].y - last.y) >= minDist) out.push(pts[i]);
+    }
+    out.push(pts[pts.length - 1]);
+    return out.map(p => ({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, p: p.p || 1 }));
+}
+
+function resampleSmoothPoints(pts, spacing = 3) {
+    if (pts.length < 2) return pts;
+    const clean = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+        const prev = clean[clean.length - 1], cur = pts[i];
+        if (Math.hypot(cur.x - prev.x, cur.y - prev.y) >= spacing || i === pts.length - 1) clean.push(cur);
+    }
+    if (clean.length < 3) return clean;
+    let arr = clean;
+    for (let pass = 0; pass < 2; pass++) {
+        const next = [arr[0]];
+        for (let i = 1; i < arr.length - 1; i++) {
+            next.push({
+                x: arr[i - 1].x * 0.25 + arr[i].x * 0.5 + arr[i + 1].x * 0.25,
+                y: arr[i - 1].y * 0.25 + arr[i].y * 0.5 + arr[i + 1].y * 0.25,
+                p: arr[i].p || 1
+            });
+        }
+        next.push(arr[arr.length - 1]);
+        arr = next;
+    }
+    return arr;
+}
+
+function drawSmoothCurve(ctx, rawPts, size, color, alpha) {
+    const pts = resampleSmoothPoints(rawPts, 3);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(1.5, size);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (pts.length === 1) { ctx.arc(pts[0].x, pts[0].y, size / 2, 0, Math.PI * 2); ctx.fill(); ctx.restore(); return; }
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawTaperedHairstroke(ctx, rawPts, size, color, alpha) {
+    const pts = resampleSmoothPoints(rawPts, 2);
+    if (pts.length < 2) { drawSmoothCurve(ctx, pts, size * 0.45, color, alpha); return; }
+    const n = pts.length;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < n - 1; i++) {
+        const t = i / Math.max(1, n - 2);
+        let taper = 1.0;
+        if (t < 0.16) taper = 0.2 + (t / 0.16) * 0.8;
+        else if (t > 0.72) taper = 0.16 + ((1 - t) / 0.28) * 0.84;
+        const pressure = pts[i].p || 1.0;
+        ctx.lineWidth = Math.max(0.75, size * taper * pressure);
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[i + 1].x, pts[i + 1].y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function drawRulerLine(ctx, p1, p2, size, color, alpha, isPreview) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(1.5, size * 0.85);
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    if (isPreview) {
+        [p1, p2].forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(4, size), 0, Math.PI * 2); ctx.fill(); });
+    }
+    ctx.restore();
+}
+
+function drawArrowLine(ctx, p1, p2, size, color, alpha) {
+    const dx = p2.x - p1.x, dy = p2.y - p1.y, ang = Math.atan2(dy, dx);
+    const headLen = Math.max(14, size * 3.8);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color; ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(2, size);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(p2.x, p2.y);
+    ctx.lineTo(p2.x - headLen * Math.cos(ang - Math.PI / 6), p2.y - headLen * Math.sin(ang - Math.PI / 6));
+    ctx.lineTo(p2.x - headLen * Math.cos(ang + Math.PI / 6), p2.y - headLen * Math.sin(ang + Math.PI / 6));
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+}
+
+function commitNumberStamp(dp) {
+    const ctx = LAYER_MAP[activeLayerKey].ctx;
+    const mirrorOn = isSymmetryActive();
+    drawNumberStamp(ctx, dp.x, dp.y, numberCounter, brushSize, activeColor, brushOpacity);
+    const mp = mirrorOn ? mirrorDocPt(dp) : null;
+    if (mp) drawNumberStamp(ctx, mp.x, mp.y, numberCounter, brushSize, activeColor, brushOpacity);
+    timelapseOps.push({ type: 'number', layer: activeLayerKey, x: dp.x, y: dp.y, mx: mp ? mp.x : null, my: mp ? mp.y : null, num: numberCounter, size: brushSize, color: activeColor, opacity: brushOpacity });
+    numberCounter++;
+    document.getElementById('numberStampBadge').innerText = numberCounter;
+    pushUndoForLayer(activeLayerKey, 1);
+}
+function drawNumberStamp(ctx, x, y, num, size, color, alpha) {
+    const r = Math.max(15, size * 2.4);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#09090b'; ctx.stroke();
+    ctx.fillStyle = (color === '#18181b' || color === '#78350f') ? '#ffffff' : '#09090b';
+    ctx.font = `800 ${Math.round(r * 1.1)}px "Plus Jakarta Sans", sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), x, y + 1);
+    ctx.restore();
+}
+
+function commitTextBadge(rawText) {
+    const txt = (rawText || '').trim();
+    closeModal('textPromptModal');
+    if (!txt || !pendingTextDocPt) return;
+    const ctx = LAYER_MAP[activeLayerKey].ctx;
+    drawTextBadge(ctx, pendingTextDocPt.x, pendingTextDocPt.y, txt, brushSize, activeColor, brushOpacity);
+    timelapseOps.push({ type: 'text', layer: activeLayerKey, x: pendingTextDocPt.x, y: pendingTextDocPt.y, text: txt, size: brushSize, color: activeColor, opacity: brushOpacity });
+    pendingTextDocPt = null;
+    pushUndoForLayer(activeLayerKey, 1);
+}
+function drawTextBadge(ctx, x, y, txt, size, color, alpha) {
+    const fs = Math.max(22, Math.round(size * 3.2));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `800 ${fs}px "Plus Jakarta Sans", sans-serif`;
+    const padX = Math.round(fs * 0.55), padY = Math.round(fs * 0.3);
+    const tw = ctx.measureText(txt).width;
+    const bw = tw + padX * 2, bh = fs + padY * 2;
+    ctx.fillStyle = 'rgba(9,9,11,0.82)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(x - bw / 2, y - bh / 2, bw, bh, 12);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(txt, x, y + 1);
+    ctx.restore();
+}
+
+// ============================================================================
+// 9. CÔNG CỤ CHẤM ĐIỂM NỐI KHUNG 1-2-3... + MẪU 6 ĐIỂM MÀY / MÔI
+// ============================================================================
+function handlePointFrameDown(dp) {
+    const hitRadius = Math.max(24, 28 / (fitScale * userZoom));
+    for (let i = 0; i < framePoints.length; i++) {
+        if (Math.hypot(dp.x - framePoints[i].x, dp.y - framePoints[i].y) <= hitRadius) {
+            draggingPointIdx = i;
+            return;
+        }
+    }
+    // Nếu đang có >= 3 điểm và chạm gần tâm khối -> kéo dịch chuyển toàn bộ khung mẫu
+    if (framePoints.length >= 4) {
+        const cx = framePoints.reduce((s, p) => s + p.x, 0) / framePoints.length;
+        const cy = framePoints.reduce((s, p) => s + p.y, 0) / framePoints.length;
+        if (Math.hypot(dp.x - cx, dp.y - cy) <= hitRadius * 1.4) {
+            draggingAllPointsStart = { startDp: dp, origPts: framePoints.map(p => ({ ...p })) };
+            return;
+        }
+    }
+    framePoints.push({ x: dp.x, y: dp.y });
+    redrawActivePointFrame();
+}
+function handlePointFrameMove(dp) {
+    if (draggingPointIdx >= 0 && framePoints[draggingPointIdx]) {
+        framePoints[draggingPointIdx].x = dp.x;
+        framePoints[draggingPointIdx].y = dp.y;
+        redrawActivePointFrame();
+    } else if (draggingAllPointsStart) {
+        const dx = dp.x - draggingAllPointsStart.startDp.x;
+        const dy = dp.y - draggingAllPointsStart.startDp.y;
+        framePoints = draggingAllPointsStart.origPts.map(p => ({ x: p.x + dx, y: p.y + dy }));
+        redrawActivePointFrame();
+    }
+}
+function spawnTemplatePoints(kind) {
+    const cx = docW / 2, cy = docH / 2;
+    if (kind === 'brow') {
+        // 6 điểm chân mày chuẩn: 1 Đầu trên -> 2 Đỉnh trên -> 3 Đuôi -> 4 Bụng dưới -> 5 Đầu dưới -> (6 Eo giữa)
+        framePoints = [
+            { x: cx - docW * 0.28, y: cy - docH * 0.05 },
+            { x: cx + docW * 0.04, y: cy - docH * 0.13 },
+            { x: cx + docW * 0.30, y: cy - docH * 0.03 },
+            { x: cx + docW * 0.05, y: cy - docH * 0.05 },
+            { x: cx - docW * 0.28, y: cy + docH * 0.01 },
+            { x: cx - docW * 0.12, y: cy - docH * 0.02 }
+        ];
+    } else {
+        // 6 điểm đôi môi chuẩn: 1 Khóe trái -> 2 Đỉnh tim trái -> 3 Giữa tim -> 4 Đỉnh tim phải -> 5 Khóe phải -> 6 Đáy môi dưới
+        framePoints = [
+            { x: cx - docW * 0.28, y: cy },
+            { x: cx - docW * 0.06, y: cy - docH * 0.08 },
+            { x: cx, y: cy - docH * 0.05 },
+            { x: cx + docW * 0.06, y: cy - docH * 0.08 },
+            { x: cx + docW * 0.28, y: cy },
+            { x: cx, y: cy + docH * 0.11 }
+        ];
+    }
+    framePointClosed = true;
+    framePointCurved = true;
+    updatePointFrameButtonsUI();
+    redrawActivePointFrame();
+    showToast('📍 Kéo từng chấm số để khớp với ảnh, rồi bấm "✅ Chốt Khung"!');
+}
+function togglePointCurveMode() { framePointCurved = !framePointCurved; updatePointFrameButtonsUI(); redrawActivePointFrame(); }
+function togglePointClosedMode() { framePointClosed = !framePointClosed; updatePointFrameButtonsUI(); redrawActivePointFrame(); }
+function undoLastFramePoint() { framePoints.pop(); redrawActivePointFrame(); }
+function clearFramePoints() { framePoints = []; redrawActivePointFrame(); }
+function updatePointFrameButtonsUI() {
+    document.getElementById('btnPointCurve').innerText = framePointCurved ? '〰️ Nối Cong' : '📏 Nối Thẳng';
+    const bc = document.getElementById('btnPointClosed');
+    bc.className = framePointClosed
+        ? 'shrink-0 px-2 py-1 rounded-xl bg-amber-400 text-zinc-950 font-black text-[11px]'
+        : 'shrink-0 px-2 py-1 rounded-xl bg-zinc-800 border border-zinc-600 text-slate-200 font-bold text-[11px]';
+}
+function redrawActivePointFrame() {
+    activeCtx.clearRect(0, 0, docW, docH);
+    if (!framePoints.length) return;
+
+    const drawGuide = (pts, isGhostMirror) => {
+        activeCtx.save();
+        activeCtx.globalAlpha = isGhostMirror ? 0.55 : brushOpacity;
+        activeCtx.strokeStyle = activeColor;
+        activeCtx.lineWidth = Math.max(2, brushSize * 0.9);
+        activeCtx.lineCap = 'round'; activeCtx.lineJoin = 'round';
+        if (pts.length >= 2) {
+            activeCtx.beginPath();
+            buildPolySubpath(activeCtx, pts, framePointCurved, framePointClosed);
+            activeCtx.stroke();
+        }
+        if (!isGhostMirror) {
+            const r = Math.max(13, 15 / Math.max(0.5, fitScale * userZoom));
+            pts.forEach((p, idx) => {
+                activeCtx.fillStyle = '#f43f5e';
+                activeCtx.beginPath(); activeCtx.arc(p.x, p.y, r, 0, Math.PI * 2); activeCtx.fill();
+                activeCtx.lineWidth = 2.5; activeCtx.strokeStyle = '#ffffff'; activeCtx.stroke();
+                activeCtx.fillStyle = '#ffffff';
+                activeCtx.font = `800 ${Math.round(r * 1.1)}px "Plus Jakarta Sans", sans-serif`;
+                activeCtx.textAlign = 'center'; activeCtx.textBaseline = 'middle';
+                activeCtx.fillText(String(idx + 1), p.x, p.y + 1);
+            });
+            // Chấm tâm kéo cả khung nếu >= 4 điểm
+            if (pts.length >= 4) {
+                const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+                const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+                activeCtx.fillStyle = 'rgba(251,191,36,0.9)';
+                activeCtx.beginPath(); activeCtx.arc(cx, cy, r * 0.75, 0, Math.PI * 2); activeCtx.fill();
+            }
+        }
+        activeCtx.restore();
+    };
+    drawGuide(framePoints, false);
+    if (isSymmetryActive()) drawGuide(framePoints.map(mirrorDocPt), true);
+}
+
+function commitPointFrame() {
+    if (framePoints.length < 2) { showToast('Hãy chấm ít nhất 2 điểm để nối khung!'); return; }
+    if (frameLocked) { showToast('🔒 Lớp Khung đang khóa! Hãy mở khóa trong mục Lớp.'); return; }
+
+    const fCtx = LAYER_MAP.frame.ctx;
+    const poly = { pts: framePoints.map(p => ({ x: p.x, y: p.y })), curved: framePointCurved, closed: framePointClosed };
+    const mirrorPoly = isSymmetryActive() ? { pts: poly.pts.map(mirrorDocPt), curved: framePointCurved, closed: framePointClosed } : null;
+
+    const renderPoly = (pl) => {
+        fCtx.save();
+        fCtx.globalAlpha = brushOpacity;
+        fCtx.strokeStyle = activeColor;
+        fCtx.lineWidth = Math.max(2, brushSize * 0.9);
+        fCtx.lineCap = 'round'; fCtx.lineJoin = 'round';
+        fCtx.beginPath();
+        buildPolySubpath(fCtx, pl.pts, pl.curved, pl.closed);
+        fCtx.stroke();
+        fCtx.restore();
+    };
+    renderPoly(poly);
+    if (mirrorPoly) renderPoly(mirrorPoly);
+
+    if (poly.closed || poly.pts.length >= 3) {
+        savedFramePolys.push(poly);
+        if (mirrorPoly) savedFramePolys.push(mirrorPoly);
+    }
+
+    timelapseOps.push({ type: 'framePoly', layer: 'frame', poly, mirrorPoly, color: activeColor, size: brushSize, opacity: brushOpacity });
+    framePoints = [];
+    activeCtx.clearRect(0, 0, docW, docH);
+    pushUndoForLayer('frame', 1);
+    showToast('✅ Đã chốt khung vào Lớp Khung! Có thể bật "🔒Trong khung" để đánh máy không lem.');
+}
+
+// ============================================================================
+// 10. BỘ 6 MÓN TRỢ GIẢNG (OVERlAY, LASER, TRỤC MẶT, BEFORE/AFTER, LƯỚI, CÔNG THỨC)
+// ============================================================================
+function startLaserLoop() {
+    if (laserRafId) return;
+    const tick = () => {
+        const now = performance.now();
+        laserStrokes = laserStrokes.filter(s => s.pts.length && (now - s.pts[s.pts.length - 1].t < 2100));
+        renderOverlay();
+        if (laserStrokes.length > 0) laserRafId = requestAnimationFrame(tick);
+        else laserRafId = 0;
+    };
+    laserRafId = requestAnimationFrame(tick);
+}
+
+function toggleFaceAxis() {
+    faceAxis.visible = !faceAxis.visible;
+    document.getElementById('axisControlBar').classList.toggle('hidden', !faceAxis.visible);
+    document.getElementById('btnTutorAxis').className = faceAxis.visible
+        ? 'p-3 rounded-2xl bg-indigo-500/25 border-2 border-indigo-400 text-left space-y-0.5 active:scale-95'
+        : 'p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95';
+    renderOverlay();
+}
+function toggleSymmetryDraw() {
+    if (!faceAxis.visible) toggleFaceAxis();
+    faceAxis.symmetry = !faceAxis.symmetry;
+    document.getElementById('btnSymmetryQuick').innerText = faceAxis.symmetry ? '🪞 Vẽ Đối Xứng: BẬT' : '🪞 Vẽ Đối Xứng: TẮT';
+    document.getElementById('btnSymmetryQuick').className = faceAxis.symmetry
+        ? 'shrink-0 px-2 py-1 rounded-xl bg-indigo-500 text-white font-black text-[11px]'
+        : 'shrink-0 px-2 py-1 rounded-xl bg-zinc-800 text-slate-300 font-bold text-[11px]';
+    document.getElementById('btnTutorSymmetry').className = faceAxis.symmetry
+        ? 'p-3 rounded-2xl bg-sky-500/25 border-2 border-sky-400 text-left space-y-0.5 active:scale-95'
+        : 'p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95';
+}
+function onAxisAngleChange(v) {
+    faceAxis.angleDeg = Number(v);
+    document.getElementById('axisAngleVal').innerText = `${v}°`;
+    renderOverlay();
+}
+function resetFaceAxis() {
+    faceAxis.x = docW / 2; faceAxis.y = docH / 2; faceAxis.angleDeg = 0;
+    document.getElementById('axisAngleSlider').value = 0;
+    document.getElementById('axisAngleVal').innerText = '0°';
+    renderOverlay();
+}
+
+function toggleMirrorFlipView() {
+    viewMirrorFlip = !viewMirrorFlip;
+    document.getElementById('btnTutorFlipView').className = viewMirrorFlip
+        ? 'p-3 rounded-2xl bg-emerald-500/25 border-2 border-emerald-400 text-left space-y-0.5 active:scale-95'
+        : 'p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95';
+    applyTransformCSS();
+    renderOverlay();
+    showToast(viewMirrorFlip ? '👀 Đang soi gương toàn màn hình (để bắt lỗi lệch)!' : '👀 Đã trả về góc nhìn thuận.');
+}
+
+function toggleGridOverlay() {
+    gridVisible = !gridVisible;
+    document.getElementById('btnTutorGrid').className = gridVisible
+        ? 'p-3 rounded-2xl bg-amber-500/20 border-2 border-amber-400 text-left space-y-0.5 active:scale-95'
+        : 'p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95';
+    renderOverlay();
+}
+
+function toggleSplitCompare() {
+    splitCompare.active = !splitCompare.active;
+    const bar = document.getElementById('splitCurtainBar');
+    bar.classList.toggle('hidden', !splitCompare.active);
+    document.getElementById('btnTutorSplit').className = splitCompare.active
+        ? 'p-3 rounded-2xl bg-amber-500/25 border-2 border-amber-400 text-left space-y-0.5 active:scale-95'
+        : 'p-3 rounded-2xl bg-zinc-950 border border-zinc-700 text-left space-y-0.5 active:scale-95';
+    updateSplitCurtainClip();
+}
+function updateSplitCurtainClip() {
+    const bar = document.getElementById('splitCurtainBar');
+    const targets = [shadingLayer, hairLayer, frameLayer];
+    if (!splitCompare.active) {
+        targets.forEach(el => el.style.clipPath = 'none');
+        return;
+    }
+    const r = canvasWrap.getBoundingClientRect();
+    const screenX = r.width * splitCompare.ratio;
+    bar.style.left = screenX + 'px';
+
+    const s = fitScale * userZoom;
+    const sx = viewMirrorFlip ? -s : s;
+    const docSplitX = docW / 2 + (screenX - (r.width / 2 + viewPanX)) / sx;
+    const pct = Math.max(0, Math.min(100, (docSplitX / docW) * 100));
+    const clipVal = viewMirrorFlip ? `inset(0 ${100 - pct}% 0 0)` : `inset(0 0 0 ${pct}%)`;
+    targets.forEach(el => el.style.clipPath = clipVal);
+}
+
+function onFormulaChange(val) {
+    formulaText = val.trim();
+    localStorage.setItem('kb_formula_text', formulaText);
+    updateFormulaUI();
+}
+function appendFormulaPreset(txt) {
+    const inp = document.getElementById('formulaInput');
+    inp.value = inp.value.trim() ? `${inp.value.trim()} • ${txt}` : txt;
+    onFormulaChange(inp.value);
+}
+function updateFormulaUI() {
+    const inp = document.getElementById('formulaInput');
+    if (inp && inp.value !== formulaText) inp.value = formulaText;
+    const badge = document.getElementById('formulaHudBadge');
+    if (formulaText) { badge.innerText = '📝 ' + formulaText; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+}
+
+function renderOverlay(targetCtx = overlayCtx, toWrapFn = docToWrapCss, scaleFactor = 1) {
+    const r = canvasWrap.getBoundingClientRect();
+    const dpr = targetCtx === overlayCtx ? Math.min(2, window.devicePixelRatio || 1) : scaleFactor;
+    if (targetCtx === overlayCtx) {
+        targetCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        targetCtx.clearRect(0, 0, r.width, r.height);
+    }
+
+    // 1. Lưới chia ô
+    if (gridVisible) {
+        targetCtx.save();
+        targetCtx.strokeStyle = 'rgba(255,255,255,0.16)';
+        targetCtx.lineWidth = 1;
+        const step = 60;
+        for (let x = step; x < docW; x += step) {
+            const p1 = toWrapFn(x, 0), p2 = toWrapFn(x, docH);
+            targetCtx.beginPath(); targetCtx.moveTo(p1.x, p1.y); targetCtx.lineTo(p2.x, p2.y); targetCtx.stroke();
+        }
+        for (let y = step; y < docH; y += step) {
+            const p1 = toWrapFn(0, y), p2 = toWrapFn(docW, y);
+            targetCtx.beginPath(); targetCtx.moveTo(p1.x, p1.y); targetCtx.lineTo(p2.x, p2.y); targetCtx.stroke();
+        }
+        targetCtx.restore();
+    }
+
+    // 2. Trục giữa mặt + vạch tỷ lệ vàng
+    if (faceAxis.visible) {
+        const rad = (faceAxis.angleDeg * Math.PI) / 180;
+        const ux = -Math.sin(rad), uy = Math.cos(rad);
+        const len = Math.max(docW, docH);
+        const a1 = toWrapFn(faceAxis.x - ux * len, faceAxis.y - uy * len);
+        const a2 = toWrapFn(faceAxis.x + ux * len, faceAxis.y + uy * len);
+        const center = toWrapFn(faceAxis.x, faceAxis.y);
+
+        targetCtx.save();
+        targetCtx.strokeStyle = faceAxis.symmetry ? 'rgba(129,140,248,0.95)' : 'rgba(251,191,36,0.85)';
+        targetCtx.lineWidth = 2;
+        targetCtx.setLineDash([8, 6]);
+        targetCtx.beginPath(); targetCtx.moveTo(a1.x, a1.y); targetCtx.lineTo(a2.x, a2.y); targetCtx.stroke();
+        targetCtx.setLineDash([]);
+
+        // Vạch chia đối xứng 2 bên
+        const nx = Math.cos(rad), ny = Math.sin(rad);
+        [80, 160, 240].forEach(d => {
+            [-1, 1].forEach(sign => {
+                const tickDoc = { x: faceAxis.x + nx * d * sign, y: faceAxis.y + ny * d * sign };
+                const t1 = toWrapFn(tickDoc.x - ux * 16, tickDoc.y - uy * 16);
+                const t2 = toWrapFn(tickDoc.x + ux * 16, tickDoc.y + uy * 16);
+                targetCtx.strokeStyle = 'rgba(251,191,36,0.5)';
+                targetCtx.beginPath(); targetCtx.moveTo(t1.x, t1.y); targetCtx.lineTo(t2.x, t2.y); targetCtx.stroke();
+            });
+        });
+
+        // Tay cầm kéo vị trí trục
+        targetCtx.fillStyle = '#6366f1';
+        targetCtx.beginPath(); targetCtx.arc(center.x, center.y, 11, 0, Math.PI * 2); targetCtx.fill();
+        targetCtx.strokeStyle = '#ffffff'; targetCtx.lineWidth = 2; targetCtx.stroke();
+        targetCtx.restore();
+    }
+
+    // 3. Bút Laser Đỏ (phát sáng & tự tan biến sau 2 giây)
+    if (laserStrokes.length) {
+        const now = performance.now();
+        targetCtx.save();
+        targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round';
+        laserStrokes.forEach(s => {
+            if (s.pts.length < 2) return;
+            for (let i = 0; i < s.pts.length - 1; i++) {
+                const age = now - s.pts[i + 1].t;
+                const alpha = Math.max(0, 1 - age / 2000);
+                if (alpha <= 0) continue;
+                const p1 = toWrapFn(s.pts[i].x, s.pts[i].y);
+                const p2 = toWrapFn(s.pts[i + 1].x, s.pts[i + 1].y);
+                targetCtx.strokeStyle = `rgba(244,63,94,${alpha * 0.55})`;
+                targetCtx.lineWidth = 14 * alpha;
+                targetCtx.beginPath(); targetCtx.moveTo(p1.x, p1.y); targetCtx.lineTo(p2.x, p2.y); targetCtx.stroke();
+                targetCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                targetCtx.lineWidth = 4 * alpha;
+                targetCtx.beginPath(); targetCtx.moveTo(p1.x, p1.y); targetCtx.lineTo(p2.x, p2.y); targetCtx.stroke();
+            }
+        });
+        targetCtx.restore();
+    }
+
+    // 4. Vòng định vị đầu kim khi đang vẽ/quay giảng
+    if (pointerRingOn && livePointerDocPt) {
+        const cp = toWrapFn(livePointerDocPt.x, livePointerDocPt.y);
+        const radCss = Math.max(8, brushSize * fitScale * userZoom * 0.9);
+        targetCtx.save();
+        targetCtx.strokeStyle = isRecordingLesson ? 'rgba(244,63,94,0.95)' : 'rgba(56,189,248,0.85)';
+        targetCtx.lineWidth = 2;
+        targetCtx.beginPath(); targetCtx.arc(cp.x, cp.y, radCss, 0, Math.PI * 2); targetCtx.stroke();
+        targetCtx.restore();
+    }
+}
+
+// ============================================================================
+// 11. TRANG MỚI, XÓA SẠCH CÓ XÁC NHẬN AN TOÀN, PHÔI DA GIẢ & ẢNH NỀN
+// ============================================================================
+function showConfirmDialog(title, msg, icon = '⚠️', okText = 'Đồng ý') {
+    return new Promise(resolve => {
+        confirmResolver = resolve;
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMsg').innerText = msg;
+        document.getElementById('confirmIcon').innerText = icon;
+        document.getElementById('confirmOkBtn').innerText = okText;
+        document.getElementById('confirmModal').classList.remove('hidden');
+    });
+}
+function resolveConfirm(res) {
+    document.getElementById('confirmModal').classList.add('hidden');
+    if (confirmResolver) { confirmResolver(res); confirmResolver = null; }
+}
+
+function hasAnyDrawing() {
+    return undoStack.length > 0 || timelapseOps.length > 0 || framePoints.length > 0;
+}
+
+async function requestNewPage() {
+    if (hasAnyDrawing()) {
+        const ok = await showConfirmDialog('Làm Trang Mới?', 'Tạo trang mới sẽ xóa toàn bộ nét vẽ hiện tại (hãy chắc chắn bạn đã Lưu ảnh hoặc Lưu nháp nếu cần).', '📄', 'Tạo Trang Mới');
+        if (!ok) return;
+    }
+    openModal('newPageModal');
+}
+
+function createFreshPage(templateKind) {
+    closeModal('newPageModal');
+    setDocumentDimensions(1080, 1440);
+    renderTemplateBg(templateKind);
+    ['shading', 'hair', 'frame', 'active'].forEach(k => {
+        const c = k === 'active' ? activeCtx : LAYER_MAP[k].ctx;
+        c.clearRect(0, 0, docW, docH);
+    });
+    savedFramePolys = []; framePoints = []; timelapseOps = []; undoneTimelapseOps = [];
+    numberCounter = 1; document.getElementById('numberStampBadge').innerText = '1';
+    if (clipInsideFrame) toggleClipInsideFrame();
+    syncBaselines();
+    scheduleAutoSave();
+    showToast('✨ Đã tạo trang mới tinh!');
+}
+
+async function requestLoadTemplate(kind) {
+    closeModal('photoModal');
+    if (hasAnyDrawing()) {
+        const ok = await showConfirmDialog('Đổi Phôi Da Giả?', 'Thay phôi mới sẽ tạo bảng vẽ mới và xóa nét cũ. Bạn có đồng ý không?', '🪶', 'Đổi Phôi Mới');
+        if (!ok) return;
+    }
+    createFreshPage(kind);
+}
+
+async function requestClearLayer(key) {
+    const label = LAYER_MAP[key].label;
+    const ok = await showConfirmDialog(`Xóa sạch Lớp "${label}"?`, `Chỉ xóa các nét trên Lớp ${label}, các lớp khác và ảnh nền vẫn giữ nguyên.`, '🧹', `Xóa Lớp ${label}`);
+    if (!ok) return;
+    LAYER_MAP[key].ctx.clearRect(0, 0, docW, docH);
+    if (key === 'frame') { savedFramePolys = []; framePoints = []; activeCtx.clearRect(0, 0, docW, docH); if (clipInsideFrame) toggleClipInsideFrame(); }
+    timelapseOps.push({ type: 'clearLayer', layer: key });
+    pushUndoForLayer(key, 1);
+    showToast(`🧹 Đã xóa sạch Lớp ${label}`);
+}
+
+function requestClearCurrentLayer() { requestClearLayer(activeLayerKey); }
+
+async function requestClearAllLayers() {
+    const ok = await showConfirmDialog('Xóa Hết Toàn Bộ Nét Vẽ?', 'Thao tác này sẽ xóa sạch cả Lớp Khung, Lớp Sợi và Lớp Đánh Máy (chỉ giữ lại ảnh nền).', '🗑️', 'Xóa Sạch Hết');
+    if (!ok) return;
+    ['shading', 'hair', 'frame'].forEach(k => LAYER_MAP[k].ctx.clearRect(0, 0, docW, docH));
+    activeCtx.clearRect(0, 0, docW, docH);
+    savedFramePolys = []; framePoints = [];
+    numberCounter = 1; document.getElementById('numberStampBadge').innerText = '1';
+    if (clipInsideFrame) toggleClipInsideFrame();
+    timelapseOps = []; undoneTimelapseOps = [];
+    syncBaselines();
+    scheduleAutoSave();
+    showToast('🗑️ Đã xóa sạch toàn bộ nét vẽ!');
+}
+
+function handleBgPhotoSelected(input) {
+    const file = input.files && input.files[0]; input.value = ''; if (!file) return;
+    closeModal('photoModal');
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+        const sc = Math.min(1, 1440 / Math.max(img.width, img.height));
+        const w = Math.max(240, Math.round(img.width * sc));
+        const h = Math.max(240, Math.round(img.height * sc));
+        // Nếu chưa vẽ gì thì chỉnh khung đúng tỷ lệ ảnh mới luôn; nếu đang có nét thì vẽ lồng vừa khung hiện tại
+        if (!hasAnyDrawing()) {
+            setDocumentDimensions(w, h);
+            LAYER_MAP.bg.ctx.drawImage(img, 0, 0, w, h);
+            syncBaselines();
+        } else {
+            const bgCtx = LAYER_MAP.bg.ctx;
+            bgCtx.clearRect(0, 0, docW, docH);
+            const fit = Math.min(docW / img.width, docH / img.height);
+            const dw = img.width * fit, dh = img.height * fit;
+            bgCtx.fillStyle = '#18181b'; bgCtx.fillRect(0, 0, docW, docH);
+            bgCtx.drawImage(img, (docW - dw) / 2, (docH - dh) / 2, dw, dh);
+        }
+        URL.revokeObjectURL(url);
+        scheduleAutoSave();
+        showToast('🖼️ Đã nạp ảnh mới thành công!');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); showToast('❌ Không đọc được file ảnh này.'); };
+    img.src = url;
+}
+
+function renderTemplateBg(kind) {
+    const bgCtx = LAYER_MAP.bg.ctx;
+    bgCtx.clearRect(0, 0, docW, docH);
+    if (kind === 'blank') {
+        bgCtx.fillStyle = '#faf5f0';
+        bgCtx.fillRect(0, 0, docW, docH);
+        return;
+    }
+    const grad = bgCtx.createLinearGradient(0, 0, 0, docH);
+    grad.addColorStop(0, '#f4d6c1'); grad.addColorStop(1, '#e8bfa6');
+    bgCtx.fillStyle = grad;
+    bgCtx.fillRect(0, 0, docW, docH);
+
+    // Vân da giả silicon siêu mịn
+    bgCtx.fillStyle = 'rgba(160,110,80,0.05)';
+    for (let i = 0; i < 1400; i++) {
+        bgCtx.fillRect(((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1 * docW, ((Math.cos(i * 78.233) * 19341.12) % 1 + 1) % 1 * docH, 2, 2);
+    }
+
+    if (kind === 'brow' || kind === 'spine' || kind === 'ombre') {
+        bgCtx.save();
+        bgCtx.strokeStyle = 'rgba(110,70,50,0.32)'; bgCtx.lineWidth = 4; bgCtx.setLineDash([12, 10]);
+        bgCtx.beginPath();
+        bgCtx.moveTo(190, 620); bgCtx.quadraticCurveTo(560, 470, 910, 610);
+        bgCtx.quadraticCurveTo(600, 565, 195, 685); bgCtx.closePath();
+        bgCtx.stroke();
+        bgCtx.setLineDash([]);
+
+        if (kind === 'spine') {
+            // Đường Spine hướng dẫn hướng đổ sợi chân mày cho học viên đồ theo
+            bgCtx.strokeStyle = 'rgba(99,102,241,0.45)'; bgCtx.lineWidth = 4;
+            bgCtx.beginPath(); bgCtx.moveTo(215, 668); bgCtx.quadraticCurveTo(470, 575, 895, 608); bgCtx.stroke();
+            bgCtx.strokeStyle = 'rgba(99,102,241,0.28)'; bgCtx.lineWidth = 2.5;
+            for (let x = 240; x <= 740; x += 48) {
+                const topY = 620 - Math.sin((x - 190) / 720 * Math.PI) * 90;
+                bgCtx.beginPath(); bgCtx.moveTo(x, topY + 60); bgCtx.quadraticCurveTo(x + 25, topY + 25, x + 55, topY + 8); bgCtx.stroke();
+            }
+        }
+        if (kind === 'ombre') {
+            // Chia 3 vùng Ombre: Đầu (20% nhạt) - Thân (60%) - Đuôi (90% đậm)
+            bgCtx.strokeStyle = 'rgba(244,63,94,0.45)'; bgCtx.lineWidth = 3; bgCtx.setLineDash([8, 6]);
+            [350, 690].forEach(vx => { bgCtx.beginPath(); bgCtx.moveTo(vx, 450); bgCtx.lineTo(vx, 730); bgCtx.stroke(); });
+            bgCtx.setLineDash([]);
+            bgCtx.fillStyle = 'rgba(90,50,40,0.6)'; bgCtx.font = '800 24px "Plus Jakarta Sans", sans-serif';
+            bgCtx.fillText('ĐẦU (Nhạt 20%)', 175, 440);
+            bgCtx.fillText('THÂN (Chuyển 60%)', 415, 440);
+            bgCtx.fillText('ĐUÔI (Nét 90%)', 715, 440);
+        }
+        // Mắt mờ bên dưới
+        bgCtx.strokeStyle = 'rgba(90,55,40,0.34)'; bgCtx.lineWidth = 5;
+        bgCtx.beginPath(); bgCtx.moveTo(270, 860); bgCtx.quadraticCurveTo(540, 760, 810, 865); bgCtx.stroke();
+        bgCtx.fillStyle = 'rgba(70,45,35,0.2)';
+        bgCtx.beginPath(); bgCtx.arc(540, 855, 68, 0, Math.PI * 2); bgCtx.fill();
+        bgCtx.restore();
+    } else if (kind === 'lip') {
+        bgCtx.save();
+        const lipGrad = bgCtx.createRadialGradient(540, 720, 40, 540, 720, 380);
+        lipGrad.addColorStop(0, 'rgba(175,105,105,0.58)');
+        lipGrad.addColorStop(1, 'rgba(135,80,88,0.45)');
+        bgCtx.fillStyle = lipGrad;
+        bgCtx.beginPath();
+        bgCtx.moveTo(180, 720); bgCtx.quadraticCurveTo(360, 580, 470, 625);
+        bgCtx.quadraticCurveTo(540, 665, 610, 625); bgCtx.quadraticCurveTo(720, 580, 900, 720);
+        bgCtx.quadraticCurveTo(730, 885, 540, 895); bgCtx.quadraticCurveTo(350, 885, 180, 720);
+        bgCtx.closePath(); bgCtx.fill();
+        bgCtx.strokeStyle = 'rgba(110,60,68,0.45)'; bgCtx.lineWidth = 4; bgCtx.stroke();
+        bgCtx.beginPath(); bgCtx.moveTo(195, 722); bgCtx.quadraticCurveTo(540, 755, 885, 722); bgCtx.stroke();
+        bgCtx.restore();
+    }
+}
+
+function rotateDocument90() {
+    const keys = ['bg', 'shading', 'hair', 'frame'];
+    const rotated = keys.map(k => {
+        const tmp = document.createElement('canvas'); tmp.width = docH; tmp.height = docW;
+        const tc = tmp.getContext('2d'); tc.translate(docH, 0); tc.rotate(Math.PI / 2);
+        tc.drawImage(LAYER_MAP[k].el, 0, 0);
+        return tmp;
+    });
+    const oldH = docH, oldW = docW;
+    setDocumentDimensions(oldH, oldW);
+    keys.forEach((k, idx) => LAYER_MAP[k].ctx.drawImage(rotated[idx], 0, 0));
+    savedFramePolys = savedFramePolys.map(p => ({ ...p, pts: p.pts.map(pt => ({ x: oldH - pt.y, y: pt.x })) }));
+    syncBaselines();
+    scheduleAutoSave();
+}
+function flipBackgroundHorizontal() {
+    ['bg', 'shading', 'hair', 'frame'].forEach(k => {
+        const tmp = cloneLayerCanvas(LAYER_MAP[k].el);
+        const ctx = LAYER_MAP[k].ctx;
+        ctx.clearRect(0, 0, docW, docH);
+        ctx.save(); ctx.translate(docW, 0); ctx.scale(-1, 1); ctx.drawImage(tmp, 0, 0); ctx.restore();
+    });
+    savedFramePolys = savedFramePolys.map(p => ({ ...p, pts: p.pts.map(pt => ({ x: docW - pt.x, y: pt.y })) }));
+    syncBaselines();
+    closeModal('photoModal');
+    scheduleAutoSave();
+}
+function onBgOpacityChange(v) {
+    bgOpacity = Number(v) / 100;
+    document.getElementById('bgOpacityVal').innerText = `${v}%`;
+    bgLayer.style.opacity = bgOpacity;
+}
+function resetNumberStamp() { numberCounter = 1; document.getElementById('numberStampBadge').innerText = '1'; closeModal('photoModal'); }
+function toggleWatermarkOption() {
+    watermarkOn = !watermarkOn;
+    const b = document.getElementById('watermarkToggleBtn');
+    b.innerText = watermarkOn ? '🏷️ Tem Lưu Ảnh: BẬT' : '🏷️ Tem Lưu Ảnh: TẮT';
+    b.className = watermarkOn ? 'py-2 px-3 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold text-xs' : 'py-2 px-3 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-400 font-bold text-xs';
+}
+function togglePointerRingOption() {
+    pointerRingOn = !pointerRingOn;
+    const b = document.getElementById('pointerRingToggleBtn');
+    b.innerText = pointerRingOn ? '🔵 Vòng Kim Quay: BẬT' : '🔵 Vòng Kim Quay: TẮT';
+    b.className = pointerRingOn ? 'py-2 px-3 rounded-xl bg-sky-500/20 border border-sky-400 text-sky-300 font-bold text-xs' : 'py-2 px-3 rounded-xl bg-zinc-950 border border-zinc-700 text-slate-400 font-bold text-xs';
+}
+
+// ============================================================================
+// 12. LƯU TẠM BỘ NHỚ MÁY & KHO NHÁP (INDEXEDDB OFFLINE)
+// ============================================================================
+function openIDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open('KimBlingPMU_DB', 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts', { keyPath: 'id' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+function canvasToBlobPromise(canvas, type = 'image/png', q = 0.92) {
+    return new Promise(res => canvas.toBlob(b => res(b), type, q));
+}
+async function serializeProjectState(id, title) {
+    const [bgBlob, shadingBlob, hairBlob, frameBlob] = await Promise.all([
+        canvasToBlobPromise(bgLayer, 'image/jpeg', 0.88),
+        canvasToBlobPromise(shadingLayer, 'image/png'),
+        canvasToBlobPromise(hairLayer, 'image/png'),
+        canvasToBlobPromise(frameLayer, 'image/png')
+    ]);
+    return {
+        id, title, updatedAt: Date.now(),
+        docW, docH, bgOpacity, numberCounter,
+        savedFramePolys, timelapseOps: timelapseOps.slice(-400),
+        formulaText,
+        bgBlob, shadingBlob, hairBlob, frameBlob
+    };
+}
+async function applyProjectState(data) {
+    if (!data || !data.docW) return false;
+    setDocumentDimensions(data.docW, data.docH);
+    bgOpacity = data.bgOpacity ?? 1;
+    document.getElementById('bgOpacitySlider').value = Math.round(bgOpacity * 100);
+    onBgOpacityChange(Math.round(bgOpacity * 100));
+    numberCounter = data.numberCounter || 1;
+    document.getElementById('numberStampBadge').innerText = numberCounter;
+    savedFramePolys = data.savedFramePolys || [];
+    timelapseOps = data.timelapseOps || [];
+    if (data.formulaText !== undefined) onFormulaChange(data.formulaText);
+
+    const loadBlobToCtx = (blob, ctx) => new Promise(res => {
+        if (!blob) return res();
+        const url = URL.createObjectURL(blob), img = new Image();
+        img.onload = () => { ctx.clearRect(0, 0, docW, docH); ctx.drawImage(img, 0, 0, docW, docH); URL.revokeObjectURL(url); res(); };
+        img.onerror = () => { URL.revokeObjectURL(url); res(); };
+        img.src = url;
+    });
+    await Promise.all([
+        loadBlobToCtx(data.bgBlob, LAYER_MAP.bg.ctx),
+        loadBlobToCtx(data.shadingBlob, LAYER_MAP.shading.ctx),
+        loadBlobToCtx(data.hairBlob, LAYER_MAP.hair.ctx),
+        loadBlobToCtx(data.frameBlob, LAYER_MAP.frame.ctx)
+    ]);
+    syncBaselines();
+    return true;
+}
+
+function scheduleAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(async () => {
+        try {
+            const db = await openIDB();
+            const state = await serializeProjectState('__autosave__', 'Tự động lưu gần nhất');
+            const tx = db.transaction('drafts', 'readwrite');
+            tx.objectStore('drafts').put(state);
+            const badge = document.getElementById('autoSaveBadge');
+            badge.classList.remove('hidden');
+            setTimeout(() => badge.classList.add('hidden'), 1800);
+        } catch (e) {}
+    }, 900);
+}
+async function loadAutoSaveFromIDB() {
+    const db = await openIDB();
+    return new Promise((resolve) => {
+        const tx = db.transaction('drafts', 'readonly');
+        const req = tx.objectStore('drafts').get('__autosave__');
+        req.onsuccess = async () => {
+            if (req.result && req.result.timelapseOps && req.result.timelapseOps.length > 0) {
+                resolve(await applyProjectState(req.result));
+            } else resolve(false);
+        };
+        req.onerror = () => resolve(false);
+    });
+}
+async function openDraftsModal() {
+    openModal('draftsModal');
+    await refreshDraftsList();
+}
+async function refreshDraftsList() {
+    const wrap = document.getElementById('draftsListWrap');
+    wrap.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">Đang đọc bộ nhớ máy...</div>';
+    try {
+        const db = await openIDB();
+        const list = await new Promise((res) => {
+            const req = db.transaction('drafts', 'readonly').objectStore('drafts').getAll();
+            req.onsuccess = () => res((req.result || []).filter(x => x.id !== '__autosave__').sort((a, b) => b.updatedAt - a.updatedAt));
+            req.onerror = () => res([]);
+        });
+        if (!list.length) {
+            wrap.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">Chưa có bài nháp nào được lưu. Bấm "+ Lưu Bài Này" để cất bài giảng!</div>';
+            return;
+        }
+        wrap.innerHTML = list.map(d => {
+            const dt = new Date(d.updatedAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+            return `
+            <div class="p-2.5 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                    <div class="font-bold text-xs text-white truncate">${escapeHtml(d.title)}</div>
+                    <div class="text-[10px] text-slate-400">🕒 ${dt} • ${d.docW}x${d.docH}</div>
+                </div>
+                <div class="flex items-center space-x-1 shrink-0">
+                    <button onclick="openDraftById('${d.id}')" class="px-2.5 py-1.5 rounded-xl bg-sky-500 text-zinc-950 font-black text-[11px]">Mở</button>
+                    <button onclick="deleteDraftById('${d.id}')" class="px-2 py-1.5 rounded-xl bg-rose-950 text-rose-300 font-bold text-[11px]">🗑️</button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) { wrap.innerHTML = '<div class="text-xs text-rose-400 text-center py-4">Không truy cập được IndexedDB.</div>'; }
+}
+async function saveNamedDraft() {
+    const inp = document.getElementById('draftTitleInput');
+    const title = (inp.value || '').trim() || `Bài giảng ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    const db = await openIDB();
+    const state = await serializeProjectState('draft_' + Date.now(), title);
+    await new Promise((res, rej) => {
+        const tx = db.transaction('drafts', 'readwrite');
+        tx.objectStore('drafts').put(state);
+        tx.oncomplete = res; tx.onerror = rej;
+    });
+    inp.value = '';
+    await refreshDraftsList();
+    showToast('💾 Đã cất bài vào Kho Nháp trên máy!');
+}
+async function openDraftById(id) {
+    const db = await openIDB();
+    const data = await new Promise(res => {
+        const req = db.transaction('drafts', 'readonly').objectStore('drafts').get(id);
+        req.onsuccess = () => res(req.result); req.onerror = () => res(null);
+    });
+    if (data) {
+        closeModal('draftsModal');
+        await applyProjectState(data);
+        showToast(`📂 Đã mở bài: ${data.title}`);
+    }
+}
+async function deleteDraftById(id) {
+    const ok = await showConfirmDialog('Xóa bài nháp này?', 'Bài nháp sẽ bị xóa khỏi bộ nhớ máy.', '🗑️', 'Xóa Nháp');
+    if (!ok) return;
+    const db = await openIDB();
+    await new Promise(res => { const tx = db.transaction('drafts', 'readwrite'); tx.objectStore('drafts').delete(id); tx.oncomplete = res; });
+    await refreshDraftsList();
+}
+
+// ============================================================================
+// 13. QUAY VIDEO GIẢNG DẠY (LIVE + MIC) & XUẤT TIMELAPSE SIÊU NHANH (WEBCODECS MP4)
+// ============================================================================
+function compositeCurrentFrame(outCtx, w, h) {
+    outCtx.setTransform(1, 0, 0, 1, 0, 0);
+    outCtx.fillStyle = '#09090b';
+    outCtx.fillRect(0, 0, w, h);
+
+    const wrapR = canvasWrap.getBoundingClientRect();
+    const sRatio = Math.min(w / Math.max(1, wrapR.width), h / Math.max(1, wrapR.height));
+    const offsetX = (w - wrapR.width * sRatio) / 2;
+    const offsetY = (h - wrapR.height * sRatio) / 2;
+
+    const totalScale = fitScale * userZoom * sRatio;
+    const centerX = offsetX + (wrapR.width / 2 + viewPanX) * sRatio;
+    const centerY = offsetY + (wrapR.height / 2 + viewPanY) * sRatio;
+
+    const drawDocLayers = (onlyBg) => {
+        outCtx.save();
+        outCtx.translate(centerX, centerY);
+        outCtx.scale(viewMirrorFlip ? -totalScale : totalScale, totalScale);
+        outCtx.translate(-docW / 2, -docH / 2);
+
+        if (onlyBg) {
+            outCtx.fillStyle = '#18181b'; outCtx.fillRect(0, 0, docW, docH);
+            outCtx.globalAlpha = bgOpacity; outCtx.drawImage(bgLayer, 0, 0);
+        } else {
+            ['shading', 'hair', 'frame'].forEach(k => {
+                if (!LAYER_MAP[k].vis) return;
+                outCtx.globalAlpha = LAYER_MAP[k].op;
+                outCtx.drawImage(LAYER_MAP[k].el, 0, 0);
+            });
+            outCtx.globalAlpha = 1;
+            outCtx.drawImage(activeLayer, 0, 0);
+        }
+        outCtx.restore();
+    };
+
+    drawDocLayers(true);
+
+    if (splitCompare.active) {
+        const splitX = offsetX + wrapR.width * splitCompare.ratio * sRatio;
+        outCtx.save();
+        outCtx.beginPath(); outCtx.rect(splitX, 0, w - splitX, h); outCtx.clip();
+        drawDocLayers(false);
+        outCtx.restore();
+        outCtx.fillStyle = '#fbbf24'; outCtx.fillRect(splitX - 1.5, 0, 3, h);
+    } else {
+        drawDocLayers(false);
+    }
+
+    // Vẽ overlay (lưới, trục, laser, vòng kim) đúng tỷ lệ
+    const toRecPx = (dx, dy) => {
+        const p = docToWrapCss(dx, dy);
+        return { x: offsetX + p.x * sRatio, y: offsetY + p.y * sRatio };
+    };
+    renderOverlay(outCtx, toRecPx, sRatio);
+
+    // Đóng dấu thương hiệu + Công thức
+    drawBrandFooter(outCtx, w, h, true);
+}
+
+function drawBrandFooter(ctx, w, h, includeFormula = true) {
+    if (!watermarkOn && (!includeFormula || !formulaText)) return;
+    ctx.save();
+    const fs = Math.max(18, Math.round(w * 0.023));
+    ctx.font = `800 ${fs}px "Plus Jakarta Sans", sans-serif`;
+    if (watermarkOn) {
+        const txt = '✨ KimBling Beauty • Master Nguyễn Hiền';
+        const tw = ctx.measureText(txt).width;
+        ctx.fillStyle = 'rgba(9,9,11,0.75)';
+        ctx.fillRect(w - tw - 36, h - fs - 30, tw + 24, fs + 18);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(txt, w - tw - 24, h - 18);
+    }
+    if (includeFormula && formulaText) {
+        const ffs = Math.max(15, Math.round(w * 0.019));
+        ctx.font = `700 ${ffs}px "Plus Jakarta Sans", sans-serif`;
+        const fTxt = '📝 ' + formulaText;
+        const ftw = Math.min(w * 0.65, ctx.measureText(fTxt).width);
+        ctx.fillStyle = 'rgba(9,9,11,0.78)';
+        ctx.fillRect(14, h - ffs - 30, ftw + 24, ffs + 18);
+        ctx.fillStyle = '#6ee7b7';
+        ctx.fillText(fTxt, 26, h - 18, w * 0.65);
+    }
+    ctx.restore();
+}
+
+async function toggleRecordLesson() {
+    if (isRecordingLesson) {
+        if (lessonRecorder && lessonRecorder.state !== 'inactive') lessonRecorder.stop();
+        return;
+    }
+    try {
+        const wrapR = canvasWrap.getBoundingClientRect();
+        const scale = Math.min(1.5, 1080 / Math.max(wrapR.width, wrapR.height));
+        recordCanvas.width = Math.max(320, Math.round(wrapR.width * scale) & ~1);
+        recordCanvas.height = Math.max(320, Math.round(wrapR.height * scale) & ~1);
+
+        compositeCurrentFrame(recordCtx, recordCanvas.width, recordCanvas.height);
+        const canvasStream = recordCanvas.captureStream(30);
+        let combined = canvasStream;
+        try {
+            lessonMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            combined = new MediaStream([...canvasStream.getVideoTracks(), ...lessonMicStream.getAudioTracks()]);
+        } catch (e) { showToast('🎙️ Không có quyền Micro — Đang quay bảng vẽ không tiếng.'); }
+
+        const mimes = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+        const mime = (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) ? (mimes.find(m => MediaRecorder.isTypeSupported(m)) || '') : '';
+        lessonChunks = [];
+        lessonRecorder = new MediaRecorder(combined, mime ? { mimeType: mime, videoBitsPerSecond: 3200000 } : { videoBitsPerSecond: 3200000 });
+        lessonRecorder.ondataavailable = e => { if (e.data && e.data.size) lessonChunks.push(e.data); };
+        lessonRecorder.onstop = () => {
+            if (lessonMicStream) { lessonMicStream.getTracks().forEach(t => t.stop()); lessonMicStream = null; }
+            cancelAnimationFrame(lessonRecRaf);
+            clearInterval(lessonTimerIv);
+            isRecordingLesson = false;
+            updateRecordBtnUI();
+            if (!lessonChunks.length) return;
+            lessonBlob = new Blob(lessonChunks, { type: lessonRecorder.mimeType || 'video/mp4' });
+            if (lessonUrl) URL.revokeObjectURL(lessonUrl);
+            lessonUrl = URL.createObjectURL(lessonBlob);
+            document.getElementById('lessonPreviewVideo').src = lessonUrl;
+            openModal('lessonPreviewModal');
+        };
+        isRecordingLesson = true;
+        lessonSeconds = 0;
+        lessonRecorder.start(800);
+        updateRecordBtnUI();
+        lessonTimerIv = setInterval(() => { lessonSeconds++; updateRecordBtnUI(); }, 1000);
+        const pump = () => {
+            if (!isRecordingLesson) return;
+            compositeCurrentFrame(recordCtx, recordCanvas.width, recordCanvas.height);
+            lessonRecRaf = requestAnimationFrame(pump);
+        };
+        lessonRecRaf = requestAnimationFrame(pump);
+    } catch (err) {
+        showToast('❌ Thiết bị chưa hỗ trợ quay trực tiếp: ' + (err?.message || err));
+    }
+}
+function updateRecordBtnUI() {
+    const btn = document.getElementById('btnRecordLesson'), lbl = document.getElementById('recBtnLabel'), dot = document.getElementById('recDotIcon');
+    if (isRecordingLesson) {
+        const m = String(Math.floor(lessonSeconds / 60)).padStart(2, '0'), s = String(lessonSeconds % 60).padStart(2, '0');
+        btn.className = 'px-2 py-1.5 rounded-xl bg-amber-400 text-zinc-950 font-black text-[11px] flex items-center space-x-1 shadow animate-pulse';
+        dot.innerText = '⏹️'; lbl.innerText = `${m}:${s}`;
+    } else {
+        btn.className = 'px-2 py-1.5 rounded-xl bg-rose-600 text-white font-black text-[11px] flex items-center space-x-1 shadow active:scale-95';
+        dot.innerText = '🔴'; lbl.innerText = 'Quay';
+    }
+}
+function closeLessonPreview() { document.getElementById('lessonPreviewVideo').pause(); closeModal('lessonPreviewModal'); }
+function downloadRecordedLesson() { triggerBlobDownload(lessonUrl, lessonBlob, 'KimBling-BaiGiang'); }
+async function shareRecordedLesson() { await triggerBlobShare(lessonBlob, 'KimBling-BaiGiang', 'Bài Giảng Phun Xăm - Master Nguyễn Hiền'); }
+
+// --- XUẤT VIDEO TUA NHANH SIÊU TỐC (WEBCODECS MP4 + FALLBACK) ---
+function openTimelapseModal() {
+    document.getElementById('tlOpsCount').innerText = timelapseOps.length;
+    document.getElementById('tlConfigPanel').classList.remove('hidden');
+    document.getElementById('tlProgressWrap').classList.add('hidden');
+    document.getElementById('tlResultWrap').classList.add('hidden');
+    openModal('timelapseModal');
+}
+function selectTlDuration(sec) {
+    tlTargetDuration = sec;
+    [10, 15, 30].forEach(s => {
+        const b = document.getElementById(`tlDur_${s}`);
+        b.className = s === sec
+            ? 'py-2.5 rounded-xl border-2 border-amber-400 bg-amber-400/20 text-amber-200 font-black text-xs'
+            : 'py-2.5 rounded-xl border border-zinc-700 bg-zinc-950 text-slate-200 font-bold text-xs';
+    });
+}
+
+function replayOpOntoLayers(op, layersObj) {
+    if (op.type === 'clearLayer') {
+        layersObj[op.layer].getContext('2d').clearRect(0, 0, docW, docH);
+        return;
+    }
+    const ctx = layersObj[op.layer].getContext('2d');
+    if (op.type === 'framePoly') {
+        const drawP = (pl) => {
+            ctx.save(); ctx.globalAlpha = op.opacity; ctx.strokeStyle = op.color;
+            ctx.lineWidth = Math.max(2, op.size * 0.9); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath(); buildPolySubpath(ctx, pl.pts, pl.curved, pl.closed); ctx.stroke(); ctx.restore();
+        };
+        drawP(op.poly);
+        if (op.mirrorPoly) drawP(op.mirrorPoly);
+        return;
+    }
+    if (op.type === 'number') {
+        drawNumberStamp(ctx, op.x, op.y, op.num, op.size, op.color, op.opacity);
+        if (op.mx !== null) drawNumberStamp(ctx, op.mx, op.my, op.num, op.size, op.color, op.opacity);
+        return;
+    }
+    if (op.type === 'text') {
+        drawTextBadge(ctx, op.x, op.y, op.text, op.size, op.color, op.opacity);
+        return;
+    }
+    if (op.type === 'stroke') {
+        const runSet = (pts, seedOffset) => {
+            ctx.save();
+            if (op.clipPolys && op.clipPolys.length) applyFrameClip(ctx, op.clipPolys);
+            if (op.tool === 'ruler') drawRulerLine(ctx, pts[0], pts[pts.length - 1], op.size, op.color, op.opacity, false);
+            else if (op.tool === 'arrow') drawArrowLine(ctx, pts[0], pts[pts.length - 1], op.size, op.color, op.opacity);
+            else if (op.tool === 'smooth') drawSmoothCurve(ctx, pts, op.size, op.color, op.opacity);
+            else if (op.tool === 'hairstroke') drawTaperedHairstroke(ctx, pts, op.size, op.color, op.opacity);
+            else if (op.tool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.lineWidth = op.size * 2.3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+                for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+                ctx.stroke();
+            } else if (op.tool === 'lip') {
+                const stamp = getSoftStamp(op.color);
+                ctx.globalAlpha = Math.min(0.18, op.opacity * 0.14);
+                for (let i = 0; i < pts.length; i++) {
+                    const a = pts[Math.max(0, i - 1)], b = pts[i];
+                    const dist = Math.hypot(b.x - a.x, b.y - a.y);
+                    const rad = Math.max(8, op.size * 2.1 * (a.p || 1));
+                    const steps = Math.max(1, Math.ceil(dist / Math.max(2, rad * 0.25)));
+                    for (let s = 0; s <= steps; s++) {
+                        const t = s / steps;
+                        ctx.drawImage(stamp, a.x + (b.x - a.x) * t - rad, a.y + (b.y - a.y) * t - rad, rad * 2, rad * 2);
+                    }
+                }
+            } else if (op.tool === 'shading') {
+                const rand = mulberry32((op.seed || 1) + seedOffset);
+                ctx.fillStyle = op.color;
+                for (let i = 0; i < pts.length; i++) {
+                    const a = pts[Math.max(0, i - 1)], b = pts[i];
+                    const dist = Math.hypot(b.x - a.x, b.y - a.y);
+                    const radius = Math.max(4, op.size * 1.45);
+                    const steps = Math.max(1, Math.ceil(dist / 3.5));
+                    const dots = Math.max(3, Math.round(op.size * 0.7 * op.opacity));
+                    for (let s = 0; s <= steps; s++) {
+                        const t = s / steps, cx = a.x + (b.x - a.x) * t, cy = a.y + (b.y - a.y) * t;
+                        for (let d = 0; d < dots; d++) {
+                            const ang = rand() * Math.PI * 2, r = Math.sqrt(rand()) * radius;
+                            ctx.globalAlpha = op.opacity * (0.2 + 0.5 * (1 - r / radius));
+                            ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, Math.max(0.9, op.size * 0.11), 0, Math.PI * 2); ctx.fill();
+                        }
+                    }
+                }
+            }
+            ctx.restore();
+        };
+        runSet(op.pts, 0);
+        if (op.mirrorPts) runSet(op.mirrorPts, 7777);
+    }
+}
+
+async function startTimelapseExport() {
+    if (!timelapseOps.length) { showToast('Chưa có thao tác vẽ nào để tua nhanh!'); return; }
+    document.getElementById('tlConfigPanel').classList.add('hidden');
+    document.getElementById('tlProgressWrap').classList.remove('hidden');
+
+    const updateProgress = (pct, msg) => {
+        document.getElementById('tlProgressBar').style.width = `${pct}%`;
+        document.getElementById('tlPctText').innerText = `${pct}%`;
+        if (msg) document.getElementById('tlStatusText').innerText = msg;
+    };
+
+    const maxSide = 1080;
+    const sc = Math.min(1, maxSide / Math.max(docW, docH));
+    const outW = (Math.round(docW * sc) & ~1) || 720;
+    const outH = (Math.round(docH * sc) & ~1) || 960;
+    const outCanvas = document.createElement('canvas'); outCanvas.width = outW; outCanvas.height = outH;
+    const outCtx = outCanvas.getContext('2d');
+
+    const tlLayers = {};
+    ['shading', 'hair', 'frame'].forEach(k => {
+        const c = document.createElement('canvas'); c.width = docW; c.height = docH; tlLayers[k] = c;
+    });
+
+    const fps = 30;
+    const holdFrames = 36; // 1.2 giây giữ thành phẩm cuối
+    const drawFrames = Math.max(60, tlTargetDuration * fps - holdFrames);
+    const totalFrames = drawFrames + holdFrames;
+
+    const composeTlFrame = () => {
+        outCtx.fillStyle = '#18181b'; outCtx.fillRect(0, 0, outW, outH);
+        outCtx.globalAlpha = bgOpacity; outCtx.drawImage(bgLayer, 0, 0, outW, outH);
+        outCtx.globalAlpha = 1;
+        ['shading', 'hair', 'frame'].forEach(k => {
+            if (!LAYER_MAP[k].vis) return;
+            outCtx.globalAlpha = LAYER_MAP[k].op;
+            outCtx.drawImage(tlLayers[k], 0, 0, outW, outH);
+        });
+        outCtx.globalAlpha = 1;
+        drawBrandFooter(outCtx, outW, outH, true);
+    };
+
+    // Thử dùng WebCodecs + mp4-muxer (Siêu nhanh bằng chip phần cứng!)
+    let usedWebCodecs = false;
+    if (typeof VideoEncoder !== 'undefined' && typeof VideoFrame !== 'undefined') {
+        try {
+            updateProgress(5, 'Đang kích hoạt bộ mã hóa MP4 siêu tốc...');
+            const { Muxer, ArrayBufferTarget } = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.4/build/mp4-muxer.mjs');
+            const codecs = ['avc1.4d002a', 'avc1.42001f', 'avc1.42001e'];
+            let chosenCodec = null;
+            for (const c of codecs) {
+                const sup = await VideoEncoder.isConfigSupported({ codec: c, width: outW, height: outH, bitrate: 3500000, framerate: fps });
+                if (sup.supported) { chosenCodec = c; break; }
+            }
+            if (chosenCodec) {
+                usedWebCodecs = true;
+                const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: outW, height: outH }, fastStart: 'in-memory' });
+                const encoder = new VideoEncoder({
+                    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+                    error: (e) => { throw e; }
+                });
+                encoder.configure({ codec: chosenCodec, width: outW, height: outH, bitrate: 3500000, framerate: fps });
+
+                let opCursor = 0;
+                for (let f = 0; f < totalFrames; f++) {
+                    const targetOpIdx = f >= drawFrames ? timelapseOps.length : Math.floor(((f + 1) / drawFrames) * timelapseOps.length);
+                    while (opCursor < targetOpIdx) { replayOpOntoLayers(timelapseOps[opCursor++], tlLayers); }
+                    composeTlFrame();
+
+                    const vf = new VideoFrame(outCanvas, { timestamp: Math.round((f * 1_000_000) / fps), duration: Math.round(1_000_000 / fps) });
+                    encoder.encode(vf, { keyFrame: f % 30 === 0 });
+                    vf.close();
+
+                    if (f % 12 === 0) {
+                        updateProgress(Math.min(98, Math.round((f / totalFrames) * 95) + 5), '⚡ Đang nén MP4 siêu nhanh...');
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+                await encoder.flush();
+                muxer.finalize();
+                tlBlob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+            }
+        } catch (err) {
+            usedWebCodecs = false;
+            ['shading', 'hair', 'frame'].forEach(k => tlLayers[k].getContext('2d').clearRect(0, 0, docW, docH));
+        }
+    }
+
+    // Dự phòng cho trình duyệt cũ hoặc khi mất mạng không tải được mp4-muxer
+    if (!usedWebCodecs) {
+        updateProgress(10, 'Đang dựng video tua nhanh (Chế độ tương thích)...');
+        const stream = outCanvas.captureStream(30);
+        const mimes = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+        const mime = (MediaRecorder.isTypeSupported && mimes.find(m => MediaRecorder.isTypeSupported(m))) || '';
+        const chunks = [];
+        const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 3200000 } : { videoBitsPerSecond: 3200000 });
+        rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+        const donePromise = new Promise(res => { rec.onstop = () => res(new Blob(chunks, { type: rec.mimeType || 'video/webm' })); });
+        rec.start(400);
+
+        let opCursor = 0;
+        const fastFrames = Math.min(totalFrames, 180);
+        for (let f = 0; f < fastFrames; f++) {
+            const targetOpIdx = f >= fastFrames - 25 ? timelapseOps.length : Math.floor(((f + 1) / (fastFrames - 25)) * timelapseOps.length);
+            while (opCursor < targetOpIdx) { replayOpOntoLayers(timelapseOps[opCursor++], tlLayers); }
+            composeTlFrame();
+            updateProgress(Math.min(98, Math.round((f / fastFrames) * 90) + 8));
+            await new Promise(r => setTimeout(r, 28));
+        }
+        rec.stop();
+        tlBlob = await donePromise;
+    }
+
+    updateProgress(100, 'Hoàn tất!');
+    if (tlUrl) URL.revokeObjectURL(tlUrl);
+    tlUrl = URL.createObjectURL(tlBlob);
+    document.getElementById('tlPreviewVideo').src = tlUrl;
+    document.getElementById('tlProgressWrap').classList.add('hidden');
+    document.getElementById('tlResultWrap').classList.remove('hidden');
+}
+function downloadTimelapse() { triggerBlobDownload(tlUrl, tlBlob, 'KimBling-Timelapse'); }
+async function shareTimelapse() { await triggerBlobShare(tlBlob, 'KimBling-Timelapse', 'Video Tua Nhanh PMU - Master Nguyễn Hiền'); }
+
+// ============================================================================
+// 14. LƯU ẢNH CHẤT LƯỢNG CAO & TIỆN ÍCH CHUNG
+// ============================================================================
+function saveAnnotatedImage() {
+    const out = document.createElement('canvas');
+    out.width = docW; out.height = docH;
+    const octx = out.getContext('2d');
+    octx.fillStyle = '#18181b'; octx.fillRect(0, 0, docW, docH);
+    octx.globalAlpha = bgOpacity; octx.drawImage(bgLayer, 0, 0);
+    ['shading', 'hair', 'frame'].forEach(k => {
+        if (!LAYER_MAP[k].vis) return;
+        octx.globalAlpha = LAYER_MAP[k].op;
+        octx.drawImage(LAYER_MAP[k].el, 0, 0);
+    });
+    octx.globalAlpha = 1;
+    drawBrandFooter(octx, docW, docH, true);
+
+    out.toBlob(async blob => {
+        if (!blob) return;
+        const fileName = `KimBling-VePMU-${Date.now()}.jpg`;
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: 'KimBling Sketch PMU' }); return; } catch (e) {}
+        }
+        const url = URL.createObjectURL(blob);
+        triggerBlobDownload(url, blob, 'KimBling-VePMU', 'jpg');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }, 'image/jpeg', 0.94);
+}
+
+function triggerBlobDownload(url, blob, prefix, forceExt = null) {
+    if (!url || !blob) return;
+    const ext = forceExt || ((blob.type || '').toLowerCase().includes('mp4') ? 'mp4' : 'webm');
+    const a = document.createElement('a'); a.href = url; a.download = `${prefix}-${Date.now()}.${ext}`;
+    document.body.appendChild(a); a.click(); a.remove();
+}
+async function triggerBlobShare(blob, prefix, title) {
+    if (!blob) return;
+    const ext = (blob.type || '').toLowerCase().includes('mp4') ? 'mp4' : 'webm';
+    const file = new File([blob], `${prefix}-${Date.now()}.${ext}`, { type: blob.type || 'video/mp4' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title }); return; } catch (e) {}
+    }
+    const url = URL.createObjectURL(blob);
+    triggerBlobDownload(url, blob, prefix);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function showToast(msg) {
+    const box = document.getElementById('toastBox');
+    box.innerText = msg; box.classList.remove('hidden');
+    clearTimeout(box._t);
+    box._t = setTimeout(() => box.classList.add('hidden'), 2600);
+}
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+window.onload = initApp;
+</script>
+</body>
+</html>
