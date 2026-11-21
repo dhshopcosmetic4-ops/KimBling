@@ -1,5 +1,5 @@
 /* =========================================================
- * PUN.JS (v1.0 - Trợ lý AI Gemini Live chuyên PMU & điều khiển vepmu.html)
+ * PUN.JS (v1.1 - Trợ lý AI Gemini Live chuyên PMU & điều khiển vepmu.html)
  * ========================================================= */
 (function () {
   const PUN_AI_URL =
@@ -510,13 +510,9 @@
     if (isActive && !autoShutdownPending) setVisualState("active", "🎙️ Pun đang nghe", "#10b981");
   }
 
-  // =========================================================
-  // XỬ LÝ TOOL TỪ GEMINI LIVE -> ĐIỀU KHIỂN VEPUM.HTML
-  // =========================================================
   async function handlePunToolCall(name, args) {
     const B = window.PunBridge;
     if (!B) return { ok: false, error: "Chưa sẵn sàng PunBridge trên app." };
-
     if (name === "end_pun_session") {
       autoShutdownPending = true;
       autoShutdownMessage = "👋 Tạm biệt! Pun đã ngưng hỗ trợ.";
@@ -531,7 +527,6 @@
     if (name === "manage_layers") return await B.manageLayers(args);
     if (name === "control_ai_pmu") return await B.controlAiPmu(args);
     if (name === "control_tutor_and_export") return await B.controlTutorAndExport(args);
-
     return { ok: false, error: "Lệnh không hợp lệ: " + name };
   }
 
