@@ -1132,36 +1132,19 @@
         let videoTextOverlays = [], activeTextOverlayId = null, draggingTextInfo = null, lastDrawnTextBoxes = [];
 
         function computeSmartTitleStyle(screenText, visualDesc, shotType, aiHint) {
-            const t = String(screenText || '').trim(), v = (String(visualDesc || '') + ' ' + String(shotType || '')).toLowerCase();
-            const isFace = /mặt|biểu cảm|ngạc nhiên|thèm|uống|hút|thưởng thức|nhìn|cười/.test(v);
-            const isPriceOrHook = /(\d+k|\d+đ|upsize|giá|chỉ|ghé|ngay|độc lạ|đâu rồi|set đánh|\?)/i.test(t);
-            const isToppingOrDetail = /(topping|trân châu|thạch|bọt|cacao|sữa|mát|ngọt|vị)/i.test(t);
-            let styleId = 'yellow_box', animId = 'pop', y = 0.22, size = 44;
-            if (isFace) { styleId = 'red_viral'; animId = 'pop'; y = 0.15; }
-            else if (isPriceOrHook && t.length <= 26) { styleId = 'yellow_box'; animId = 'pulse'; y = 0.20; }
-            else if (isToppingOrDetail) { styleId = v.includes('cận') || v.includes('macro') ? 'glass_dark' : 'white_outline'; animId = 'slide_up'; y = 0.21; }
-            else if (v.includes('macro') || v.includes('rót') || v.includes('phân tầng')) { styleId = 'neon_glow'; animId = 'glow'; y = 0.20; }
-            const len = t.length;
-            if (len <= 16) size = 50;
-            else if (len <= 24) size = 44;
-            else if (len <= 34) size = 38;
-            else size = 34;
-            if (aiHint && typeof aiHint === 'object') {
-                if (TEXT_STYLES.some(s => s.id === aiHint.styleId)) styleId = aiHint.styleId;
-                if (TEXT_ANIMS.some(a => a.id === aiHint.animId)) animId = aiHint.animId;
-                if (typeof aiHint.y === 'number' && aiHint.y >= 0.1 && aiHint.y <= 0.88) y = aiHint.y;
-                if (typeof aiHint.size === 'number' && aiHint.size >= 24 && aiHint.size <= 64) size = aiHint.size;
-            }
-            return { styleId, animId, y, size };
+            return {
+                styleId: 'neon_glow',
+                animId: 'pulse',
+                y: 0.20,
+                size: 38
+            };
         }
         function computeSmartSubtitleStyle(subText, visualDesc) {
-            const len = String(subText || '').length, v = String(visualDesc || '').toLowerCase();
-            const isBusy = v.includes('rót') || v.includes('macro') || v.includes('topping');
             return {
-                styleId: isBusy ? 'glass_dark' : 'white_outline',
-                animId: 'pop',
+                styleId: 'glass_dark',
+                animId: 'typewriter',
                 y: 0.80,
-                size: len > 28 ? 30 : (len < 16 ? 38 : 34)
+                size: 34
             };
         }
 
