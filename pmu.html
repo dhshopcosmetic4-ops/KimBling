@@ -1156,7 +1156,7 @@ TRẢ VỀ ĐÚNG JSON:
   "fixAdvice": "Hướng dẫn chi tiết 2-4 câu của Master Nguyễn Hiền (nên chỉnh lực tay/tốc độ máy/góc kim 90 độ hay 45 độ/pha màu ra sao).",
   "voiceSummary": "2-3 câu ngắn gọn tự nhiên để đọc thành giọng nói nhận xét cho học viên."
 }`;
-                for (const model of ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-flash']) {
+                for (const model of ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite']) {
                     try {
                         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1708,7 +1708,7 @@ Cảnh 3 (11s - 16s) (Quay ở Lần 3)
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim(); if (!apiKey) return null;
             const parts = [{ text: promptText }];
             if (audioObj && audioObj.arrayBuffer && audioObj.size <= 14 * 1024 * 1024) parts.push({ inline_data: { mime_type: audioObj.type || 'audio/mp3', data: arrayBufferToBase64(audioObj.arrayBuffer) } });
-            for (const model of ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-2.5-flash']) {
+            for (const model of ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite']) {
                 try {
                     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2030,58 +2030,75 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
 
 
 
+        let studioLastErr = '';
+        const DEFAULT_PMU_VOICE_STYLE = 'Giọng nữ miền Nam Việt Nam ấm áp, chuyên nghiệp, nhẹ nhàng đáng tin cậy, đọc rõ từng chữ';
+        async function studioFetchTimeout(url, options, ms = 22000) {
+            const ctrl = new AbortController();
+            const tm = setTimeout(() => ctrl.abort(), ms);
+            try { return await fetch(url, { ...options, signal: ctrl.signal }); }
+            finally { clearTimeout(tm); }
+        }
+
         async function generateStudioScriptOnly() {
+            studioLastErr = '';
             const productInfo = document.getElementById('studioProductInput').value.trim();
             if (!productInfo) { alert('Bạn hãy nhập dịch vụ hoặc nội dung phun xăm vào ô trước nhé!'); return null; }
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy bấm nút 🔑 để dán Gemini API Key trước nhé!'); openMainKeyModal(); return null; }
+
             const styleSpecs = {
-                1: 'Phong cách 1: Kéo khách đặt lịch (mở đầu 3 giây bằng <gasp> đánh trúng nỗi sợ đau/trổ xanh đỏ, xen <whispering> trấn an nhẹ nhàng tại KimBling Beauty - Master Nguyễn Hiền).',
-                2: 'Phong cách 2: Chia sẻ chuyên môn / Giáo trình (giọng Master Nguyễn Hiền tâm huyết, dùng <breath> và <short pause> nhấn mạnh kỹ thuật tầng thượng bì, giữ hạt tự nhiên).',
-                3: 'Phong cách 3: Tuyển sinh học viên nghề Phun Xăm (nhiệt huyết, <chuckle> thân thiện gần gũi, truyền lửa kèm 1:1).',
-                4: 'Phong cách 4: Storytelling lột xác nhan sắc (mở đầu bằng <sigh> đồng cảm nỗi tự ti môi thâm/mày lỗi, rồi vỡ òa hạnh phúc với <gasp> và <giggle> nhẹ).'
+                1: 'Phong cách 1: Kéo khách đặt lịch (đánh trúng nỗi sợ đau/trổ xanh đỏ, nhấn mạnh nét tự nhiên tại KimBling Beauty - Master Nguyễn Hiền).',
+                2: 'Phong cách 2: Chia sẻ chuyên môn / Giáo trình (giọng Master Nguyễn Hiền tâm huyết về kỹ thuật tầng thượng bì, giữ hạt tự nhiên).',
+                3: 'Phong cách 3: Tuyển sinh học viên nghề Phun Xăm (nhiệt huyết, gần gũi, truyền lửa kèm 1:1).',
+                4: 'Phong cách 4: Storytelling lột xác nhan sắc (đồng cảm nỗi tự ti môi thâm/mày lỗi, rồi rạng rỡ tự tin).'
             };
             const prompt = `Bạn là chuyên gia nội dung Phun Xăm Thẩm Mỹ cho KimBling Beauty - Master Nguyễn Hiền.
-Viết ĐÚNG 1 BẢN LỜI THOẠI GIÀU CẢM XÚC, CÓ HỒN NHƯ NGƯỜI THẬT TÂM SỰ theo: ${styleSpecs[studioSelectedStyle]}
+Viết ĐÚNG 1 BẢN LỜI THOẠI GIÀU CẢM XÚC NHƯ NGƯỜI THẬT TÂM SỰ theo: ${styleSpecs[studioSelectedStyle]}
 
 QUY TẮC BẮT BUỘC:
 1. Đưa ĐẦY ĐỦ thông tin kỹ thuật từ đầu vào, đúng chuyên môn phun xăm. Đổi số/đơn vị sang chữ để AI đọc chuẩn.
-2. BẮT BUỘC CHIA CỤM 2-3 CÂU + <long pause> ĐỂ CẮT AUDIO CHUẨN:
-   - Chia lời thoại thành 4-6 cụm cảnh quay.
-   - MỖI CỤM PHẢI GỒM ĐÚNG 2 CÂU (nếu câu dài) HOẶC 3 CÂU (nếu câu ngắn).
-   - Chỉ sau câu cuối của mỗi cụm (trừ cụm chốt đơn cuối) mới xuống dòng đặt đúng 1 thẻ <long pause>.
-   - TUYỆT ĐỐI KHÔNG đặt <long pause> ở giữa 2-3 câu trong cùng 1 cụm!
-3. BẮT BUỘC ĐƯA CẢM XÚC VÀO TỪNG CỤM (KHÔNG VIẾT ĐỀU ĐỀU):
-   - Rải đều ít nhất 5-7 thẻ cảm xúc tiếng Anh trong ngoặc nhọn: <gasp>, <sigh>, <chuckle>, <giggle>, <whispering>, <breath>, <short pause>.
-   - Dùng dấu "..." để ngắt nhịp lấy hơi tự nhiên, và VIẾT HOA nhẹ 1-2 từ khóa cần nhấn (VD: KHÔNG SƯNG ĐAU, MẢNH TƠI NHƯ THẬT).
-   - TUYỆT ĐỐI KHÔNG viết chú thích trong ngoặc tròn (cười), (thì thầm) vì máy sẽ đọc thành chữ! Không đánh số đoạn.
-   - Ví dụ mẫu: "<sigh> Chị em nào từng tự ti vì nền môi thâm xỉn màu... <short pause> đừng vội buồn nha! <whispering> Bí quyết nằm ở bước khử thâm tầng thượng bì siêu nhẹ này nè..."
+2. CHIA CỤM 2-3 CÂU + <long pause> ĐỂ CẮT AUDIO CHUẨN:
+   - Nhóm thành 4-6 cụm cảnh quay. MỖI CỤM GỒM 2 CÂU (nếu câu dài) HOẶC 3 CÂU (nếu câu ngắn).
+   - Chỉ sau câu cuối của mỗi cụm (trừ cụm cuối cùng) mới xuống dòng đặt đúng 1 thẻ <long pause>. Tuyệt đối KHÔNG đặt <long pause> ở giữa cụm.
+3. BẮT BUỘC LỒNG CẢM XÚC Ở ĐẦU VÀ CUỐI MỖI CỤM 2-3 CÂU:
+   - ĐẦU CỤM mở bằng thẻ cảm xúc dẫn nhập (<gasp>, <sigh>, <whispering>, <breath>).
+   - GIỮA CỤM dùng dấu "..." hoặc <short pause> ngắt nhịp tự nhiên, VIẾT HOA nhẹ từ cần nhấn (VD: KHÔNG SƯNG ĐAU, MẢNH TƠI NHƯ THẬT).
+   - CUỐI CỤM (ngay trước <long pause>) chốt bằng dư âm cảm xúc (<chuckle>, <giggle>, hoặc <sigh> nhẹ) để câu có hồn.
+   - Không viết chú thích trong ngoặc tròn (). Không đánh số đoạn.
+   - Ví dụ 1 cụm chuẩn: "<sigh> Chị em nào từng tự ti vì nền môi thâm xỉn màu... <short pause> đừng vội buồn nha, vì bí quyết nằm ở lớp khử thâm siêu nhẹ này nè! <chuckle>"
 
 NỘI DUNG ĐẦU VÀO:
 """${productInfo}"""`;
 
-            let text = null;
-            if (typeof window.callGeminiApiSmart === 'function') {
-                text = await window.callGeminiApiSmart(prompt, [], { temp: 0.72, maxTokens: 2048, timeoutMs: 20000 });
-            } else {
-                for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
-                    try {
-                        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.72, maxOutputTokens: 2048 } })
-                        });
-                        if (!r.ok) continue;
-                        const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                        if (t) { text = t; break; }
-                    } catch (e) {}
+            const models = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-3.5-flash-lite'];
+            const errs = [];
+            for (const m of models) {
+                try {
+                    const resp = await studioFetchTimeout(
+                        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`,
+                        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.72, maxOutputTokens: 2048 } }) },
+                        20000
+                    );
+                    if (!resp.ok) {
+                        let em = `HTTP ${resp.status}`;
+                        try { const ej = await resp.json(); if (ej?.error?.message) em += `: ${ej.error.message.slice(0, 80)}`; } catch (e) {}
+                        errs.push(`${m} (${em})`);
+                        if (resp.status === 400 || resp.status === 403) break;
+                        continue;
+                    }
+                    const data = await resp.json(), text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                    if (text) {
+                        const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
+                        document.getElementById('studioTtsTranscript').value = cleanText;
+                        updateStudioCharCount();
+                        return cleanText;
+                    }
+                    errs.push(`${m} (Trả về rỗng)`);
+                } catch (e) {
+                    errs.push(`${m} (${e.name === 'AbortError' ? 'Timeout 20s' : (e.message || 'Lỗi mạng')})`);
                 }
             }
-            if (text) {
-                const cleanText = text.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
-                document.getElementById('studioTtsTranscript').value = cleanText;
-                updateStudioCharCount();
-                return cleanText;
-            }
+            studioLastErr = errs.join(' | ');
             return null;
         }
 
@@ -2090,51 +2107,57 @@ NỘI DUNG ĐẦU VÀO:
             if (!raw) { alert('Ô lời thoại đang trống! Hãy viết thoại trước rồi bấm nút này.'); return; }
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy dán Gemini API Key trước nhé!'); openMainKeyModal(); return; }
-            const btn = document.getElementById('btnEnrichEmotion'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
-            btn.disabled = true; btn.innerText = '⏳ Đang thổi hồn...'; st.innerText = '🎭 AI đang chèn cảm xúc & giữ nguyên mốc <long pause>...';
+            const btn = document.getElementById('btnEnrichEmotion'), st = document.getElementById('studioStatusMsg'), orig = btn ? btn.innerText : '';
+            if (btn) { btn.disabled = true; btn.innerText = '⏳ Đang thổi hồn...'; }
+            st.innerText = '🎭 AI đang chèn cảm xúc đầu/cuối cụm & giữ nguyên <long pause>...';
             try {
-                const prompt = `Bạn là đạo diễn giọng đọc Gemini 3.8 TTS cho thương hiệu KimBling Beauty - Master Nguyễn Hiền. Giữ nguyên NGUYÊN Ý lời thoại tiếng Việt dưới đây và chỉ chèn thêm các thẻ cảm xúc (<gasp>, <chuckle>, <giggle>, <sigh>, <whispering>, <breath>, <short pause>), dấu "..." và VIẾT HOA nhẹ từ cần nhấn mạnh.
-QUY TẮC SỐNG CÒN:
-- GIỮ NGUYÊN Y ĐÚNG VỊ TRÍ VÀ SỐ LƯỢNG thẻ <long pause> đang có (TUYỆT ĐỐI KHÔNG thêm bớt <long pause>).
-- Không dùng ngoặc đơn (). Chỉ trả về thuần văn bản lời thoại.
-LỜI THOẠI GỐC:
+                const prompt = `Giữ nguyên NGUYÊN Ý lời thoại phun xăm dưới đây và chèn thêm cảm xúc (<gasp>, <chuckle>, <giggle>, <sigh>, <whispering>, <breath>, <short pause>), dấu "..." vào ĐẦU và CUỐI mỗi cụm.
+QUY TẮC: GIỮ NGUYÊN Y ĐÚNG VỊ TRÍ VÀ SỐ LƯỢNG thẻ <long pause> đang có. Không dùng ngoặc đơn (). Chỉ trả về thuần lời thoại.
+LỜI THOẠI:
 """${raw}"""`;
-                let out = null;
-                if (typeof window.callGeminiApiSmart === 'function') {
-                    out = await window.callGeminiApiSmart(prompt, [], { temp: 0.55, maxTokens: 2048, timeoutMs: 18000 });
-                } else {
-                    for (const m of ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']) {
-                        try {
-                            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.55, maxOutputTokens: 2048 } })
-                            });
-                            if (!r.ok) continue;
-                            const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                            if (t) { out = t; break; }
-                        } catch (e) {}
-                    }
+                let out = null, errs = [];
+                for (const m of ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite']) {
+                    try {
+                        const r = await studioFetchTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.55, maxOutputTokens: 2048 } })
+                        }, 18000);
+                        if (!r.ok) { errs.push(`${m} (${r.status})`); if (r.status === 400 || r.status === 403) break; continue; }
+                        const d = await r.json(), t = d?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                        if (t) { out = t; break; }
+                    } catch (e) { errs.push(`${m} (${e.message})`); }
                 }
                 if (out) {
                     ta.value = out.replace(/<\/[a-z\s]+>/gi, '').replace(/<whispers>/gi, '<whispering>').trim();
                     updateStudioCharCount();
-                    st.innerText = '🎭 Đã thổi hồn cảm xúc xong! Chọn "Đọc Full" và bấm Tạo & Nghe thử.';
+                    st.innerText = '🎭 Đã thổi cảm xúc xong! Bấm Tạo & Nghe thử.';
                 } else {
-                    st.innerText = `❌ Không thêm được cảm xúc (${window.lastGeminiError || 'kiểm tra Key'}).`;
+                    st.innerText = `❌ Lỗi: ${errs.join(' | ')}`;
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = orig; }
+            }
+        }
+
+        async function runStudioScriptOnlyBtn() {
+            const btn = document.getElementById('btnStudioScriptOnly'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
+            btn.disabled = true; btn.innerText = '⏳ Đang viết...'; st.innerText = '✍️ AI đang viết thoại PMU giàu cảm xúc theo cụm 2-3 câu...';
+            try {
+                const res = await generateStudioScriptOnly();
+                if (res) {
+                    st.innerText = '✅ Đã viết xong thoại PMU kèm cảm xúc & <long pause>! Bấm Tạo & Nghe thử.';
+                } else {
+                    st.innerText = `❌ Lỗi viết thoại: ${studioLastErr || 'Kiểm tra Key hoặc mạng.'}`;
+                    if (studioLastErr) alert(`Không viết được thoại:\n${studioLastErr}`);
                 }
             } finally {
                 btn.disabled = false; btn.innerText = orig;
             }
         }
 
-
-        async function runStudioScriptOnlyBtn() {
-            const btn = document.getElementById('btnStudioScriptOnly'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
-            btn.disabled = true; btn.innerText = '⏳ Đang viết...'; st.innerText = '✍️ AI đang viết thoại chuyên ngành PMU kèm mốc <long pause>...';
-            const res = await generateStudioScriptOnly(); btn.disabled = false; btn.innerText = orig;
-            st.innerText = res ? '✅ Đã viết xong thoại PMU! Bấm Tạo & Nghe thử.' : '❌ Không tạo được kịch bản.';
+        function formatTranscriptForTtsModel(text) {
+            return String(text || '').replace(/<whispers>/gi, '<whispering>').replace(/<\/[a-z\s_-]+>/gi, '').replace(/\s*\n+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
         }
-        function formatTranscriptForTtsModel(text) { return String(text || '').replace(/<whispers>/gi, '<whispering>').replace(/<\/[a-z\s_-]+>/gi, '').replace(/\s*\n+\s*/g, ' ').replace(/\s{2,}/g, ' ').trim(); }
         function extractPcmInfoFromBase64(b64, mimeType) {
             const bin = atob(b64), len = bin.length, bytes = new Uint8Array(len);
             for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
@@ -2145,19 +2168,14 @@ LỜI THOẠI GỐC:
                 while (pos + 8 <= len) {
                     const id = String.fromCharCode(bytes[pos], bytes[pos+1], bytes[pos+2], bytes[pos+3]), chunkSize = view.getUint32(pos + 4, true);
                     if (id === 'fmt ' && pos + 24 <= len) { channels = view.getUint16(pos + 10, true) || 1; sampleRate = view.getUint32(pos + 12, true) || sampleRate; bitsPerSample = view.getUint16(pos + 22, true) || 16; }
-                    else if (id === 'data') { pcmBytes = bytes.subarray(pos + 8, Math.min(len, pos + 8 + chunkSize)); break; }
+                    else if (id === 'data') { const endPos = (chunkSize > 0 && chunkSize < len) ? Math.min(len, pos + 8 + chunkSize) : len; pcmBytes = bytes.subarray(pos + 8, endPos); break; }
                     pos += 8 + chunkSize + (chunkSize % 2);
                 }
             }
             return { pcmBytes, sampleRate, channels, bitsPerSample };
         }
         function combineAudioPartsToWavBuffer(audioParts) {
-            if (audioParts.length === 1) {
-                const bin = atob(audioParts[0].data), len = bin.length, bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
-                if (len > 44 && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) return bytes.buffer;
-            }
-            const parsed = audioParts.map(p => extractPcmInfoFromBase64(p.data, p.mimeType));
+            const parsed = audioParts.map(p => extractPcmInfoFromBase64(p.data, p.mimeType || p.mime_type));
             const sampleRate = parsed[0].sampleRate || 24000, channels = parsed[0].channels || 1, bitsPerSample = parsed[0].bitsPerSample || 16;
             const totalPcmLen = parsed.reduce((acc, p) => acc + p.pcmBytes.length, 0);
             const wavBuf = new ArrayBuffer(44 + totalPcmLen), view = new DataView(wavBuf), out = new Uint8Array(wavBuf);
@@ -2170,54 +2188,105 @@ LỜI THOẠI GỐC:
             let offset = 44; for (const p of parsed) { out.set(p.pcmBytes, offset); offset += p.pcmBytes.length; }
             return wavBuf;
         }
+
         async function generateStudioAudioOnly() {
             const rawTranscript = document.getElementById('studioTtsTranscript').value.trim();
             if (!rawTranscript) { alert('Ô lời thoại đang trống. Hãy viết hoặc dán lời thoại vào trước nhé!'); return false; }
             const apiKey = (localStorage.getItem(GEMINI_KEY_KEY) || '').trim();
             if (!apiKey) { alert('Hãy bấm nút 🔑 để dán Gemini API Key trước nhé!'); openMainKeyModal(); return false; }
+
             const btn = document.getElementById('btnStudioGenAudio'), st = document.getElementById('studioStatusMsg');
             btn.disabled = true; btn.innerText = '⏳ Đang thu...'; st.innerText = '🎙️ Giọng AI đang thu âm bài nói PMU, đợi vài giây nhé...';
-            const voiceName = document.getElementById('studioVoiceSelect').value || 'Leda';
-            const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim() || 'Giọng nữ miền Nam Việt Nam ấm áp, nhẹ nhàng';
-            const chosenModel = document.getElementById('studioTtsModelSelect').value;
-            const modelQueue = [...new Set([chosenModel, 'gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview', 'gemini-2.5-flash-preview-tts'])];
-            const prepped = formatTranscriptForTtsModel(rawTranscript);
-            let collectedParts = [], lastErr = '';
-            for (const modelId of modelQueue) {
-                try {
+
+            try {
+                const voiceName = document.getElementById('studioVoiceSelect').value || 'Leda';
+                const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim() || DEFAULT_PMU_VOICE_STYLE;
+                const chosenModel = document.getElementById('studioTtsModelSelect').value;
+                const modelQueue = [...new Set([chosenModel, 'gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-2.5-flash-tts', 'gemini-2.5-flash-preview-tts'])];
+                const prepped = formatTranscriptForTtsModel(rawTranscript);
+                let collectedParts = [], errList = [], usedModel = '';
+
+                for (const modelId of modelQueue) {
                     const is38 = modelId.includes('3.8');
-                    const partPayload = is38
-                        ? { text: prepped, speechMetadata: { style: voiceStyle } }
-                        : { text: `${voiceStyle}: ${prepped.replace(/<long pause>/gi, '... ... ').replace(/<short pause>/gi, ', ')}` };
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ role: 'user', parts: [partPayload] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } } } })
-                    });
-                    if (!resp.ok) { lastErr = `${modelId} (${resp.status})`; continue; }
-                    const data = await resp.json(), parts = (data?.candidates?.[0]?.content?.parts || []).filter(p => p.inlineData && p.inlineData.data).map(p => p.inlineData);
-                    if (parts.length > 0) { collectedParts = parts; break; }
-                } catch (e) { lastErr = e.message || 'Network error'; }
+                    const attempts = is38
+                        ? [{ text: prepped, speech_metadata: { style: voiceStyle } }, { text: prepped }]
+                        : [{ text: `${voiceStyle}: ${prepped.replace(/<long pause>/gi, '... ... ').replace(/<short pause>/gi, ', ').replace(/<breath>/gi, ', ')}` }];
+
+                    for (const partPayload of attempts) {
+                        try {
+                            const resp = await studioFetchTimeout(
+                                `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`,
+                                {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        contents: [{ role: 'user', parts: [partPayload] }],
+                                        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } } }
+                                    })
+                                },
+                                32000
+                            );
+                            if (!resp.ok) {
+                                let em = `HTTP ${resp.status}`;
+                                try { const ej = await resp.json(); if (ej?.error?.message) em += `: ${ej.error.message.slice(0, 80)}`; } catch (e) {}
+                                errList.push(`${modelId} (${em})`);
+                                if (resp.status === 400 && partPayload.speech_metadata) continue;
+                                if (resp.status === 400 || resp.status === 403) break;
+                                break;
+                            }
+                            const data = await resp.json();
+                            const parts = (data?.candidates?.[0]?.content?.parts || []).map(p => p.inlineData || p.inline_data).filter(d => d && d.data);
+                            if (parts.length > 0) { collectedParts = parts; usedModel = modelId; break; }
+                            errList.push(`${modelId} (Không có audio)`);
+                        } catch (e) {
+                            errList.push(`${modelId} (${e.name === 'AbortError' ? 'Timeout 32s' : e.message})`);
+                            break;
+                        }
+                    }
+                    if (collectedParts.length > 0) break;
+                }
+
+                if (!collectedParts.length) {
+                    const msg = errList.join(' | ');
+                    st.innerText = `❌ Không tạo được âm thanh: ${msg}`;
+                    alert(`Không thu âm được:\n${msg}`);
+                    return false;
+                }
+
+                studioWavBuffer = combineAudioPartsToWavBuffer(collectedParts);
+                studioWavDuration = await probeAudioDuration(studioWavBuffer, 'audio/wav');
+                if (studioWavUrl) URL.revokeObjectURL(studioWavUrl);
+                studioWavUrl = URL.createObjectURL(new Blob([studioWavBuffer], { type: 'audio/wav' }));
+                const player = document.getElementById('studioAudioPlayer'); player.src = studioWavUrl;
+                document.getElementById('studioAudioResultBox').classList.remove('hidden'); document.getElementById('btnStudioDownloadWav').disabled = false;
+                st.innerText = `✅ Thu âm xong (${studioWavDuration.toFixed(1)}s) • Giọng ${voiceName} (${usedModel})!`;
+                try { await player.play(); } catch (e) {}
+                return true;
+            } finally {
+                btn.disabled = false; btn.innerText = '🔊 Tạo & Nghe thử';
             }
-            btn.disabled = false; btn.innerText = '🔊 Tạo & Nghe thử';
-            if (!collectedParts.length) { st.innerText = `❌ Không tạo được âm thanh (${lastErr || 'kiểm tra Key hoặc quota'}).`; return false; }
-            studioWavBuffer = combineAudioPartsToWavBuffer(collectedParts);
-            studioWavDuration = await probeAudioDuration(studioWavBuffer, 'audio/wav');
-            if (studioWavUrl) URL.revokeObjectURL(studioWavUrl);
-            studioWavUrl = URL.createObjectURL(new Blob([studioWavBuffer], { type: 'audio/wav' }));
-            const player = document.getElementById('studioAudioPlayer'); player.src = studioWavUrl;
-            document.getElementById('studioAudioResultBox').classList.remove('hidden'); document.getElementById('btnStudioDownloadWav').disabled = false;
-            st.innerText = `✅ Thu âm xong (${studioWavDuration.toFixed(1)}s) • Giọng ${voiceName}!`;
-            try { await player.play(); } catch (e) {} return true;
         }
+
         async function runStudioFullPipeline() {
             const btn = document.getElementById('btnStudioFullRun'), st = document.getElementById('studioStatusMsg'), orig = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>Đang viết thoại PMU &amp; thu âm...</span>';
-            st.innerText = '✍️ Bước 1/2: AI đang viết kịch bản phun xăm kèm mốc <long pause>...';
-            const scriptText = await generateStudioScriptOnly();
-            if (!scriptText) { btn.disabled = false; btn.innerHTML = orig; st.innerText = '❌ Không tạo được kịch bản.'; return; }
-            st.innerText = '🎙️ Bước 2/2: Đang thu thành file .WAV...';
-            await generateStudioAudioOnly(); btn.disabled = false; btn.innerHTML = orig;
+            try {
+                st.innerText = '✍️ Bước 1/2: AI đang viết thoại PMU có cảm xúc đầu/cuối cụm...';
+                const scriptText = await generateStudioScriptOnly();
+                if (!scriptText) {
+                    st.innerText = `❌ Lỗi viết thoại: ${studioLastErr || 'Kiểm tra Key hoặc mạng.'}`;
+                    if (studioLastErr) alert(`Không viết được thoại:\n${studioLastErr}`);
+                    return;
+                }
+                st.innerText = '🎙️ Bước 2/2: Đang thu thành file .WAV...';
+                await generateStudioAudioOnly();
+            } finally {
+                btn.disabled = false; btn.innerText = ''; btn.innerHTML = orig;
+            }
         }
+
+
+
+
         function downloadStudioWav() { if (!studioWavUrl) return; const a = document.createElement('a'); a.href = studioWavUrl; a.download = `KimBlingBeauty-PMU-${Date.now()}.wav`; document.body.appendChild(a); a.click(); a.remove(); }
         async function sendStudioToShootTab() {
             if (!studioWavBuffer) { alert('Chưa có file âm thanh để chuyển.'); return; }
