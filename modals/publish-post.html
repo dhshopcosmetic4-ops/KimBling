@@ -1,0 +1,190 @@
+<style>
+  .pub-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .pub-media-box { background: #10121a; border: 1px dashed #35394d; border-radius: 12px; padding: 12px; text-align: center; }
+  .pub-media-box video, .pub-media-box img { max-height: 160px; max-width: 100%; border-radius: 8px; margin-bottom: 6px; }
+  .pub-input, .pub-textarea { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #10121a; color: #fff; font-size: 14px; }
+  .pub-textarea { min-height: 75px; resize: vertical; }
+  .pub-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .pub-btn.ai { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
+  .pub-btn.post { background: #fe2c55; color: #fff; display: none; }
+  .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .pub-card h4 { font-size: 14px; color: #25f4ee; }
+  .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.4; }
+</style>
+
+<div class="pub-wrap">
+  <div class="pub-media-box" id="pub-media-box">
+    <p style="font-size:13px; color:#8a8b91; margin-bottom:8px;">Chưa có Video/Ảnh từ ổ chứa tạm.</p>
+    <div style="display:flex; gap:8px; justify-content:center;">
+      <button type="button" id="pub-pick-vid" style="padding:8px 12px; border-radius:8px; border:none; background:#fe2c55; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">🎬 Nén Video</button>
+      <button type="button" id="pub-pick-img" style="padding:8px 12px; border-radius:8px; border:none; background:#25f4ee; color:#000; font-size:12px; font-weight:600; cursor:pointer;">🖼️ Nén Ảnh</button>
+    </div>
+  </div>
+
+  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Máy xay mini 6 lưỡi)" />
+  <textarea class="pub-textarea" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, khuyến mãi, ưu điểm nổi bật..."></textarea>
+
+  <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
+  <div class="pub-status" id="pub-status"></div>
+
+  <div id="pub-results" style="display:none; flex-direction:column; gap:10px;">
+    <div class="pub-card">
+      <h4>🎵 TikTok</h4>
+      <input class="pub-input" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
+      <input class="pub-input" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
+    </div>
+
+    <div class="pub-card">
+      <h4>📘 Facebook Fanpage</h4>
+      <input class="pub-input" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
+      <textarea class="pub-textarea" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
+      <input class="pub-input" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
+    </div>
+
+    <div class="pub-card">
+      <h4>▶️ YouTube Shorts</h4>
+      <input class="pub-input" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
+      <textarea class="pub-textarea" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
+      <input class="pub-input" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
+    </div>
+  </div>
+
+  <button class="pub-btn post" id="pub-send-all">🚀 Đẩy Video & Nội dung sang Google Apps Script</button>
+</div>
+
+<script type="module">
+  const mediaBox = document.getElementById('pub-media-box');
+  const productEl = document.getElementById('pub-product');
+  const notesEl = document.getElementById('pub-notes');
+  const genBtn = document.getElementById('pub-gen-ai');
+  const statusEl = document.getElementById('pub-status');
+  const resultsEl = document.getElementById('pub-results');
+  const sendBtn = document.getElementById('pub-send-all');
+  const pickVidBtn = document.getElementById('pub-pick-vid');
+  const pickImgBtn = document.getElementById('pub-pick-img');
+
+  if (pickVidBtn) pickVidBtn.onclick = () => AppBus.openModal('compress-vid', 'Nén Video iPhone');
+  if (pickImgBtn) pickImgBtn.onclick = () => AppBus.openModal('compress-img', 'Nén Ảnh Squoosh');
+
+  let previewUrl = null;
+
+  function renderMedia(media) {
+    if (!media) return;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(media.blob);
+    const mb = (media.size / 1048576).toFixed(2);
+    const tag = media.type === 'video'
+      ? `<video src="${previewUrl}" controls playsinline></video>`
+      : `<img src="${previewUrl}" alt="preview" />`;
+    mediaBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã nhận từ ổ tạm: <b>${media.name}</b> (${mb} MB)</div>`;
+  }
+
+  AppBus.on('media:changed', renderMedia);
+  if (AppBus.state.media) renderMedia(AppBus.state.media);
+
+  genBtn.onclick = async () => {
+    const gasUrl = AppBus.state.gasUrl;
+    const geminiKey = AppBus.state.geminiKey;
+
+    if (!gasUrl || !geminiKey) {
+      statusEl.textContent = '⚠️ Vào Tab Cài đặt ⚙️ nhập đủ Link GAS và Gemini API Key trước nhé!';
+      return;
+    }
+    const product = productEl.value.trim();
+    if (!product) {
+      statusEl.textContent = '⚠️ Vui lòng nhập tên sản phẩm trước!';
+      return;
+    }
+
+    genBtn.disabled = true;
+    statusEl.textContent = '✨ Gemini AI đang sáng tạo nội dung cho cả 3 kênh...';
+
+    try {
+      const res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'generate_copy',
+          geminiKey,
+          productName: product,
+          notes: notesEl.value.trim(),
+          mediaType: AppBus.state.media?.type || 'video'
+        })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Lỗi từ GAS');
+
+      const d = json.data;
+      document.getElementById('pub-tt-title').value = d.tiktok.caption;
+      document.getElementById('pub-tt-tags').value = d.tiktok.hashtags.join(' ');
+      document.getElementById('pub-fb-title').value = d.facebook.title;
+      document.getElementById('pub-fb-body').value = d.facebook.body;
+      document.getElementById('pub-fb-tags').value = d.facebook.hashtags.join(' ');
+      document.getElementById('pub-yt-title').value = d.youtube.title;
+      document.getElementById('pub-yt-body').value = d.youtube.description;
+      document.getElementById('pub-yt-tags').value = d.youtube.hashtags.join(' ');
+
+      resultsEl.style.display = 'flex';
+      sendBtn.style.display = 'block';
+      statusEl.textContent = '✅ AI đã phối xong! Bạn có thể sửa nhẹ rồi bấm Đăng.';
+    } catch (err) {
+      statusEl.textContent = '❌ Lỗi: ' + err.message;
+    } finally {
+      genBtn.disabled = false;
+    }
+  };
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  sendBtn.onclick = async () => {
+    const gasUrl = AppBus.state.gasUrl;
+    const media = AppBus.state.media;
+    if (!media) {
+      statusEl.textContent = '⚠️ Chưa có file Video/Ảnh để gửi!';
+      return;
+    }
+    if (media.size > 35 * 1048576) {
+      statusEl.textContent = '❌ File > 35 MB, hãy nén lại Bitrate thấp hơn để vừa giới hạn 50MB của GAS!';
+      return;
+    }
+
+    sendBtn.disabled = true;
+    statusEl.textContent = '🚀 Đang đẩy Video & Nội dung sang Google Apps Script...';
+
+    try {
+      const base64Data = await blobToBase64(media.blob);
+      const payload = {
+        action: 'publish_test',
+        fileName: media.name,
+        mimeType: media.blob.type || 'video/mp4',
+        base64Data,
+        posts: {
+          tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
+          facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
+          youtube: { title: document.getElementById('pub-yt-title').value, description: document.getElementById('pub-yt-body').value + '\n\n' + document.getElementById('pub-yt-tags').value }
+        }
+      };
+
+      const res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Lỗi khi gửi lên GAS');
+
+      statusEl.innerHTML = `🎉 <b>Thành công!</b><br>${json.message}`;
+    } catch (err) {
+      statusEl.textContent = '❌ Lỗi gửi file: ' + err.message;
+    } finally {
+      sendBtn.disabled = false;
+    }
+  };
+</script>
