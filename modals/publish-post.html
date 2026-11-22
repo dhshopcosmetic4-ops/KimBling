@@ -54,14 +54,14 @@
     </div>
 
     <div class="pub-card">
-      <h4><span>📘 Facebook Fanpage</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước sau)</span></h4>
+      <h4><span>📘 Facebook Fanpage</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-fb-enable" checked /> Đăng kênh này</label></h4>
       <input class="pub-input pub-save-field" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
       <textarea class="pub-textarea pub-save-field" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
       <input class="pub-input pub-save-field" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
     </div>
 
     <div class="pub-card">
-      <h4><span>🎵 TikTok</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước sau)</span></h4>
+      <h4><span>🎵 TikTok</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước cuối)</span></h4>
       <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
       <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
     </div>
@@ -76,7 +76,7 @@
     </select>
   </div>
 
-  <button class="pub-btn post" id="pub-send-all">🚀 Đăng Video lên YouTube Shorts ngay</button>
+  <button class="pub-btn post" id="pub-send-all">🚀 Đăng lên các kênh đã chọn ngay</button>
   <div class="pub-status" id="pub-send-status"></div>
 </div>
 
@@ -92,6 +92,7 @@
   const clearBtn = document.getElementById('pub-clear-all');
   const hintEl = document.getElementById('pub-autosave-hint');
   const ytEnableEl = document.getElementById('pub-yt-enable');
+  const fbEnableEl = document.getElementById('pub-fb-enable');
   const ytPrivacyEl = document.getElementById('pub-yt-privacy');
 
   const fieldIds = [
@@ -131,7 +132,8 @@
     const tag = media.type === 'video'
       ? `<video src="${previewUrl}" controls playsinline></video>`
       : `<img src="${previewUrl}" alt="preview" />`;
-    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b> (${mb} MB)</div>`;
+    const extra = (media.files && media.files.length > 1) ? ` (${media.files.length} ảnh)` : '';
+    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b>${extra} (${mb} MB)</div>`;
   }
 
   document.querySelectorAll('.pub-save-field').forEach(el => {
@@ -175,7 +177,6 @@
   genBtn.onclick = async () => {
     const gasUrl = AppBus.state.gasUrl;
     const geminiKey = AppBus.state.geminiKey;
-
     if (!gasUrl || !geminiKey) {
       showStatus(aiStatusEl, '⚠️ Vào Tab <b>Cài đặt ⚙️</b> nhập đủ Link GAS và Gemini API Key trước nhé!');
       return;
@@ -216,9 +217,8 @@
       document.getElementById('pub-yt-tags').value = d.youtube.hashtags.join(' ');
 
       saveAllDraftFields();
-
       const used = d._usedModel ? ` (${d._usedModel})` : '';
-      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}! Chọn chế độ rồi bấm nút Đỏ.`);
+      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}!`);
     } catch (err) {
       showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
@@ -236,95 +236,134 @@
     });
   }
 
+  async function postGas(gasUrl, bodyObj) {
+    const res = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(bodyObj)
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'GAS trả về lỗi');
+    return json;
+  }
+
   sendBtn.onclick = async () => {
     const gasUrl = AppBus.state.gasUrl;
     const media = AppBus.state.media;
+    const wantYT = ytEnableEl.checked;
+    const wantFB = fbEnableEl.checked;
 
-    if (!gasUrl) {
-      showStatus(sendStatusEl, '⚠️ Chưa có Link Google Apps Script ở Tab Cài đặt ⚙️!');
-      return;
-    }
-    if (!media) {
-      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" trước.');
+    if (!gasUrl) { showStatus(sendStatusEl, '⚠️ Chưa có Link GAS ở Tab Cài đặt ⚙️!'); return; }
+    if (!media) { showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy nén hoặc chọn file trước.'); return; }
+    if (!wantYT && !wantFB) { showStatus(sendStatusEl, '⚠️ Hãy tích chọn ít nhất 1 kênh để đăng.'); return; }
+    if (wantFB && (!AppBus.state.fbPageId || !AppBus.state.fbPageToken)) {
+      showStatus(sendStatusEl, '⚠️ Bạn đang tích đăng Facebook nhưng chưa nhập <b>Page ID / Page Token</b> ở Tab Cài đặt ⚙️!');
       return;
     }
     if (media.size > 35 * 1048576) {
-      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy nén lại Bitrate thấp hơn.');
+      showStatus(sendStatusEl, '❌ File > 35 MB, hãy nén nhỏ lại trước.');
       return;
     }
 
     const ytTagsRaw = document.getElementById('pub-yt-tags').value.trim();
-    const ytTagsArr = ytTagsRaw ? ytTagsRaw.split(/\s+/) : [];
-
     const postsPayload = {
       tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
       facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
       youtube: {
         title: document.getElementById('pub-yt-title').value,
         description: document.getElementById('pub-yt-body').value + '\n\n' + ytTagsRaw,
-        tags: ytTagsArr
+        tags: ytTagsRaw ? ytTagsRaw.split(/\s+/) : []
       }
     };
 
+    const uploadId = media.uploadId || ('up_' + Date.now());
+    const isMultiImage = (media.type === 'image' && Array.isArray(media.files) && media.files.length > 1);
     sendBtn.disabled = true;
-    let currentPart = 0;
-    let totalChunks = 1;
 
     try {
-      const CHUNK_SIZE = 1536 * 1024;
-      totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
-      const uploadId = 'up_' + Date.now();
+      let finalizePayload = {
+        action: 'finalize_publish',
+        uploadId,
+        productName: productEl.value.trim() || media.name,
+        fileName: media.name,
+        mimeType: media.blob.type || 'video/mp4',
+        isMultiImage,
+        targets: { youtube: wantYT, facebook: wantFB },
+        ytPrivacy: ytPrivacyEl.value,
+        fbPageId: AppBus.state.fbPageId,
+        fbPageToken: AppBus.state.fbPageToken,
+        posts: postsPayload
+      };
 
-      for (let i = 0; i < totalChunks; i++) {
-        currentPart = i + 1;
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, media.blob.size);
-        const chunkBlob = media.blob.slice(start, end);
-        const chunkBase64 = await blobToBase64(chunkBlob);
-        const isLast = (i === totalChunks - 1);
+      if (isMultiImage) {
+        // Nhiều ảnh: gửi song song từng ảnh (tối đa 3 ảnh/đợt)
+        const files = media.files;
+        let done = 0;
+        const BATCH = 3;
+        for (let b = 0; b < files.length; b += BATCH) {
+          const slice = files.slice(b, b + BATCH);
+          await Promise.all(slice.map(async (f, idx) => {
+            const realIdx = b + idx;
+            const b64 = await blobToBase64(f.blob);
+            await postGas(gasUrl, { action: 'upload_part', uploadId, chunkIndex: realIdx, chunkBase64: b64 });
+            done++;
+            sendBtn.textContent = `⏳ Đang đẩy ảnh (${done}/${files.length})...`;
+            showStatus(sendStatusEl, `🚀 Đang truyền song song <b>${done}/${files.length} ảnh</b> lên Google...`);
+          }));
+        }
+        finalizePayload.totalChunks = files.length;
+        finalizePayload.imageMimes = files.map(f => f.blob.type || 'image/jpeg');
+      } else {
+        // Video hoặc 1 Ảnh: cắt khúc 3 MB và bắn song song 3 khúc một đợt!
+        const CHUNK_SIZE = 3 * 1024 * 1024;
+        const totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
 
-        const pct = Math.round((currentPart / totalChunks) * 100);
-        sendBtn.textContent = isLast
-          ? '🚀 Đang tải lên YouTube (chờ 5–15 giây)...'
-          : `⏳ Đang đẩy lên Google (${currentPart}/${totalChunks} - ${pct}%)...`;
-        showStatus(sendStatusEl, isLast
-          ? '🎬 Đang ghép file & đẩy thẳng lên kênh YouTube của bạn...'
-          : `🚀 Đang truyền phần <b>${currentPart}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
+        if (totalChunks === 1) {
+          sendBtn.textContent = '🚀 Đang gửi file & đăng bài...';
+          showStatus(sendStatusEl, '🚀 Đang gửi thẳng lên Google & đăng bài...');
+          finalizePayload.totalChunks = 1;
+          finalizePayload.inlineBase64 = await blobToBase64(media.blob);
+        } else {
+          let done = 0;
+          const BATCH = 3;
+          for (let b = 0; b < totalChunks; b += BATCH) {
+            const batchIndices = [];
+            for (let k = b; k < Math.min(b + BATCH, totalChunks); k++) batchIndices.push(k);
 
-        const res = await fetch(gasUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'publish_chunk',
-            uploadId,
-            chunkIndex: i,
-            totalChunks,
-            isLast,
-            chunkBase64,
-            fileName: media.name,
-            mimeType: media.blob.type || 'video/mp4',
-            targets: isLast ? { youtube: ytEnableEl.checked } : null,
-            ytPrivacy: ytPrivacyEl.value,
-            posts: isLast ? postsPayload : null
-          })
-        });
-
-        const json = await res.json();
-        if (!json.ok) throw new Error(json.error || `GAS từ chối phần ${currentPart}`);
-
-        if (isLast) {
-          let linkHtml = '';
-          if (json.youtube && json.youtube.url) {
-            linkHtml = `<br><br><a href="${json.youtube.url}" target="_blank" style="display:inline-block;padding:8px 14px;background:#25f4ee;color:#000;border-radius:8px;text-decoration:none;font-weight:700;">▶️ Bấm xem trên YouTube Shorts</a>`;
+            await Promise.all(batchIndices.map(async (idx) => {
+              const start = idx * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, media.blob.size);
+              const chunkB64 = await blobToBase64(media.blob.slice(start, end));
+              await postGas(gasUrl, { action: 'upload_part', uploadId, chunkIndex: idx, chunkBase64: chunkB64 });
+              done++;
+              const pct = Math.round((done / totalChunks) * 100);
+              sendBtn.textContent = `⚡ Đang bắn song song (${done}/${totalChunks} - ${pct}%)...`;
+              showStatus(sendStatusEl, `⚡ Đang truyền tốc độ cao: <b>${done}/${totalChunks} phần (${pct}%)</b>...`);
+            }));
           }
-          showStatus(sendStatusEl, `🎉 ${json.message}${linkHtml}`);
+          finalizePayload.totalChunks = totalChunks;
         }
       }
+
+      sendBtn.textContent = '🎬 Đang đăng lên YouTube & Facebook...';
+      showStatus(sendStatusEl, '⏳ Google đã nhận đủ file! Đang bắn lên các kênh đã chọn (iPhone có mất mạng lúc này Google vẫn tự đăng xong)...');
+
+      const result = await postGas(gasUrl, finalizePayload);
+      let html = `<b>Kết quả xử lý:</b><br>`;
+      if (result.youtube) {
+        html += `<br>▶️ <b>YouTube:</b> ${result.youtube.statusText}`;
+        if (result.youtube.url) html += ` — <a href="${result.youtube.url}" target="_blank" style="color:#25f4ee;">Mở xem</a>`;
+      }
+      if (result.facebook) {
+        html += `<br>📘 <b>Facebook:</b> ${result.facebook.statusText}`;
+        if (result.facebook.url) html += ` — <a href="${result.facebook.url}" target="_blank" style="color:#25f4ee;">Mở bài</a>`;
+      }
+      showStatus(sendStatusEl, html);
     } catch (err) {
-      showStatus(sendStatusEl, `❌ Lỗi tại phần <b>${currentPart}/${totalChunks}</b>: ${err.message}`);
+      showStatus(sendStatusEl, `❌ Bị ngắt kết nối: ${err.message}<br><span style="color:#25f4ee;">💡 Nếu bị rớt mạng lúc đang đăng, hãy ra Trang chủ bấm <b>"🔍 Tải nhật ký"</b> để kiểm tra xem bài đã lên chưa rồi hãy bấm lại!</span>`);
     } finally {
       sendBtn.disabled = false;
-      sendBtn.textContent = '🚀 Đăng Video lên YouTube Shorts ngay';
+      sendBtn.textContent = '🚀 Đăng lên các kênh đã chọn ngay';
     }
   };
 </script>
