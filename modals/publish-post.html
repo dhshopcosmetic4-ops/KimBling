@@ -1,5 +1,10 @@
 <style>
   .pub-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .pub-topbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .pub-clear-btn {
+    background: #222533; color: #ff7b93; border: 1px solid #3c2330;
+    padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
   .pub-media-box { background: #10121a; border: 1px dashed #35394d; border-radius: 12px; padding: 12px; text-align: center; }
   .pub-media-box video, .pub-media-box img { max-height: 160px; max-width: 100%; border-radius: 8px; margin-bottom: 6px; }
   .pub-pick-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
@@ -16,6 +21,11 @@
 </style>
 
 <div class="pub-wrap">
+  <div class="pub-topbar">
+    <span style="font-size:12px; color:#8a8b91;" id="pub-autosave-hint">💾 Tự động lưu nháp trên máy</span>
+    <button type="button" class="pub-clear-btn" id="pub-clear-all">🧹 Quét dọn / Làm mới</button>
+  </div>
+
   <div class="pub-media-box" id="pub-media-box">
     <div id="pub-media-preview">
       <p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh nào được chọn.</p>
@@ -28,8 +38,8 @@
     </div>
   </div>
 
-  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Mì tương đen cá viên)" />
-  <textarea class="pub-textarea" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, địa chỉ, ưu đãi..."></textarea>
+  <input class="pub-input pub-save-field" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Mì tương đen cá viên)" />
+  <textarea class="pub-textarea pub-save-field" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, địa chỉ, ưu đãi..."></textarea>
 
   <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
   <div class="pub-status" id="pub-ai-status"></div>
@@ -37,22 +47,22 @@
   <div id="pub-results" style="display:flex; flex-direction:column; gap:10px;">
     <div class="pub-card">
       <h4>🎵 TikTok</h4>
-      <input class="pub-input" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
-      <input class="pub-input" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
+      <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
+      <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
     </div>
 
     <div class="pub-card">
       <h4>📘 Facebook Fanpage</h4>
-      <input class="pub-input" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
-      <textarea class="pub-textarea" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
-      <input class="pub-input" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
+      <input class="pub-input pub-save-field" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
+      <textarea class="pub-textarea pub-save-field" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
+      <input class="pub-input pub-save-field" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
     </div>
 
     <div class="pub-card">
       <h4>▶️ YouTube Shorts</h4>
-      <input class="pub-input" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
-      <textarea class="pub-textarea" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
-      <input class="pub-input" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
+      <input class="pub-input pub-save-field" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
+      <textarea class="pub-textarea pub-save-field" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
+      <input class="pub-input pub-save-field" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
     </div>
   </div>
 
@@ -69,6 +79,53 @@
   const aiStatusEl = document.getElementById('pub-ai-status');
   const sendBtn = document.getElementById('pub-send-all');
   const sendStatusEl = document.getElementById('pub-send-status');
+  const clearBtn = document.getElementById('pub-clear-all');
+  const hintEl = document.getElementById('pub-autosave-hint');
+
+  const fieldIds = [
+    'pub-product', 'pub-notes',
+    'pub-tt-title', 'pub-tt-tags',
+    'pub-fb-title', 'pub-fb-body', 'pub-fb-tags',
+    'pub-yt-title', 'pub-yt-body', 'pub-yt-tags'
+  ];
+
+  let previewUrl = null;
+
+  function saveAllDraftFields() {
+    const data = {};
+    fieldIds.forEach(id => { data[id] = document.getElementById(id).value; });
+    AppBus.saveDraftText(data);
+  }
+
+  function restoreDraftFields() {
+    const saved = AppBus.getDraftText();
+    if (!saved) return;
+    fieldIds.forEach(id => {
+      if (saved[id] !== undefined) document.getElementById(id).value = saved[id];
+    });
+  }
+
+  function resetEmptyPreview() {
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+    previewBox.innerHTML = '<p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh nào được chọn.</p>';
+    directFileEl.value = '';
+  }
+
+  function renderMedia(media) {
+    if (!media) { resetEmptyPreview(); return; }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(media.blob);
+    const mb = (media.size / 1048576).toFixed(2);
+    const tag = media.type === 'video'
+      ? `<video src="${previewUrl}" controls playsinline></video>`
+      : `<img src="${previewUrl}" alt="preview" />`;
+    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b> (${mb} MB)</div>`;
+  }
+
+  // Tự lưu mỗi khi người dùng gõ sửa
+  document.querySelectorAll('.pub-save-field').forEach(el => {
+    el.addEventListener('input', saveAllDraftFields);
+  });
 
   document.getElementById('pub-pick-vid').onclick = () => AppBus.openModal('compress-vid', 'Nén Video iPhone');
   document.getElementById('pub-pick-img').onclick = () => AppBus.openModal('compress-img', 'Nén Ảnh Squoosh');
@@ -80,20 +137,25 @@
     AppBus.setMedia({ blob: f, name: f.name, type, size: f.size });
   };
 
-  let previewUrl = null;
-
-  function renderMedia(media) {
-    if (!media) return;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = URL.createObjectURL(media.blob);
-    const mb = (media.size / 1048576).toFixed(2);
-    const tag = media.type === 'video'
-      ? `<video src="${previewUrl}" controls playsinline></video>`
-      : `<img src="${previewUrl}" alt="preview" />`;
-    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã sẵn sàng: <b>${media.name}</b> (${mb} MB)</div>`;
-  }
+  // Nút Quét dọn / Làm mới toàn bộ lưu tạm
+  clearBtn.onclick = async () => {
+    await AppBus.clearTempAll();
+    fieldIds.forEach(id => { document.getElementById(id).value = ''; });
+    resetEmptyPreview();
+    aiStatusEl.style.display = 'none';
+    sendStatusEl.style.display = 'none';
+    hintEl.textContent = '🧹 Đã quét dọn sạch lưu tạm!';
+    setTimeout(() => { hintEl.textContent = '💾 Tự động lưu nháp trên máy'; }, 3000);
+  };
 
   AppBus.on('media:changed', renderMedia);
+  AppBus.on('media:cleared', resetEmptyPreview);
+  AppBus.on('draft:cleared', () => {
+    fieldIds.forEach(id => { document.getElementById(id).value = ''; });
+  });
+
+  // Phục hồi dữ liệu ngay khi mở Popup
+  restoreDraftFields();
   if (AppBus.state.media) renderMedia(AppBus.state.media);
 
   function showStatus(el, html) {
@@ -144,8 +206,10 @@
       document.getElementById('pub-yt-body').value = d.youtube.description;
       document.getElementById('pub-yt-tags').value = d.youtube.hashtags.join(' ');
 
+      saveAllDraftFields(); // Lưu ngay nội dung AI vừa viết vào máy!
+
       const used = d._usedModel ? ` (${d._usedModel})` : '';
-      showStatus(aiStatusEl, `✅ AI đã phối xong${used}! Cuộn xuống bấm nút Đỏ để đẩy file.`);
+      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}! Cuộn xuống bấm nút Đỏ để đẩy file.`);
     } catch (err) {
       showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
