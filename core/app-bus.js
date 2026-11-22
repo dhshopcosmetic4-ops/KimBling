@@ -20,6 +20,7 @@ function openIDB() {
 async function saveMediaToIDB(mediaObj) {
   const db = await openIDB();
   const record = {
+    uploadId: mediaObj.uploadId,
     name: mediaObj.name,
     type: mediaObj.type,
     size: mediaObj.size,
@@ -57,6 +58,7 @@ async function loadMediaFromIDB() {
   if (!record || !record.buffer) return null;
 
   const mediaObj = {
+    uploadId: record.uploadId || ('up_' + Date.now()),
     blob: new Blob([record.buffer], { type: record.mimeType }),
     name: record.name,
     type: record.type,
@@ -88,7 +90,9 @@ export const AppBus = {
   state: {
     media: null,
     gasUrl: localStorage.getItem('gas_url') || '',
-    geminiKey: localStorage.getItem('gemini_key') || ''
+    geminiKey: localStorage.getItem('gemini_key') || '',
+    fbPageId: localStorage.getItem('fb_page_id') || '',
+    fbPageToken: localStorage.getItem('fb_page_token') || ''
   },
   listeners: {},
 
@@ -102,10 +106,11 @@ export const AppBus = {
 
   setMedia(mediaObj) {
     const ver = ++this._mediaVer;
+    if (!mediaObj.uploadId) {
+      mediaObj.uploadId = 'up_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    }
     this.state.media = mediaObj;
     this.emit('media:changed', mediaObj);
-
-    // Lưu ngầm vào IndexedDB của iPhone để tải lại trang không bị mất
     saveMediaToIDB(mediaObj).catch(err => console.warn('Lưu tạm media lỗi:', err));
     return ver;
   },
@@ -154,6 +159,13 @@ export const AppBus = {
   setGeminiKey(key) {
     this.state.geminiKey = key.trim();
     localStorage.setItem('gemini_key', this.state.geminiKey);
+  },
+
+  setFacebookConfig(pageId, pageToken) {
+    this.state.fbPageId = pageId.trim();
+    this.state.fbPageToken = pageToken.trim();
+    localStorage.setItem('fb_page_id', this.state.fbPageId);
+    localStorage.setItem('fb_page_token', this.state.fbPageToken);
   },
 
   openTab: () => {},
