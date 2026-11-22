@@ -9,7 +9,7 @@
   .pub-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
   .pub-btn:disabled { opacity: 0.6; }
   .pub-btn.ai { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
-  .pub-btn.post { background: #fe2c55; color: #fff; display: none; }
+  .pub-btn.post { background: #fe2c55; color: #fff; }
   .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .pub-card h4 { font-size: 14px; color: #25f4ee; }
   .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 8px 10px; border-radius: 8px; display: none; }
@@ -28,13 +28,13 @@
     </div>
   </div>
 
-  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Matcha Latte 20k)" />
-  <textarea class="pub-textarea" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, khuyến mãi, ưu điểm nổi bật..."></textarea>
+  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Mì tương đen cá viên)" />
+  <textarea class="pub-textarea" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, địa chỉ, ưu đãi..."></textarea>
 
   <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
   <div class="pub-status" id="pub-ai-status"></div>
 
-  <div id="pub-results" style="display:none; flex-direction:column; gap:10px;">
+  <div id="pub-results" style="display:flex; flex-direction:column; gap:10px;">
     <div class="pub-card">
       <h4>🎵 TikTok</h4>
       <input class="pub-input" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
@@ -67,7 +67,6 @@
   const notesEl = document.getElementById('pub-notes');
   const genBtn = document.getElementById('pub-gen-ai');
   const aiStatusEl = document.getElementById('pub-ai-status');
-  const resultsEl = document.getElementById('pub-results');
   const sendBtn = document.getElementById('pub-send-all');
   const sendStatusEl = document.getElementById('pub-send-status');
 
@@ -145,11 +144,10 @@
       document.getElementById('pub-yt-body').value = d.youtube.description;
       document.getElementById('pub-yt-tags').value = d.youtube.hashtags.join(' ');
 
-      resultsEl.style.display = 'flex';
-      sendBtn.style.display = 'block';
-      showStatus(aiStatusEl, '✅ AI đã phối xong! Bạn có thể sửa lại hoặc cuộn xuống bấm nút Đỏ.');
+      const used = d._usedModel ? ` (${d._usedModel})` : '';
+      showStatus(aiStatusEl, `✅ AI đã phối xong${used}! Cuộn xuống bấm nút Đỏ để đẩy file.`);
     } catch (err) {
-      showStatus(aiStatusEl, '❌ Lỗi: ' + err.message);
+      showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
       genBtn.disabled = false;
       genBtn.textContent = '✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)';
@@ -174,12 +172,11 @@
       return;
     }
     if (!media) {
-      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" hoặc "📁 Chọn sẵn từ máy" trước.');
-      sendStatusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" hoặc "🖼️ Nén Ảnh" trước.');
       return;
     }
     if (media.size > 35 * 1048576) {
-      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy bấm <b>🎬 Nén Video</b> hạ Bitrate xuống dưới 35 MB để vừa giới hạn của Google.');
+      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy nén lại Bitrate thấp hơn để vừa giới hạn của Google.');
       return;
     }
 
@@ -190,23 +187,25 @@
     };
 
     sendBtn.disabled = true;
+    let currentPart = 0;
+    let totalChunks = 1;
 
     try {
-      // Cắt từng khúc đúng 3 MB (3 * 1024 * 1024 chia hết cho 3 -> nối Base64 chuẩn 100%)
-      const CHUNK_SIZE = 3 * 1024 * 1024;
-      const totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
+      const CHUNK_SIZE = 1536 * 1024;
+      totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
       const uploadId = 'up_' + Date.now();
 
       for (let i = 0; i < totalChunks; i++) {
+        currentPart = i + 1;
         const start = i * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, media.blob.size);
         const chunkBlob = media.blob.slice(start, end);
         const chunkBase64 = await blobToBase64(chunkBlob);
         const isLast = (i === totalChunks - 1);
 
-        const pct = Math.round(((i + 1) / totalChunks) * 100);
-        sendBtn.textContent = `⏳ Đang đẩy lên Google (${i + 1}/${totalChunks} - ${pct}%)...`;
-        showStatus(sendStatusEl, `🚀 Đang truyền phần <b>${i + 1}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
+        const pct = Math.round((currentPart / totalChunks) * 100);
+        sendBtn.textContent = `⏳ Đang đẩy lên Google (${currentPart}/${totalChunks} - ${pct}%)...`;
+        showStatus(sendStatusEl, `🚀 Đang truyền phần <b>${currentPart}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
 
         const res = await fetch(gasUrl, {
           method: 'POST',
@@ -225,14 +224,14 @@
         });
 
         const json = await res.json();
-        if (!json.ok) throw new Error(json.error || `Lỗi ở phần ${i + 1}`);
+        if (!json.ok) throw new Error(json.error || `GAS từ chối phần ${currentPart}`);
 
         if (isLast) {
           showStatus(sendStatusEl, `🎉 <b>Thành công!</b><br>${json.message}`);
         }
       }
     } catch (err) {
-      showStatus(sendStatusEl, '❌ Lỗi gửi file: ' + err.message);
+      showStatus(sendStatusEl, `❌ Lỗi tại phần <b>${currentPart}/${totalChunks}</b>: ${err.message}`);
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = '🚀 Đẩy Video & Nội dung sang Google Apps Script';
