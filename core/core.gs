@@ -1,5 +1,14 @@
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GEMINI_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-3.6-flash'
+];
 const TEMP_FOLDER_NAME = 'AutoPost_Temp';
+
+function doGet() {
+  return jsonOut({ ok: true, msg: 'Google Apps Script Backend đang hoạt động!' });
+}
 
 function doPost(e) {
   try {
@@ -15,29 +24,68 @@ function doPost(e) {
       return jsonOut({ ok: true, data });
     }
 
-    if (body.action === 'publish_test') {
-      const bytes = Utilities.base64Decode(body.base64Data);
-      const blob = Utilities.newBlob(bytes, body.mimeType, body.fileName);
-
-      // 1. Cho vào thư mục tạm AutoPost_Temp để kiểm tra (không làm bừa bộn thư mục gốc)
-      const folder = getOrCreateTempFolder();
-      const tempFile = folder.createFile(blob);
-      const savedSizeMB = (tempFile.getSize() / 1048576).toFixed(2);
-
-      // (Giai đoạn 4: Ở đây ta sẽ truyền thẳng `blob` lên YouTube / Facebook / TikTok)
-
-      // 2. Gửi/Kiểm tra xong -> Xóa ngay lập tức để không tốn dung lượng Drive
-      const cleanupStatus = deleteFileCleanly(tempFile);
-
-      return jsonOut({
-        ok: true,
-        message: `GAS đã nhận trọn vẹn file <b>${body.fileName}</b> (${savedSizeMB} MB) trong thư mục "${TEMP_FOLDER_NAME}" và <b>${cleanupStatus}</b>.`
-      });
+    if (body.action === 'publish_chunk') {
+      return handleChunkUpload(body);
     }
 
     return jsonOut({ ok: false, error: 'Action không hợp lệ' });
   } catch (err) {
     return jsonOut({ ok: false, error: err.toString() });
+  }
+}
+
+function handleChunkUpload(body) {
+  const folder = getOrCreateTempFolder();
+  const { uploadId, chunkIndex, totalChunks, isLast, chunkBase64, fileName, mimeType } = body;
+
+  if (totalChunks === 1) {
+    const bytes = Utilities.base64Decode(chunkBase64);
+    const blob = Utilities.newBlob(bytes, mimeType, fileName);
+    const tempFile = folder.createFile(blob);
+    const savedMB = (tempFile.getSize() / 1048576).toFixed(2);
+    const cleanup = deleteFileCleanly(tempFile);
+
+    return jsonOut({
+      ok: true,
+      message: `GAS đã nhận đủ <b>${fileName}</b> (${savedMB} MB) trong "${TEMP_FOLDER_NAME}" và <b>${cleanup}</b>.`
+    });
+  }
+
+  const partName = `${uploadId}_part_${String(chunkIndex).padStart(3, '0')}.txt`;
+  folder.createFile(partName, chunkBase64, MimeType.PLAIN_TEXT);
+
+  if (!isLast) {
+    return jsonOut({ ok: true, receivedChunk: chunkIndex });
+  }
+
+  let fullBase64 = '';
+  try {
+    for (let i = 0; i < totalChunks; i++) {
+      const pName = `${uploadId}_part_${String(i).padStart(3, '0')}.txt`;
+      const it = folder.getFilesByName(pName);
+      if (!it.hasNext()) throw new Error(`Thiếu mảnh dữ liệu số ${i + 1}`);
+      const partFile = it.next();
+      fullBase64 += partFile.getBlob().getDataAsString();
+      deleteFileCleanly(partFile);
+    }
+
+    const bytes = Utilities.base64Decode(fullBase64);
+    const finalBlob = Utilities.newBlob(bytes, mimeType, fileName);
+    const tempFile = folder.createFile(finalBlob);
+    const savedMB = (tempFile.getSize() / 1048576).toFixed(2);
+
+    const cleanup = deleteFileCleanly(tempFile);
+    return jsonOut({
+      ok: true,
+      message: `GAS đã ghép đủ ${totalChunks} phần của <b>${fileName}</b> (${savedMB} MB) trong "${TEMP_FOLDER_NAME}" và <b>${cleanup}</b>.`
+    });
+  } catch (err) {
+    for (let i = 0; i < totalChunks; i++) {
+      const pName = `${uploadId}_part_${String(i).padStart(3, '0')}.txt`;
+      const it = folder.getFilesByName(pName);
+      while (it.hasNext()) deleteFileCleanly(it.next());
+    }
+    throw err;
   }
 }
 
@@ -48,7 +96,6 @@ function getOrCreateTempFolder() {
 
 function deleteFileCleanly(file) {
   try {
-    // Nếu bạn có bật "Drive API" ở mục Dịch vụ (+) bên trái thì xóa vĩnh viễn luôn
     if (typeof Drive !== 'undefined' && Drive.Files) {
       if (typeof Drive.Files.delete === 'function') {
         Drive.Files.delete(file.getId());
@@ -60,7 +107,6 @@ function deleteFileCleanly(file) {
       }
     }
   } catch (e) {}
-  // Nếu chưa bật Drive API thì chuyển vào Thùng rác (Google tự dọn sau 30 ngày)
   file.setTrashed(true);
   return 'đã xóa vào Thùng rác';
 }
@@ -89,24 +135,44 @@ Trả về ĐÚNG định dạng JSON sau:
   }
 }`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const payload = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json' }
   };
 
-  const res = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    headers: { 'x-goog-api-key': apiKey },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+  let lastError = '';
+  for (let i = 0; i < GEMINI_MODELS.length; i++) {
+    const model = GEMINI_MODELS[i];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-  const json = JSON.parse(res.getContentText());
-  if (json.error) throw new Error(json.error.message);
+    const res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-goog-api-key': apiKey },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
 
-  return JSON.parse(json.candidates[0].content.parts[0].text);
+    const code = res.getResponseCode();
+    const raw = res.getContentText();
+    let json;
+    try { json = JSON.parse(raw); } catch (e) { lastError = raw; continue; }
+
+    if (code === 200 && json.candidates && json.candidates[0]?.content?.parts?.[0]?.text) {
+      const parsed = JSON.parse(json.candidates[0].content.parts[0].text);
+      parsed._usedModel = model;
+      return parsed;
+    }
+
+    lastError = (json.error && json.error.message) ? json.error.message : `HTTP ${code}`;
+    // Nếu lỗi do sai API Key thì báo ngay, không thử model khác
+    if ((code === 400 || code === 401 || code === 403) &&
+        (lastError.toLowerCase().includes('api key') || lastError.toLowerCase().includes('permission'))) {
+      throw new Error(lastError);
+    }
+  }
+
+  throw new Error(`Các máy chủ Gemini đều đang bận: ${lastError}`);
 }
 
 function jsonOut(obj) {
