@@ -1,1 +1,68 @@
+<style>
+  .set-group { display: flex; flex-direction: column; gap: 12px; background: #161823; padding: 16px; border-radius: 14px; }
+  .set-label { font-size: 13px; color: #ccc; margin-bottom: -6px; }
+  .set-row { display: flex; gap: 8px; }
+  .set-input { flex: 1; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0d0e15; color: #fff; font-size: 14px; }
+  .set-eye { padding: 0 12px; border-radius: 8px; border: 1px solid #333; background: #222533; color: #fff; cursor: pointer; }
+  .set-btn { padding: 13px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #fe2c55; color: #fff; margin-top: 4px; }
+  .set-msg { font-size: 13px; color: #25f4ee; min-height: 20px; line-height: 1.4; }
+</style>
 
+<h2 style="margin-bottom: 14px;">Cài đặt kết nối</h2>
+<div class="set-group">
+  <div class="set-label">1. Link Web App Google Apps Script (/exec):</div>
+  <input class="set-input" id="set-gas-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" />
+
+  <div class="set-label">2. Gemini API Key (Lưu riêng trên iPhone này):</div>
+  <div class="set-row">
+    <input class="set-input" id="set-gemini-key" type="password" autocomplete="off" placeholder="AIzaSy..." />
+    <button class="set-eye" id="set-toggle-key" type="button">👁️</button>
+  </div>
+
+  <button class="set-btn" id="set-save-btn">Lưu cài đặt & Kiểm tra GAS</button>
+  <div class="set-msg" id="set-msg"></div>
+</div>
+
+<script type="module">
+  const urlInput = document.getElementById('set-gas-url');
+  const keyInput = document.getElementById('set-gemini-key');
+  const toggleBtn = document.getElementById('set-toggle-key');
+  const msg = document.getElementById('set-msg');
+
+  urlInput.value = AppBus.state.gasUrl;
+  keyInput.value = AppBus.state.geminiKey;
+
+  toggleBtn.onclick = () => {
+    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+  };
+
+  document.getElementById('set-save-btn').onclick = async () => {
+    const url = urlInput.value.trim();
+    const key = keyInput.value.trim();
+
+    if (!url.startsWith('https://script.google.com/')) {
+      msg.textContent = '❌ Link GAS phải bắt đầu bằng https://script.google.com/...';
+      return;
+    }
+
+    AppBus.setGasUrl(url);
+    AppBus.setGeminiKey(key);
+
+    msg.textContent = '⏳ Đã lưu trên iPhone. Đang gọi thử Apps Script...';
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'ping' })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        msg.innerHTML = `✅ ${json.msg}<br>${key ? '🔑 Đã lưu Gemini Key trên máy.' : '⚠️ Bạn chưa nhập Gemini Key!'}`;
+      } else {
+        msg.textContent = '⚠️ GAS báo lỗi: ' + (json.error || 'Không rõ');
+      }
+    } catch (err) {
+      msg.textContent = '❌ Không kết nối được GAS: ' + err.message;
+    }
+  };
+</script>
