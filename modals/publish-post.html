@@ -9,15 +9,16 @@
   .pub-media-box video, .pub-media-box img { max-height: 160px; max-width: 100%; border-radius: 8px; margin-bottom: 6px; }
   .pub-pick-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
   .pub-pick-btn { padding: 8px 10px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-block; }
-  .pub-input, .pub-textarea { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #10121a; color: #fff; font-size: 14px; }
+  .pub-input, .pub-textarea, .pub-select { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #10121a; color: #fff; font-size: 14px; }
   .pub-textarea { min-height: 75px; resize: vertical; }
   .pub-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
   .pub-btn:disabled { opacity: 0.6; }
   .pub-btn.ai { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
   .pub-btn.post { background: #fe2c55; color: #fff; }
   .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .pub-card h4 { font-size: 14px; color: #25f4ee; }
-  .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 8px 10px; border-radius: 8px; display: none; }
+  .pub-card h4 { font-size: 14px; color: #25f4ee; display: flex; justify-content: space-between; align-items: center; }
+  .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 10px; border-radius: 8px; display: none; }
+  .pub-yt-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #10121a; border: 1px solid #2a2e40; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
 </style>
 
 <div class="pub-wrap">
@@ -46,27 +47,36 @@
 
   <div id="pub-results" style="display:flex; flex-direction:column; gap:10px;">
     <div class="pub-card">
-      <h4>🎵 TikTok</h4>
-      <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
-      <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
+      <h4><span>▶️ YouTube Shorts</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-yt-enable" checked /> Đăng kênh này</label></h4>
+      <input class="pub-input pub-save-field" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
+      <textarea class="pub-textarea pub-save-field" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
+      <input class="pub-input pub-save-field" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
     </div>
 
     <div class="pub-card">
-      <h4>📘 Facebook Fanpage</h4>
+      <h4><span>📘 Facebook Fanpage</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước sau)</span></h4>
       <input class="pub-input pub-save-field" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
       <textarea class="pub-textarea pub-save-field" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
       <input class="pub-input pub-save-field" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
     </div>
 
     <div class="pub-card">
-      <h4>▶️ YouTube Shorts</h4>
-      <input class="pub-input pub-save-field" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
-      <textarea class="pub-textarea pub-save-field" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
-      <input class="pub-input pub-save-field" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
+      <h4><span>🎵 TikTok</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước sau)</span></h4>
+      <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
+      <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
     </div>
   </div>
 
-  <button class="pub-btn post" id="pub-send-all">🚀 Đẩy Video & Nội dung sang Google Apps Script</button>
+  <div class="pub-yt-opt">
+    <span>🔒 Chế độ YouTube:</span>
+    <select class="pub-select" id="pub-yt-privacy" style="width:auto; padding:7px 10px;">
+      <option value="private">Riêng tư (Test thử)</option>
+      <option value="unlisted">Không công khai</option>
+      <option value="public">Công khai (Public)</option>
+    </select>
+  </div>
+
+  <button class="pub-btn post" id="pub-send-all">🚀 Đăng Video lên YouTube Shorts ngay</button>
   <div class="pub-status" id="pub-send-status"></div>
 </div>
 
@@ -81,6 +91,8 @@
   const sendStatusEl = document.getElementById('pub-send-status');
   const clearBtn = document.getElementById('pub-clear-all');
   const hintEl = document.getElementById('pub-autosave-hint');
+  const ytEnableEl = document.getElementById('pub-yt-enable');
+  const ytPrivacyEl = document.getElementById('pub-yt-privacy');
 
   const fieldIds = [
     'pub-product', 'pub-notes',
@@ -122,7 +134,6 @@
     previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b> (${mb} MB)</div>`;
   }
 
-  // Tự lưu mỗi khi người dùng gõ sửa
   document.querySelectorAll('.pub-save-field').forEach(el => {
     el.addEventListener('input', saveAllDraftFields);
   });
@@ -137,7 +148,6 @@
     AppBus.setMedia({ blob: f, name: f.name, type, size: f.size });
   };
 
-  // Nút Quét dọn / Làm mới toàn bộ lưu tạm
   clearBtn.onclick = async () => {
     await AppBus.clearTempAll();
     fieldIds.forEach(id => { document.getElementById(id).value = ''; });
@@ -154,7 +164,6 @@
     fieldIds.forEach(id => { document.getElementById(id).value = ''; });
   });
 
-  // Phục hồi dữ liệu ngay khi mở Popup
   restoreDraftFields();
   if (AppBus.state.media) renderMedia(AppBus.state.media);
 
@@ -206,10 +215,10 @@
       document.getElementById('pub-yt-body').value = d.youtube.description;
       document.getElementById('pub-yt-tags').value = d.youtube.hashtags.join(' ');
 
-      saveAllDraftFields(); // Lưu ngay nội dung AI vừa viết vào máy!
+      saveAllDraftFields();
 
       const used = d._usedModel ? ` (${d._usedModel})` : '';
-      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}! Cuộn xuống bấm nút Đỏ để đẩy file.`);
+      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}! Chọn chế độ rồi bấm nút Đỏ.`);
     } catch (err) {
       showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
@@ -236,18 +245,25 @@
       return;
     }
     if (!media) {
-      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" hoặc "🖼️ Nén Ảnh" trước.');
+      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" trước.');
       return;
     }
     if (media.size > 35 * 1048576) {
-      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy nén lại Bitrate thấp hơn để vừa giới hạn của Google.');
+      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy nén lại Bitrate thấp hơn.');
       return;
     }
+
+    const ytTagsRaw = document.getElementById('pub-yt-tags').value.trim();
+    const ytTagsArr = ytTagsRaw ? ytTagsRaw.split(/\s+/) : [];
 
     const postsPayload = {
       tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
       facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
-      youtube: { title: document.getElementById('pub-yt-title').value, description: document.getElementById('pub-yt-body').value + '\n\n' + document.getElementById('pub-yt-tags').value }
+      youtube: {
+        title: document.getElementById('pub-yt-title').value,
+        description: document.getElementById('pub-yt-body').value + '\n\n' + ytTagsRaw,
+        tags: ytTagsArr
+      }
     };
 
     sendBtn.disabled = true;
@@ -268,8 +284,12 @@
         const isLast = (i === totalChunks - 1);
 
         const pct = Math.round((currentPart / totalChunks) * 100);
-        sendBtn.textContent = `⏳ Đang đẩy lên Google (${currentPart}/${totalChunks} - ${pct}%)...`;
-        showStatus(sendStatusEl, `🚀 Đang truyền phần <b>${currentPart}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
+        sendBtn.textContent = isLast
+          ? '🚀 Đang tải lên YouTube (chờ 5–15 giây)...'
+          : `⏳ Đang đẩy lên Google (${currentPart}/${totalChunks} - ${pct}%)...`;
+        showStatus(sendStatusEl, isLast
+          ? '🎬 Đang ghép file & đẩy thẳng lên kênh YouTube của bạn...'
+          : `🚀 Đang truyền phần <b>${currentPart}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
 
         const res = await fetch(gasUrl, {
           method: 'POST',
@@ -283,6 +303,8 @@
             chunkBase64,
             fileName: media.name,
             mimeType: media.blob.type || 'video/mp4',
+            targets: isLast ? { youtube: ytEnableEl.checked } : null,
+            ytPrivacy: ytPrivacyEl.value,
             posts: isLast ? postsPayload : null
           })
         });
@@ -291,14 +313,18 @@
         if (!json.ok) throw new Error(json.error || `GAS từ chối phần ${currentPart}`);
 
         if (isLast) {
-          showStatus(sendStatusEl, `🎉 <b>Thành công!</b><br>${json.message}`);
+          let linkHtml = '';
+          if (json.youtube && json.youtube.url) {
+            linkHtml = `<br><br><a href="${json.youtube.url}" target="_blank" style="display:inline-block;padding:8px 14px;background:#25f4ee;color:#000;border-radius:8px;text-decoration:none;font-weight:700;">▶️ Bấm xem trên YouTube Shorts</a>`;
+          }
+          showStatus(sendStatusEl, `🎉 ${json.message}${linkHtml}`);
         }
       }
     } catch (err) {
       showStatus(sendStatusEl, `❌ Lỗi tại phần <b>${currentPart}/${totalChunks}</b>: ${err.message}`);
     } finally {
       sendBtn.disabled = false;
-      sendBtn.textContent = '🚀 Đẩy Video & Nội dung sang Google Apps Script';
+      sendBtn.textContent = '🚀 Đăng Video lên YouTube Shorts ngay';
     }
   };
 </script>
