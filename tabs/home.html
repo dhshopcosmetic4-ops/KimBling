@@ -2,20 +2,18 @@
   .home-card { background: #161823; border: 1px solid #262938; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
   .home-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; }
   .home-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .home-log-item { background: #10121a; border: 1px solid #262938; border-radius: 10px; padding: 10px; margin-top: 8px; font-size: 12px; line-height: 1.5; }
+  .home-log-item a { color: #25f4ee; text-decoration: none; font-weight: 600; }
 </style>
 
 <h2 style="margin-bottom: 14px;">Creator Studio</h2>
 
 <div class="home-card">
-  <h3 style="margin-bottom: 6px;">1. Nén Video trên iPhone</h3>
-  <p style="font-size: 13px; color: #9a9ca8;">Giảm video 55MB (1080p) xuống ~14–25MB bằng chip iPhone.</p>
-  <button class="home-btn" style="background:#fe2c55; color:#fff;" id="home-go-vid">🎬 Mở máy nén Video</button>
-</div>
-
-<div class="home-card">
-  <h3 style="margin-bottom: 6px;">2. Nén Ảnh (Chuẩn Squoosh)</h3>
-  <p style="font-size: 13px; color: #9a9ca8;">Giảm 60–80% dung lượng ảnh sản phẩm mà vẫn giữ độ nét.</p>
-  <button class="home-btn" style="background:#25f4ee; color:#000;" id="home-go-img">🖼️ Mở máy nén Ảnh</button>
+  <h3 style="margin-bottom: 6px;">1. Công cụ Nén trên iPhone</h3>
+  <div class="home-row" style="margin-top:0;">
+    <button class="home-btn" style="background:#fe2c55; color:#fff; font-size:14px;" id="home-go-vid">🎬 Nén Video</button>
+    <button class="home-btn" style="background:#25f4ee; color:#000; font-size:14px;" id="home-go-img">🖼️ Nén Ảnh</button>
+  </div>
 </div>
 
 <div class="home-card">
@@ -28,8 +26,10 @@
 </div>
 
 <div class="home-card">
-  <h3 style="margin-bottom: 6px;">Trạng thái kết nối</h3>
-  <p id="home-gas-status" style="font-size: 13px; color: #9a9ca8;"></p>
+  <h3 style="margin-bottom: 6px;">📋 Nhật ký đăng (Google Sheets)</h3>
+  <p style="font-size:12px; color:#8a8b91;">Dùng để kiểm tra lại kết quả nếu iPhone bị rớt mạng lúc vừa gửi.</p>
+  <button class="home-btn" style="background:#2a2e40; color:#25f4ee; font-size:13px;" id="home-load-logs">🔍 Tải nhật ký mới nhất</button>
+  <div id="home-logs-list"></div>
 </div>
 
 <script type="module">
@@ -38,7 +38,7 @@
   document.getElementById('home-go-pub').onclick = () => AppBus.openModal('publish-post', 'Đăng bài đa kênh');
 
   const tempEl = document.getElementById('home-temp-info');
-  const gasEl = document.getElementById('home-gas-status');
+  const logsEl = document.getElementById('home-logs-list');
 
   function refreshTempInfo() {
     const m = AppBus.state.media;
@@ -59,14 +59,40 @@
     tempEl.innerHTML = '🧹 <b>Đã quét dọn sạch sẽ bộ nhớ tạm!</b>';
   };
 
+  document.getElementById('home-load-logs').onclick = async () => {
+    const gasUrl = AppBus.state.gasUrl;
+    if (!gasUrl) {
+      logsEl.innerHTML = '<div class="home-log-item">⚠️ Chưa nhập Link GAS ở Tab Cài đặt ⚙️</div>';
+      return;
+    }
+    logsEl.innerHTML = '<div class="home-log-item">⏳ Đang đọc Google Sheets...</div>';
+    try {
+      const res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'get_logs' })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      if (!json.logs.length) {
+        logsEl.innerHTML = '<div class="home-log-item">Chưa có bài đăng nào được ghi nhận.</div>';
+        return;
+      }
+      logsEl.innerHTML = json.logs.map(row => `
+        <div class="home-log-item">
+          <div><b>${row.product || row.fileName}</b> <span style="color:#8a8b91;">(${row.time})</span></div>
+          <div>▶️ YouTube: ${row.ytStatus} ${row.ytLink ? `— <a href="${row.ytLink}" target="_blank">Mở link</a>` : ''}</div>
+          <div>📘 Facebook: ${row.fbStatus} ${row.fbLink ? `— <a href="${row.fbLink}" target="_blank">Mở link</a>` : ''}</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      logsEl.innerHTML = `<div class="home-log-item">❌ Lỗi tải nhật ký: ${err.message}</div>`;
+    }
+  };
+
   AppBus.on('media:changed', refreshTempInfo);
   AppBus.on('media:cleared', refreshTempInfo);
   AppBus.on('draft:changed', refreshTempInfo);
   AppBus.on('draft:cleared', refreshTempInfo);
-
   refreshTempInfo();
-
-  gasEl.textContent = (AppBus.state.gasUrl && AppBus.state.geminiKey)
-    ? '✅ Đã đủ Link Google Apps Script & Gemini Key.'
-    : '⚠️ Chưa đủ Link GAS hoặc Gemini Key (Vào Tab Cài đặt ⚙️).';
 </script>
