@@ -182,8 +182,6 @@
         <button class="action-btn" id="btnEventStatusIndicator" style="background:#475569; color:#fff;" onclick="checkEventStatusAlert()">⚪ Trạng thái Event</button>
         <button class="action-btn sound-btn" id="btnEnableSound" onclick="enableAudioAndNotification()">🔔 Chuông Nền</button>
         <button class="action-btn" onclick="fetchOrders(true);">🔄 Tải lại</button>
-        
-        <!-- 🧹 NÚT XÓA SẠCH ĐƠN HÀNG MỚI THÊM -->
         <button class="action-btn" style="background:#dc2626; color:#fff;" onclick="requestClearAllOrders()">🧹 Xóa Sạch Đơn</button>
       </div>
 
@@ -352,9 +350,19 @@
       }
     }
 
+    function parseEventDateTimeMs(val) {
+      if (!val) return NaN;
+      let s = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+        if (s.length === 16) s += ':00';
+        s += '+07:00';
+      }
+      return new Date(s).getTime();
+    }
+
     async function checkActiveEventFromSheets() {
       try {
-        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&rand=${Math.random()}&t=${Date.now()}`);
+        const res = await fetch(`${KIMBLING_API_URL}?type=getEventConfig&rand=${Math.random()}&t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.config) {
           const config = data.config;
@@ -363,10 +371,12 @@
           if (config.useSchedule) {
             if (!config.timeStart || !config.timeEnd) return { active: false, reason: "Chưa cài đặt đủ thời gian hẹn giờ" };
             const now = new Date().getTime();
-            const startTime = new Date(config.timeStart).getTime();
-            const endTime = new Date(config.timeEnd).getTime();
+            const startTime = parseEventDateTimeMs(config.timeStart);
+            const endTime = parseEventDateTimeMs(config.timeEnd);
 
-            if (now >= startTime && now <= endTime) return { active: true, config: config };
+            if (!isNaN(startTime) && !isNaN(endTime) && now >= startTime && now <= endTime) {
+              return { active: true, config: config };
+            }
             return { active: false, reason: "Ngoài khung giờ hẹn lịch" };
           }
           return { active: true, config: config };
@@ -386,6 +396,7 @@
         btn.style.color = '#fff';
         let extraText = [];
         if (status.config.doubleDiamond) extraText.push("x2 💎");
+        if (status.config.doublePoints) extraText.push("x2 ⭐ Điểm");
         if (status.config.bonusTurns) extraText.push(`+${status.config.bonusTurnsValue || 5} lượt`);
         btn.innerHTML = `🟢 Event: Đang Chạy (${extraText.join(', ') || 'Bật'})`;
       } else {
@@ -403,7 +414,8 @@
       if (status.active) {
         let msg = "🟢 EVENT LỄ LỘC ĐANG HOẠT ĐỘNG (Đồng bộ Sheets):\n";
         if (status.config.doubleDiamond) msg += "💎 Đang áp dụng Nhân đôi Kim Cương.\n";
-        if (status.config.bonusTurns) msg += `🎁 Đang tặng thêm ${status.config.bonusTurnsValue || 5} lượt mở hộp khi đặt hàng.\n`;
+        if (status.config.doublePoints) msg += "⭐ Đang áp dụng x2 Điểm Món khi tích điểm.\n";
+        if (status.config.bonusTurns) msg += `🎁 Đang tặng thêm +${status.config.bonusTurnsValue || 5} lượt mở hộp khi đặt hàng.\n`;
         alert(msg);
       } else {
         alert(`🔴 EVENT ĐANG TẮT HOẶC CHƯA DIỄN RA.\nLý do: ${status.reason}`);
@@ -711,6 +723,26 @@
         });
     }
 
+    function splitOuterParenAtEnd(text) {
+      const str = String(text || '').trim();
+      if (!str.endsWith(')')) return { main: str, opt: '' };
+      let depth = 0;
+      for (let i = str.length - 1; i >= 0; i--) {
+        const ch = str.charAt(i);
+        if (ch === ')') depth++;
+        else if (ch === '(') {
+          depth--;
+          if (depth === 0) {
+            return {
+              main: str.substring(0, i).trim(),
+              opt: str.substring(i + 1, str.length - 1).trim()
+            };
+          }
+        }
+      }
+      return { main: str, opt: '' };
+    }
+
     function parseOrderItemsForPOS(orderObj, orderId) {
       const rawItems = orderObj.items;
       if (Array.isArray(rawItems) && rawItems.length > 0) {
@@ -730,41 +762,43 @@
         return [{ cartId: Date.now(), id: 1, name: `Đơn hàng #${orderId}`, basePrice: Number(orderObj.total || 56000), optionsText: "Size: Bình thường", quantity: 1, rawToppings: [] }];
       }
 
-      const itemBlocks = rawItemsStr.split(/(?<=\d\s*(?:đ|k))\s*\|\s*(?=[A-Za-zÀ-ỹ])/i).map(s => s.trim()).filter(Boolean);
+      const itemBlocks = rawItemsStr
+        .replace(/(\d[\d\.]*\s*(?:đ|k))\s*\|\s*/gi, '$1\n')
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+
       let parsedItems = [];
 
       itemBlocks.forEach((block, idx) => {
         let itemPrice = 26000;
-        const priceMatch = block.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s*(?:đ|k)/i);
+        let cleanBlock = block;
+        const priceMatch = cleanBlock.match(/(?:=\s*)?(\d{1,3}(?:\.\d{3})*|\d+)\s*(đ|k)\s*$/i);
         if (priceMatch) {
           let pVal = parseInt(priceMatch[1].replace(/[^\d]/g, ''), 10);
           if (pVal > 0) {
-            if (priceMatch[0].toLowerCase().includes('k') && pVal < 1000) pVal *= 1000;
+            if ((priceMatch[2] || '').toLowerCase() === 'k' && pVal < 1000) pVal *= 1000;
             itemPrice = pVal;
           }
-        }
-
-        let cleanBlock = block;
-        if (priceMatch) cleanBlock = cleanBlock.replace(priceMatch[0], '').replace(/=\s*$/, '').trim();
-
-        let optionContent = "";
-        const parenMatch = cleanBlock.match(/\(([^)]+)\)/);
-        if (parenMatch) {
-          optionContent = parenMatch[1].trim();
-          cleanBlock = cleanBlock.replace(parenMatch[0], '').trim();
+          cleanBlock = cleanBlock.substring(0, priceMatch.index).replace(/=\s*$/, '').trim();
         }
 
         let qty = 1;
         const qtyMatch = cleanBlock.match(/(?:x|×)\s*(\d+)\s*$/i);
         if (qtyMatch) {
           qty = parseInt(qtyMatch[1], 10) || 1;
-          cleanBlock = cleanBlock.replace(qtyMatch[0], '').trim();
+          cleanBlock = cleanBlock.substring(0, qtyMatch.index).trim();
         }
 
-        let dishName = cleanBlock.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
+        const splitParen = splitOuterParenAtEnd(cleanBlock);
+        let dishName = splitParen.main.replace(/^[-–—|]\s*/, '').replace(/[-–—|]\s*$/, '').trim();
         if (!dishName) dishName = 'Món nước';
+        let optionContent = splitParen.opt;
 
-        let finalOptionsText = optionContent ? `Size: ${optionContent}` : "Size: Bình thường";
+        let finalOptionsText = optionContent
+          ? (optionContent.startsWith('Size:') ? optionContent : `Size: ${optionContent}`)
+          : "Size: Bình thường";
+
         let toppingsArr = [];
         if (optionContent.includes('+')) {
           const parts = optionContent.split('+');
@@ -863,9 +897,11 @@
 
           let oldNote = String(targetOrder.note || '');
           let shippingFee = 0;
-          const shipMatch = oldNote.match(/Phí ship:\s*([\d\.]+)\s*đ?/i);
+          const shipMatch = oldNote.match(/Phí ship:\s*([\d\.]+)\s*(k|đ)?/i);
           if (shipMatch) {
-            shippingFee = parseInt(shipMatch[1].replace(/[^\d]/g, ''), 10) || 0;
+            let sVal = parseInt(shipMatch[1].replace(/[^\d]/g, ''), 10) || 0;
+            if ((shipMatch[2] || '').toLowerCase() === 'k' && sVal < 1000) sVal *= 1000;
+            shippingFee = sVal;
           }
 
           let newFinalTotal = foodTotal + shippingFee;
@@ -976,27 +1012,28 @@
       pushOrderToPOS(String(orderObj.orderId || ''), orderObj, button);
     }
 
-        async function pushOrderToPOS(orderId, orderObj, button) {
+    async function pushOrderToPOS(orderId, orderObj, button) {
       if (!orderId) { alert('Không xác định được mã đơn hàng.'); return; }
       if (button && button.disabled) return;
 
       const pin = prompt(`🔐 Nhập mã PIN chủ quán để đẩy đơn #${orderId} sang POS:`);
       if (!pin) return;
       const savedAdminPin = localStorage.getItem('kimbling_admin_pin') || '0';
-      if (pin !== savedAdminPin && pin !== '1234') { alert('❌ Mã PIN chủ quán không chính xác!'); return; }
+      if (pin !== savedAdminPin && pin !== '1234' && pin !== '0') {
+        alert('❌ Mã PIN chủ quán không chính xác!');
+        return;
+      }
 
       if (button) {
         button.classList.add('pushed');
         button.disabled = true;
-        button.textContent = '✅ Đã đẩy POS';
+        button.textContent = '⏳ Đang đẩy POS...';
       }
-      localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
 
       const checkboxEl = document.getElementById(`tichdiem_check_${orderId}`);
       const isTichDiemChecked = checkboxEl ? checkboxEl.checked : false;
 
       const parsedCartItems = parseOrderItemsForPOS(orderObj, orderId);
-      
       let totalItemsCount = 0;
       parsedCartItems.forEach(item => { totalItemsCount += Number(item.quantity || 1); });
 
@@ -1007,9 +1044,9 @@
       const isDiamondPayment = paymentType.includes('túi') || paymentType.includes('kim cương') || paymentType.includes('trừ túi');
 
       if (isDiamondPayment) {
-          diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
+        diamondsValue = -Math.abs(Math.round((totalAmount / 1000) * 20)); 
       } else {
-          diamondsValue = Math.round(totalAmount / 1000); 
+        diamondsValue = Math.round(totalAmount / 1000); 
       }
 
       const customerPhone = String(orderObj.phone || '').replace(/'/g, '').trim();
@@ -1023,67 +1060,80 @@
         payment: String(orderObj.payment || 'Tiền mặt'), note: String(orderObj.note || '')
       };
 
-      const dataString = JSON.stringify(payloadPOS);
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(KIMBLING_API_URL, new Blob([dataString], {type: 'text/plain;charset=utf-8'}));
-      } else {
-        fetch(KIMBLING_API_URL, {
-          method: 'POST', mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: dataString
-        }).catch(e => {});
-      }
+      try {
+        // 1. Lấy cấu hình Event trước (tuần tự để tránh đụng khóa LockService)
+        const eventCheck = await checkActiveEventFromSheets();
 
-      // 🔍 KIỂM TRA EVENT TỪ GOOGLE SHEETS VÀ XỬ LÝ X2 ĐIỂM / TẶNG LƯỢT
-      checkActiveEventFromSheets().then(eventCheck => {
+        // 2. Đẩy đơn chính thức qua POS (server tự xử lý x2 Kim Cương nếu Event bật)
+        const posRes = await fetch(KIMBLING_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payloadPOS)
+        });
+        const posData = await posRes.json();
+
+        if (!posData || posData.ok === false || posData.success === false) {
+          throw new Error((posData && (posData.error || posData.message)) || 'Lỗi đẩy POS');
+        }
+
+        localStorage.setItem(`kimbling_pushed_pos_${orderId}`, 'true');
+        if (button) {
+          button.textContent = '✅ Đã đẩy POS';
+        }
+
         let actualPoints = totalItemsCount;
-        
+
+        // 3. Xử lý Event: +5 lần mở hộp quà (0 = 5 lượt, -5 = 10 lượt) & x2 Điểm Món
         if (eventCheck.active && eventCheck.config) {
           const eventConfig = eventCheck.config;
-          
-          // 🔥 Kích hoạt x2 Điểm Món nếu Event bật cấu hình doublePoints
+
           if (eventConfig.doublePoints) {
             actualPoints = totalItemsCount * 2;
           }
 
-          // Xử lý tặng thêm lượt mở hộp
           if (eventConfig.bonusTurns && customerPhone.length >= 9) {
-            const bonusAmount = eventConfig.bonusTurnsValue || 5;
-            const eventPayload = JSON.stringify({
-              action: 'add_hatkim', type: 'add_hatkim',
-              phone: customerPhone, amount: 0, turnsPlayed: -bonusAmount
-            });
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon(KIMBLING_API_URL, new Blob([eventPayload], {type: 'text/plain;charset=utf-8'}));
-            } else {
-              fetch(KIMBLING_API_URL, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: eventPayload
-              }).catch(e => {});
-            }
-          }
-        }
-
-        // Gửi điểm cộng chính thức cho khách (Đã nhân đôi nếu event bật)
-        if (isTichDiemChecked && customerPhone.length >= 9) {
-          const pointPayload = JSON.stringify({
-            action: 'add_points', sdt: customerPhone,
-            ly: actualPoints, txid: `ONLINE_${orderId}`
-          });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon(KIMBLING_API_URL, new Blob([pointPayload], {type: 'text/plain;charset=utf-8'}));
-          } else {
-            fetch(KIMBLING_API_URL, {
-              method: 'POST', mode: 'no-cors',
+            const bonusAmount = parseInt(eventConfig.bonusTurnsValue, 10) || 5;
+            await fetch(KIMBLING_API_URL, {
+              method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: pointPayload
-            }).catch(e => {});
+              body: JSON.stringify({
+                action: 'add_hatkim',
+                type: 'add_hatkim',
+                phone: customerPhone,
+                amount: 0,
+                turnsPlayed: -bonusAmount,
+                bonusTurns: bonusAmount,
+                isEventBonus: true
+              })
+            }).catch(e => console.error('Lỗi cộng lượt mở hộp Event:', e));
           }
         }
-      }).catch(e => {});
-    }
 
+        // 4. Cộng điểm món vào hệ thống (nếu ô tích điểm đang được tick; giữ nguyên rule chỉ tự tick khi tại quán)
+        if (isTichDiemChecked && customerPhone.length >= 9) {
+          await fetch(KIMBLING_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'add_points',
+              type: 'add_points',
+              sdt: customerPhone,
+              ly: actualPoints,
+              txid: `ONLINE_${orderId}`
+            })
+          }).catch(e => console.error('Lỗi cộng điểm món:', e));
+        }
+
+        stopContinuousAlarm();
+      } catch (err) {
+        if (button) {
+          button.classList.remove('pushed');
+          button.disabled = false;
+          button.textContent = '🚀 Đẩy qua POS';
+        }
+        alert('⚠️ Lỗi đẩy đơn qua POS: ' + (err.message || 'Không kết nối được máy chủ!'));
+      }
+    }
 
     function updateStatus(btnElement, phone, orderId, status) {
       const card = btnElement.closest('.order-card');
@@ -1158,10 +1208,9 @@
 
         if (res.success) {
           stopContinuousAlarm();
-          cachedOrdersMap.clear();
           knownOrderIds.clear();
+          lastRenderedDataSignature = "";
           
-          // Xóa luôn trạng thái đã đẩy POS trong LocalStorage
           Object.keys(localStorage).forEach(key => {
             if (key.startsWith('kimbling_pushed_pos_')) {
               localStorage.removeItem(key);
@@ -1177,8 +1226,6 @@
         setTimeout(() => { isFetchingOrders = false; }, 2000);
       }
     }
-
-
   </script>
 </body>
 </html>
