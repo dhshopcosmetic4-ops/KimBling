@@ -1,0 +1,162 @@
+<style>
+  .cvid-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .cvid-label { font-size: 13px; color: #ccc; }
+  .cvid-select, .cvid-file { width: 100%; padding: 10px; border-radius: 10px; background: #10121a; color: #fff; border: 1px solid #2d3142; font-size: 14px; }
+  .cvid-btn { background: #fe2c55; color: #fff; border: none; padding: 13px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .cvid-btn:disabled { opacity: 0.5; }
+  .cvid-btn.go { background: #25f4ee; color: #000; display: none; }
+  .cvid-bar-bg { width: 100%; height: 10px; background: #10121a; border-radius: 10px; overflow: hidden; display: none; }
+  .cvid-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #25f4ee, #fe2c55); transition: width 0.15s; }
+  .cvid-log { font-size: 13px; color: #ccc; background: #10121a; padding: 10px; border-radius: 8px; line-height: 1.5; }
+  .cvid-preview { width: 100%; max-height: 240px; border-radius: 10px; background: #000; display: none; }
+  .cvid-dl { text-align: center; font-size: 13px; color: #25f4ee; text-decoration: none; display: none; padding: 4px; }
+</style>
+
+<div class="cvid-wrap">
+  <input class="cvid-file" type="file" id="cvid-file" accept="video/*" />
+
+  <div>
+    <div class="cvid-label">Mức Bitrate (Video 45s khuyên dùng 4 Mbps ≈ 22MB):</div>
+    <select class="cvid-select" id="cvid-bitrate">
+      <option value="2.5">2.5 Mbps (Siêu nhẹ ~14 MB)</option>
+      <option value="4" selected>4.0 Mbps (Cân bằng nét ~22 MB)</option>
+      <option value="5.5">5.5 Mbps (Rất nét ~31 MB)</option>
+    </select>
+  </div>
+
+  <div>
+    <div class="cvid-label">Độ phân giải đầu ra:</div>
+    <select class="cvid-select" id="cvid-height">
+      <option value="0" selected>Giữ nguyên độ nét gốc (1080p / 4K)</option>
+      <option value="1080">Giới hạn tối đa 1080p</option>
+      <option value="720">Hạ xuống 720p (Nén nhanh hơn)</option>
+    </select>
+  </div>
+
+  <button class="cvid-btn" id="cvid-start" disabled>⚡ Bắt đầu nén trên iPhone</button>
+
+  <div class="cvid-bar-bg" id="cvid-bar-bg"><div class="cvid-bar-fill" id="cvid-bar-fill"></div></div>
+  <div class="cvid-log" id="cvid-log">Chọn video cần nén (ví dụ file 55 MB)...</div>
+
+  <video class="cvid-preview" id="cvid-preview" controls playsinline></video>
+  <a class="cvid-dl" id="cvid-dl" download="compressed.mp4">⬇️ Lưu thử video đã nén về iPhone</a>
+  <button class="cvid-btn go" id="cvid-send">Quăng qua Đăng bài & Nhờ AI viết Content ➔</button>
+</div>
+
+<script type="module">
+  import {
+    Input, Output, Conversion, ALL_FORMATS, BlobSource,
+    Mp4OutputFormat, BufferTarget, canEncodeVideo
+  } from 'https://cdn.jsdelivr.net/npm/mediabunny/+esm';
+
+  const fileEl = document.getElementById('cvid-file');
+  const bitrateEl = document.getElementById('cvid-bitrate');
+  const heightEl = document.getElementById('cvid-height');
+  const startBtn = document.getElementById('cvid-start');
+  const barBg = document.getElementById('cvid-bar-bg');
+  const barFill = document.getElementById('cvid-bar-fill');
+  const logEl = document.getElementById('cvid-log');
+  const previewEl = document.getElementById('cvid-preview');
+  const dlEl = document.getElementById('cvid-dl');
+  const sendBtn = document.getElementById('cvid-send');
+
+  let compressedResult = null;
+  let previewUrl = null;
+
+  fileEl.onchange = () => {
+    const f = fileEl.files[0];
+    if (!f) return;
+    startBtn.disabled = false;
+    const mb = (f.size / 1048576).toFixed(2);
+    logEl.innerHTML = `Đã chọn: <b>${f.name}</b><br>Dung lượng gốc: <b>${mb} MB</b>`;
+    sendBtn.style.display = 'none';
+    dlEl.style.display = 'none';
+    previewEl.style.display = 'none';
+  };
+
+  startBtn.onclick = async () => {
+    const file = fileEl.files[0];
+    if (!file) return;
+
+    if (typeof VideoEncoder === 'undefined' || !(await canEncodeVideo('avc'))) {
+      logEl.textContent = '❌ Trình duyệt này chưa bật WebCodecs H.264. Hãy mở bằng Safari mới nhất trên iPhone!';
+      return;
+    }
+
+    startBtn.disabled = true;
+    barBg.style.display = 'block';
+    barFill.style.width = '0%';
+    logEl.textContent = '⏳ Đang khởi tạo bộ nén phần cứng iPhone...';
+    const t0 = performance.now();
+
+    try {
+      const input = new Input({ formats: ALL_FORMATS, source: new BlobSource(file) });
+      const target = new BufferTarget();
+      const output = new Output({ format: new Mp4OutputFormat(), target });
+
+      const bps = Math.round(Number(bitrateEl.value) * 1_000_000);
+      const maxH = Number(heightEl.value);
+
+      const videoTrack = await input.getPrimaryVideoTrack();
+      const origH = videoTrack ? await videoTrack.getDisplayHeight() : 1080;
+
+      const videoOpts = {
+        codec: 'avc',
+        bitrate: bps,
+        hardwareAcceleration: 'prefer-hardware',
+        forceTranscode: true
+      };
+      // Chỉ resize nếu người dùng chọn giới hạn và video gốc lớn hơn mức chọn
+      if (maxH > 0 && origH > maxH) {
+        videoOpts.height = maxH;
+      }
+
+      // Không truyền audioOpts để Mediabunny tự copy nguyên luồng âm thanh AAC gốc (nhanh + không lỗi tiếng iOS)
+      const conversion = await Conversion.init({ input, output, tracks: 'primary', video: videoOpts });
+
+      if (!conversion.isValid) {
+        throw new Error('Không tương thích định dạng: ' + conversion.discardedTracks.map(t => t.reason).join(', '));
+      }
+
+      conversion.onProgress = (p) => {
+        const pct = Math.round(p * 100);
+        barFill.style.width = pct + '%';
+        logEl.textContent = `⚡ Đang nén video: ${pct}% ... (Giữ màn hình sáng)`;
+      };
+
+      await conversion.execute();
+
+      const outBlob = new Blob([output.target.buffer], { type: 'video/mp4' });
+      const sec = ((performance.now() - t0) / 1000).toFixed(1);
+      const origMB = (file.size / 1048576).toFixed(2);
+      const outMB = (outBlob.size / 1048576).toFixed(2);
+      const saved = Math.round((1 - outBlob.size / file.size) * 100);
+      const outName = file.name.replace(/\.\w+$/, '') + '_compressed.mp4';
+
+      compressedResult = { blob: outBlob, name: outName, type: 'video', size: outBlob.size };
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(outBlob);
+      previewEl.src = previewUrl;
+      previewEl.style.display = 'block';
+
+      dlEl.href = previewUrl;
+      dlEl.download = outName;
+      dlEl.style.display = 'block';
+      sendBtn.style.display = 'block';
+
+      const warn = outBlob.size > 35 * 1048576 ? '<br>⚠️ Video hơi lớn (>35MB), hãy chọn Bitrate thấp hơn để gửi qua Apps Script.' : '';
+      logEl.innerHTML = `✅ Xong trong <b>${sec} giây</b>!<br>Gốc: ${origMB} MB ➔ Sau nén: <b style="color:#25f4ee;">${outMB} MB</b> (Giảm ${saved}%)${warn}`;
+    } catch (err) {
+      logEl.textContent = '❌ Lỗi nén video: ' + err.message;
+    } finally {
+      startBtn.disabled = false;
+    }
+  };
+
+  sendBtn.onclick = () => {
+    if (!compressedResult) return;
+    AppBus.setMedia(compressedResult);
+    AppBus.openModal('publish-post', 'Đăng bài đa kênh');
+  };
+</script>
