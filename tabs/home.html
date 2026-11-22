@@ -1,13 +1,14 @@
 <style>
   .home-card { background: #161823; border: 1px solid #262938; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
   .home-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 10px; }
+  .home-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 </style>
 
 <h2 style="margin-bottom: 14px;">Creator Studio</h2>
 
 <div class="home-card">
   <h3 style="margin-bottom: 6px;">1. Nén Video trên iPhone</h3>
-  <p style="font-size: 13px; color: #9a9ca8;">Giảm video 55MB (1080p) xuống ~25MB bằng chip iPhone trước khi đẩy lên AI.</p>
+  <p style="font-size: 13px; color: #9a9ca8;">Giảm video 55MB (1080p) xuống ~14–25MB bằng chip iPhone.</p>
   <button class="home-btn" style="background:#fe2c55; color:#fff;" id="home-go-vid">🎬 Mở máy nén Video</button>
 </div>
 
@@ -18,16 +19,54 @@
 </div>
 
 <div class="home-card">
-  <h3 style="margin-bottom: 6px;">Trạng thái hệ thống</h3>
+  <h3 style="margin-bottom: 6px;">📦 Bộ nhớ tạm trên máy</h3>
+  <p id="home-temp-info" style="font-size: 13px; color: #9a9ca8; line-height: 1.5;"></p>
+  <div class="home-row">
+    <button class="home-btn" style="margin-top:0; background:#2a2e40; color:#fff; font-size:13px;" id="home-go-pub">🚀 Mở bài đang làm</button>
+    <button class="home-btn" style="margin-top:0; background:#3c2330; color:#ff7b93; font-size:13px;" id="home-clear-temp">🧹 Quét dọn tạm</button>
+  </div>
+</div>
+
+<div class="home-card">
+  <h3 style="margin-bottom: 6px;">Trạng thái kết nối</h3>
   <p id="home-gas-status" style="font-size: 13px; color: #9a9ca8;"></p>
 </div>
 
 <script type="module">
   document.getElementById('home-go-vid').onclick = () => AppBus.openModal('compress-vid', 'Nén Video iPhone');
   document.getElementById('home-go-img').onclick = () => AppBus.openModal('compress-img', 'Nén Ảnh Squoosh');
+  document.getElementById('home-go-pub').onclick = () => AppBus.openModal('publish-post', 'Đăng bài đa kênh');
 
-  const st = document.getElementById('home-gas-status');
-  st.textContent = AppBus.state.gasUrl
-    ? '✅ Đã kết nối link Google Apps Script.'
-    : '⚠️ Chưa cài link Google Apps Script (Vào tab Cài đặt ⚙️ để nhập).';
+  const tempEl = document.getElementById('home-temp-info');
+  const gasEl = document.getElementById('home-gas-status');
+
+  function refreshTempInfo() {
+    const m = AppBus.state.media;
+    const d = AppBus.getDraftText();
+    const mediaTxt = m
+      ? `File: <b style="color:#25f4ee;">${m.name}</b> (${(m.size / 1048576).toFixed(2)} MB)`
+      : 'File: <i>Trống</i>';
+    const prodName = d && d['pub-product'] ? d['pub-product'].trim() : '';
+    const draftTxt = prodName
+      ? `Nháp nội dung: <b style="color:#25f4ee;">${prodName}</b>`
+      : 'Nháp nội dung: <i>Trống</i>';
+    tempEl.innerHTML = `${mediaTxt}<br>${draftTxt}`;
+  }
+
+  document.getElementById('home-clear-temp').onclick = async () => {
+    await AppBus.clearTempAll();
+    refreshTempInfo();
+    tempEl.innerHTML = '🧹 <b>Đã quét dọn sạch sẽ bộ nhớ tạm!</b>';
+  };
+
+  AppBus.on('media:changed', refreshTempInfo);
+  AppBus.on('media:cleared', refreshTempInfo);
+  AppBus.on('draft:changed', refreshTempInfo);
+  AppBus.on('draft:cleared', refreshTempInfo);
+
+  refreshTempInfo();
+
+  gasEl.textContent = (AppBus.state.gasUrl && AppBus.state.geminiKey)
+    ? '✅ Đã đủ Link Google Apps Script & Gemini Key.'
+    : '⚠️ Chưa đủ Link GAS hoặc Gemini Key (Vào Tab Cài đặt ⚙️).';
 </script>
