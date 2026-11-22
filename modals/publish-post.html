@@ -2,30 +2,37 @@
   .pub-wrap { display: flex; flex-direction: column; gap: 12px; }
   .pub-media-box { background: #10121a; border: 1px dashed #35394d; border-radius: 12px; padding: 12px; text-align: center; }
   .pub-media-box video, .pub-media-box img { max-height: 160px; max-width: 100%; border-radius: 8px; margin-bottom: 6px; }
+  .pub-pick-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .pub-pick-btn { padding: 8px 10px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-block; }
   .pub-input, .pub-textarea { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #10121a; color: #fff; font-size: 14px; }
   .pub-textarea { min-height: 75px; resize: vertical; }
   .pub-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .pub-btn:disabled { opacity: 0.6; }
   .pub-btn.ai { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
   .pub-btn.post { background: #fe2c55; color: #fff; display: none; }
   .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .pub-card h4 { font-size: 14px; color: #25f4ee; }
-  .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.4; }
+  .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 8px 10px; border-radius: 8px; display: none; }
 </style>
 
 <div class="pub-wrap">
   <div class="pub-media-box" id="pub-media-box">
-    <p style="font-size:13px; color:#8a8b91; margin-bottom:8px;">Chưa có Video/Ảnh từ ổ chứa tạm.</p>
-    <div style="display:flex; gap:8px; justify-content:center;">
-      <button type="button" id="pub-pick-vid" style="padding:8px 12px; border-radius:8px; border:none; background:#fe2c55; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">🎬 Nén Video</button>
-      <button type="button" id="pub-pick-img" style="padding:8px 12px; border-radius:8px; border:none; background:#25f4ee; color:#000; font-size:12px; font-weight:600; cursor:pointer;">🖼️ Nén Ảnh</button>
+    <div id="pub-media-preview">
+      <p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh nào được chọn.</p>
+    </div>
+    <div class="pub-pick-row">
+      <button type="button" class="pub-pick-btn" id="pub-pick-vid" style="background:#fe2c55; color:#fff;">🎬 Nén Video</button>
+      <button type="button" class="pub-pick-btn" id="pub-pick-img" style="background:#25f4ee; color:#000;">🖼️ Nén Ảnh</button>
+      <label for="pub-direct-file" class="pub-pick-btn" style="background:#2a2e40; color:#fff;">📁 Chọn sẵn từ máy</label>
+      <input type="file" id="pub-direct-file" accept="video/*,image/*" style="display:none;" />
     </div>
   </div>
 
-  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Máy xay mini 6 lưỡi)" />
+  <input class="pub-input" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Matcha Latte 20k)" />
   <textarea class="pub-textarea" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, khuyến mãi, ưu điểm nổi bật..."></textarea>
 
   <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
-  <div class="pub-status" id="pub-status"></div>
+  <div class="pub-status" id="pub-ai-status"></div>
 
   <div id="pub-results" style="display:none; flex-direction:column; gap:10px;">
     <div class="pub-card">
@@ -50,21 +57,29 @@
   </div>
 
   <button class="pub-btn post" id="pub-send-all">🚀 Đẩy Video & Nội dung sang Google Apps Script</button>
+  <div class="pub-status" id="pub-send-status"></div>
 </div>
 
 <script type="module">
-  const mediaBox = document.getElementById('pub-media-box');
+  const previewBox = document.getElementById('pub-media-preview');
+  const directFileEl = document.getElementById('pub-direct-file');
   const productEl = document.getElementById('pub-product');
   const notesEl = document.getElementById('pub-notes');
   const genBtn = document.getElementById('pub-gen-ai');
-  const statusEl = document.getElementById('pub-status');
+  const aiStatusEl = document.getElementById('pub-ai-status');
   const resultsEl = document.getElementById('pub-results');
   const sendBtn = document.getElementById('pub-send-all');
-  const pickVidBtn = document.getElementById('pub-pick-vid');
-  const pickImgBtn = document.getElementById('pub-pick-img');
+  const sendStatusEl = document.getElementById('pub-send-status');
 
-  if (pickVidBtn) pickVidBtn.onclick = () => AppBus.openModal('compress-vid', 'Nén Video iPhone');
-  if (pickImgBtn) pickImgBtn.onclick = () => AppBus.openModal('compress-img', 'Nén Ảnh Squoosh');
+  document.getElementById('pub-pick-vid').onclick = () => AppBus.openModal('compress-vid', 'Nén Video iPhone');
+  document.getElementById('pub-pick-img').onclick = () => AppBus.openModal('compress-img', 'Nén Ảnh Squoosh');
+
+  directFileEl.onchange = () => {
+    const f = directFileEl.files[0];
+    if (!f) return;
+    const type = f.type.startsWith('image') ? 'image' : 'video';
+    AppBus.setMedia({ blob: f, name: f.name, type, size: f.size });
+  };
 
   let previewUrl = null;
 
@@ -76,28 +91,34 @@
     const tag = media.type === 'video'
       ? `<video src="${previewUrl}" controls playsinline></video>`
       : `<img src="${previewUrl}" alt="preview" />`;
-    mediaBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã nhận từ ổ tạm: <b>${media.name}</b> (${mb} MB)</div>`;
+    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã sẵn sàng: <b>${media.name}</b> (${mb} MB)</div>`;
   }
 
   AppBus.on('media:changed', renderMedia);
   if (AppBus.state.media) renderMedia(AppBus.state.media);
+
+  function showStatus(el, html) {
+    el.style.display = 'block';
+    el.innerHTML = html;
+  }
 
   genBtn.onclick = async () => {
     const gasUrl = AppBus.state.gasUrl;
     const geminiKey = AppBus.state.geminiKey;
 
     if (!gasUrl || !geminiKey) {
-      statusEl.textContent = '⚠️ Vào Tab Cài đặt ⚙️ nhập đủ Link GAS và Gemini API Key trước nhé!';
+      showStatus(aiStatusEl, '⚠️ Vào Tab <b>Cài đặt ⚙️</b> nhập đủ Link GAS và Gemini API Key trước nhé!');
       return;
     }
     const product = productEl.value.trim();
     if (!product) {
-      statusEl.textContent = '⚠️ Vui lòng nhập tên sản phẩm trước!';
+      showStatus(aiStatusEl, '⚠️ Vui lòng nhập tên sản phẩm trước!');
       return;
     }
 
     genBtn.disabled = true;
-    statusEl.textContent = '✨ Gemini AI đang sáng tạo nội dung cho cả 3 kênh...';
+    genBtn.textContent = '⏳ Gemini AI đang viết bài...';
+    showStatus(aiStatusEl, '✨ Đang phối Tiêu đề + 5 Hashtag cho 3 kênh...');
 
     try {
       const res = await fetch(gasUrl, {
@@ -126,11 +147,12 @@
 
       resultsEl.style.display = 'flex';
       sendBtn.style.display = 'block';
-      statusEl.textContent = '✅ AI đã phối xong! Bạn có thể sửa nhẹ rồi bấm Đăng.';
+      showStatus(aiStatusEl, '✅ AI đã phối xong! Bạn có thể sửa lại hoặc cuộn xuống bấm nút Đỏ.');
     } catch (err) {
-      statusEl.textContent = '❌ Lỗi: ' + err.message;
+      showStatus(aiStatusEl, '❌ Lỗi: ' + err.message);
     } finally {
       genBtn.disabled = false;
+      genBtn.textContent = '✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)';
     }
   };
 
@@ -146,45 +168,74 @@
   sendBtn.onclick = async () => {
     const gasUrl = AppBus.state.gasUrl;
     const media = AppBus.state.media;
+
+    if (!gasUrl) {
+      showStatus(sendStatusEl, '⚠️ Chưa có Link Google Apps Script ở Tab Cài đặt ⚙️!');
+      return;
+    }
     if (!media) {
-      statusEl.textContent = '⚠️ Chưa có file Video/Ảnh để gửi!';
+      showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy kéo lên trên bấm "🎬 Nén Video" hoặc "📁 Chọn sẵn từ máy" trước.');
+      sendStatusEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     if (media.size > 35 * 1048576) {
-      statusEl.textContent = '❌ File > 35 MB, hãy nén lại Bitrate thấp hơn để vừa giới hạn 50MB của GAS!';
+      showStatus(sendStatusEl, '❌ File nặng hơn 35 MB! Hãy bấm <b>🎬 Nén Video</b> hạ Bitrate xuống dưới 35 MB để vừa giới hạn của Google.');
       return;
     }
 
+    const postsPayload = {
+      tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
+      facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
+      youtube: { title: document.getElementById('pub-yt-title').value, description: document.getElementById('pub-yt-body').value + '\n\n' + document.getElementById('pub-yt-tags').value }
+    };
+
     sendBtn.disabled = true;
-    statusEl.textContent = '🚀 Đang đẩy Video & Nội dung sang Google Apps Script...';
 
     try {
-      const base64Data = await blobToBase64(media.blob);
-      const payload = {
-        action: 'publish_test',
-        fileName: media.name,
-        mimeType: media.blob.type || 'video/mp4',
-        base64Data,
-        posts: {
-          tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
-          facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
-          youtube: { title: document.getElementById('pub-yt-title').value, description: document.getElementById('pub-yt-body').value + '\n\n' + document.getElementById('pub-yt-tags').value }
+      // Cắt từng khúc đúng 3 MB (3 * 1024 * 1024 chia hết cho 3 -> nối Base64 chuẩn 100%)
+      const CHUNK_SIZE = 3 * 1024 * 1024;
+      const totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
+      const uploadId = 'up_' + Date.now();
+
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, media.blob.size);
+        const chunkBlob = media.blob.slice(start, end);
+        const chunkBase64 = await blobToBase64(chunkBlob);
+        const isLast = (i === totalChunks - 1);
+
+        const pct = Math.round(((i + 1) / totalChunks) * 100);
+        sendBtn.textContent = `⏳ Đang đẩy lên Google (${i + 1}/${totalChunks} - ${pct}%)...`;
+        showStatus(sendStatusEl, `🚀 Đang truyền phần <b>${i + 1}/${totalChunks}</b> (${(end / 1048576).toFixed(1)} / ${(media.size / 1048576).toFixed(1)} MB)...`);
+
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'publish_chunk',
+            uploadId,
+            chunkIndex: i,
+            totalChunks,
+            isLast,
+            chunkBase64,
+            fileName: media.name,
+            mimeType: media.blob.type || 'video/mp4',
+            posts: isLast ? postsPayload : null
+          })
+        });
+
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || `Lỗi ở phần ${i + 1}`);
+
+        if (isLast) {
+          showStatus(sendStatusEl, `🎉 <b>Thành công!</b><br>${json.message}`);
         }
-      };
-
-      const res = await fetch(gasUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || 'Lỗi khi gửi lên GAS');
-
-      statusEl.innerHTML = `🎉 <b>Thành công!</b><br>${json.message}`;
+      }
     } catch (err) {
-      statusEl.textContent = '❌ Lỗi gửi file: ' + err.message;
+      showStatus(sendStatusEl, '❌ Lỗi gửi file: ' + err.message);
     } finally {
       sendBtn.disabled = false;
+      sendBtn.textContent = '🚀 Đẩy Video & Nội dung sang Google Apps Script';
     }
   };
 </script>
