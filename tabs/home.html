@@ -60,7 +60,7 @@
   };
 
   document.getElementById('home-load-logs').onclick = async () => {
-    const gasUrl = AppBus.state.gasUrl;
+    const gasUrl = AppBus.state.gasUrl || localStorage.getItem('gas_url') || '';
     if (!gasUrl) {
       logsEl.innerHTML = '<div class="home-log-item">⚠️ Chưa nhập Link GAS ở Tab Cài đặt ⚙️</div>';
       return;
@@ -83,6 +83,7 @@
           <div><b>${row.product || row.fileName}</b> <span style="color:#8a8b91;">(${row.time})</span></div>
           <div>▶️ YouTube: ${row.ytStatus} ${row.ytLink ? `— <a href="${row.ytLink}" target="_blank">Mở link</a>` : ''}</div>
           <div>📘 Facebook: ${row.fbStatus} ${row.fbLink ? `— <a href="${row.fbLink}" target="_blank">Mở link</a>` : ''}</div>
+          <div>🎵 TikTok: ${row.ttStatus || '—'}</div>
         </div>
       `).join('');
     } catch (err) {
