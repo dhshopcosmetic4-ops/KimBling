@@ -94,35 +94,44 @@
     <div id="sheet-body"></div>
   </section>
 
-  <!-- Script thường: Chạy kiểm tra ngay cả khi mở nhầm bằng file:// trên Documents -->
   <script>
     if (window.location.protocol === 'file:') {
       var w = document.getElementById('env-warn');
       w.style.display = 'block';
-      w.innerHTML = '⚠️ <b>Bạn đang mở file trực tiếp từ Documents (file://)!</b><br>Trình duyệt chặn nút bấm và không cho tải các file con khi mở kiểu này. Hãy mở bằng <b>Live Server (VS Code)</b> hoặc up lên <b>GitHub Pages</b>!';
+      w.innerHTML = '⚠️ <b>Bạn đang mở file trực tiếp từ Documents (file://)!</b><br>Hãy mở qua <b>GitHub Pages</b> hoặc <b>Live Server</b>.';
     }
   </script>
 
   <script type="module">
     async function boot() {
-      // Nạp app-bus.js an toàn; nếu thiếu file vẫn tự tạo dự phòng để nút bấm không bị chết
       let AppBus;
       try {
-        const mod = await import('./core/app-bus.js');
+        // Thêm ?v=3 để ép Safari tải bản app-bus.js mới nhất
+        const mod = await import('./core/app-bus.js?v=3');
         AppBus = mod.AppBus;
       } catch (err) {
         AppBus = {
           state: {
             media: null,
             gasUrl: localStorage.getItem('gas_url') || '',
-            geminiKey: localStorage.getItem('gemini_key') || ''
+            geminiKey: localStorage.getItem('gemini_key') || '',
+            fbPageId: localStorage.getItem('fb_page_id') || '',
+            fbPageToken: localStorage.getItem('fb_page_token') || ''
           },
           listeners: {},
           on(e, fn) { (this.listeners[e] ||= []).push(fn); },
           emit(e, d) { (this.listeners[e] || []).forEach(fn => fn(d)); },
           setMedia(m) { this.state.media = m; this.emit('media:changed', m); },
+          saveDraftText(d) { localStorage.setItem('draft_post_text', JSON.stringify(d)); },
+          getDraftText() { try { return JSON.parse(localStorage.getItem('draft_post_text')); } catch(e){ return null; } },
+          async clearTempAll() { this.state.media = null; localStorage.removeItem('draft_post_text'); this.emit('media:cleared'); },
           setGasUrl(u) { this.state.gasUrl = u.trim(); localStorage.setItem('gas_url', this.state.gasUrl); },
-          setGeminiKey(k) { this.state.geminiKey = k.trim(); localStorage.setItem('gemini_key', this.state.geminiKey); }
+          setGeminiKey(k) { this.state.geminiKey = k.trim(); localStorage.setItem('gemini_key', this.state.geminiKey); },
+          setFacebookConfig(id, tk) {
+            this.state.fbPageId = id.trim(); this.state.fbPageToken = tk.trim();
+            localStorage.setItem('fb_page_id', this.state.fbPageId);
+            localStorage.setItem('fb_page_token', this.state.fbPageToken);
+          }
         };
         window.AppBus = AppBus;
       }
@@ -138,7 +147,8 @@
         if (loadedCache.has(url)) return;
         container.innerHTML = '<p style="color:#8a8b91;text-align:center;padding:30px;">Đang tải module...</p>';
         try {
-          const res = await fetch(url);
+          // cache: 'no-store' giúp Safari luôn lấy bản HTML mới nhất từ GitHub
+          const res = await fetch(url, { cache: 'no-store' });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const html = await res.text();
           container.innerHTML = '';
@@ -147,9 +157,7 @@
           loadedCache.add(url);
         } catch (err) {
           container.innerHTML = `<div style="background:#2a151b;border:1px solid #fe2c55;padding:14px;border-radius:10px;font-size:13px;line-height:1.5;">
-            ❌ <b>Không tải được file:</b> <code>${url}</code><br>
-            Lý do: ${err.message}<br>
-            <span style="color:#ccc;">(Kiểm tra xem bạn đã tạo đúng tên thư mục/tên file này chưa, và có đang mở qua http/https không).</span>
+            ❌ <b>Không tải được file:</b> <code>${url}</code><br>Lý do: ${err.message}
           </div>`;
         }
       }
