@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Kết nối TikTok - Creator Studio</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body {
+      margin: 0; min-height: 100vh; background: #000; color: #fff;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .box {
+      width: 100%; max-width: 420px; background: #161823; border: 1px solid #2a2d3d;
+      border-radius: 16px; padding: 24px 18px; text-align: center;
+    }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    p { font-size: 14px; color: #ccc; line-height: 1.5; word-break: break-word; }
+    .btn {
+      display: inline-block; margin-top: 16px; padding: 12px 20px; border-radius: 10px;
+      background: #fe2c55; color: #fff; text-decoration: none; font-weight: 600; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🎵 Kết nối TikTok</h2>
+    <p id="cb-msg">⏳ Đang xử lý xác thực với TikTok...</p>
+    <a href="./index.html" class="btn" id="cb-back" style="display:none;">⬅️ Quay lại Creator Studio</a>
+  </div>
+
+  <script>
+    (async function () {
+      const msgEl = document.getElementById('cb-msg');
+      const backBtn = document.getElementById('cb-back');
+
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('error');
+        if (err) {
+          throw new Error(params.get('error_description') || err);
+        }
+
+        const code = params.get('code');
+        const state = params.get('state');
+        const savedState = localStorage.getItem('tt_oauth_state');
+
+        if (!code) throw new Error('Không nhận được mã code từ TikTok.');
+        if (savedState && state !== savedState) throw new Error('Sai mã bảo mật state, hãy thử kết nối lại.');
+
+        const gasUrl = localStorage.getItem('gas_url') || '';
+        const clientKey = localStorage.getItem('tt_client_key') || '';
+        const clientSecret = localStorage.getItem('tt_client_secret') || '';
+
+        if (!gasUrl || !clientKey || !clientSecret) {
+          throw new Error('Thiếu Link GAS hoặc TikTok Client Key/Secret trong Tab Cài đặt.');
+        }
+
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'tiktok_exchange_code',
+            code,
+            redirectUri,
+            clientKey,
+            clientSecret
+          })
+        });
+
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Không đổi được Token TikTok');
+
+        localStorage.setItem('tt_display_name', json.displayName || 'Tài khoản TikTok');
+        localStorage.removeItem('tt_oauth_state');
+
+        msgEl.innerHTML = `✅ Đã kết nối thành công với TikTok: <b style="color:#25f4ee;">${json.displayName || 'OK'}</b>!<br>Đang quay lại ứng dụng...`;
+        backBtn.style.display = 'inline-block';
+        setTimeout(() => { window.location.href = './index.html'; }, 1500);
+      } catch (e) {
+        msgEl.innerHTML = '❌ <b>Lỗi kết nối:</b> ' + e.message;
+        backBtn.style.display = 'inline-block';
+      }
+    })();
+  </script>
+</body>
+</html>
