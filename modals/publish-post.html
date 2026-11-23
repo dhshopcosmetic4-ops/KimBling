@@ -18,7 +18,7 @@
   .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .pub-card h4 { font-size: 14px; color: #25f4ee; display: flex; justify-content: space-between; align-items: center; }
   .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 10px; border-radius: 8px; display: none; }
-  .pub-yt-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #10121a; border: 1px solid #2a2e40; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
+  .pub-opt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #10121a; border: 1px solid #2a2e40; padding: 10px 12px; border-radius: 10px; font-size: 13px; }
 </style>
 
 <div class="pub-wrap">
@@ -61,18 +61,27 @@
     </div>
 
     <div class="pub-card">
-      <h4><span>🎵 TikTok</span><span style="font-size:11px;color:#8a8b91;">(Nối ở bước cuối)</span></h4>
+      <h4><span>🎵 TikTok</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-tt-enable" checked /> Đăng kênh này</label></h4>
       <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
       <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
     </div>
   </div>
 
-  <div class="pub-yt-opt">
-    <span>🔒 Chế độ YouTube:</span>
+  <div class="pub-opt-row">
+    <span>▶️ Chế độ YouTube:</span>
     <select class="pub-select" id="pub-yt-privacy" style="width:auto; padding:7px 10px;">
-      <option value="private">Riêng tư (Test thử)</option>
+      <option value="private">Riêng tư (Test)</option>
       <option value="unlisted">Không công khai</option>
       <option value="public">Công khai (Public)</option>
+    </select>
+  </div>
+
+  <div class="pub-opt-row">
+    <span>🎵 Chế độ TikTok:</span>
+    <select class="pub-select" id="pub-tt-mode" style="width:auto; padding:7px 10px;">
+      <option value="draft">Đẩy vào Hộp nháp (Duyệt tay 1 chạm)</option>
+      <option value="direct_private">Đăng thẳng - Riêng tư (Sandbox)</option>
+      <option value="direct_public">Đăng thẳng - Công khai (Sau Audit)</option>
     </select>
   </div>
 
@@ -93,7 +102,9 @@
   const hintEl = document.getElementById('pub-autosave-hint');
   const ytEnableEl = document.getElementById('pub-yt-enable');
   const fbEnableEl = document.getElementById('pub-fb-enable');
+  const ttEnableEl = document.getElementById('pub-tt-enable');
   const ytPrivacyEl = document.getElementById('pub-yt-privacy');
+  const ttModeEl = document.getElementById('pub-tt-mode');
 
   const fieldIds = [
     'pub-product', 'pub-notes',
@@ -175,8 +186,8 @@
   }
 
   genBtn.onclick = async () => {
-    const gasUrl = AppBus.state.gasUrl;
-    const geminiKey = AppBus.state.geminiKey;
+    const gasUrl = AppBus.state.gasUrl || localStorage.getItem('gas_url') || '';
+    const geminiKey = AppBus.state.geminiKey || localStorage.getItem('gemini_key') || '';
     if (!gasUrl || !geminiKey) {
       showStatus(aiStatusEl, '⚠️ Vào Tab <b>Cài đặt ⚙️</b> nhập đủ Link GAS và Gemini API Key trước nhé!');
       return;
@@ -248,16 +259,23 @@
   }
 
   sendBtn.onclick = async () => {
-    const gasUrl = AppBus.state.gasUrl;
+    const gasUrl = AppBus.state.gasUrl || localStorage.getItem('gas_url') || '';
+    const fbPageId = AppBus.state.fbPageId || localStorage.getItem('fb_page_id') || '';
+    const fbPageToken = AppBus.state.fbPageToken || localStorage.getItem('fb_page_token') || '';
     const media = AppBus.state.media;
     const wantYT = ytEnableEl.checked;
     const wantFB = fbEnableEl.checked;
+    const wantTT = ttEnableEl.checked;
 
     if (!gasUrl) { showStatus(sendStatusEl, '⚠️ Chưa có Link GAS ở Tab Cài đặt ⚙️!'); return; }
     if (!media) { showStatus(sendStatusEl, '⚠️ <b>Chưa có Video/Ảnh!</b> Hãy nén hoặc chọn file trước.'); return; }
-    if (!wantYT && !wantFB) { showStatus(sendStatusEl, '⚠️ Hãy tích chọn ít nhất 1 kênh để đăng.'); return; }
-    if (wantFB && (!AppBus.state.fbPageId || !AppBus.state.fbPageToken)) {
-      showStatus(sendStatusEl, '⚠️ Bạn đang tích đăng Facebook nhưng chưa nhập <b>Page ID / Page Token</b> ở Tab Cài đặt ⚙️!');
+    if (!wantYT && !wantFB && !wantTT) { showStatus(sendStatusEl, '⚠️ Hãy tích chọn ít nhất 1 kênh để đăng.'); return; }
+    if (wantFB && (!fbPageId || !fbPageToken)) {
+      showStatus(sendStatusEl, '⚠️ Chưa nhập <b>Page ID / Page Token</b> ở Tab Cài đặt ⚙️!');
+      return;
+    }
+    if (wantTT && !localStorage.getItem('tt_display_name')) {
+      showStatus(sendStatusEl, '⚠️ Bạn đang tích đăng TikTok nhưng chưa bấm <b>"🎵 Kết nối tài khoản TikTok"</b> ở Tab Cài đặt ⚙️!');
       return;
     }
     if (media.size > 35 * 1048576) {
@@ -267,7 +285,7 @@
 
     const ytTagsRaw = document.getElementById('pub-yt-tags').value.trim();
     const postsPayload = {
-      tiktok: { caption: document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value },
+      tiktok: { caption: (document.getElementById('pub-tt-title').value + ' ' + document.getElementById('pub-tt-tags').value).trim() },
       facebook: { message: document.getElementById('pub-fb-title').value + '\n\n' + document.getElementById('pub-fb-body').value + '\n\n' + document.getElementById('pub-fb-tags').value },
       youtube: {
         title: document.getElementById('pub-yt-title').value,
@@ -288,15 +306,15 @@
         fileName: media.name,
         mimeType: media.blob.type || 'video/mp4',
         isMultiImage,
-        targets: { youtube: wantYT, facebook: wantFB },
+        targets: { youtube: wantYT, facebook: wantFB, tiktok: wantTT },
         ytPrivacy: ytPrivacyEl.value,
-        fbPageId: AppBus.state.fbPageId,
-        fbPageToken: AppBus.state.fbPageToken,
+        ttMode: ttModeEl.value,
+        fbPageId,
+        fbPageToken,
         posts: postsPayload
       };
 
       if (isMultiImage) {
-        // Nhiều ảnh: gửi song song từng ảnh (tối đa 3 ảnh/đợt)
         const files = media.files;
         let done = 0;
         const BATCH = 3;
@@ -314,7 +332,6 @@
         finalizePayload.totalChunks = files.length;
         finalizePayload.imageMimes = files.map(f => f.blob.type || 'image/jpeg');
       } else {
-        // Video hoặc 1 Ảnh: cắt khúc 3 MB và bắn song song 3 khúc một đợt!
         const CHUNK_SIZE = 3 * 1024 * 1024;
         const totalChunks = Math.max(1, Math.ceil(media.blob.size / CHUNK_SIZE));
 
@@ -345,8 +362,8 @@
         }
       }
 
-      sendBtn.textContent = '🎬 Đang đăng lên YouTube & Facebook...';
-      showStatus(sendStatusEl, '⏳ Google đã nhận đủ file! Đang bắn lên các kênh đã chọn (iPhone có mất mạng lúc này Google vẫn tự đăng xong)...');
+      sendBtn.textContent = '🎬 Đang đăng lên cả 3 kênh...';
+      showStatus(sendStatusEl, '⏳ Google đã nhận đủ file! Đang bắn lên YouTube, Facebook & TikTok...');
 
       const result = await postGas(gasUrl, finalizePayload);
       let html = `<b>Kết quả xử lý:</b><br>`;
@@ -358,9 +375,12 @@
         html += `<br>📘 <b>Facebook:</b> ${result.facebook.statusText}`;
         if (result.facebook.url) html += ` — <a href="${result.facebook.url}" target="_blank" style="color:#25f4ee;">Mở bài</a>`;
       }
+      if (result.tiktok) {
+        html += `<br>🎵 <b>TikTok:</b> ${result.tiktok.statusText}`;
+      }
       showStatus(sendStatusEl, html);
     } catch (err) {
-      showStatus(sendStatusEl, `❌ Bị ngắt kết nối: ${err.message}<br><span style="color:#25f4ee;">💡 Nếu bị rớt mạng lúc đang đăng, hãy ra Trang chủ bấm <b>"🔍 Tải nhật ký"</b> để kiểm tra xem bài đã lên chưa rồi hãy bấm lại!</span>`);
+      showStatus(sendStatusEl, `❌ Bị ngắt kết nối: ${err.message}<br><span style="color:#25f4ee;">💡 Hãy ra Trang chủ bấm <b>"🔍 Tải nhật ký"</b> để kiểm tra xem bài đã lên kênh nào rồi!</span>`);
     } finally {
       sendBtn.disabled = false;
       sendBtn.textContent = '🚀 Đăng lên các kênh đã chọn ngay';
