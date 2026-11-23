@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phòng Thu AI 30 Giọng - KimBling Studio</title>
+    <title>Phòng Thu AI 30 Giọng &amp; Giọng Thật - KimBling</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="shared-core.js?v=1"></script>
+    <script src="shared-core.js?v=2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
@@ -18,7 +18,7 @@
         <!-- NHẬP Ý TƯỞNG / NỘI DUNG -->
         <section class="bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/35 rounded-3xl border-2 border-rose-500/40 p-4 space-y-3 shadow-2xl">
             <div>
-                <h2 class="font-black text-rose-300 flex items-center space-x-1.5"><span>🎙️</span><span>Phòng Thu AI (30 Giọng Google)</span></h2>
+                <h2 class="font-black text-rose-300 flex items-center space-x-1.5"><span>🎙️</span><span>Phòng Thu AI (30 Giọng + Giọng Thật)</span></h2>
                 <p class="text-slate-400 font-semibold" style="font-size: 12px !important;">Đọc liền mạch tự nhiên (không &lt;long pause&gt;, không cười giả) để ghép CapCut</p>
             </div>
 
@@ -63,7 +63,7 @@
             </div>
         </section>
 
-        <!-- LỜI THOẠI & CHỌN 30 GIỌNG -->
+        <!-- LỜI THOẠI & CHỌN GIỌNG (30 GIỌNG + GIỌNG THẬT) -->
         <section class="bg-slate-900 rounded-3xl border-2 border-slate-800 p-4 space-y-3 shadow-xl">
             <div class="flex items-center justify-between">
                 <span class="font-black text-sky-300" style="font-size: 14px !important;">🎬 Lời Thoại Liền Mạch (Có thể sửa)</span>
@@ -80,10 +80,16 @@
                 <button onclick="insertStudioTag('<chuckle>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-rose-500/40 text-rose-200 font-bold" style="font-size: 12px !important;">😊 Cười nhẹ</button>
             </div>
 
-            <!-- BỘ LỌC & CHỌN 30 GIỌNG GOOGLE TTS -->
-            <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2">
+            <!-- CHUYỂN CHẾ ĐỘ: 30 GIỌNG HỆ THỐNG vs GIỌNG THẬT CỦA TÔI -->
+            <div class="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-2xl border border-slate-800">
+                <button onclick="switchVoiceMode('system')" id="vModeSystemBtn" class="py-2 px-2 rounded-xl font-black bg-rose-500 text-white text-center" style="font-size: 13px !important;">🎙️ 30 Giọng AI (Free)</button>
+                <button onclick="switchVoiceMode('custom')" id="vModeCustomBtn" class="py-2 px-2 rounded-xl font-bold text-slate-300 bg-slate-900 text-center" style="font-size: 13px !important;">🧬 Giọng Thật (Paid)</button>
+            </div>
+
+            <!-- KHỐI 1: 30 GIỌNG HỆ THỐNG -->
+            <div id="systemVoicesPanel" class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="font-black text-amber-300" style="font-size: 13px !important;">🗣️ Chọn Giọng (30 giọng):</span>
+                    <span class="font-black text-amber-300" style="font-size: 13px !important;">🗣️ Chọn Giọng:</span>
                     <div class="flex space-x-1">
                         <button onclick="filterVoices('all')" id="vf_all" class="px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black" style="font-size: 11px !important;">Tất cả (30)</button>
                         <button onclick="filterVoices('F')" id="vf_F" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold" style="font-size: 11px !important;">Nữ (14)</button>
@@ -96,13 +102,93 @@
                     <button onclick="auditionSelectedVoice()" id="btnAuditionVoice" class="px-3 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-black shrink-0 active:scale-95" style="font-size: 13px !important;">🎧 Thử 2s</button>
                 </div>
                 <p id="voiceDescBadge" class="text-slate-400 font-semibold" style="font-size: 12px !important;"></p>
+            </div>
 
-                <input id="studioVoiceStyleInput" type="text" value="Giọng tiếng Việt tự nhiên, nói rõ chữ, truyền cảm vừa phải, không nhấn nhá gượng" placeholder="Mô tả sắc thái giọng đọc..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-amber-200 font-semibold outline-none" style="font-size: 13px !important;">
+            <!-- KHỐI 2: GIỌNG THẬT CỦA TÔI (VOICE REPLICATION + CẢNH BÁO KEY FREE + PAID KEY RIÊNG) -->
+            <div id="customVoicePanel" class="hidden bg-slate-950 rounded-2xl p-3 border-2 border-amber-500/40 space-y-3">
+                <!-- CẢNH BÁO KEY FREE & Ô NHẬP PAID KEY RIÊNG -->
+                <div id="paidKeyWarningBanner" class="bg-amber-500/15 border border-amber-400/60 rounded-xl p-2.5 space-y-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <p id="paidKeyBannerMsg" class="text-amber-200 font-bold leading-snug" style="font-size: 12px !important;">
+                            ⚠️ Nhân bản &amp; đọc bằng Giọng Thật yêu cầu API Key gói <strong>Paid Tier (đã gắn Billing)</strong>. Key Free sẽ bị Google từ chối. Nhập riêng Paid Key ở đây sẽ <strong>không đè lên Key Free chính</strong>:
+                        </p>
+                        <button onclick="togglePaidKeyInputs()" id="btnTogglePaidKeyBox" class="px-2 py-1 rounded-lg bg-slate-900 text-sky-300 font-bold shrink-0" style="font-size: 11px !important;">Mở</button>
+                    </div>
+                    <div id="paidKeyInputGroup" class="space-y-2">
+                        <input id="paidVoiceKeyInput" type="password" placeholder="Dán Paid Key riêng cho Giọng Thật (AIza...)..." class="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-white font-mono outline-none" style="font-size: 13px !important;">
+                        <div class="flex space-x-2">
+                            <button onclick="savePaidKeyBtn()" class="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black" style="font-size: 12px !important;">💾 Lưu Paid Key</button>
+                            <button onclick="testPaidKeyBtn()" id="btnTestPaidKey" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-black" style="font-size: 12px !important;">⚡ Test</button>
+                            <button onclick="clearPaidKeyBtn()" class="px-3 py-2 rounded-xl bg-slate-800 text-rose-300 font-bold" style="font-size: 12px !important;">Xoá</button>
+                        </div>
+                        <p id="paidKeyTestOut" class="hidden font-bold leading-snug" style="font-size: 11px !important;"></p>
+                    </div>
+                </div>
 
-                <select id="studioTtsModelSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-emerald-300 font-bold outline-none" style="font-size: 13px !important;">
+                <!-- DANH SÁCH GIỌNG THẬT ĐÃ LƯU -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-black text-emerald-300" style="font-size: 13px !important;">🗣️ Giọng Thật Của Bạn:</span>
+                        <button onclick="toggleCreateVoiceForm()" id="btnShowCreateVoice" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-black" style="font-size: 11px !important;">+ Tạo Giọng Mới</button>
+                    </div>
+                    <div id="savedCustomVoicesBox" class="space-y-1.5"></div>
+                </div>
+
+                <!-- FORM TẠO GIỌNG THẬT (THU MIC / UP FILE HOẶC DÁN VOICE_ID) -->
+                <div id="createVoiceForm" class="hidden bg-slate-900 rounded-xl p-3 border border-slate-700 space-y-2.5">
+                    <span class="font-black text-white block" style="font-size: 13px !important;">🧬 Cách 1: Thu 2 đoạn mẫu tạo Giọng Thật</span>
+                    <input id="newVoiceNameInput" type="text" placeholder="Đặt tên giọng (VD: Giọng Chủ Quán, Master Hiền)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none" style="font-size: 13px !important;">
+
+                    <!-- ĐOẠN 1: GIỌNG MẪU 10-30s -->
+                    <input id="srcVoiceFileInput" type="file" class="hidden" onchange="onVoiceFilePicked('src', this)">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-sky-300" style="font-size: 12px !important;">1️⃣ Đoạn nói tự nhiên (10–30 giây):</span>
+                            <span id="srcSampleStatus" class="text-slate-400 font-bold" style="font-size: 11px !important;">Chưa có</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="toggleMicRecordSample('src')" id="btnMicSrc" class="py-2 px-2 rounded-lg bg-rose-600 text-white font-black" style="font-size: 12px !important;">🔴 Thu Mic</button>
+                            <button onclick="document.getElementById('srcVoiceFileInput').click()" class="py-2 px-2 rounded-lg bg-slate-800 text-amber-300 font-bold" style="font-size: 12px !important;">📁 Chọn File</button>
+                        </div>
+                    </div>
+
+                    <!-- ĐOẠN 2: XÁC NHẬN CHỦ GIỌNG -->
+                    <input id="conVoiceFileInput" type="file" class="hidden" onchange="onVoiceFilePicked('con', this)">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-emerald-300" style="font-size: 12px !important;">2️⃣ Câu xác nhận chính chủ (3–6 giây):</span>
+                            <span id="conSampleStatus" class="text-slate-400 font-bold" style="font-size: 11px !important;">Chưa có</span>
+                        </div>
+                        <p class="text-amber-200 bg-slate-900 p-2 rounded-lg font-semibold leading-snug" style="font-size: 11px !important;">
+                            Đọc to câu tiếng Anh này:<br>
+                            <em>"I am the owner of this voice and I consent to Google using this voice to create a synthetic voice model."</em>
+                        </p>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="toggleMicRecordSample('con')" id="btnMicCon" class="py-2 px-2 rounded-lg bg-rose-600 text-white font-black" style="font-size: 12px !important;">🔴 Thu Xác Nhận</button>
+                            <button onclick="document.getElementById('conVoiceFileInput').click()" class="py-2 px-2 rounded-lg bg-slate-800 text-amber-300 font-bold" style="font-size: 12px !important;">📁 Chọn File</button>
+                        </div>
+                    </div>
+
+                    <button onclick="submitReplicateVoice()" id="btnSubmitReplicate" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black shadow" style="font-size: 13px !important;">🧬 Tạo Giọng Thật Của Tôi</button>
+                    <p id="replicateStatusTxt" class="text-center text-slate-300 font-semibold" style="font-size: 11px !important;"></p>
+
+                    <div class="pt-2 border-t border-slate-800 space-y-1.5">
+                        <span class="font-bold text-slate-400 block" style="font-size: 11px !important;">Hoặc Cách 2: Dán mã <code>voice_...</code> đã tạo trên Google AI Studio:</span>
+                        <div class="flex space-x-1.5">
+                            <input id="manualVoiceIdInput" type="text" placeholder="Dán mã voice_..." class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono" style="font-size: 12px !important;">
+                            <button onclick="saveManualVoiceId()" class="px-3 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 12px !important;">💾 Lưu mã</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CẤU HÌNH PHONG CÁCH & MODEL -->
+            <div class="space-y-2">
+                <input id="studioVoiceStyleInput" type="text" value="Giọng tiếng Việt tự nhiên, nói rõ chữ, truyền cảm vừa phải, không nhấn nhá gượng" placeholder="Mô tả sắc thái giọng đọc..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-amber-200 font-semibold outline-none" style="font-size: 13px !important;">
+                <select id="studioTtsModelSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-emerald-300 font-bold outline-none" style="font-size: 13px !important;">
                     <option value="gemini-3.8-flash-tts">🎭 Đọc Tự Nhiên &amp; Cảm Xúc Tốt Nhất (gemini-3.8-flash-tts)</option>
                     <option value="gemini-3.8-flash-lite-tts">⚡ Tạo Nhanh &amp; Tiết Kiệm Quota (gemini-3.8-flash-lite-tts)</option>
-                    <option value="gemini-2.5-flash-tts">🆓 Nhánh Free Tier (gemini-2.5-flash-tts)</option>
+                    <option value="gemini-2.5-flash-tts">🆓 Nhánh Free Tier (gemini-2.5-flash-tts - chỉ 30 giọng mẫu)</option>
                 </select>
             </div>
 
@@ -121,8 +207,12 @@
     </div>
 
     <script>
-        let studioSelectedStyle = 1, voiceFilter = 'all';
-        let studioWavBuffer = null, studioWavDuration = 0, studioWavUrl = null;
+        let studioSelectedStyle = 1, voiceFilter = 'all', voiceMode = 'system';
+        let selectedCustomVoiceId = '', studioWavBuffer = null, studioWavDuration = 0, studioWavUrl = null;
+
+        // Voice Replication buffers & mic recorder
+        let srcSampleBuf = null, conSampleBuf = null;
+        let micStream = null, micRec = null, micChunks = [], micTarget = '', micIv = 0, micSec = 0;
 
         const SAMPLES = {
             fb: 'Bạc Sỉu Đá tại Kim Bling (M9 Cư xá Phú Lâm A): Giá 19.000đ ly chuẩn, upsize ly 1 lít thêm 10.000đ. Topping đồng giá 3.000đ gồm Trân Châu Trắng, Trân Châu Caramel, Thạch Trái Cây, Kem Machiato béo ngậy.',
@@ -132,18 +222,191 @@
 
         function initStudioPage() {
             renderVoicesDropdown('all');
+            renderPaidKeyUI();
+            renderCustomVoicesList();
             updateStudioCharCount();
         }
 
+        // ====== CHUYỂN CHẾ ĐỘ 30 GIỌNG vs GIỌNG THẬT ======
+        function switchVoiceMode(mode) {
+            voiceMode = mode;
+            const isSys = mode === 'system';
+            document.getElementById('systemVoicesPanel').classList.toggle('hidden', !isSys);
+            document.getElementById('customVoicePanel').classList.toggle('hidden', isSys);
+            document.getElementById('vModeSystemBtn').className = isSys ? 'py-2 px-2 rounded-xl font-black bg-rose-500 text-white text-center' : 'py-2 px-2 rounded-xl font-bold text-slate-300 bg-slate-900 text-center';
+            document.getElementById('vModeCustomBtn').className = !isSys ? 'py-2 px-2 rounded-xl font-black bg-amber-400 text-slate-950 text-center' : 'py-2 px-2 rounded-xl font-bold text-slate-300 bg-slate-900 text-center';
+            if (!isSys) renderPaidKeyUI();
+        }
+
+        function renderPaidKeyUI(forceShowInput = false) {
+            const hasPaid = KBCore.hasVoiceKey();
+            const banner = document.getElementById('paidKeyWarningBanner'), msg = document.getElementById('paidKeyBannerMsg'), grp = document.getElementById('paidKeyInputGroup'), btn = document.getElementById('btnTogglePaidKeyBox');
+            document.getElementById('paidVoiceKeyInput').value = KBCore.getVoiceKey();
+            if (hasPaid) {
+                banner.className = 'bg-emerald-950/40 border border-emerald-400/50 rounded-xl p-2.5 space-y-2';
+                msg.className = 'text-emerald-300 font-bold leading-snug';
+                msg.innerHTML = '✅ Đã gắn <strong>Paid Key riêng</strong> cho Giọng Thật (Key Free chính vẫn được giữ nguyên).';
+                grp.classList.toggle('hidden', !forceShowInput);
+                btn.innerText = grp.classList.contains('hidden') ? 'Đổi Key' : 'Thu gọn';
+            } else {
+                banner.className = 'bg-amber-500/15 border border-amber-400/60 rounded-xl p-2.5 space-y-2';
+                msg.className = 'text-amber-200 font-bold leading-snug';
+                msg.innerHTML = '⚠️ Nhân bản &amp; đọc bằng Giọng Thật yêu cầu API Key gói <strong>Paid Tier (có gắn Billing)</strong>. Key Free sẽ bị từ chối. Dán riêng Paid Key bên dưới (không đè lên Key Free chính):';
+                grp.classList.remove('hidden');
+                btn.innerText = 'Thu gọn';
+            }
+        }
+        function togglePaidKeyInputs() {
+            const grp = document.getElementById('paidKeyInputGroup'), btn = document.getElementById('btnTogglePaidKeyBox');
+            btn.innerText = grp.classList.toggle('hidden') ? 'Mở' : 'Thu gọn';
+        }
+        function savePaidKeyBtn() {
+            const v = document.getElementById('paidVoiceKeyInput').value.trim();
+            if (!v) { alert('Hãy dán Paid Key vào ô trước!'); return; }
+            KBCore.setVoiceKey(v);
+            renderPaidKeyUI(false);
+        }
+        function clearPaidKeyBtn() { KBCore.clearVoiceKey(); renderPaidKeyUI(true); }
+        async function testPaidKeyBtn() {
+            const v = document.getElementById('paidVoiceKeyInput').value.trim();
+            if (v) KBCore.setVoiceKey(v);
+            const k = KBCore.getEffectiveVoiceKey(), out = document.getElementById('paidKeyTestOut'), btn = document.getElementById('btnTestPaidKey');
+            if (!k) { alert('Chưa có Key để test.'); return; }
+            btn.disabled = true; btn.innerText = '⏳...'; out.classList.remove('hidden'); out.className = 'text-sky-300 font-bold'; out.innerText = '⏳ Đang kiểm tra Paid Key...';
+            const res = await KBCore.testKey(k);
+            btn.disabled = false; btn.innerText = '⚡ Test';
+            out.className = res.ok ? 'text-emerald-300 font-bold' : 'text-rose-300 font-bold';
+            out.innerText = res.ok ? `${res.message} (Nếu Key đã bật Billing trên AI Studio thì dùng Giọng Thật OK!)` : res.message;
+        }
+
+        // ====== QUẢN LÝ & TẠO GIỌNG THẬT ======
+        function renderCustomVoicesList() {
+            const list = KBCore.getCustomVoices(), box = document.getElementById('savedCustomVoicesBox');
+            if (!list.length) {
+                selectedCustomVoiceId = '';
+                box.innerHTML = `<p class="text-slate-400 font-medium p-2 bg-slate-900 rounded-xl border border-slate-800" style="font-size: 12px !important;">Chưa có Giọng Thật nào. Bấm <strong>+ Tạo Giọng Mới</strong> để thu 2 đoạn ngắn tạo giọng của bạn.</p>`;
+                document.getElementById('createVoiceForm').classList.remove('hidden');
+                return;
+            }
+            if (!selectedCustomVoiceId || !list.some(x => x.id === selectedCustomVoiceId)) selectedCustomVoiceId = list[0].id;
+            box.innerHTML = list.map(v => {
+                const act = v.id === selectedCustomVoiceId;
+                return `<div class="flex items-center justify-between gap-2 p-2 rounded-xl border ${act ? 'bg-amber-500/20 border-amber-400' : 'bg-slate-900 border-slate-700'}">
+                    <button onclick="selectCustomVoice('${KBCore.escHtml(v.id)}')" class="flex-1 min-w-0 text-left">
+                        <span class="font-black text-white block truncate" style="font-size: 13px !important;">${act ? '● ' : '○ '}${KBCore.escHtml(v.name)}</span>
+                        <span class="text-slate-400 font-mono block truncate" style="font-size: 10px !important;">${KBCore.escHtml(v.id)}</span>
+                    </button>
+                    <button onclick="auditionCustomVoice('${KBCore.escHtml(v.id)}')" class="px-2 py-1 rounded-lg bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 11px !important;">🎧 Thử</button>
+                    <button onclick="removeCustomVoice('${KBCore.escHtml(v.id)}')" class="px-2 py-1 rounded-lg bg-slate-800 text-rose-300 font-bold shrink-0" style="font-size: 11px !important;">🗑️</button>
+                </div>`;
+            }).join('');
+        }
+        function selectCustomVoice(id) { selectedCustomVoiceId = id; renderCustomVoicesList(); }
+        function removeCustomVoice(id) { KBCore.deleteCustomVoice(id); renderCustomVoicesList(); }
+        function toggleCreateVoiceForm() { document.getElementById('createVoiceForm').classList.toggle('hidden'); }
+        function saveManualVoiceId() {
+            const id = document.getElementById('manualVoiceIdInput').value.trim();
+            const name = document.getElementById('newVoiceNameInput').value.trim() || 'Giọng Của Tôi';
+            if (!id) { alert('Hãy dán mã voice_... vào ô!'); return; }
+            KBCore.saveCustomVoice({ id, name, createdAt: Date.now() });
+            selectedCustomVoiceId = id;
+            document.getElementById('manualVoiceIdInput').value = '';
+            document.getElementById('createVoiceForm').classList.add('hidden');
+            renderCustomVoicesList();
+        }
+
+        async function onVoiceFilePicked(which, input) {
+            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
+            const ab = await file.arrayBuffer();
+            const probed = await KBCore.probeAudioDuration(ab, file.type);
+            if (which === 'src') {
+                srcSampleBuf = ab;
+                document.getElementById('srcSampleStatus').innerText = `✅ ${probed.duration.toFixed(1)}s`;
+                document.getElementById('srcSampleStatus').className = 'text-emerald-300 font-black';
+            } else {
+                conSampleBuf = ab;
+                document.getElementById('conSampleStatus').innerText = `✅ ${probed.duration.toFixed(1)}s`;
+                document.getElementById('conSampleStatus').className = 'text-emerald-300 font-black';
+            }
+        }
+
+        function stopMicRecording() {
+            clearInterval(micIv);
+            if (micRec && micRec.state !== 'inactive') { try { micRec.stop(); } catch (e) {} }
+            if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+            document.getElementById('btnMicSrc').innerText = '🔴 Thu Mic';
+            document.getElementById('btnMicCon').innerText = '🔴 Thu Xác Nhận';
+        }
+        async function toggleMicRecordSample(which) {
+            if (micRec && micRec.state === 'recording') { stopMicRecording(); return; }
+            stopMicRecording();
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micTarget = which; micChunks = []; micSec = 0;
+                const btn = document.getElementById(which === 'src' ? 'btnMicSrc' : 'btnMicCon');
+                const stEl = document.getElementById(which === 'src' ? 'srcSampleStatus' : 'conSampleStatus');
+                micRec = new MediaRecorder(micStream);
+                micRec.ondataavailable = e => { if (e.data && e.data.size) micChunks.push(e.data); };
+                micRec.onstop = async () => {
+                    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+                    clearInterval(micIv);
+                    btn.innerText = which === 'src' ? '🔴 Thu Mic' : '🔴 Thu Xác Nhận';
+                    if (!micChunks.length) return;
+                    const blob = new Blob(micChunks, { type: micRec.mimeType || 'audio/mp4' });
+                    const ab = await blob.arrayBuffer();
+                    const probed = await KBCore.probeAudioDuration(ab, blob.type);
+                    if (which === 'src') srcSampleBuf = ab; else conSampleBuf = ab;
+                    stEl.innerText = `✅ ${probed.duration.toFixed(1)}s`;
+                    stEl.className = 'text-emerald-300 font-black';
+                };
+                micRec.start(300);
+                btn.innerText = '⏹️ Dừng (0s)';
+                micIv = setInterval(() => {
+                    micSec++;
+                    btn.innerText = `⏹️ Dừng (${micSec}s)`;
+                    if (which === 'src' && micSec >= 28) stopMicRecording();
+                    if (which === 'con' && micSec >= 12) stopMicRecording();
+                }, 1000);
+            } catch (e) { alert('Không mở được Micro. Vui lòng cấp quyền Micro cho trình duyệt!'); }
+        }
+
+        async function submitReplicateVoice() {
+            if (!srcSampleBuf || !conSampleBuf) { alert('Bạn cần thu (hoặc chọn file) đủ cả 2 đoạn: Giọng mẫu 10-30s VÀ Câu xác nhận!'); return; }
+            const name = document.getElementById('newVoiceNameInput').value.trim() || 'Giọng Của Tôi';
+            const btn = document.getElementById('btnSubmitReplicate'), st = document.getElementById('replicateStatusTxt');
+            btn.disabled = true; btn.innerText = '⏳ Đang nén 24kHz & tạo giọng thật...';
+            st.innerText = '📡 Đang gửi 2 đoạn mẫu lên Gemini 3.8 TTS...';
+            try {
+                const res = await KBCore.replicateVoice({ displayName: name, sourceBuffer: srcSampleBuf, consentBuffer: conSampleBuf });
+                if (!res.ok) {
+                    st.innerText = `❌ ${res.message}`;
+                    st.className = 'text-center text-rose-300 font-bold';
+                    if (res.needPaidKey) {
+                        renderPaidKeyUI(true);
+                        document.getElementById('paidKeyWarningBanner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    alert(res.message);
+                    return;
+                }
+                KBCore.saveCustomVoice({ id: res.voiceId, name: res.displayName, createdAt: Date.now() });
+                selectedCustomVoiceId = res.voiceId;
+                st.innerText = `✅ Tạo thành công! Mã giọng: ${res.voiceId}`;
+                st.className = 'text-center text-emerald-300 font-bold';
+                document.getElementById('createVoiceForm').classList.add('hidden');
+                renderCustomVoicesList();
+            } finally {
+                btn.disabled = false; btn.innerText = '🧬 Tạo Giọng Thật Của Tôi';
+            }
+        }
+
+        // ====== 30 GIỌNG HỆ THỐNG ======
         function filterVoices(gender) {
             voiceFilter = gender;
             ['all', 'F', 'M'].forEach(k => {
-                const b = document.getElementById(`vf_${k}`);
-                b.className = k === gender ? 'px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black' : 'px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold';
+                document.getElementById(`vf_${k}`).className = k === gender ? 'px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black' : 'px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold';
             });
             renderVoicesDropdown(gender);
         }
-
         function renderVoicesDropdown(gender) {
             const sel = document.getElementById('studioVoiceSelect'), prev = sel.value;
             const filtered = KBCore.TTS_VOICES.filter(v => gender === 'all' || v.gender === gender);
@@ -157,10 +420,8 @@
             if (filtered.some(v => v.id === prev)) sel.value = prev;
             onVoiceChanged();
         }
-
         function onVoiceChanged() {
-            const id = document.getElementById('studioVoiceSelect').value;
-            const v = KBCore.TTS_VOICES.find(x => x.id === id);
+            const id = document.getElementById('studioVoiceSelect').value, v = KBCore.TTS_VOICES.find(x => x.id === id);
             document.getElementById('voiceDescBadge').innerText = v ? `ℹ️ ${v.group} • ${v.desc}` : '';
         }
 
@@ -168,21 +429,19 @@
         async function pasteStudioProduct() { try { const t = await navigator.clipboard.readText(); if (t) document.getElementById('studioProductInput').value = t; } catch (e) { alert('Chạm giữ vào ô chữ rồi chọn Dán nhé!'); } }
         function clearStudioAll() { document.getElementById('studioProductInput').value = ''; document.getElementById('studioTtsTranscript').value = ''; updateStudioCharCount(); document.getElementById('studioAudioResultBox').classList.add('hidden'); document.getElementById('btnStudioDownloadWav').disabled = true; studioWavBuffer = null; }
         function updateStudioCharCount() { document.getElementById('studioCharCount').innerText = `${(document.getElementById('studioTtsTranscript').value || '').length} ký tự`; }
-
         function insertStudioTag(tag) {
             const ta = document.getElementById('studioTtsTranscript'), s = ta.selectionStart || ta.value.length, e = ta.selectionEnd || ta.value.length;
             const ins = (s > 0 && ta.value[s-1] !== ' ' && ta.value[s-1] !== '\n' ? ' ' : '') + tag + ' ';
-            ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
-            ta.focus(); ta.selectionStart = ta.selectionEnd = s + ins.length;
-            updateStudioCharCount();
+            ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e); ta.focus(); ta.selectionStart = ta.selectionEnd = s + ins.length; updateStudioCharCount();
         }
-
         function selectStudioStyle(num) {
             studioSelectedStyle = num;
-            [1, 2, 3, 4].forEach(i => {
-                const b = document.getElementById(`studioStyleBtn${i}`);
-                b.className = i === num ? 'p-2.5 rounded-2xl border-2 border-rose-400 bg-rose-500/20 text-left' : 'p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left';
-            });
+            [1, 2, 3, 4].forEach(i => { document.getElementById(`studioStyleBtn${i}`).className = i === num ? 'p-2.5 rounded-2xl border-2 border-rose-400 bg-rose-500/20 text-left' : 'p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left'; });
+        }
+
+        function getActiveVoiceSelection() {
+            if (voiceMode === 'custom') return { voiceName: selectedCustomVoiceId, isCustom: true };
+            return { voiceName: document.getElementById('studioVoiceSelect').value, isCustom: false };
         }
 
         async function generateStudioScriptOnly() {
@@ -196,17 +455,14 @@
                 4: 'Storytelling kể chuyện tâm sự gần gũi, chân thật như người dùng chia sẻ lại.'
             };
             const prompt = `Bạn là biên kịch voiceover TikTok chuyên nghiệp. Hãy viết ĐÚNG 1 BẢN LỜI THOẠI HOÀN CHỈNH theo phong cách: ${styleMap[studioSelectedStyle]}
-
 QUY TẮC BẮT BUỘC:
 1. Đưa ĐẦY ĐỦ 100% thông tin từ phần ĐẦU VÀO. Đổi số tiền/đơn vị sang chữ tiếng Việt ("19k" -> "mười chín ngàn", "1 lít" -> "một lít").
 2. VIẾT LIỀN MẠCH TỰ NHIÊN ĐỂ DỰNG CAPCUT:
    - TUYỆT ĐỐI KHÔNG dùng thẻ <long pause>. Giọng nói phải trôi chảy liền mạch từ đầu tới cuối.
-   - TUYỆT ĐỐI KHÔNG chèn tiếng cười <chuckle> / <giggle> lặp đi lặp lại ở đầu hay cuối các đoạn (nghe rất giả!). Chỉ giữ tối đa 1 chỗ tự nhiên nếu thật sự cần thiết.
+   - TUYỆT ĐỐI KHÔNG chèn tiếng cười <chuckle> / <giggle> lặp đi lặp lại ở đầu hay cuối các đoạn. Chỉ giữ tối đa 1 chỗ tự nhiên nếu thật sự cần thiết.
    - Tạo nhịp nói giống người thật bằng dấu phẩy, dấu chấm, dấu "..." và tối đa vài chỗ <short pause> hoặc <breath> nhẹ khi chuyển ý lớn.
    - Không viết chú thích trong ngoặc đơn (). Không đánh số đoạn, không viết tiêu đề. Chỉ trả về thuần lời thoại.
-
-NỘI DUNG ĐẦU VÀO:
-"""${info}"""`;
+NỘI DUNG ĐẦU VÀO: """${info}"""`;
 
             const text = await KBCore.callGemini(prompt, [], { temp: 0.68, maxTokens: 2048, timeoutMs: 22000 });
             if (text) {
@@ -227,41 +483,57 @@ NỘI DUNG ĐẦU VÀO:
             } finally { btn.disabled = false; btn.innerText = orig; }
         }
 
-        async function auditionSelectedVoice() {
-            if (!KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở góc trên trang chính).'); return; }
-            const btn = document.getElementById('btnAuditionVoice'), st = document.getElementById('studioStatusMsg');
-            const voiceName = document.getElementById('studioVoiceSelect').value;
+        async function auditionVoiceById(voiceName) {
+            const st = document.getElementById('studioStatusMsg');
             const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim();
             const chosenModel = document.getElementById('studioTtsModelSelect').value;
-            btn.disabled = true; btn.innerText = '⏳...'; st.innerText = `🎧 Đang tạo mẫu nghe thử giọng ${voiceName}...`;
-            try {
-                const sampleTxt = 'Xin chào các bạn, hôm nay mình sẽ hướng dẫn cách quay video bằng điện thoại cực kỳ đơn giản và đẹp mắt nhé!';
-                const res = await KBCore.generateTTS({ text: sampleTxt, voiceName, voiceStyle, preferredModel: chosenModel, timeoutMs: 20000 });
-                if (!res) { st.innerText = `❌ Không thử được giọng: ${KBCore.getLastError()}`; return; }
-                const url = URL.createObjectURL(new Blob([res.wavBuffer], { type: 'audio/wav' }));
-                const player = document.getElementById('studioAudioPlayer');
-                player.src = url;
-                document.getElementById('studioAudioResultBox').classList.remove('hidden');
-                st.innerText = `🔊 Đang phát mẫu giọng ${voiceName} (${res.model})`;
-                try { await player.play(); } catch (e) {}
-            } finally { btn.disabled = false; btn.innerText = '🎧 Thử 2s'; }
+            st.innerText = `🎧 Đang tạo mẫu nghe thử giọng ${voiceName}...`;
+            const sampleTxt = 'Xin chào các bạn, hôm nay mình sẽ hướng dẫn cách quay video bằng điện thoại cực kỳ đơn giản và đẹp mắt nhé!';
+            const res = await KBCore.generateTTS({ text: sampleTxt, voiceName, voiceStyle, preferredModel: chosenModel, timeoutMs: 22000 });
+            if (!res) {
+                const err = KBCore.getLastError();
+                if (err.includes('NEED_PAID_KEY')) {
+                    switchVoiceMode('custom'); renderPaidKeyUI(true);
+                    alert('⚠️ Giọng Thật cần API Key gói Paid Tier (đã gắn Billing). Hãy dán Paid Key vào ô màu vàng bên trên nhé!');
+                }
+                st.innerText = `❌ Không thử được giọng: ${err}`; return;
+            }
+            const url = URL.createObjectURL(new Blob([res.wavBuffer], { type: 'audio/wav' }));
+            const player = document.getElementById('studioAudioPlayer'); player.src = url;
+            document.getElementById('studioAudioResultBox').classList.remove('hidden');
+            st.innerText = `🔊 Đang phát mẫu giọng (${res.model})`;
+            try { await player.play(); } catch (e) {}
         }
+        async function auditionSelectedVoice() {
+            if (!KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở góc trên trang chính).'); return; }
+            const btn = document.getElementById('btnAuditionVoice'); btn.disabled = true; btn.innerText = '⏳...';
+            try { await auditionVoiceById(document.getElementById('studioVoiceSelect').value); }
+            finally { btn.disabled = false; btn.innerText = '🎧 Thử 2s'; }
+        }
+        async function auditionCustomVoice(id) { await auditionVoiceById(id); }
 
         async function generateStudioAudioOnly() {
             const raw = document.getElementById('studioTtsTranscript').value.trim();
             if (!raw) { alert('Ô lời thoại đang trống!'); return false; }
-            if (!KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở trang chính).'); return false; }
+            const { voiceName, isCustom } = getActiveVoiceSelection();
+            if (isCustom && !voiceName) { alert('Bạn chưa chọn hoặc tạo Giọng Thật nào!'); return false; }
+            if (!isCustom && !KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở trang chính).'); return false; }
+
             const btn = document.getElementById('btnStudioGenAudio'), st = document.getElementById('studioStatusMsg');
-            btn.disabled = true; btn.innerText = '⏳ Đang thu...'; st.innerText = '🎙️ Giọng AI đang thu âm cả bài...';
+            btn.disabled = true; btn.innerText = '⏳ Đang thu...'; st.innerText = isCustom ? '🧬 Đang đọc bằng Giọng Thật của bạn...' : '🎙️ Giọng AI đang thu âm cả bài...';
             try {
-                const voiceName = document.getElementById('studioVoiceSelect').value;
                 const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim();
                 const preferredModel = document.getElementById('studioTtsModelSelect').value;
-                const res = await KBCore.generateTTS({ text: raw, voiceName, voiceStyle, preferredModel, timeoutMs: 32000 });
+                const res = await KBCore.generateTTS({ text: raw, voiceName, voiceStyle, preferredModel, timeoutMs: 34000 });
                 if (!res) {
                     const err = KBCore.getLastError();
                     st.innerText = `❌ Lỗi thu âm: ${err}`;
-                    alert(`Không thu âm được:\n${err}`);
+                    if (err.includes('NEED_PAID_KEY')) {
+                        renderPaidKeyUI(true);
+                        alert('⚠️ Key đang dùng là Key Free nên chưa đọc được bằng Giọng Thật. Hãy dán Paid Key vào ô riêng ở mục Giọng Thật, hoặc chuyển sang tab 30 Giọng AI (Free)!');
+                    } else {
+                        alert(`Không thu âm được:\n${err}`);
+                    }
                     return false;
                 }
                 studioWavBuffer = res.wavBuffer;
@@ -272,7 +544,7 @@ NỘI DUNG ĐẦU VÀO:
                 const player = document.getElementById('studioAudioPlayer'); player.src = studioWavUrl;
                 document.getElementById('studioAudioResultBox').classList.remove('hidden');
                 document.getElementById('btnStudioDownloadWav').disabled = false;
-                st.innerText = `✅ Thu xong (${studioWavDuration.toFixed(1)}s) • Giọng ${voiceName} (${res.model})`;
+                st.innerText = `✅ Thu xong (${studioWavDuration.toFixed(1)}s) • ${isCustom ? '🧬 Giọng Thật' : voiceName} (${res.model})`;
                 try { await player.play(); } catch (e) {}
                 return true;
             } finally { btn.disabled = false; btn.innerText = '🔊 Thu Âm Cả Bài'; }
@@ -300,12 +572,10 @@ NỘI DUNG ĐẦU VÀO:
             const info = document.getElementById('studioProductInput').value.trim();
             const transcript = document.getElementById('studioTtsTranscript').value.trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
             const fullText = `${info ? 'NỘI DUNG:\n' + info + '\n\n' : ''}LỜI THOẠI CHÍNH THỨC:\n${transcript}`;
+            const { voiceName, isCustom } = getActiveVoiceSelection();
             await KBCore.idbPut('master_audio', {
-                name: `KimBling-${document.getElementById('studioVoiceSelect').value}.wav`,
-                type: 'audio/wav',
-                size: studioWavBuffer.byteLength,
-                duration: studioWavDuration || 15,
-                arrayBuffer: studioWavBuffer
+                name: `KimBling-${isCustom ? 'GiongThat' : voiceName}.wav`,
+                type: 'audio/wav', size: studioWavBuffer.byteLength, duration: studioWavDuration || 15, arrayBuffer: studioWavBuffer
             });
             KBCore.notifyParent('kb_studio_to_shoot', { scriptText: fullText });
             if (window.parent === window) {
@@ -314,6 +584,7 @@ NỘI DUNG ĐẦU VÀO:
             }
         }
 
+        window.addEventListener('pagehide', stopMicRecording);
         window.onload = initStudioPage;
     </script>
 </body>

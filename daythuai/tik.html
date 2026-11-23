@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KimBling Director - Thầy Dạy Quay Trực Quan &amp; CapCut</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="shared-core.js?v=1"></script>
+    <script src="shared-core.js?v=2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
@@ -46,11 +46,11 @@
 
         <!-- THANH MỞ NHANH POPUP CHÍNH -->
         <div class="grid grid-cols-2 gap-2">
-            <button onclick="openPopup('phong-thu.html', '🎙️ Phòng Thu AI (30 Giọng)')" class="p-3 rounded-2xl bg-gradient-to-r from-rose-500/25 to-amber-500/20 border-2 border-rose-400/70 text-left flex items-center space-x-2.5 active:scale-95 shadow-lg">
+            <button onclick="openPopup('phong-thu.html?v=2', '🎙️ Phòng Thu AI (30 Giọng + Giọng Thật)')" class="p-3 rounded-2xl bg-gradient-to-r from-rose-500/25 to-amber-500/20 border-2 border-rose-400/70 text-left flex items-center space-x-2.5 active:scale-95 shadow-lg">
                 <span class="text-2xl">🎙️</span>
                 <div class="min-w-0">
                     <span class="font-black text-white block truncate" style="font-size: 14px !important;">Phòng Thu AI</span>
-                    <span class="text-rose-200 font-semibold block truncate" style="font-size: 11px !important;">30 giọng • Không ngắt đơ</span>
+                    <span class="text-rose-200 font-semibold block truncate" style="font-size: 11px !important;">30 giọng • Giọng thật</span>
                 </div>
             </button>
             <button onclick="openPopup('camera-coach.html', '📐 Thước Góc Quay &amp; Soi Đèn')" class="p-3 rounded-2xl bg-gradient-to-r from-sky-500/25 to-indigo-500/20 border-2 border-sky-400/70 text-left flex items-center space-x-2.5 active:scale-95 shadow-lg">
@@ -73,6 +73,17 @@
             </div>
         </section>
 
+        <!-- KHO DỰ ÁN ĐÃ LƯU TẠM TRÊN MÁY (INDEXEDDB) -->
+        <section id="savedProjectsSection" class="hidden bg-slate-900 rounded-2xl border border-emerald-500/35 p-3 space-y-2">
+            <div class="flex items-center justify-between">
+                <button onclick="toggleSavedProjectsList()" class="flex items-center space-x-1.5 font-black text-emerald-300" style="font-size: 13px !important;">
+                    <span>📚</span><span id="savedProjectsCountLbl">Dự án đã lưu tạm trên máy (0)</span><span id="savedProjectsArrow">▾</span>
+                </button>
+                <button onclick="startFreshProject()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-300 font-bold" style="font-size: 11px !important;">+ Bài mới</button>
+            </div>
+            <div id="savedProjectsList" class="hidden space-y-1.5 max-h-56 overflow-y-auto pt-1"></div>
+        </section>
+
         <!-- KHUNG NHẬP KỊCH BẢN & AUDIO -->
         <section class="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 rounded-3xl border-2 border-indigo-500/40 p-4 space-y-3 shadow-2xl">
             <div class="flex items-center justify-between gap-2">
@@ -81,7 +92,7 @@
                     <h2 class="font-black text-amber-300 truncate">Kịch Bản &amp; Audio Gốc</h2>
                 </div>
                 <div class="flex items-center space-x-1.5 shrink-0">
-                    <button onclick="clearAllTempCache()" class="px-2.5 py-1 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 font-bold" style="font-size: 12px !important;">🧹 Dọn</button>
+                    <button onclick="startFreshProject()" class="px-2.5 py-1 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 font-bold" style="font-size: 12px !important;">✨ Bài mới</button>
                     <button onclick="toggleScriptInputCollapse()" id="toggleInputCollapseBtn" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 font-bold" style="font-size: 12px !important;">Thu gọn</button>
                 </div>
             </div>
@@ -113,7 +124,7 @@
                 <button onclick="analyzeScriptWithAI()" id="analyzeScriptBtn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-indigo-600 text-white font-black shadow-xl active:scale-95 flex items-center justify-center space-x-2">
                     <span>✨</span><span>AI Chia Cảnh &amp; Vẽ Cách Quay Trực Quan</span>
                 </button>
-                <p id="analyzeModeHint" class="text-center text-slate-400 font-semibold" style="font-size: 12px !important;">Tự gán thông số iPhone (4K 60 / Slo-mo 120 / EV / Lộn ngược máy) + Sơ đồ tay</p>
+                <p id="analyzeModeHint" class="text-center text-slate-400 font-semibold" style="font-size: 12px !important;">Tự động lưu vào bộ nhớ máy sau khi chia cảnh</p>
             </div>
         </section>
 
@@ -122,7 +133,10 @@
             <div class="bg-slate-900 rounded-2xl border-2 border-slate-800 p-4 space-y-2.5 shadow-xl">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                        <span id="scriptEngineBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black mb-1" style="font-size: 12px !important;">⚡ Đã phân tích</span>
+                        <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                            <span id="scriptEngineBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black" style="font-size: 11px !important;">⚡ Đã phân tích</span>
+                            <span id="offlineSavedBadge" class="inline-block px-2 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-200 font-bold" style="font-size: 11px !important;">💾 Đã tự lưu tạm trên máy</span>
+                        </div>
                         <h3 id="scriptProjectTitle" class="font-black text-white leading-snug">Kịch bản quay video</h3>
                     </div>
                     <button onclick="openPopup('capcut-guide.html', '🎬 Cẩm Nang Dựng CapCut')" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 13px !important;">🎬 Dựng CapCut</button>
@@ -149,7 +163,7 @@
             <div id="scenesContainer" class="space-y-4"></div>
         </section>
 
-        <!-- INPUT MỞ THẲNG CAMERA GỐC IPHONE ĐỂ QUAY CLIP LƯU VÀO THƯ VIỆN -->
+        <!-- INPUT MỞ THẲNG CAMERA GỐC IPHONE -->
         <input id="nativeCameraCaptureInput" type="file" accept="video/*" capture="environment" class="hidden" onchange="handleNativeCameraDone(this)">
     </main>
 
@@ -159,7 +173,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="font-black text-white">🔑 Cấu Hình Gemini AI Key</h2>
-                    <p class="text-slate-400 font-semibold" style="font-size: 13px !important;">Dùng chung cho toàn bộ các Popup (Phòng Thu, Soi Góc, Chia Cảnh)</p>
+                    <p class="text-slate-400 font-semibold" style="font-size: 13px !important;">Key chính (Free/Paid) dùng cho Chia Cảnh, Viết Thoại, Soi Góc</p>
                 </div>
                 <button onclick="closeMainKeyModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black">✕</button>
             </div>
@@ -189,7 +203,7 @@
         let currentNiche = localStorage.getItem(KBCore.STORAGE_NICHE) || 'fb';
         let currentProject = null, currentViewMode = 'shooting', hideDoneScenes = false;
         let masterAudioData = null, masterAudioBuffer = null, activeCardAudioNode = null, activeCardPlayingSceneId = null;
-        let pendingNativeCamSceneId = null;
+        let pendingNativeCamSceneId = null, savedProjectsOpen = false;
 
         const NICHE_DEMOS = {
             fb: `Lần quay 1: Quay sản phẩm trên kệ/quầy & không gian quán (Cảnh 1, Cảnh 2).
@@ -261,32 +275,137 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
         async function initApp() {
             updateMainKeyUI();
             selectNiche(currentNiche, false);
-            const raw = localStorage.getItem(KBCore.STORAGE_RAW_SCRIPT);
-            if (raw) document.getElementById('scriptInputTextarea').value = raw;
-            const savedAudio = await KBCore.idbGet('master_audio');
-            if (savedAudio && savedAudio.arrayBuffer) { masterAudioData = savedAudio; updateMasterAudioUI(); }
-            const projStr = localStorage.getItem(KBCore.STORAGE_PROJECT);
-            if (projStr) {
-                try { currentProject = JSON.parse(projStr); if (currentProject?.scenes?.length) renderScriptBoard(); } catch (e) {}
+
+            // Khôi phục từ IndexedDB trước (bền vững), sau đó fallback localStorage
+            let restored = false;
+            const idbLast = await KBCore.idbGet('active_workspace');
+            if (idbLast && idbLast.project && idbLast.project.scenes?.length) {
+                currentProject = idbLast.project;
+                document.getElementById('scriptInputTextarea').value = idbLast.rawScript || '';
+                if (idbLast.audioObj && idbLast.audioObj.arrayBuffer) {
+                    masterAudioData = idbLast.audioObj;
+                    await KBCore.idbPut('master_audio', masterAudioData);
+                }
+                restored = true;
             }
+            if (!restored) {
+                const raw = localStorage.getItem(KBCore.STORAGE_RAW_SCRIPT);
+                if (raw) document.getElementById('scriptInputTextarea').value = raw;
+                const savedAudio = await KBCore.idbGet('master_audio');
+                if (savedAudio && savedAudio.arrayBuffer) masterAudioData = savedAudio;
+                const projStr = localStorage.getItem(KBCore.STORAGE_PROJECT);
+                if (projStr) {
+                    try { currentProject = JSON.parse(projStr); } catch (e) {}
+                }
+            }
+            updateMasterAudioUI();
+            if (currentProject?.scenes?.length) renderScriptBoard();
+            await refreshSavedProjectsUI();
             window.addEventListener('message', handlePopupMessage);
         }
 
-        // ====== POPUP BRIDGE (KIỂU TIKTOK) ======
+        // ====== KHO DỰ ÁN LƯU TẠM TRÊN MÁY (INDEXEDDB) ======
+        async function saveProjectToStorage() {
+            const raw = document.getElementById('scriptInputTextarea').value || '';
+            try {
+                localStorage.setItem(KBCore.STORAGE_RAW_SCRIPT, raw);
+                if (currentProject) localStorage.setItem(KBCore.STORAGE_PROJECT, JSON.stringify(currentProject));
+            } catch (e) {}
+            if (currentProject && currentProject.scenes?.length) {
+                await KBCore.idbPut('active_workspace', { project: currentProject, rawScript: raw, audioObj: masterAudioData || null });
+                await KBCore.saveProjectToLibrary(currentProject, raw, masterAudioData);
+                await refreshSavedProjectsUI();
+                const badge = document.getElementById('offlineSavedBadge');
+                if (badge) badge.innerText = '💾 Đã tự lưu tạm trên máy';
+            }
+        }
+
+        async function refreshSavedProjectsUI() {
+            const list = await KBCore.listSavedProjects();
+            const sec = document.getElementById('savedProjectsSection'), lbl = document.getElementById('savedProjectsCountLbl'), listEl = document.getElementById('savedProjectsList');
+            if (!list.length) { sec.classList.add('hidden'); return; }
+            sec.classList.remove('hidden');
+            lbl.innerText = `Dự án đã lưu tạm trên máy (${list.length})`;
+            const nicheIcons = { fb: '🧋', spa: '💆', vlog: '🎥', product: '🛍️' };
+            listEl.innerHTML = list.map(item => {
+                const active = currentProject && currentProject.id === item.id;
+                const dt = new Date(item.updatedAt || Date.now());
+                const timeStr = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')} ${dt.getDate()}/${dt.getMonth()+1}`;
+                return `<div class="flex items-center justify-between gap-2 p-2.5 rounded-xl border ${active ? 'bg-emerald-950/35 border-emerald-400/60' : 'bg-slate-950 border-slate-800'}">
+                    <button onclick="openSavedProject('${item.id}')" class="flex-1 min-w-0 text-left">
+                        <span class="font-bold text-white block truncate" style="font-size: 13px !important;">${nicheIcons[item.niche] || '🎬'} ${KBCore.escHtml(item.title)}</span>
+                        <span class="text-slate-400 block truncate" style="font-size: 11px !important;">${item.doneCount}/${item.sceneCount} cảnh xong ${item.hasAudio ? '• 🎙️ Có Audio' : ''} • ${timeStr}</span>
+                    </button>
+                    <button onclick="removeSavedProject('${item.id}')" class="px-2 py-1 rounded-lg bg-slate-800 text-rose-300 font-bold shrink-0" style="font-size: 11px !important;">🗑️</button>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleSavedProjectsList() {
+            savedProjectsOpen = !savedProjectsOpen;
+            document.getElementById('savedProjectsList').classList.toggle('hidden', !savedProjectsOpen);
+            document.getElementById('savedProjectsArrow').innerText = savedProjectsOpen ? '▴' : '▾';
+        }
+
+        async function openSavedProject(projId) {
+            const data = await KBCore.loadProjectFromLibrary(projId);
+            if (!data || !data.project) { alert('Không tìm thấy dữ liệu dự án này.'); return; }
+            stopActiveCardAudio();
+            currentProject = data.project;
+            if (currentProject.niche) selectNiche(currentProject.niche, true);
+            document.getElementById('scriptInputTextarea').value = data.rawScript || '';
+            masterAudioBuffer = null;
+            if (data.audioObj && data.audioObj.arrayBuffer) {
+                masterAudioData = data.audioObj;
+                await KBCore.idbPut('master_audio', masterAudioData);
+            } else {
+                masterAudioData = null;
+                await KBCore.idbDel('master_audio');
+            }
+            updateMasterAudioUI();
+            try {
+                localStorage.setItem(KBCore.STORAGE_RAW_SCRIPT, data.rawScript || '');
+                localStorage.setItem(KBCore.STORAGE_PROJECT, JSON.stringify(currentProject));
+            } catch (e) {}
+            await KBCore.idbPut('active_workspace', { project: currentProject, rawScript: data.rawScript || '', audioObj: masterAudioData || null });
+            renderScriptBoard();
+            await refreshSavedProjectsUI();
+            document.getElementById('scriptInputBody').classList.add('hidden');
+            document.getElementById('toggleInputCollapseBtn').innerText = 'Mở ô dán';
+            document.getElementById('scriptBoardSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function removeSavedProject(projId) {
+            await KBCore.deleteProjectFromLibrary(projId);
+            await refreshSavedProjectsUI();
+        }
+
+        async function startFreshProject() {
+            stopActiveCardAudio();
+            currentProject = null; masterAudioData = null; masterAudioBuffer = null;
+            localStorage.removeItem(KBCore.STORAGE_RAW_SCRIPT);
+            localStorage.removeItem(KBCore.STORAGE_PROJECT);
+            await KBCore.idbDel('master_audio');
+            await KBCore.idbDel('active_workspace');
+            document.getElementById('scriptInputTextarea').value = '';
+            document.getElementById('scriptBoardSection').classList.add('hidden');
+            document.getElementById('scriptInputBody').classList.remove('hidden');
+            document.getElementById('toggleInputCollapseBtn').innerText = 'Thu gọn';
+            updateMasterAudioUI();
+            await refreshSavedProjectsUI();
+        }
+
+        // ====== POPUP BRIDGE ======
         function openPopup(url, title) {
             document.getElementById('kbPopupTitle').innerText = title || 'KimBling Studio';
             const back = document.getElementById('kbPopupBackdrop'), sheet = document.getElementById('kbPopupSheet'), iframe = document.getElementById('kbPopupIframe');
-            iframe.src = url;
-            back.classList.remove('hidden');
+            iframe.src = url; back.classList.remove('hidden');
             requestAnimationFrame(() => sheet.classList.add('kb-sheet-open'));
         }
         function closePopup() {
             const back = document.getElementById('kbPopupBackdrop'), sheet = document.getElementById('kbPopupSheet'), iframe = document.getElementById('kbPopupIframe');
             sheet.classList.remove('kb-sheet-open');
-            setTimeout(() => {
-                back.classList.add('hidden');
-                iframe.src = 'about:blank'; // Tắt hẳn camera/mic & giải phóng RAM
-            }, 200);
+            setTimeout(() => { back.classList.add('hidden'); iframe.src = 'about:blank'; }, 200);
         }
         async function handlePopupMessage(ev) {
             const msg = ev.data;
@@ -295,12 +414,9 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
             if (msg.type === 'kb_studio_to_shoot') {
                 closePopup();
                 const savedAudio = await KBCore.idbGet('master_audio');
-                if (savedAudio && savedAudio.arrayBuffer) {
-                    masterAudioData = savedAudio; masterAudioBuffer = null; updateMasterAudioUI();
-                }
-                if (msg.payload && msg.payload.scriptText) {
-                    document.getElementById('scriptInputTextarea').value = msg.payload.scriptText;
-                }
+                if (savedAudio && savedAudio.arrayBuffer) { masterAudioData = savedAudio; masterAudioBuffer = null; updateMasterAudioUI(); }
+                if (msg.payload && msg.payload.scriptText) document.getElementById('scriptInputTextarea').value = msg.payload.scriptText;
+                if (currentProject) currentProject.id = null; // Tạo dự án mới chứ không ghi đè bài cũ
                 await analyzeScriptWithAI();
                 return;
             }
@@ -340,8 +456,7 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
             if (inputVal) KBCore.setKey(inputVal);
             updateMainKeyUI();
             const btn = document.getElementById('btnTestKey'), el = document.getElementById('mainKeyTestResult');
-            btn.disabled = true; btn.innerText = '⏳...';
-            el.classList.remove('hidden'); el.innerText = '⏳ Đang kiểm tra kết nối tới Google Gemini...';
+            btn.disabled = true; btn.innerText = '⏳...'; el.classList.remove('hidden'); el.innerText = '⏳ Đang kiểm tra kết nối tới Google Gemini...';
             const res = await KBCore.testKey();
             btn.disabled = false; btn.innerText = '⚡ Test';
             el.className = res.ok ? 'font-bold p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-400 text-emerald-300 whitespace-pre-wrap' : 'font-bold p-2.5 rounded-xl bg-rose-950/60 border border-rose-400 text-rose-200 whitespace-pre-wrap';
@@ -357,7 +472,7 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
                 if (b) b.className = k === niche ? 'py-2 px-1 rounded-xl bg-rose-500 text-white font-black text-center' : 'py-2 px-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-bold text-center';
             });
         }
-        function loadDemoByNiche() { document.getElementById('scriptInputTextarea').value = NICHE_DEMOS[currentNiche] || NICHE_DEMOS.fb; analyzeScriptWithAI(); }
+        function loadDemoByNiche() { if (currentProject) currentProject.id = null; document.getElementById('scriptInputTextarea').value = NICHE_DEMOS[currentNiche] || NICHE_DEMOS.fb; analyzeScriptWithAI(); }
         function toggleScriptInputCollapse() { const body = document.getElementById('scriptInputBody'), btn = document.getElementById('toggleInputCollapseBtn'); btn.innerText = body.classList.toggle('hidden') ? 'Mở ô dán' : 'Thu gọn'; }
         async function pasteScriptFromClipboard() { try { const txt = await navigator.clipboard.readText(); if (txt) document.getElementById('scriptInputTextarea').value = txt; else alert('Bộ nhớ tạm trống.'); } catch (e) { alert('Chạm giữ vào ô chữ bên dưới rồi chọn Dán nhé!'); } }
 
@@ -407,23 +522,9 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
             src.start(0, st, dur); activeCardAudioNode = src; activeCardPlayingSceneId = sceneId;
             if (btnEl) btnEl.innerText = '⏹️ Dừng nghe';
         }
-        async function removeMasterAudio() { stopActiveCardAudio(); masterAudioData = null; masterAudioBuffer = null; await KBCore.idbDel('master_audio'); updateMasterAudioUI(); }
-        async function clearAllTempCache() {
-            if (!confirm('Xoá sạch kịch bản, tiến độ quay & file âm thanh tạm?')) return;
-            stopActiveCardAudio(); localStorage.removeItem(KBCore.STORAGE_RAW_SCRIPT); localStorage.removeItem(KBCore.STORAGE_PROJECT);
-            await KBCore.idbDel('master_audio'); masterAudioData = null; masterAudioBuffer = null; currentProject = null;
-            document.getElementById('scriptInputTextarea').value = ''; document.getElementById('scriptBoardSection').classList.add('hidden');
-            document.getElementById('scriptInputBody').classList.remove('hidden'); document.getElementById('toggleInputCollapseBtn').innerText = 'Thu gọn';
-            updateMasterAudioUI();
-        }
-        function saveProjectToStorage() {
-            try {
-                localStorage.setItem(KBCore.STORAGE_RAW_SCRIPT, document.getElementById('scriptInputTextarea').value || '');
-                if (currentProject) localStorage.setItem(KBCore.STORAGE_PROJECT, JSON.stringify(currentProject));
-            } catch (e) {}
-        }
+        async function removeMasterAudio() { stopActiveCardAudio(); masterAudioData = null; masterAudioBuffer = null; await KBCore.idbDel('master_audio'); updateMasterAudioUI(); saveProjectToStorage(); }
 
-        // ====== AI CHIA CẢNH & GÁN CÔNG THỨC QUAY TRỰC QUAN ======
+        // ====== AI CHIA CẢNH & LƯU TẠM ======
         function pickRecipeIdOffline(text) {
             const s = (text || '').toLowerCase();
             if (s.includes('lộn ngược') || s.includes('bảng hiệu') || s.includes('logo') || s.includes('đèn') || s.includes('địa chỉ')) return 'upside_down_logo';
@@ -441,37 +542,19 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
             const rec = KBCore.SHOT_RECIPES[recId];
             const dur = Math.max(2, Number(rawSc.durationSec) || totalFallbackDur || 4);
             return {
-                id: `sc_${idx+1}_${Date.now()}_${idx}`,
-                sceneNum: Number(rawSc.sceneNum) || (idx + 1),
-                shootOrder: Number(rawSc.shootOrder) || (idx + 1),
-                durationSec: dur,
-                recSeconds: Math.max(3, Math.ceil(dur + 2)),
-                timeRange: rawSc.timeRange || `00s - ${String(Math.round(dur)).padStart(2,'0')}s`,
-                recipeId: rec.id,
-                recipeName: rawSc.recipeName || rec.name,
-                camMode: rawSc.camMode || rec.mode,
-                camLens: rawSc.camLens || rec.lens,
-                camResFps: rawSc.camResFps || rec.resFps,
-                camEv: rawSc.camEv || rec.ev,
-                holdMode: rawSc.holdMode || rec.holdMode,
-                svgType: rec.svgType,
-                angleDeg: Number(rawSc.angleDeg) || rec.angleDeg,
-                distance: rawSc.distance || rec.distance,
-                visualDesc: rawSc.visualDesc || 'Quay theo đúng hướng dẫn góc máy.',
-                propTip: rawSc.propTip || rec.propTip,
-                capcutGuide: rawSc.capcutGuide || rec.capcutGuide,
-                screenText: rawSc.screenText || '',
-                speech: rawSc.speech || '',
-                audioStartSec: 0,
-                audioEndSec: dur,
-                done: false
+                id: `sc_${idx+1}_${Date.now()}_${idx}`, sceneNum: Number(rawSc.sceneNum) || (idx + 1), shootOrder: Number(rawSc.shootOrder) || (idx + 1),
+                durationSec: dur, recSeconds: Math.max(3, Math.ceil(dur + 2)), timeRange: rawSc.timeRange || `00s - ${String(Math.round(dur)).padStart(2,'0')}s`,
+                recipeId: rec.id, recipeName: rawSc.recipeName || rec.name, camMode: rawSc.camMode || rec.mode, camLens: rawSc.camLens || rec.lens,
+                camResFps: rawSc.camResFps || rec.resFps, camEv: rawSc.camEv || rec.ev, holdMode: rawSc.holdMode || rec.holdMode,
+                svgType: rec.svgType, angleDeg: Number(rawSc.angleDeg) || rec.angleDeg, distance: rawSc.distance || rec.distance,
+                visualDesc: rawSc.visualDesc || 'Quay theo đúng hướng dẫn góc máy.', propTip: rawSc.propTip || rec.propTip, capcutGuide: rawSc.capcutGuide || rec.capcutGuide,
+                screenText: rawSc.screenText || '', speech: rawSc.speech || '', audioStartSec: 0, audioEndSec: dur, done: false
             };
         }
 
         function parseScriptOffline(rawText) {
             const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            const shootGroups = {}, scenes = [];
-            let cur = null;
+            const shootGroups = {}, scenes = []; let cur = null;
             const pushCur = () => { if (cur) scenes.push(buildSceneFromRecipe(cur, scenes.length, 4)); };
             for (const line of lines) {
                 const gm = line.match(/(?:^\d+\.\s*)?Lần\s+quay\s+(\d+)\s*:\s*(.+)/i);
@@ -486,9 +569,7 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
                 }
                 if (cur) {
                     const vm = line.match(/^Hình\s*ảnh\s*:\s*(.+)/i), tm = line.match(/^Chữ\s*trên\s*màn\s*hình\s*:\s*(.+)/i), sm = line.match(/^Lời\s*thoại\s*:\s*(.+)/i);
-                    if (vm) cur.visualDesc = vm[1].trim();
-                    else if (tm) cur.screenText = tm[1].trim();
-                    else if (sm) cur.speech = sm[1].trim().replace(/^["“]|["”]$/g, '');
+                    if (vm) cur.visualDesc = vm[1].trim(); else if (tm) cur.screenText = tm[1].trim(); else if (sm) cur.speech = sm[1].trim().replace(/^["“]|["”]$/g, '');
                     else cur.visualDesc = (cur.visualDesc ? cur.visualDesc + ' ' : '') + line;
                 }
             }
@@ -500,14 +581,14 @@ Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
                     scenes.push(buildSceneFromRecipe({ sceneNum: scenes.length + 1, shootOrder: scenes.length + 1, speech, visualDesc: `Quay minh họa cho câu: ${speech}` }, scenes.length, 4));
                 }
             }
-            return { title: 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'offline', hasAudio: !!masterAudioData, shootGroups, scenes };
+            return { id: 'proj_' + Date.now(), title: 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'offline', hasAudio: !!masterAudioData, shootGroups, scenes };
         }
 
         async function analyzeScriptWithAI() {
             const raw = document.getElementById('scriptInputTextarea').value.trim();
             if (!raw && !masterAudioData) { alert('Hãy dán kịch bản/lời thoại hoặc chọn file Audio trước nhé!'); return; }
             const btn = document.getElementById('analyzeScriptBtn'), orig = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>AI đang lập sơ đồ góc quay trực quan...</span>';
+            btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>AI đang lập sơ đồ góc quay &amp; lưu máy...</span>';
             try {
                 let pauseRuns = [];
                 if (masterAudioData) {
@@ -534,7 +615,7 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     const aiRes = await KBCore.callGemini(prompt, extraParts, { json: true, temp: 0.25, maxTokens: 4096, timeoutMs: 26000 });
                     if (aiRes && Array.isArray(aiRes.scenes) && aiRes.scenes.length) {
                         const mapped = aiRes.scenes.map((s, idx) => buildSceneFromRecipe(s, idx, 4));
-                        project = { title: aiRes.title || 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'gemini', hasAudio: !!masterAudioData, shootGroups: aiRes.shootGroups || {}, scenes: mapped };
+                        project = { id: 'proj_' + Date.now(), title: aiRes.title || 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'gemini', hasAudio: !!masterAudioData, shootGroups: aiRes.shootGroups || {}, scenes: mapped };
                     }
                 }
                 if (!project) {
@@ -545,7 +626,7 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     KBCore.matchNaturalCuts(project.scenes, pauseRuns, masterAudioData.duration);
                 }
                 currentProject = project;
-                saveProjectToStorage();
+                await saveProjectToStorage();
                 renderScriptBoard();
                 document.getElementById('scriptInputBody').classList.add('hidden');
                 document.getElementById('toggleInputCollapseBtn').innerText = 'Mở ô dán';
@@ -555,7 +636,7 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
             }
         }
 
-        // ====== SƠ ĐỒ SVG MINH HỌA TRỰC QUAN ======
+        // ====== SVG MINH HỌA TRỰC QUAN ======
         function buildShotSvg(svgType, holdMode) {
             const isUpside = holdMode === 'upside_down';
             const phoneRect = (x, y, rot = 0) => `
@@ -565,66 +646,21 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     ${isUpside ? '<text x="0" y="-5" text-anchor="middle" fill="#fbbf24" font-size="8" font-weight="bold">NGƯỢC</text>' : ''}
                 </g>`;
             if (svgType === 'upside_down') {
-                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                    <circle cx="90" cy="14" r="7" fill="#fbbf24" opacity="0.9"/>
-                    <rect x="42" y="66" width="96" height="16" rx="4" fill="#334155" stroke="#fbbf24" stroke-width="1.5"/>
-                    <text x="90" y="77" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="bold">LOGO / BẢNG HIỆU</text>
-                    <g class="anim-pull">${phoneRect(44, 38, 12)}</g>
-                    <path d="M90 24 L90 58" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 3"/>
-                    <polygon points="90,62 85,54 95,54" fill="#34d399"/>
-                    <text x="136" y="42" fill="#94a3b8" font-size="8" font-weight="bold">Kéo từ đèn</text>
-                    <text x="136" y="53" fill="#94a3b8" font-size="8" font-weight="bold">xuống chữ</text>
-                </svg>`;
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><circle cx="90" cy="14" r="7" fill="#fbbf24" opacity="0.9"/><rect x="42" y="66" width="96" height="16" rx="4" fill="#334155" stroke="#fbbf24" stroke-width="1.5"/><text x="90" y="77" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="bold">LOGO / BẢNG HIỆU</text><g class="anim-pull">${phoneRect(44, 38, 12)}</g><path d="M90 24 L90 58" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 3"/><polygon points="90,62 85,54 95,54" fill="#34d399"/><text x="136" y="42" fill="#94a3b8" font-size="8" font-weight="bold">Kéo từ đèn</text><text x="136" y="53" fill="#94a3b8" font-size="8" font-weight="bold">xuống chữ</text></svg>`;
             }
             if (svgType === 'rack_focus') {
-                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                    <rect x="18" y="68" width="40" height="8" rx="2" fill="#f8fafc" opacity="0.85"/>
-                    <text x="38" y="85" text-anchor="middle" fill="#cbd5e1" font-size="7.5">Tờ giấy trượt</text>
-                    <g class="anim-slide">${phoneRect(38, 44, -8)}</g>
-                    <path d="M58 46 L112 46" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3"/>
-                    <polygon points="116,46 108,41 108,51" fill="#fbbf24"/>
-                    <circle cx="122" cy="56" r="11" fill="#f43f5e" opacity="0.85"/>
-                    <text x="122" y="79" text-anchor="middle" fill="#fda4af" font-size="8" font-weight="bold">Món chính</text>
-                    <rect x="148" y="24" width="16" height="32" rx="4" fill="#38bdf8" opacity="0.5"/>
-                    <text x="156" y="68" text-anchor="middle" fill="#7dd3fc" font-size="7.5">Nét sau</text>
-                </svg>`;
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><rect x="18" y="68" width="40" height="8" rx="2" fill="#f8fafc" opacity="0.85"/><text x="38" y="85" text-anchor="middle" fill="#cbd5e1" font-size="7.5">Tờ giấy trượt</text><g class="anim-slide">${phoneRect(38, 44, -8)}</g><path d="M58 46 L112 46" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3"/><polygon points="116,46 108,41 108,51" fill="#fbbf24"/><circle cx="122" cy="56" r="11" fill="#f43f5e" opacity="0.85"/><text x="122" y="79" text-anchor="middle" fill="#fda4af" font-size="8" font-weight="bold">Món chính</text><rect x="148" y="24" width="16" height="32" rx="4" fill="#38bdf8" opacity="0.5"/><text x="156" y="68" text-anchor="middle" fill="#7dd3fc" font-size="7.5">Nét sau</text></svg>`;
             }
             if (svgType === 'slomo_orbit') {
-                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                    <ellipse cx="110" cy="64" rx="52" ry="14" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
-                    <circle cx="88" cy="62" r="9" fill="#fb923c"/><circle cx="115" cy="64" r="8" fill="#f43f5e"/><circle cx="138" cy="60" r="7" fill="#38bdf8"/>
-                    <path d="M36 22 Q 80 56, 148 34" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="5 3"/>
-                    <g class="anim-orbit">${phoneRect(36, 36, 20)}</g>
-                    <text x="90" y="16" text-anchor="middle" fill="#6ee7b7" font-size="8.5" font-weight="bold">Slo-mo 120fps • Uốn lượn qua bàn</text>
-                </svg>`;
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><ellipse cx="110" cy="64" rx="52" ry="14" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/><circle cx="88" cy="62" r="9" fill="#fb923c"/><circle cx="115" cy="64" r="8" fill="#f43f5e"/><circle cx="138" cy="60" r="7" fill="#38bdf8"/><path d="M36 22 Q 80 56, 148 34" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="5 3"/><g class="anim-orbit">${phoneRect(36, 36, 20)}</g><text x="90" y="16" text-anchor="middle" fill="#6ee7b7" font-size="8.5" font-weight="bold">Slo-mo 120fps • Uốn lượn qua bàn</text></svg>`;
             }
             if (svgType === 'reveal') {
-                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                    <rect x="115" y="10" width="55" height="70" fill="#0f172a" stroke="#475569"/>
-                    <text x="142" y="48" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="bold">Mép tường</text>
-                    <text x="64" y="46" text-anchor="middle" fill="#34d399" font-size="9" font-weight="bold">Không gian quán</text>
-                    <g class="anim-slide">${phoneRect(82, 54, -15)}</g>
-                    <path d="M98 62 L52 62" stroke="#fbbf24" stroke-width="2.5"/>
-                    <polygon points="48,62 56,57 56,67" fill="#fbbf24"/>
-                </svg>`;
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><rect x="115" y="10" width="55" height="70" fill="#0f172a" stroke="#475569"/><text x="142" y="48" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="bold">Mép tường</text><text x="64" y="46" text-anchor="middle" fill="#34d399" font-size="9" font-weight="bold">Không gian quán</text><g class="anim-slide">${phoneRect(82, 54, -15)}</g><path d="M98 62 L52 62" stroke="#fbbf24" stroke-width="2.5"/><polygon points="48,62 56,57 56,67" fill="#fbbf24"/></svg>`;
             }
             if (svgType === 'macro') {
-                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                    <circle cx="122" cy="52" r="16" fill="#f43f5e" opacity="0.35" stroke="#fb7185" stroke-width="2" stroke-dasharray="4 3"/>
-                    <circle cx="122" cy="52" r="6" fill="#fbbf24"/>
-                    <g class="anim-slide">${phoneRect(56, 46, 35)}</g>
-                    <path d="M74 48 L104 51" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3"/>
-                    <text x="122" y="80" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="bold">Sát 15cm • Chạm khóa nét</text>
-                </svg>`;
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><circle cx="122" cy="52" r="16" fill="#f43f5e" opacity="0.35" stroke="#fb7185" stroke-width="2" stroke-dasharray="4 3"/><circle cx="122" cy="52" r="6" fill="#fbbf24"/><g class="anim-slide">${phoneRect(56, 46, 35)}</g><path d="M74 48 L104 51" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3"/><text x="122" y="80" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="bold">Sát 15cm • Chạm khóa nét</text></svg>`;
             }
-            return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
-                <rect x="20" y="66" width="140" height="8" rx="3" fill="#334155"/>
-                <circle cx="118" cy="50" r="14" fill="#fbbf24" opacity="0.85"/>
-                <g class="anim-pull">${phoneRect(56, 44, 15)}</g>
-                <path d="M52 24 L26 24" stroke="#34d399" stroke-width="2.5"/>
-                <polygon points="22,24 30,19 30,29" fill="#34d399"/>
-                <text x="90" y="16" text-anchor="middle" fill="#7dd3fc" font-size="8.5" font-weight="bold">Tỳ tay cạnh bàn • Kéo lùi chậm</text>
-            </svg>`;
+            return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800"><rect x="20" y="66" width="140" height="8" rx="3" fill="#334155"/><circle cx="118" cy="50" r="14" fill="#fbbf24" opacity="0.85"/><g class="anim-pull">${phoneRect(56, 44, 15)}</g><path d="M52 24 L26 24" stroke="#34d399" stroke-width="2.5"/><polygon points="22,24 30,19 30,29" fill="#34d399"/><text x="90" y="16" text-anchor="middle" fill="#7dd3fc" font-size="8.5" font-weight="bold">Tỳ tay cạnh bàn • Kéo lùi chậm</text></svg>`;
         }
 
         // ====== RENDER BẢNG CẢNH QUAY ======
@@ -660,20 +696,14 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
             document.getElementById('scriptEngineBadge').innerText = currentProject.engine === 'gemini' ? '🤖 AI Đạo Diễn (@datvairo Style)' : '⚡ Mẫu Thực Chiến';
             updateProgressUI(); renderScenesList();
         }
-
         function openCoachForScene(sceneId) {
-            const sc = currentProject?.scenes?.find(s => s.id === sceneId);
-            if (!sc) return;
+            const sc = currentProject?.scenes?.find(s => s.id === sceneId); if (!sc) return;
             localStorage.setItem('kb_active_coach_scene', JSON.stringify(sc));
             openPopup(`camera-coach.html?sceneId=${encodeURIComponent(sc.id)}`, `📐 Soi Góc Cảnh ${sc.sceneNum}`);
         }
-        function openNativeCameraForScene(sceneId) {
-            pendingNativeCamSceneId = sceneId;
-            document.getElementById('nativeCameraCaptureInput').click();
-        }
+        function openNativeCameraForScene(sceneId) { pendingNativeCamSceneId = sceneId; document.getElementById('nativeCameraCaptureInput').click(); }
         function handleNativeCameraDone(input) {
-            const file = input.files && input.files[0]; input.value = '';
-            if (!file) return;
+            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
             if (pendingNativeCamSceneId) {
                 const sc = currentProject?.scenes?.find(s => s.id === pendingNativeCamSceneId);
                 if (sc && !sc.done) toggleSceneDone(sc.id);
@@ -704,12 +734,8 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     </div>
                     <button onclick="toggleSceneDone('${sc.id}')" class="px-3 py-1 rounded-xl font-black shrink-0 ${sc.done ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300 border border-slate-700'}" style="font-size: 12px !important;">${sc.done ? '✅ Đã quay' : '⬜ Chưa quay'}</button>
                 </div>
-
-                <!-- HỘP CÀI ĐẶT CAMERA IPHONE -->
                 <div class="bg-slate-950 rounded-xl p-3 border border-sky-500/35 space-y-2">
-                    <div class="flex items-center justify-between gap-1">
-                        <span class="font-black text-sky-300 truncate" style="font-size: 13px !important;">⚙️ Chỉnh Camera iPhone: ${KBCore.escHtml(sc.recipeName)}</span>
-                    </div>
+                    <span class="font-black text-sky-300 block truncate" style="font-size: 13px !important;">⚙️ Chỉnh Camera iPhone: ${KBCore.escHtml(sc.recipeName)}</span>
                     <div class="flex flex-wrap gap-1.5">
                         <span class="px-2 py-0.5 rounded-lg bg-indigo-500/25 text-indigo-200 font-bold" style="font-size: 11px !important;">🎥 ${KBCore.escHtml(sc.camMode)}</span>
                         <span class="px-2 py-0.5 rounded-lg bg-sky-500/25 text-sky-200 font-bold" style="font-size: 11px !important;">🔍 ${KBCore.escHtml(sc.camLens)}</span>
@@ -720,16 +746,13 @@ TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":
                     ${buildShotSvg(sc.svgType, sc.holdMode)}
                     <p class="text-slate-100 font-semibold leading-snug" style="font-size: 13px !important;">👉 <strong class="text-amber-300">Thao tác tay:</strong> ${KBCore.escHtml(sc.propTip)}</p>
                 </div>
-
                 ${audioBar}
-
                 <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                     <p class="text-slate-200 leading-snug" style="font-size: 14px !important;"><strong class="text-slate-400">🎬 Quay gì:</strong> ${KBCore.escHtml(sc.visualDesc)}</p>
                     ${sc.screenText ? `<p class="text-amber-300 font-bold leading-snug" style="font-size: 13px !important;">🔤 Chữ gợi ý: "${KBCore.escHtml(sc.screenText)}"</p>` : ''}
                     ${sc.speech ? `<p class="text-sky-200 italic font-semibold leading-snug" style="font-size: 14px !important;">💬 Thoại: "${KBCore.escHtml(sc.speech)}"</p>` : ''}
                     <p class="text-indigo-300 font-bold leading-snug pt-1 border-t border-slate-800/80" style="font-size: 12px !important;">✂️ CapCut: ${KBCore.escHtml(sc.capcutGuide)}</p>
                 </div>
-
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="openCoachForScene('${sc.id}')" class="py-3 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-sky-400/50 text-sky-200 font-black active:scale-95" style="font-size: 13px !important;">📐 Thước Góc AR</button>
                     <button onclick="openNativeCameraForScene('${sc.id}')" class="py-3 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow-lg active:scale-95" style="font-size: 13px !important;">📷 Camera Gốc iPhone</button>
