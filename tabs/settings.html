@@ -4,7 +4,8 @@
   .set-row { display: flex; gap: 8px; }
   .set-input { flex: 1; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0d0e15; color: #fff; font-size: 14px; }
   .set-eye { padding: 0 12px; border-radius: 8px; border: 1px solid #333; background: #222533; color: #fff; cursor: pointer; }
-  .set-btn { padding: 13px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #fe2c55; color: #fff; }
+  .set-btn { padding: 13px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #fe2c55; color: #fff; font-size: 15px; }
+  .set-btn:disabled { opacity: 0.6; }
   .set-msg { font-size: 13px; color: #25f4ee; min-height: 20px; line-height: 1.5; }
 </style>
 
@@ -20,7 +21,7 @@
   </div>
 
   <div class="set-label">3. Facebook Page ID (Fanpage):</div>
-  <input class="set-input" id="set-fb-id" type="text" placeholder="VD: 102938475612345" />
+  <input class="set-input" id="set-fb-id" type="text" placeholder="VD: 1449848791548930" />
 
   <div class="set-label">4. Facebook Page Access Token:</div>
   <div class="set-row">
@@ -28,7 +29,7 @@
     <button class="set-eye" id="set-toggle-fb" type="button">👁️</button>
   </div>
 
-  <button class="set-btn" id="set-save-btn">Lưu tất cả & Kiểm tra kết nối</button>
+  <button class="set-btn" id="set-save-btn" type="button">Lưu tất cả & Kiểm tra kết nối</button>
   <div class="set-msg" id="set-msg"></div>
 </div>
 
@@ -37,12 +38,13 @@
   const keyInput = document.getElementById('set-gemini-key');
   const fbIdInput = document.getElementById('set-fb-id');
   const fbTokenInput = document.getElementById('set-fb-token');
+  const saveBtn = document.getElementById('set-save-btn');
   const msg = document.getElementById('set-msg');
 
-  urlInput.value = AppBus.state.gasUrl;
-  keyInput.value = AppBus.state.geminiKey;
-  fbIdInput.value = AppBus.state.fbPageId;
-  fbTokenInput.value = AppBus.state.fbPageToken;
+  urlInput.value = AppBus.state.gasUrl || localStorage.getItem('gas_url') || '';
+  keyInput.value = AppBus.state.geminiKey || localStorage.getItem('gemini_key') || '';
+  fbIdInput.value = AppBus.state.fbPageId || localStorage.getItem('fb_page_id') || '';
+  fbTokenInput.value = AppBus.state.fbPageToken || localStorage.getItem('fb_page_token') || '';
 
   document.getElementById('set-toggle-key').onclick = () => {
     keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
@@ -51,23 +53,32 @@
     fbTokenInput.type = fbTokenInput.type === 'password' ? 'text' : 'password';
   };
 
-  document.getElementById('set-save-btn').onclick = async () => {
-    const url = urlInput.value.trim();
-    const key = keyInput.value.trim();
-    const fbId = fbIdInput.value.trim();
-    const fbToken = fbTokenInput.value.trim();
-
-    if (!url.startsWith('https://script.google.com/')) {
-      msg.textContent = '❌ Link GAS phải bắt đầu bằng https://script.google.com/...';
-      return;
-    }
-
-    AppBus.setGasUrl(url);
-    AppBus.setGeminiKey(key);
-    AppBus.setFacebookConfig(fbId, fbToken);
-
-    msg.textContent = '⏳ Đã lưu trên iPhone. Đang kiểm tra GAS & Facebook Page...';
+  saveBtn.onclick = async () => {
     try {
+      const url = urlInput.value.trim();
+      const key = keyInput.value.trim();
+      const fbId = fbIdInput.value.trim();
+      const fbToken = fbTokenInput.value.trim();
+
+      if (!url.startsWith('https://script.google.com/')) {
+        msg.textContent = '❌ Link GAS phải bắt đầu bằng https://script.google.com/...';
+        return;
+      }
+
+      AppBus.setGasUrl(url);
+      AppBus.setGeminiKey(key);
+      if (typeof AppBus.setFacebookConfig === 'function') {
+        AppBus.setFacebookConfig(fbId, fbToken);
+      } else {
+        AppBus.state.fbPageId = fbId;
+        AppBus.state.fbPageToken = fbToken;
+        localStorage.setItem('fb_page_id', fbId);
+        localStorage.setItem('fb_page_token', fbToken);
+      }
+
+      saveBtn.disabled = true;
+      msg.textContent = '⏳ Đã lưu trên iPhone. Đang kiểm tra GAS & Facebook Page...';
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -80,13 +91,19 @@
       const json = await res.json();
       if (json.ok) {
         let html = `✅ ${json.msg}<br>${key ? '🔑 Đã lưu Gemini Key.' : '⚠️ Chưa có Gemini Key!'}`;
-        if (json.fbCheck) html += `<br>${json.fbCheck}`;
+        if (json.fbCheck) {
+          html += `<br>${json.fbCheck}`;
+        } else if (fbId && fbToken) {
+          html += `<br>⚠️ GAS chưa phản hồi tên Page (nhớ kiểm tra đã Deploy phiên bản mới ` + '`Code.gs`' + ` chưa nhé!).`;
+        }
         msg.innerHTML = html;
       } else {
         msg.textContent = '⚠️ GAS báo lỗi: ' + (json.error || 'Không rõ');
       }
     } catch (err) {
-      msg.textContent = '❌ Không kết nối được GAS: ' + err.message;
+      msg.textContent = '❌ Lỗi kiểm tra: ' + err.message;
+    } finally {
+      saveBtn.disabled = false;
     }
   };
 </script>
