@@ -23,7 +23,7 @@
   <div class="set-label">3. Facebook Page ID (Fanpage):</div>
   <input class="set-input" id="set-fb-id" type="text" placeholder="VD: 1449848791548930" />
 
-  <div class="set-label">4. Facebook Page Access Token:</div>
+  <div class="set-label">4. Facebook Page Token (hoặc User Token để tự đổi):</div>
   <div class="set-row">
     <input class="set-input" id="set-fb-token" type="password" autocomplete="off" placeholder="EAA..." />
     <button class="set-eye" id="set-toggle-fb" type="button">👁️</button>
@@ -53,6 +53,17 @@
     fbTokenInput.type = fbTokenInput.type === 'password' ? 'text' : 'password';
   };
 
+  function saveFbToLocal(id, token) {
+    if (typeof AppBus.setFacebookConfig === 'function') {
+      AppBus.setFacebookConfig(id, token);
+    } else {
+      AppBus.state.fbPageId = id;
+      AppBus.state.fbPageToken = token;
+      localStorage.setItem('fb_page_id', id);
+      localStorage.setItem('fb_page_token', token);
+    }
+  }
+
   saveBtn.onclick = async () => {
     try {
       const url = urlInput.value.trim();
@@ -67,14 +78,7 @@
 
       AppBus.setGasUrl(url);
       AppBus.setGeminiKey(key);
-      if (typeof AppBus.setFacebookConfig === 'function') {
-        AppBus.setFacebookConfig(fbId, fbToken);
-      } else {
-        AppBus.state.fbPageId = fbId;
-        AppBus.state.fbPageToken = fbToken;
-        localStorage.setItem('fb_page_id', fbId);
-        localStorage.setItem('fb_page_token', fbToken);
-      }
+      saveFbToLocal(fbId, fbToken);
 
       saveBtn.disabled = true;
       msg.textContent = '⏳ Đã lưu trên iPhone. Đang kiểm tra GAS & Facebook Page...';
@@ -90,12 +94,12 @@
       });
       const json = await res.json();
       if (json.ok) {
-        let html = `✅ ${json.msg}<br>${key ? '🔑 Đã lưu Gemini Key.' : '⚠️ Chưa có Gemini Key!'}`;
-        if (json.fbCheck) {
-          html += `<br>${json.fbCheck}`;
-        } else if (fbId && fbToken) {
-          html += `<br>⚠️ GAS chưa phản hồi tên Page (nhớ kiểm tra đã Deploy phiên bản mới ` + '`Code.gs`' + ` chưa nhé!).`;
+        if (json.upgradedPageToken) {
+          fbTokenInput.value = json.upgradedPageToken;
+          saveFbToLocal(fbId, json.upgradedPageToken);
         }
+        let html = `✅ ${json.msg}<br>${key ? '🔑 Đã lưu Gemini Key.' : '⚠️ Chưa có Gemini Key!'}`;
+        if (json.fbCheck) html += `<br>${json.fbCheck}`;
         msg.innerHTML = html;
       } else {
         msg.textContent = '⚠️ GAS báo lỗi: ' + (json.error || 'Không rõ');
