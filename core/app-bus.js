@@ -92,7 +92,10 @@ export const AppBus = {
     gasUrl: localStorage.getItem('gas_url') || '',
     geminiKey: localStorage.getItem('gemini_key') || '',
     fbPageId: localStorage.getItem('fb_page_id') || '',
-    fbPageToken: localStorage.getItem('fb_page_token') || ''
+    fbPageToken: localStorage.getItem('fb_page_token') || '',
+    ttClientKey: localStorage.getItem('tt_client_key') || '',
+    ttClientSecret: localStorage.getItem('tt_client_secret') || '',
+    ttDisplayName: localStorage.getItem('tt_display_name') || ''
   },
   listeners: {},
 
@@ -166,6 +169,13 @@ export const AppBus = {
     this.state.fbPageToken = pageToken.trim();
     localStorage.setItem('fb_page_id', this.state.fbPageId);
     localStorage.setItem('fb_page_token', this.state.fbPageToken);
+  },
+
+  setTikTokConfig(key, secret) {
+    this.state.ttClientKey = key.trim();
+    this.state.ttClientSecret = secret.trim();
+    localStorage.setItem('tt_client_key', this.state.ttClientKey);
+    localStorage.setItem('tt_client_secret', this.state.ttClientSecret);
   },
 
   openTab: () => {},
