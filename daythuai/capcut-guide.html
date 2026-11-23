@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cẩm Nang Dựng CapCut - KimBling Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-core.js?v=1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
+        input, select, textarea, button, p, span, label, h1, h2, h3 { font-size: 16px !important; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col p-4 pb-16 antialiased">
+    <div class="max-w-md w-full mx-auto space-y-4">
+
+        <!-- THANH TAB HƯỚNG DẪN -->
+        <div class="grid grid-cols-4 gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-center">
+            <button onclick="selectTab(0)" id="tabBtn0" class="py-2.5 px-1 rounded-xl font-black bg-sky-500 text-slate-950" style="font-size: 12px !important;">1. Nguyên Liệu</button>
+            <button onclick="selectTab(1)" id="tabBtn1" class="py-2.5 px-1 rounded-xl font-bold text-slate-300 bg-slate-950" style="font-size: 12px !important;">2. Speed Ramp</button>
+            <button onclick="selectTab(2)" id="tabBtn2" class="py-2.5 px-1 rounded-xl font-bold text-slate-300 bg-slate-950" style="font-size: 12px !important;">3. Âm Thanh</button>
+            <button onclick="selectTab(3)" id="tabBtn3" class="py-2.5 px-1 rounded-xl font-bold text-slate-300 bg-slate-950" style="font-size: 12px !important;">4. Chữ &amp; Xuất</button>
+        </div>
+
+        <div id="tabBody" class="space-y-3.5"></div>
+    </div>
+
+    <script>
+        let currentTab = 0, project = null, audioData = null;
+
+        async function initGuide() {
+            try { project = JSON.parse(localStorage.getItem(KBCore.STORAGE_PROJECT) || 'null'); } catch (e) {}
+            audioData = await KBCore.idbGet('master_audio');
+            renderTab();
+        }
+
+        function selectTab(idx) {
+            currentTab = idx;
+            [0, 1, 2, 3].forEach(i => {
+                const b = document.getElementById(`tabBtn${i}`);
+                b.className = i === idx ? 'py-2.5 px-1 rounded-xl font-black bg-sky-500 text-slate-950' : 'py-2.5 px-1 rounded-xl font-bold text-slate-300 bg-slate-950';
+            });
+            renderTab();
+        }
+
+        async function downloadMasterAudio() {
+            if (!audioData || !audioData.arrayBuffer) { alert('Chưa có file âm thanh. Hãy thu từ Phòng Thu AI hoặc chọn ở trang chính nhé!'); return; }
+            const blob = new Blob([audioData.arrayBuffer], { type: audioData.type || 'audio/wav' });
+            await KBCore.saveOrShareBlob(blob, audioData.name || `KimBling-Voice-${Date.now()}.wav`, 'Giọng Đọc KimBling');
+        }
+
+        async function downloadSrtFile() {
+            if (!project?.scenes?.length) { alert('Chưa có kịch bản nào để xuất phụ đề.'); return; }
+            const srt = KBCore.buildSrtText(project);
+            if (!srt) { alert('Kịch bản chưa có lời thoại.'); return; }
+            const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
+            await KBCore.saveOrShareBlob(blob, `KimBling-PhuDe-${Date.now()}.srt`, 'File Phụ Đề SRT cho CapCut');
+        }
+
+        function copyAllScriptLines() {
+            if (!project?.scenes?.length) return;
+            const sorted = project.scenes.slice().sort((a, b) => a.sceneNum - b.sceneNum);
+            const lines = [`🎬 ${project.title || 'Kịch bản CapCut'}`, ''];
+            sorted.forEach(s => {
+                lines.push(`Cảnh ${s.sceneNum} (${s.timeRange}):`);
+                if (s.screenText) lines.push(`- Tiêu đề: ${s.screenText}`);
+                if (s.speech) lines.push(`- Thoại: "${s.speech}"`);
+                lines.push(`- Dựng CapCut: ${s.capcutGuide}`, '');
+            });
+            KBCore.copyText(lines.join('\n')).then(() => alert('✅ Đã chép toàn bộ thứ tự & chữ để dán sang CapCut!'));
+        }
+
+        function copyOneText(txt) {
+            KBCore.copyText(txt).then(() => alert(`✅ Đã chép: "${txt}"`));
+        }
+
+        function renderTab() {
+            const body = document.getElementById('tabBody');
+            const scenes = (project?.scenes || []).slice().sort((a, b) => a.sceneNum - b.sceneNum);
+
+            if (currentTab === 0) {
+                body.innerHTML = `
+                    <div class="bg-sky-500/15 border-2 border-sky-400/50 rounded-2xl p-4 space-y-2">
+                        <h2 class="font-black text-sky-200">📥 Bước 1: Chuẩn bị nguyên liệu vào CapCut</h2>
+                        <p class="text-slate-200 font-medium" style="font-size: 14px !important;">Mở CapCut → <strong>Dự án mới</strong> → chọn các clip gốc bạn vừa quay bằng Camera iPhone theo đúng thứ tự Cảnh 1 → hết.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-black text-emerald-300" style="font-size: 14px !important;">🎙️ File Giọng Đọc (.WAV):</span>
+                            <span class="text-slate-400 font-semibold" style="font-size: 12px !important;">${audioData ? `${audioData.duration.toFixed(1)}s` : 'Chưa có'}</span>
+                        </div>
+                        <button onclick="downloadMasterAudio()" class="w-full py-3 rounded-xl bg-emerald-500 text-slate-950 font-black shadow active:scale-95">⬇️ Tải Giọng Đọc (.WAV)</button>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                        <span class="font-black text-amber-300 block" style="font-size: 14px !important;">💬 File Phụ Đề Tự Động (.SRT) hoặc Chữ:</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="downloadSrtFile()" class="py-3 px-2 rounded-xl bg-amber-400 text-slate-950 font-black active:scale-95" style="font-size: 13px !important;">⬇️ Tải Phụ Đề .SRT</button>
+                            <button onclick="copyAllScriptLines()" class="py-3 px-2 rounded-xl bg-indigo-600 text-white font-black active:scale-95" style="font-size: 13px !important;">📋 Chép Kịch Bản</button>
+                        </div>
+                        <p class="text-slate-400 font-medium" style="font-size: 12px !important;">💡 Mẹo: Trong CapCut bạn cũng có thể dùng thẳng nút <strong>Văn bản → Phụ đề tự động</strong> để CapCut tự nghe file .WAV và tạo phụ đề Tiếng Việt chính xác 98%!</p>
+                    </div>`;
+                return;
+            }
+
+            if (currentTab === 1) {
+                if (!scenes.length) {
+                    body.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-300 font-bold">Hãy tạo hoặc phân tích kịch bản ở trang chính trước để xem lộ trình ghép từng cảnh nhé!</div>`;
+                    return;
+                }
+                body.innerHTML = `
+                    <div class="bg-rose-500/15 border-2 border-rose-400/50 rounded-2xl p-4 space-y-1.5">
+                        <h2 class="font-black text-rose-200">✂️ Bước 2: Cắt Clip, Speed Ramp &amp; Chuyển Cảnh</h2>
+                        <p class="text-slate-200 font-medium" style="font-size: 13px !important;">Luôn cắt bỏ <strong>~1 giây đầu</strong> lúc tay mới bấm quay để lấy đoạn ổn định nhất. Ở cảnh quay 60fps/120fps, vào <strong>Tốc độ → Uốn cong (Curve)</strong> chỉnh nhanh khúc nối, chậm ở điểm nhấn món!</p>
+                    </div>
+                    <div class="space-y-3">
+                        ${scenes.map((s, idx) => `
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-black text-amber-300" style="font-size: 14px !important;">Clip ${s.sceneNum} (${KBCore.escHtml(s.timeRange)})</span>
+                                    <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-sky-300 font-bold" style="font-size: 11px !important;">Giữ ${s.durationSec.toFixed(1)}s</span>
+                                </div>
+                                <p class="text-slate-200 font-medium" style="font-size: 13px !important;">🎬 ${KBCore.escHtml(s.visualDesc)}</p>
+                                <p class="text-emerald-300 font-bold bg-emerald-950/35 p-2 rounded-xl border border-emerald-500/30" style="font-size: 13px !important;">⚡ Speed Ramp &amp; Màu: ${KBCore.escHtml(s.capcutGuide)}</p>
+                                ${idx < scenes.length - 1 ? `<p class="text-indigo-300 font-bold" style="font-size: 12px !important;">◐ Khớp nối ${s.sceneNum} → ${scenes[idx+1].sceneNum}: Bấm dấu [ | ] giữa 2 clip → chọn <strong>Mờ dần (0.2s–0.3s)</strong> hoặc <strong>Kéo vào</strong>.</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>`;
+                return;
+            }
+
+            if (currentTab === 2) {
+                body.innerHTML = `
+                    <div class="bg-emerald-500/15 border-2 border-emerald-400/50 rounded-2xl p-4 space-y-1.5">
+                        <h2 class="font-black text-emerald-200">🔊 Bước 3: Lồng Tiếng, Nhạc Nền &amp; Hiệu Ứng Âm</h2>
+                        <p class="text-slate-200 font-medium" style="font-size: 13px !important;">Đây là tỷ lệ âm lượng chuẩn giúp giọng đọc rõ ràng và video nghe sang như chuyên gia:</p>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+                            <h3 class="font-black text-white">1. Tiếng gốc của các Clip quay</h3>
+                            <p class="text-slate-300" style="font-size: 13px !important;">Bấm <strong>Tắt tiếng clip</strong> (Âm lượng 0%) cho toàn bộ clip, trừ những cảnh ASMR (rót nước, đá rơi, chiên xào giòn) thì kéo lên <strong>100% – 130%</strong>.</p>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+                            <h3 class="font-black text-amber-300">2. Giọng đọc AI (hoặc Lồng tiếng trực tiếp)</h3>
+                            <p class="text-slate-300" style="font-size: 13px !important;">Vào <strong>Âm thanh → Âm thanh → Từ thiết bị</strong> chọn file .WAV vừa tải → đặt Âm lượng <strong>120% – 140%</strong>, bật thêm <strong>Làm rõ giọng</strong> nếu có.</p>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+                            <h3 class="font-black text-sky-300">3. Nhạc nền (BGM) &amp; Hiệu ứng (SFX)</h3>
+                            <p class="text-slate-300" style="font-size: 13px !important;">Thêm nhạc Chill / Lofi / Acoustic nhẹ và hạ Âm lượng nhạc xuống chỉ còn <strong>10% – 15%</strong> (không át tiếng nói). Tại các điểm hiện giá tiền hoặc chuyển cảnh, vào <strong>Hiệu ứng âm thanh</strong> chọn tiếng <em>Whoosh / Ting / Pop</em> để âm lượng khoảng <strong>40%</strong>.</p>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            body.innerHTML = `
+                <div class="bg-amber-500/15 border-2 border-amber-400/50 rounded-2xl p-4 space-y-1.5">
+                    <h2 class="font-black text-amber-200">🔤 Bước 4: Làm Chữ Đẹp &amp; Xuất Chuẩn Nét</h2>
+                    <p class="text-slate-200 font-medium" style="font-size: 13px !important;">Đặt chữ gọn gàng, không để hiệu ứng gõ chữ lẻ làm giật mắt người xem.</p>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                    <h3 class="font-black text-white">🎨 Công thức chữ TikTok dễ đọc nhất:</h3>
+                    <p class="text-slate-300" style="font-size: 13px !important;">• <strong>Phụ đề ở dưới:</strong> Bật <strong>Phụ đề tự động</strong> (chọn Mẫu chữ nền đen mờ bo góc, chữ trắng hoặc vàng kem, cỡ vừa, đặt cách đáy 20% để không bị mô tả TikTok che).</p>
+                    <p class="text-slate-300" style="font-size: 13px !important;">• <strong>Chữ Tiêu đề ở trên:</strong> Đặt cố định hoặc hiệu ứng vào nhẹ (0.2s) rồi đứng yên cho dễ đọc.</p>
+                </div>
+                ${scenes.some(s => s.screenText) ? `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                    <span class="font-black text-sky-300 block" style="font-size: 13px !important;">📋 Bấm chép nhanh từng Tiêu đề cảnh:</span>
+                    <div class="space-y-1.5">
+                        ${scenes.filter(s => s.screenText).map(s => `
+                            <div class="flex items-center justify-between gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                                <span class="text-amber-200 font-bold truncate" style="font-size: 13px !important;">Cảnh ${s.sceneNum}: ${KBCore.escHtml(s.screenText)}</span>
+                                <button onclick="copyOneText(${JSON.stringify(s.screenText).replace(/"/g, '&quot;')})" class="px-2.5 py-1 rounded-lg bg-slate-800 text-white font-bold shrink-0" style="font-size: 11px !important;">Chép</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
+                <div class="bg-gradient-to-r from-rose-500/20 to-emerald-500/20 border-2 border-emerald-400/60 rounded-2xl p-4 space-y-1">
+                    <h3 class="font-black text-emerald-300">📤 Thông số Xuất CapCut chuẩn nét 100%:</h3>
+                    <p class="text-white font-bold" style="font-size: 14px !important;">Độ phân giải: <strong>1080p</strong> • Tỷ lệ khung hình: <strong>60fps</strong> • Tốc độ mã: <strong>Cao (hoặc Khuyến nghị)</strong></p>
+                </div>`;
+        }
+
+        window.onload = initGuide;
+    </script>
+</body>
+</html>

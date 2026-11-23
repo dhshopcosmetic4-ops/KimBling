@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Thước Góc Quay AR - KimBling Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-core.js?v=1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow: hidden; width: 100%; height: 100dvh; }
+        button, p, span, select { font-size: 15px !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-black text-slate-100 flex flex-col select-none antialiased">
+
+    <input id="nativeCamInput" type="file" accept="video/*" capture="environment" class="hidden" onchange="onNativeVideoRecorded(this)">
+
+    <!-- KHUNG CAMERA SOI GÓC -->
+    <div class="relative flex-1 bg-black overflow-hidden flex items-center justify-center">
+        <video id="coachVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+
+        <!-- LƯỚI 3x3 + HƯỚNG DẪN AR -->
+        <div id="gridOverlay" class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none z-10">
+            <div class="border-b border-r border-white/20"></div><div class="border-b border-r border-white/20"></div><div class="border-b border-white/20"></div>
+            <div class="border-b border-r border-white/20"></div><div class="border-b border-r border-white/20"></div><div class="border-b border-white/20"></div>
+            <div class="border-r border-white/20"></div><div class="border-r border-white/20"></div><div></div>
+        </div>
+        <canvas id="arGuideCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
+
+        <!-- THƯỚC THĂNG BẰNG NGANG GIỮA MÀN HÌNH -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div class="relative w-28 h-6 flex items-center justify-center">
+                <div class="w-24 h-[2px] bg-white/30 rounded-full"></div>
+                <div id="rollLevelBar" class="absolute w-14 h-[3.5px] bg-emerald-400 rounded-full transition-transform duration-75 shadow"></div>
+            </div>
+        </div>
+
+        <!-- THANH CHỈ SỐ ĐỘ NGHIÊNG & ĐÈN TRÊN CÙNG -->
+        <div class="absolute top-3 inset-x-3 z-30 space-y-2 pointer-events-auto">
+            <div class="flex items-center justify-between gap-2">
+                <span id="pitchBadge" class="px-3 py-1 rounded-full bg-black/75 border border-sky-400/60 text-sky-200 font-black backdrop-blur-md shadow" style="font-size: 13px !important;">📐 Góc: --° / 55°</span>
+                <span id="lightBadge" class="px-3 py-1 rounded-full bg-black/75 border border-amber-400/60 text-amber-200 font-bold backdrop-blur-md shadow" style="font-size: 13px !important;">☀️ Đo sáng...</span>
+            </div>
+
+            <div id="upsideBanner" class="hidden px-3 py-1.5 rounded-xl bg-rose-600/90 border border-rose-300 text-white font-black text-center shadow-lg" style="font-size: 13px !important;">
+                🙃 CẢNH NÀY CẦM LỘN NGƯỢC ĐIỆN THOẠI (Camera xuống sát bàn)
+            </div>
+
+            <!-- CHỌN NHANH CÔNG THỨC SHOT NẾU MỞ TỰ DO -->
+            <div id="recipePillsBar" class="flex space-x-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+        </div>
+
+        <!-- HỘP NHẬN XÉT AI SOI BỐ CỤC -->
+        <div id="aiScanResultBox" class="hidden absolute bottom-36 inset-x-3 z-30 bg-slate-900/90 backdrop-blur-md border-2 border-cyan-400/60 rounded-2xl p-3 space-y-1 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <span class="font-black text-cyan-300" style="font-size: 13px !important;">🤖 AI Chấm Góc &amp; Ánh Đèn:</span>
+                <button onclick="document.getElementById('aiScanResultBox').classList.add('hidden')" class="text-slate-400 font-black px-2" style="font-size: 13px !important;">✕</button>
+            </div>
+            <p id="aiScanResultText" class="text-white font-semibold leading-snug" style="font-size: 13px !important;"></p>
+        </div>
+
+        <!-- THÔNG SỐ CẦN CHỈNH KHI SANG CAMERA GỐC -->
+        <div class="absolute bottom-3 inset-x-3 z-30 bg-black/80 backdrop-blur-md border border-white/20 rounded-2xl p-3 space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+                <span id="coachTitle" class="font-black text-amber-300 truncate" style="font-size: 14px !important;">Đo góc trước khi quay</span>
+                <button onclick="enableGyroIos()" id="btnGyroPerm" class="hidden px-2.5 py-0.5 rounded-lg bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 11px !important;">📐 Bật Cảm Biến</button>
+            </div>
+            <p id="coachSpecsLine" class="text-emerald-300 font-bold" style="font-size: 12px !important;">⚙️ Camera gốc: Video • 1x • 4K 60fps • EV -0.7</p>
+            <p id="coachTipLine" class="text-slate-200 font-medium leading-snug" style="font-size: 13px !important;">Nghiêng cổ tay đến khi thanh góc chuyển XANH LÁ rồi bấm Mở Camera Gốc!</p>
+        </div>
+    </div>
+
+    <!-- THANH HÀNH ĐỘNG DƯỚI CÙNG -->
+    <footer class="shrink-0 bg-slate-900 border-t border-slate-800 p-3 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2">
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="runQuickAiSpotCheck()" id="btnAiSpotCheck" class="py-3 px-2 rounded-xl bg-indigo-600 text-white font-black active:scale-95 text-center" style="font-size: 13px !important;">🔍 AI Soi Đèn</button>
+            <button onclick="playSceneAudioHint()" id="btnPlayAudioHint" class="py-3 px-2 rounded-xl bg-slate-800 border border-emerald-500/50 text-emerald-300 font-black active:scale-95 text-center" style="font-size: 13px !important;">🎧 Nghe Nhịp</button>
+            <button onclick="switchCoachCamera()" class="py-3 px-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-black active:scale-95 text-center" style="font-size: 13px !important;">🔄 Đổi Cam</button>
+        </div>
+        <button onclick="launchNativeCamera()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-white font-black shadow-xl active:scale-95 flex items-center justify-center space-x-2">
+            <span>📷</span><span>Chuẩn Rồi! Mở Camera Gốc iPhone Quay</span>
+        </button>
+    </footer>
+
+    <script>
+        let stream = null, facing = 'environment', currentScene = null, targetAngle = 55, currentRecipeId = 'shelf_pullback';
+        let gyroBeta = 65, lightIv = 0, arRaf = 0, audioBuf = null, audioNode = null;
+        const lightCan = document.createElement('canvas'); lightCan.width = 48; lightCan.height = 48;
+        const lightCtx = lightCan.getContext('2d', { willReadFrequently: true });
+
+        async function initCoach() {
+            const params = new URLSearchParams(location.search);
+            const scId = params.get('sceneId');
+            try {
+                const rawSc = JSON.parse(localStorage.getItem('kb_active_coach_scene') || 'null');
+                if (rawSc && (!scId || rawSc.id === scId)) currentScene = rawSc;
+            } catch (e) {}
+
+            if (currentScene) {
+                currentRecipeId = currentScene.recipeId || 'shelf_pullback';
+                applySceneToUI(currentScene);
+            } else {
+                applyRecipePreset('shelf_pullback');
+            }
+            renderRecipePills();
+            setupGyro();
+            await startPreviewCam();
+            lightIv = setInterval(measureLight, 700);
+            drawArLoop();
+        }
+
+        function renderRecipePills() {
+            const bar = document.getElementById('recipePillsBar');
+            bar.innerHTML = Object.values(KBCore.SHOT_RECIPES).map(r => `
+                <button onclick="applyRecipePreset('${r.id}')" class="shrink-0 px-2.5 py-1 rounded-full font-black border backdrop-blur-md ${r.id === currentRecipeId ? 'bg-rose-500 text-white border-rose-300' : 'bg-black/65 text-slate-200 border-white/25'}" style="font-size: 11px !important;">${KBCore.escHtml(r.name)}</button>
+            `).join('');
+        }
+
+        function applyRecipePreset(id) {
+            const r = KBCore.SHOT_RECIPES[id] || KBCore.SHOT_RECIPES.shelf_pullback;
+            currentRecipeId = r.id;
+            targetAngle = r.angleDeg;
+            document.getElementById('coachTitle').innerText = r.name;
+            document.getElementById('coachSpecsLine').innerText = `⚙️ Camera Gốc: ${r.mode} • ${r.lens} • ${r.resFps} • EV ${r.ev}`;
+            document.getElementById('coachTipLine').innerText = r.propTip;
+            document.getElementById('upsideBanner').classList.toggle('hidden', r.holdMode !== 'upside_down');
+            renderRecipePills();
+        }
+
+        function applySceneToUI(sc) {
+            targetAngle = Number(sc.angleDeg) || 55;
+            document.getElementById('coachTitle').innerText = `Cảnh ${sc.sceneNum} (~${sc.recSeconds}s) • ${sc.recipeName}`;
+            document.getElementById('coachSpecsLine').innerText = `⚙️ Camera Gốc: ${sc.camMode} • ${sc.camLens} • ${sc.camResFps} • EV ${sc.camEv}`;
+            document.getElementById('coachTipLine').innerText = sc.propTip;
+            document.getElementById('upsideBanner').classList.toggle('hidden', sc.holdMode !== 'upside_down');
+        }
+
+        async function startPreviewCam() {
+            stopPreviewCam();
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+                const v = document.getElementById('coachVideo'); v.srcObject = stream;
+                v.style.transform = facing === 'user' ? 'scaleX(-1)' : 'none';
+                await v.play();
+            } catch (e) {
+                document.getElementById('lightBadge').innerText = '⚠️ Chưa cấp quyền Camera';
+            }
+        }
+        function stopPreviewCam() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+        function switchCoachCamera() { facing = facing === 'environment' ? 'user' : 'environment'; startPreviewCam(); }
+
+        function setupGyro() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                document.getElementById('btnGyroPerm').classList.remove('hidden');
+            } else {
+                window.addEventListener('deviceorientation', onGyro);
+            }
+        }
+        function enableGyroIos() {
+            DeviceOrientationEvent.requestPermission().then(res => {
+                if (res === 'granted') {
+                    window.addEventListener('deviceorientation', onGyro);
+                    document.getElementById('btnGyroPerm').classList.add('hidden');
+                }
+            }).catch(() => {});
+        }
+        function onGyro(e) {
+            if (e.beta != null) {
+                gyroBeta = Math.abs(e.beta);
+                const diff = Math.round(gyroBeta - targetAngle);
+                const ok = Math.abs(diff) <= 10;
+                const b = document.getElementById('pitchBadge');
+                b.innerText = ok ? `✅ CHUẨN GÓC ${Math.round(gyroBeta)}°` : `📐 ${Math.round(gyroBeta)}° / ${targetAngle}° (${diff > 0 ? '⬇️ Cúi nhẹ' : '⬆️ Ngẩng nhẹ'})`;
+                b.className = ok ? 'px-3 py-1 rounded-full bg-emerald-500 text-slate-950 font-black shadow' : 'px-3 py-1 rounded-full bg-black/75 border border-sky-400/60 text-sky-200 font-black backdrop-blur-md shadow';
+            }
+            if (e.gamma != null) {
+                const tilt = Math.max(-25, Math.min(25, e.gamma));
+                const bar = document.getElementById('rollLevelBar');
+                bar.style.transform = `rotate(${-tilt}deg)`;
+                bar.style.backgroundColor = Math.abs(tilt) <= 2.5 ? '#34d399' : '#fbbf24';
+            }
+        }
+
+        function measureLight() {
+            const v = document.getElementById('coachVideo'); if (!v || v.readyState < 2) return;
+            lightCtx.drawImage(v, 0, 0, 48, 48);
+            const d = lightCtx.getImageData(0, 0, 48, 48).data;
+            let sum = 0, glare = 0, cnt = 0;
+            for (let i = 0; i < d.length; i += 4) { const l = 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; sum += l; cnt++; if (l > 230) glare++; }
+            const avg = sum / cnt, gPct = glare / cnt, lb = document.getElementById('lightBadge');
+            if (gPct > 0.12) lb.innerText = '⚡ Hơi chói (Kéo EV -1.0)';
+            else if (avg < 65) lb.innerText = '🌑 Thiếu sáng (Bật đèn)';
+            else lb.innerText = '✨ Ánh sáng đẹp';
+        }
+
+        function drawArLoop() {
+            const c = document.getElementById('arGuideCanvas'), r = c.getBoundingClientRect();
+            if (c.width !== Math.round(r.width) || c.height !== Math.round(r.height)) { c.width = Math.max(1, Math.round(r.width)); c.height = Math.max(1, Math.round(r.height)); }
+            const ctx = c.getContext('2d'), w = c.width, h = c.height;
+            ctx.clearRect(0, 0, w, h);
+            const rec = KBCore.SHOT_RECIPES[currentRecipeId] || KBCore.SHOT_RECIPES.shelf_pullback;
+            ctx.save();
+            if (rec.svgType === 'reveal') {
+                ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(w * 0.66, 0, w * 0.34, h);
+                ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+                ctx.beginPath(); ctx.moveTo(w * 0.66, 0); ctx.lineTo(w * 0.66, h); ctx.stroke();
+                ctx.fillStyle = '#fde68a'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Che mép tường ở đây', w * 0.83, h * 0.5);
+            } else if (rec.svgType === 'rack_focus') {
+                ctx.strokeStyle = 'rgba(56,189,248,0.85)'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]);
+                ctx.strokeRect(w * 0.58, h * 0.25, w * 0.28, h * 0.22);
+                ctx.strokeStyle = 'rgba(244,63,94,0.9)';
+                ctx.strokeRect(w * 0.18, h * 0.45, w * 0.40, h * 0.28);
+            } else {
+                ctx.strokeStyle = 'rgba(251,191,36,0.75)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]);
+                ctx.strokeRect(w * 0.18, h * 0.26, w * 0.64, h * 0.44);
+            }
+            ctx.restore();
+            arRaf = requestAnimationFrame(drawArLoop);
+        }
+
+        async function runQuickAiSpotCheck() {
+            const v = document.getElementById('coachVideo'); if (!v || v.readyState < 2) { alert('Camera chưa sẵn sàng.'); return; }
+            if (!KBCore.hasKey()) { alert('Hãy dán Gemini API Key ở nút 🔑 trang chính để AI soi bố cục!'); return; }
+            const btn = document.getElementById('btnAiSpotCheck'), box = document.getElementById('aiScanResultBox'), txt = document.getElementById('aiScanResultText');
+            btn.disabled = true; btn.innerText = '⏳ Đang soi...';
+            try {
+                const sc = Math.min(1, 640 / v.videoWidth), tmp = document.createElement('canvas');
+                tmp.width = Math.round(v.videoWidth * sc); tmp.height = Math.round(v.videoHeight * sc);
+                tmp.getContext('2d').drawImage(v, 0, 0, tmp.width, tmp.height);
+                const b64 = tmp.toDataURL('image/jpeg', 0.72).split(',')[1];
+                const goal = currentScene ? currentScene.visualDesc : (KBCore.SHOT_RECIPES[currentRecipeId]?.name || 'Quay video');
+                const prompt = `Bạn là thầy dạy quay video điện thoại. Xem 1 khung hình thử trước khi quay cho cảnh: "${goal}". Nhận xét thật ngắn gọn 2 câu tiếng Việt: 1) Ánh sáng & nền phía sau có ổn/bừa bộn/chói đèn không? 2) Cần dịch máy hay chỉnh góc thế nào cho đẹp hơn?`;
+                const ans = await KBCore.callGemini(prompt, [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }], { temp: 0.3, maxTokens: 300, timeoutMs: 16000 });
+                box.classList.remove('hidden');
+                txt.innerText = ans || `⚠️ Không soi được (${KBCore.getLastError()})`;
+            } finally { btn.disabled = false; btn.innerText = '🔍 AI Soi Đèn'; }
+        }
+
+        async function playSceneAudioHint() {
+            if (audioNode) { try { audioNode.stop(); } catch (e) {} audioNode = null; document.getElementById('btnPlayAudioHint').innerText = '🎧 Nghe Nhịp'; return; }
+            const data = await KBCore.idbGet('master_audio');
+            if (!data || !data.arrayBuffer) { alert('Chưa có file Audio trong bộ nhớ.'); return; }
+            const ctx = KBCore.getAudioCtx(); if (!ctx) return; await ctx.resume();
+            if (!audioBuf) audioBuf = await KBCore.decodeAudioBuffer(data.arrayBuffer);
+            if (!audioBuf) return;
+            const st = currentScene ? Math.max(0, currentScene.audioStartSec || 0) : 0;
+            const dur = currentScene ? Math.max(0.5, (currentScene.audioEndSec || st + 4) - st) : Math.min(8, audioBuf.duration);
+            const src = ctx.createBufferSource(); src.buffer = audioBuf; src.connect(ctx.destination);
+            src.onended = () => { audioNode = null; document.getElementById('btnPlayAudioHint').innerText = '🎧 Nghe Nhịp'; };
+            src.start(0, st, dur); audioNode = src;
+            document.getElementById('btnPlayAudioHint').innerText = '⏹️ Dừng';
+        }
+
+        function launchNativeCamera() {
+            stopPreviewCam();
+            document.getElementById('nativeCamInput').click();
+        }
+
+        function onNativeVideoRecorded(input) {
+            const file = input.files && input.files[0]; input.value = '';
+            if (!file) { startPreviewCam(); return; }
+            if (currentScene?.id) KBCore.notifyParent('kb_scene_checked', { sceneId: currentScene.id });
+            alert('✅ Đã quay xong bằng Camera Gốc iPhone!\nVideo nét 60fps đã nằm trong Thư viện Ảnh iPhone để lát thả vào CapCut.');
+            KBCore.notifyParent('kb_close_popup', {});
+        }
+
+        window.addEventListener('pagehide', () => { stopPreviewCam(); clearInterval(lightIv); cancelAnimationFrame(arRaf); });
+        window.onload = initCoach;
+    </script>
+</body>
+</html>

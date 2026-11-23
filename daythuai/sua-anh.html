@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Studio Ảnh AI - KimBling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-core.js?v=1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
+        input, select, textarea, button, p, span, label, h1, h2 { font-size: 16px !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type="range"].pro-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 32px; background: transparent; touch-action: none; }
+        input[type="range"].pro-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: #334155; }
+        input[type="range"].pro-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 999px; background: #fff; border: 3px solid #f43f5e; margin-top: -8px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-[100dvh] flex flex-col overflow-hidden antialiased">
+
+    <input id="photoFileInput" type="file" accept="image/*" class="hidden" onchange="loadImageFile(this)">
+    <input id="photoCamInput" type="file" accept="image/*" capture="environment" class="hidden" onchange="loadImageFile(this)">
+    <input id="baFirstInput" type="file" accept="image/*" class="hidden" onchange="handleBaPick(1, this)">
+    <input id="baSecondInput" type="file" accept="image/*" class="hidden" onchange="handleBaPick(2, this)">
+
+    <!-- THANH TRÊN -->
+    <div class="flex items-center justify-between px-3 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 gap-1.5">
+        <button onclick="document.getElementById('photoCamInput').click()" class="px-2.5 py-2 rounded-xl bg-rose-600 text-white font-black shrink-0" style="font-size: 12px !important;">📸 Chụp</button>
+        <button onclick="document.getElementById('photoFileInput').click()" class="px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-600 text-amber-300 font-black shrink-0" style="font-size: 12px !important;">🖼️ Chọn</button>
+        <button onclick="openBaMergePrompt()" class="px-2.5 py-2 rounded-xl bg-indigo-600 text-white font-black shrink-0" style="font-size: 12px !important;">🔀 Ghép T/S</button>
+        <button onclick="saveFinalPhoto()" id="btnSavePhoto" disabled class="px-3 py-2 rounded-xl bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black shrink-0" style="font-size: 12px !important;">💾 Lưu</button>
+    </div>
+
+    <!-- VÙNG XEM ẢNH -->
+    <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden p-2 min-h-0">
+        <div id="emptyPhotoState" class="text-center p-6 space-y-3">
+            <span class="text-5xl block">🖼️</span>
+            <p class="text-slate-300 font-bold">Chụp bằng Camera Gốc iPhone hoặc chọn ảnh có sẵn để chỉnh nét, khử chói đèn, làm ảnh Bìa / Trước-Sau!</p>
+            <div class="flex justify-center space-x-2">
+                <button onclick="document.getElementById('photoCamInput').click()" class="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-black" style="font-size: 14px !important;">📸 Chụp Ảnh</button>
+                <button onclick="document.getElementById('photoFileInput').click()" class="px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-amber-300 font-black" style="font-size: 14px !important;">🖼️ Thư Viện</button>
+            </div>
+        </div>
+        <canvas id="previewCanvas" class="hidden max-w-full max-h-full object-contain rounded-xl"></canvas>
+        <button id="btnCompareOrig" onmousedown="holdOrig(true)" onmouseup="holdOrig(false)" onmouseleave="holdOrig(false)" ontouchstart="holdOrig(true)" ontouchend="holdOrig(false)"
+            class="hidden absolute top-3 left-3 px-3 py-1 rounded-full bg-black/75 border border-white/25 text-white font-black select-none" style="font-size: 12px !important;">👁️ Giữ xem Gốc</button>
+        <div id="retouchNote" class="hidden absolute top-3 right-3 max-w-[60%] px-2.5 py-1 rounded-xl bg-emerald-500/90 text-slate-950 font-black truncate pointer-events-none" style="font-size: 11px !important;"></div>
+        <div id="wmBadge" class="hidden absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-slate-900/80 text-amber-300 font-black pointer-events-none" style="font-size: 11px !important;">✨ KimBling Studio</div>
+    </div>
+
+    <!-- BẢNG CÔNG CỤ CHỈNH ẢNH -->
+    <div id="photoToolsDock" class="hidden shrink-0 bg-slate-900 border-t border-slate-800 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] space-y-2">
+        <div class="flex items-center space-x-3.5 overflow-x-auto no-scrollbar border-b border-slate-800 pb-1.5">
+            <button onclick="switchTab('smart')" id="pTab_smart" class="shrink-0 font-black text-sky-400 border-b-2 border-sky-400 pb-0.5" style="font-size: 14px !important;">Thông minh</button>
+            <button onclick="switchTab('beauty')" id="pTab_beauty" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Da &amp; Nét</button>
+            <button onclick="switchTab('adjust')" id="pTab_adjust" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Ánh sáng &amp; Màu</button>
+            <button onclick="switchTab('filter')" id="pTab_filter" class="shrink-0 font-black text-slate-400" style="font-size: 14px !important;">Bộ lọc</button>
+        </div>
+
+        <div id="panel_smart" class="flex space-x-2.5 overflow-x-auto no-scrollbar py-1">
+            <button onclick="runAiAutoEnhance()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-indigo-500/60">
+                <span class="w-10 h-10 rounded-full bg-indigo-500/25 text-indigo-300 flex items-center justify-center text-lg">🪄</span>
+                <span id="smartBtnLbl" class="font-bold text-slate-100" style="font-size: 12px !important;">AI Tự Chỉnh</span>
+            </button>
+            <button onclick="toggleWatermark()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-emerald-500/50">
+                <span class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-lg">🏷️</span>
+                <span id="wmBtnLbl" class="font-bold text-emerald-300" style="font-size: 12px !important;">Tem KB: BẬT</span>
+            </button>
+            <button onclick="resetAll()" class="shrink-0 flex flex-col items-center space-y-1 px-3 py-1.5 rounded-2xl bg-slate-950 border border-slate-700">
+                <span class="w-10 h-10 rounded-full bg-slate-800 text-slate-200 flex items-center justify-center text-lg">↺</span>
+                <span class="font-bold text-slate-200" style="font-size: 12px !important;">Ảnh Gốc</span>
+            </button>
+        </div>
+
+        <div id="panel_filter" class="hidden flex space-x-2 overflow-x-auto no-scrollbar py-1.5"></div>
+
+        <div id="panel_slider" class="hidden space-y-1.5">
+            <div id="toolsRow" class="flex space-x-2.5 overflow-x-auto no-scrollbar py-1"></div>
+            <div class="bg-slate-950 rounded-2xl px-3 py-1.5 border border-slate-800">
+                <div class="flex items-center justify-between">
+                    <span id="activeToolLbl" class="font-bold text-sky-300" style="font-size: 13px !important;">💡 Hết chói</span>
+                    <span id="activeToolVal" class="font-mono font-black text-white" style="font-size: 13px !important;">0</span>
+                </div>
+                <input id="activeToolSlider" type="range" min="0" max="100" value="0" class="pro-slider" oninput="onSliderMove(this.value)" onchange="renderToolsRow()">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FILTERS = [
+            { id: 'none', label: '📷 Gốc', b: 1.0, c: 1.0, s: 1.0, sepia: 0 },
+            { id: 'food', label: '🔥 Đồ Ăn Ngon', b: 1.03, c: 1.10, s: 1.24, sepia: 0 },
+            { id: 'korean', label: '✨ Hàn Trong Trẻo', b: 1.04, c: 1.02, s: 1.06, sepia: 0 },
+            { id: 'pmu', label: '💄 Chuẩn Mực PMU', b: 1.02, c: 1.05, s: 1.00, sepia: 0 },
+            { id: 'film', label: '🎞️ Film Ấm', b: 1.00, c: 1.10, s: 1.12, sepia: 0.08 }
+        ];
+        const BEAUTY_TOOLS = [
+            { id: 'skinWhiten', name: 'Sáng da', icon: '✨', min: 0, max: 100 },
+            { id: 'skinSmooth', name: 'Mịn da', icon: '🫧', min: 0, max: 80 },
+            { id: 'sharpen', name: 'Sắc nét', icon: '🔺', min: 0, max: 100 }
+        ];
+        const ADJUST_TOOLS = [
+            { id: 'deglare', name: 'Hết chói', icon: '💡', min: 0, max: 100 },
+            { id: 'shadows', name: 'Cứu tối', icon: '🌓', min: -50, max: 100 },
+            { id: 'highlights', name: 'Giảm lóa', icon: '⭕', min: -100, max: 50 },
+            { id: 'brightness', name: 'Độ sáng', icon: '☀️', min: -50, max: 50 },
+            { id: 'contrast', name: 'Tương phản', icon: '◐', min: -50, max: 50 },
+            { id: 'saturation', name: 'Bão hòa', icon: '💧', min: -50, max: 50 },
+            { id: 'temp', name: 'Nhiệt màu', icon: '🌡️', min: -50, max: 50 },
+            { id: 'vignette', name: 'Viền tối', icon: '🔲', min: -50, max: 50 }
+        ];
+
+        let adj = { skinWhiten:0, skinSmooth:0, sharpen:0, deglare:0, shadows:0, highlights:0, brightness:0, contrast:0, saturation:0, temp:0, vignette:0 };
+        let activeTab = 'smart', activeToolId = 'deglare', filterIdx = 0, wmOn = true, showOrig = false;
+        let srcCanvas = null, gl = null, baFirstImg = null;
+
+        function createGL(canvas) {
+            const ctx = canvas.getContext('webgl', { preserveDrawingBuffer: true }) || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
+            if (!ctx) return null;
+            const vsSrc = `attribute vec2 a_p; varying vec2 v_uv; void main(){ gl_Position=vec4(a_p,0.0,1.0); v_uv=vec2(a_p.x*0.5+0.5, 0.5-a_p.y*0.5); }`;
+            const fsSrc = `precision mediump float; uniform sampler2D u_img; uniform vec2 u_px; uniform vec4 u_bcst; uniform vec4 u_dshv; uniform vec4 u_sk; varying vec2 v_uv;
+                float isSkin(vec3 c){ float cb=0.5-0.1687*c.r-0.3313*c.g+0.5*c.b, cr=0.5+0.5*c.r-0.4187*c.g-0.0813*c.b; return smoothstep(0.30,0.35,cb)*(1.0-smoothstep(0.46,0.51,cb))*smoothstep(0.515,0.56,cr)*(1.0-smoothstep(0.65,0.70,cr)); }
+                void main(){
+                    vec3 col = texture2D(u_img, v_uv).rgb;
+                    float sm = (u_sk.x>0.001||u_sk.y>0.001) ? isSkin(col) : 0.0;
+                    if(u_sk.y>0.001 && sm>0.15){ vec2 o=u_px*(1.2+u_sk.y*2.6); vec3 b=(col+texture2D(u_img,v_uv+vec2(o.x,0.)).rgb+texture2D(u_img,v_uv-vec2(o.x,0.)).rgb+texture2D(u_img,v_uv+vec2(0.,o.y)).rgb+texture2D(u_img,v_uv-vec2(0.,o.y)).rgb)/5.0; col=mix(col,b,u_sk.y*0.7*sm); }
+                    if(u_sk.z>0.001){ vec2 d=u_px*1.1; vec3 lap=col*4.0-(texture2D(u_img,v_uv+vec2(d.x,0.)).rgb+texture2D(u_img,v_uv-vec2(d.x,0.)).rgb+texture2D(u_img,v_uv+vec2(0.,d.y)).rgb+texture2D(u_img,v_uv-vec2(0.,d.y)).rgb); col=clamp(col+lap*u_sk.z*0.4,0.,1.); }
+                    if(u_sk.x>0.001 && sm>0.15){ col=mix(col, pow(max(col,vec3(0.001)), vec3(1.0-u_sk.x*0.24))+vec3(0.025,0.012,0.018)*u_sk.x, sm*0.75); }
+                    float l = dot(col, vec3(0.299,0.587,0.114));
+                    if(u_dshv.x>0.001){ col *= (1.0 - smoothstep(0.72,1.0,l)*u_dshv.x*0.32); }
+                    l = dot(col, vec3(0.299,0.587,0.114));
+                    col *= (1.0 + u_dshv.y*1.1*smoothstep(0.52,0.04,l) + u_dshv.z*0.48*smoothstep(0.55,1.0,l));
+                    col.r += u_bcst.w; col.b -= u_bcst.w;
+                    col = mix(vec3(dot(col, vec3(0.2126,0.7152,0.0722))), col, u_bcst.z);
+                    col = (col*u_bcst.x - 0.5)*u_bcst.y + 0.5;
+                    if(abs(u_dshv.w)>0.001){ vec2 dv=v_uv-vec2(0.5); float d2=dot(dv,dv)*2.0; col *= (1.0-u_dshv.w*d2*d2); }
+                    gl_FragColor = vec4(clamp(col, 0., 1.), 1.);
+                }`;
+            const mk = (t, s) => { const sh = ctx.createShader(t); ctx.shaderSource(sh, s); ctx.compileShader(sh); return sh; };
+            const p = ctx.createProgram(); ctx.attachShader(p, mk(ctx.VERTEX_SHADER, vsSrc)); ctx.attachShader(p, mk(ctx.FRAGMENT_SHADER, fsSrc)); ctx.linkProgram(p); ctx.useProgram(p);
+            const buf = ctx.createBuffer(); ctx.bindBuffer(ctx.ARRAY_BUFFER, buf); ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), ctx.STATIC_DRAW);
+            const loc = ctx.getAttribLocation(p, 'a_p'); ctx.enableVertexAttribArray(loc); ctx.vertexAttribPointer(loc, 2, ctx.FLOAT, false, 0, 0);
+            const tex = ctx.createTexture(); ctx.bindTexture(ctx.TEXTURE_2D, tex);
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE); ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR); ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+            const u = { img: ctx.getUniformLocation(p,'u_img'), px: ctx.getUniformLocation(p,'u_px'), bcst: ctx.getUniformLocation(p,'u_bcst'), dshv: ctx.getUniformLocation(p,'u_dshv'), sk: ctx.getUniformLocation(p,'u_sk') };
+            return {
+                upload(el, w, h) {
+                    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; ctx.viewport(0, 0, w, h); }
+                    ctx.activeTexture(ctx.TEXTURE0); ctx.bindTexture(ctx.TEXTURE_2D, tex); ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, el);
+                    ctx.uniform1i(u.img, 0); ctx.uniform2f(u.px, 1/w, 1/h);
+                },
+                draw(isOrig) {
+                    ctx.useProgram(p);
+                    if (isOrig) { ctx.uniform4f(u.bcst,1,1,1,0); ctx.uniform4f(u.dshv,0,0,0,0); ctx.uniform4f(u.sk,0,0,0,0); ctx.drawArrays(ctx.TRIANGLES,0,6); return; }
+                    const f = FILTERS[filterIdx];
+                    ctx.uniform4f(u.bcst, f.b*(1+adj.brightness*0.007), f.c*(1+adj.contrast*0.008), f.s*(1+adj.saturation*0.011), adj.temp*0.004);
+                    ctx.uniform4f(u.dshv, adj.deglare*0.01, adj.shadows*0.007, adj.highlights*0.005, adj.vignette*0.012);
+                    ctx.uniform4f(u.sk, adj.skinWhiten*0.01, adj.skinSmooth*0.01, adj.sharpen*0.01, 0);
+                    ctx.drawArrays(ctx.TRIANGLES, 0, 6);
+                }
+            };
+        }
+
+        function loadImageFile(input) {
+            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
+            const url = URL.createObjectURL(file), img = new Image();
+            img.onload = () => {
+                const sc = Math.min(1, 1800 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+                mountPhotoCanvas(c);
+            };
+            img.src = url;
+        }
+
+        function openBaMergePrompt() {
+            alert('Chọn Ảnh 1 (TRƯỚC) xong sẽ tự hỏi chọn Ảnh 2 (SAU) để ghép đôi 50/50 nhé!');
+            document.getElementById('baFirstInput').click();
+        }
+        function handleBaPick(step, input) {
+            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
+            const url = URL.createObjectURL(file), img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                if (step === 1) { baFirstImg = img; document.getElementById('baSecondInput').click(); return; }
+                const halfW = 540, h = Math.round(img.height * (halfW / img.width)), m = document.createElement('canvas');
+                m.width = 1080; m.height = h; const ctx = m.getContext('2d');
+                ctx.drawImage(baFirstImg, 0, 0, halfW, h); ctx.drawImage(img, halfW, 0, halfW, h);
+                ctx.fillStyle = '#fff'; ctx.fillRect(halfW - 2, 0, 4, h); ctx.font = 'bold 28px sans-serif';
+                ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(20, 20, 140, 44); ctx.fillRect(halfW + 20, 20, 110, 44);
+                ctx.fillStyle = '#fbbf24'; ctx.fillText('TRƯỚC', 38, 52); ctx.fillText('SAU', halfW + 44, 52);
+                baFirstImg = null; mountPhotoCanvas(m);
+            };
+            img.src = url;
+        }
+
+        function mountPhotoCanvas(c) {
+            srcCanvas = c; resetAll(false);
+            document.getElementById('emptyPhotoState').classList.add('hidden');
+            const pv = document.getElementById('previewCanvas'); pv.classList.remove('hidden');
+            document.getElementById('btnCompareOrig').classList.remove('hidden');
+            document.getElementById('photoToolsDock').classList.remove('hidden');
+            document.getElementById('btnSavePhoto').disabled = false;
+            document.getElementById('wmBadge').classList.toggle('hidden', !wmOn);
+            if (!gl) gl = createGL(pv);
+            if (gl) { gl.upload(srcCanvas, srcCanvas.width, srcCanvas.height); gl.draw(false); }
+            renderFilterChips(); switchTab('smart');
+        }
+
+        function redraw() { if (gl) gl.draw(showOrig); }
+        function holdOrig(v) { showOrig = !!v; redraw(); }
+        function toggleWatermark() { wmOn = !wmOn; document.getElementById('wmBtnLbl').innerText = wmOn ? 'Tem KB: BẬT' : 'Tem KB: TẮT'; document.getElementById('wmBadge').classList.toggle('hidden', !wmOn); }
+        function resetAll(doDraw = true) { Object.keys(adj).forEach(k => adj[k] = 0); filterIdx = 0; document.getElementById('retouchNote').classList.add('hidden'); if (doDraw) { renderFilterChips(); renderToolsRow(); redraw(); } }
+
+        function switchTab(t) {
+            activeTab = t;
+            ['smart','beauty','adjust','filter'].forEach(k => {
+                document.getElementById(`pTab_${k}`).className = k === t ? 'shrink-0 font-black text-rose-400 border-b-2 border-rose-400 pb-0.5' : 'shrink-0 font-black text-slate-400';
+            });
+            document.getElementById('panel_smart').classList.toggle('hidden', t !== 'smart');
+            document.getElementById('panel_filter').classList.toggle('hidden', t !== 'filter');
+            document.getElementById('panel_slider').classList.toggle('hidden', t !== 'beauty' && t !== 'adjust');
+            if (t === 'beauty') { activeToolId = BEAUTY_TOOLS[0].id; renderToolsRow(); }
+            if (t === 'adjust') { activeToolId = ADJUST_TOOLS[0].id; renderToolsRow(); }
+        }
+        function renderFilterChips() { document.getElementById('panel_filter').innerHTML = FILTERS.map((f, i) => `<button onclick="filterIdx=${i};renderFilterChips();redraw();" class="shrink-0 px-3.5 py-2 rounded-xl font-black border ${i===filterIdx?'bg-rose-500 text-white border-rose-300':'bg-slate-950 text-slate-300 border-slate-700'}">${f.label}</button>`).join(''); }
+        function renderToolsRow() {
+            const list = activeTab === 'beauty' ? BEAUTY_TOOLS : ADJUST_TOOLS;
+            document.getElementById('toolsRow').innerHTML = list.map(t => `<button onclick="activeToolId='${t.id}';renderToolsRow();" class="shrink-0 flex flex-col items-center space-y-1 px-1.5"><span class="w-10 h-10 rounded-full flex items-center justify-center border-2 ${t.id===activeToolId?'bg-rose-500/25 border-rose-400 text-white':'bg-slate-950 border-slate-700 text-slate-300'}">${t.icon}</span><span class="font-bold ${t.id===activeToolId?'text-rose-300':'text-slate-300'}" style="font-size: 11px !important;">${t.name}${adj[t.id]!==0?' •':''}</span></button>`).join('');
+            const tool = list.find(t => t.id === activeToolId) || list[0];
+            const s = document.getElementById('activeToolSlider'); s.min = tool.min; s.max = tool.max; s.value = adj[tool.id];
+            document.getElementById('activeToolLbl').innerText = `${tool.icon} ${tool.name}`;
+            document.getElementById('activeToolVal').innerText = adj[tool.id];
+        }
+        function onSliderMove(v) { adj[activeToolId] = Number(v); document.getElementById('activeToolVal').innerText = v; redraw(); }
+
+        async function runAiAutoEnhance() {
+            if (!srcCanvas) return;
+            const lbl = document.getElementById('smartBtnLbl'), note = document.getElementById('retouchNote');
+            if (KBCore.hasKey()) {
+                lbl.innerText = '⏳...';
+                const tmp = document.createElement('canvas'); tmp.width = 480; tmp.height = Math.round(480 * (srcCanvas.height / srcCanvas.width));
+                tmp.getContext('2d').drawImage(srcCanvas, 0, 0, tmp.width, tmp.height);
+                const b64 = tmp.toDataURL('image/jpeg', 0.72).split(',')[1];
+                const res = await KBCore.callGemini(
+                    'Chỉnh ảnh tự nhiên (khử chói đèn, giữ nét chi tiết món ăn hoặc da mặt). Trả về JSON: {"summary":"...","deglare":0..40,"sharpen":10..35,"shadows":0..25,"highlights":-40..10,"brightness":-10..15,"contrast":0..15,"saturation":0..18,"temp":-10..12,"skinWhiten":0..22,"skinSmooth":0..15}',
+                    [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }],
+                    { json: true, temp: 0.2, timeoutMs: 16000 }
+                );
+                lbl.innerText = 'AI Tự Chỉnh';
+                if (res) {
+                    Object.keys(adj).forEach(k => { if (typeof res[k] === 'number') adj[k] = Math.round(res[k]); });
+                    note.innerText = `🤖 ${res.summary || 'Đã chỉnh tối ưu!'}`; note.classList.remove('hidden');
+                    redraw(); return;
+                }
+            }
+            adj.deglare = 22; adj.sharpen = 24; adj.shadows = 14; adj.highlights = -18; adj.contrast = 8; adj.saturation = 8;
+            note.innerText = '🤖 Đã khử chói & tăng nét'; note.classList.remove('hidden'); redraw();
+        }
+
+        function saveFinalPhoto() {
+            if (!srcCanvas) return;
+            showOrig = false; redraw();
+            const pv = document.getElementById('previewCanvas'), out = document.createElement('canvas');
+            out.width = pv.width; out.height = pv.height;
+            const octx = out.getContext('2d'); octx.drawImage(pv, 0, 0);
+            if (wmOn) {
+                octx.save(); octx.font = 'bold 24px sans-serif';
+                const t = '✨ KimBling Studio', tw = octx.measureText(t).width;
+                octx.fillStyle = 'rgba(15,23,42,0.75)'; octx.fillRect(out.width - tw - 40, out.height - 58, tw + 24, 40);
+                octx.fillStyle = '#fbbf24'; octx.fillText(t, out.width - tw - 28, out.height - 30);
+                octx.restore();
+            }
+            out.toBlob(async blob => {
+                if (blob) await KBCore.saveOrShareBlob(blob, `KimBling-Photo-${Date.now()}.jpg`, 'Ảnh KimBling AI');
+            }, 'image/jpeg', 0.94);
+        }
+    </script>
+</body>
+</html>

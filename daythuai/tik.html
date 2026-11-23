@@ -1,1 +1,770 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KimBling Director - Thầy Dạy Quay Trực Quan &amp; CapCut</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-core.js?v=1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
+        input, select, textarea, button, p, span, label, h1, h2, h3, h4 { font-size: 16px !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes slideHand { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(18px); } }
+        @keyframes pullBack { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(12px); } }
+        @keyframes orbitWave { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(14px, 8px); } }
+        .anim-slide { animation: slideHand 1.8s ease-in-out infinite; }
+        .anim-pull { animation: pullBack 1.8s ease-in-out infinite; }
+        .anim-orbit { animation: orbitWave 2.0s ease-in-out infinite; }
+        .kb-sheet-open { transform: translateY(0) !important; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white pb-24">
 
+    <!-- HEADER -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-2 min-w-0">
+                <div class="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg">KB</div>
+                <div class="min-w-0">
+                    <h1 class="font-extrabold leading-tight text-white truncate">KimBling AI</h1>
+                    <p class="text-slate-300 font-semibold truncate" style="font-size: 12px !important;">Dạy Quay Trực Quan • CapCut</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1.5 shrink-0">
+                <button onclick="openMainKeyModal()" id="headerKeyBtn" class="px-2.5 py-2 rounded-xl bg-slate-800 border-2 border-slate-600 text-amber-300 font-extrabold flex items-center space-x-1 active:scale-95" style="font-size: 13px !important;"><span>🔑</span></button>
+                <button onclick="openPopup('sua-anh.html', '📸 Chụp &amp; Sửa Ảnh AI')" class="px-2.5 py-2 rounded-xl bg-rose-500/25 border-2 border-rose-400 text-rose-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow" style="font-size: 13px !important;"><span>📸</span><span>Ảnh AI</span></button>
+                <button onclick="openPopup('capcut-guide.html', '🎬 Cẩm Nang Dựng CapCut')" class="px-2.5 py-2 rounded-xl bg-sky-500/20 border-2 border-sky-400 text-sky-200 font-extrabold flex items-center space-x-1 active:scale-95 shadow" style="font-size: 13px !important;"><span>🎬</span><span>CapCut</span></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
+
+        <!-- THANH MỞ NHANH POPUP CHÍNH -->
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="openPopup('phong-thu.html', '🎙️ Phòng Thu AI (30 Giọng)')" class="p-3 rounded-2xl bg-gradient-to-r from-rose-500/25 to-amber-500/20 border-2 border-rose-400/70 text-left flex items-center space-x-2.5 active:scale-95 shadow-lg">
+                <span class="text-2xl">🎙️</span>
+                <div class="min-w-0">
+                    <span class="font-black text-white block truncate" style="font-size: 14px !important;">Phòng Thu AI</span>
+                    <span class="text-rose-200 font-semibold block truncate" style="font-size: 11px !important;">30 giọng • Không ngắt đơ</span>
+                </div>
+            </button>
+            <button onclick="openPopup('camera-coach.html', '📐 Thước Góc Quay &amp; Soi Đèn')" class="p-3 rounded-2xl bg-gradient-to-r from-sky-500/25 to-indigo-500/20 border-2 border-sky-400/70 text-left flex items-center space-x-2.5 active:scale-95 shadow-lg">
+                <span class="text-2xl">📐</span>
+                <div class="min-w-0">
+                    <span class="font-black text-white block truncate" style="font-size: 14px !important;">Thước Góc AR</span>
+                    <span class="text-sky-200 font-semibold block truncate" style="font-size: 11px !important;">Đo độ nghiêng &amp; Ánh đèn</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- CHỌN NGÀNH QUAY -->
+        <section class="bg-slate-900 rounded-2xl border border-slate-800 p-3 space-y-2">
+            <span class="font-black text-amber-300 block" style="font-size: 13px !important;">🎯 Chọn Ngành Muốn Dạy Quay:</span>
+            <div class="grid grid-cols-4 gap-1.5" id="nicheBar">
+                <button onclick="selectNiche('fb')" id="niche_fb" class="py-2 px-1 rounded-xl bg-rose-500 text-white font-black text-center" style="font-size: 12px !important;">🧋 F&amp;B</button>
+                <button onclick="selectNiche('spa')" id="niche_spa" class="py-2 px-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-bold text-center" style="font-size: 12px !important;">💆 Spa</button>
+                <button onclick="selectNiche('vlog')" id="niche_vlog" class="py-2 px-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-bold text-center" style="font-size: 12px !important;">🎥 Vlog</button>
+                <button onclick="selectNiche('product')" id="niche_product" class="py-2 px-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-bold text-center" style="font-size: 12px !important;">🛍️ Sản phẩm</button>
+            </div>
+        </section>
+
+        <!-- KHUNG NHẬP KỊCH BẢN & AUDIO -->
+        <section class="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 rounded-3xl border-2 border-indigo-500/40 p-4 space-y-3 shadow-2xl">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center space-x-2 min-w-0">
+                    <span class="text-xl">📝</span>
+                    <h2 class="font-black text-amber-300 truncate">Kịch Bản &amp; Audio Gốc</h2>
+                </div>
+                <div class="flex items-center space-x-1.5 shrink-0">
+                    <button onclick="clearAllTempCache()" class="px-2.5 py-1 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 font-bold" style="font-size: 12px !important;">🧹 Dọn</button>
+                    <button onclick="toggleScriptInputCollapse()" id="toggleInputCollapseBtn" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 font-bold" style="font-size: 12px !important;">Thu gọn</button>
+                </div>
+            </div>
+
+            <div id="scriptInputBody" class="space-y-3">
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="pasteScriptFromClipboard()" class="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-600 text-sky-300 font-bold" style="font-size: 12px !important;">📋 Dán nhanh</button>
+                    <button onclick="loadDemoByNiche()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-bold" style="font-size: 12px !important;">✨ Nạp Mẫu Chuẩn Ngành</button>
+                </div>
+
+                <textarea id="scriptInputTextarea" rows="5" placeholder="Dán kịch bản/lời thoại vào đây (hoặc bấm Phòng Thu AI ở trên để tạo giọng đọc liền mạch, rồi gửi sang đây tự chia cảnh)..." class="w-full bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-2xl p-3 text-slate-100 placeholder-slate-500 outline-none font-medium leading-relaxed"></textarea>
+
+                <input id="masterAudioInput" type="file" class="hidden" onchange="handleMasterAudioSelected(this)">
+                <div class="bg-slate-950/90 border-2 border-dashed border-sky-500/50 rounded-2xl p-3 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <span class="font-black text-sky-300 block" style="font-size: 13px !important;">🎙️ File Giọng Đọc Chung (WAV/MP3/M4A)</span>
+                            <span id="masterAudioStatusText" class="text-slate-400 font-medium block truncate" style="font-size: 12px !important;">Chưa có file — có thể tạo từ Phòng Thu AI</span>
+                        </div>
+                        <button onclick="document.getElementById('masterAudioInput').click()" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 13px !important;">🎵 Chọn File</button>
+                    </div>
+                    <div id="masterAudioMiniControls" class="hidden flex items-center justify-between gap-2 pt-1 border-t border-slate-800">
+                        <button onclick="togglePlayMasterAudioPreview()" id="btnPlayMasterAudio" class="px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-bold" style="font-size: 12px !important;">▶️ Nghe thử</button>
+                        <span class="text-emerald-300 font-bold" style="font-size: 11px !important;">💾 Đã lưu Offline</span>
+                        <button onclick="removeMasterAudio()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-rose-300 font-bold" style="font-size: 12px !important;">✕ Bỏ</button>
+                    </div>
+                </div>
+
+                <button onclick="analyzeScriptWithAI()" id="analyzeScriptBtn" class="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-indigo-600 text-white font-black shadow-xl active:scale-95 flex items-center justify-center space-x-2">
+                    <span>✨</span><span>AI Chia Cảnh &amp; Vẽ Cách Quay Trực Quan</span>
+                </button>
+                <p id="analyzeModeHint" class="text-center text-slate-400 font-semibold" style="font-size: 12px !important;">Tự gán thông số iPhone (4K 60 / Slo-mo 120 / EV / Lộn ngược máy) + Sơ đồ tay</p>
+            </div>
+        </section>
+
+        <!-- BẢNG CÁC CẢNH QUAY TRỰC QUAN -->
+        <section id="scriptBoardSection" class="hidden space-y-4">
+            <div class="bg-slate-900 rounded-2xl border-2 border-slate-800 p-4 space-y-2.5 shadow-xl">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <span id="scriptEngineBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black mb-1" style="font-size: 12px !important;">⚡ Đã phân tích</span>
+                        <h3 id="scriptProjectTitle" class="font-black text-white leading-snug">Kịch bản quay video</h3>
+                    </div>
+                    <button onclick="openPopup('capcut-guide.html', '🎬 Cẩm Nang Dựng CapCut')" class="px-3 py-2 rounded-xl bg-sky-500 text-slate-950 font-black shrink-0" style="font-size: 13px !important;">🎬 Dựng CapCut</button>
+                </div>
+                <div class="flex items-center justify-between text-slate-300 font-bold" style="font-size: 13px !important;">
+                    <span id="scriptMetaSummary">0 cảnh • 0s</span>
+                    <span id="scriptProgressBadge" class="text-amber-300 font-black">Đã quay: 0 / 0</span>
+                </div>
+                <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                    <div id="scriptProgressBar" class="h-full bg-gradient-to-r from-rose-500 to-emerald-400 transition-all duration-300" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 bg-slate-900 p-1.5 rounded-2xl border-2 border-slate-800">
+                <button onclick="switchScriptViewMode('shooting')" id="viewTabShooting" class="py-3 px-2 rounded-xl font-black bg-rose-500 text-white shadow-lg text-center" style="font-size: 14px !important;">🎬 Quay Thực Tế</button>
+                <button onclick="switchScriptViewMode('timeline')" id="viewTabTimeline" class="py-3 px-2 rounded-xl font-black text-slate-300 bg-slate-950/60 text-center" style="font-size: 14px !important;">🎞️ Thứ Tự CapCut</button>
+            </div>
+
+            <div class="flex items-center justify-between px-1">
+                <span id="viewModeDescText" class="text-slate-400 font-semibold" style="font-size: 13px !important;">Gom theo Lần quay để tiện set đèn &amp; bày món</span>
+                <button onclick="toggleHideDoneScenes()" id="hideDoneBtn" class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-bold" style="font-size: 12px !important;">Ẩn cảnh xong: TẮT</button>
+            </div>
+
+            <div id="scenesContainer" class="space-y-4"></div>
+        </section>
+
+        <!-- INPUT MỞ THẲNG CAMERA GỐC IPHONE ĐỂ QUAY CLIP LƯU VÀO THƯ VIỆN -->
+        <input id="nativeCameraCaptureInput" type="file" accept="video/*" capture="environment" class="hidden" onchange="handleNativeCameraDone(this)">
+    </main>
+
+    <!-- MODAL CẤU HÌNH API KEY -->
+    <div id="mainKeyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-4" onclick="closeMainKeyModal()">
+        <div class="w-full max-w-md bg-slate-900 border-2 border-amber-400/50 rounded-3xl p-5 space-y-3.5 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-black text-white">🔑 Cấu Hình Gemini AI Key</h2>
+                    <p class="text-slate-400 font-semibold" style="font-size: 13px !important;">Dùng chung cho toàn bộ các Popup (Phòng Thu, Soi Góc, Chia Cảnh)</p>
+                </div>
+                <button onclick="closeMainKeyModal()" class="w-10 h-10 rounded-full bg-slate-800 text-white font-black">✕</button>
+            </div>
+            <p id="mainKeyStatusText" class="text-slate-300 font-semibold" style="font-size: 13px !important;"></p>
+            <input id="mainGeminiKeyInput" type="password" placeholder="Dán API Key từ aistudio.google.com..." class="w-full bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-xl px-4 py-3 text-white font-mono outline-none">
+            <p id="mainKeyTestResult" class="hidden font-bold p-2.5 rounded-xl bg-slate-950 border border-slate-700 whitespace-pre-wrap" style="font-size: 12px !important;"></p>
+            <div class="flex space-x-2">
+                <button onclick="saveMainGeminiKey()" class="flex-1 py-3 bg-emerald-500 text-slate-950 font-black rounded-xl">💾 Lưu Key</button>
+                <button onclick="runTestKeyBtn()" id="btnTestKey" class="px-4 py-3 bg-sky-500 text-slate-950 font-black rounded-xl">⚡ Test</button>
+                <button onclick="clearMainGeminiKey()" class="px-4 py-3 bg-slate-800 text-rose-300 font-bold rounded-xl">Xoá</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HỆ THỐNG POPUP KIỂU TIKTOK (NHÚNG FILE HTML RỜI) -->
+    <div id="kbPopupBackdrop" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex flex-col justify-end">
+        <div id="kbPopupSheet" class="w-full max-w-md mx-auto h-[94dvh] bg-slate-950 border-t-2 border-rose-500/40 rounded-t-3xl flex flex-col overflow-hidden shadow-2xl translate-y-full transition-transform duration-200">
+            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0">
+                <span id="kbPopupTitle" class="font-black text-white truncate">KimBling Popup</span>
+                <button onclick="closePopup()" class="w-9 h-9 rounded-full bg-slate-800 text-white font-black flex items-center justify-center active:scale-90">✕</button>
+            </div>
+            <iframe id="kbPopupIframe" src="about:blank" allow="camera; microphone; autoplay; clipboard-write" class="flex-1 w-full border-0 bg-slate-950"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let currentNiche = localStorage.getItem(KBCore.STORAGE_NICHE) || 'fb';
+        let currentProject = null, currentViewMode = 'shooting', hideDoneScenes = false;
+        let masterAudioData = null, masterAudioBuffer = null, activeCardAudioNode = null, activeCardPlayingSceneId = null;
+        let pendingNativeCamSceneId = null;
+
+        const NICHE_DEMOS = {
+            fb: `Lần quay 1: Quay sản phẩm trên kệ/quầy & không gian quán (Cảnh 1, Cảnh 2).
+Lần quay 2: Quay bàn đồ ăn/thức uống với đạo cụ trượt giấy & Slo-mo lộn ngược (Cảnh 3, Cảnh 4, Cảnh 5).
+Cảnh 1 (00s - 03.5s) (Quay ở Lần 1) [shot: shelf_pullback]
+ Hình ảnh: Bánh/Ly nước đặt trên kệ gỗ, tỳ cổ tay vào cạnh tủ kéo lùi chậm khoe cận lớp kem và logo ly.
+ Chữ trên màn hình: MÓN SIGNATURE TẠI KIM BLING
+ Lời thoại: "Nếu bạn đang tìm một góc cà phê vừa ngon vừa đẹp để chill cuối tuần thì đừng bỏ qua món này nha."
+Cảnh 2 (03.5s - 07s) (Quay ở Lần 1) [shot: fg_reveal]
+ Hình ảnh: Đứng sau mép cửa quán tạo tiền cảnh tối 1/3 khung, xoay nhẹ hé ra toàn cảnh bàn ghế bên trong.
+ Lời thoại: "Không gian quán thoáng mát, lên hình góc nào cũng xịn luôn đó."
+Cảnh 3 (07s - 12s) (Quay ở Lần 2) [shot: paper_rack_focus]
+ Hình ảnh: Đặt điện thoại lên tờ giấy trượt nhẹ trên bàn, chạm lấy nét bình hoa phía sau rồi đẩy tới đổi nét sang ly Bạc Sỉu Đá.
+ Chữ trên màn hình: BẠC SỈU ĐÁ CHỈ 19K
+ Lời thoại: "Món Bạc Sỉu Đá thần thánh đậm vị cà phê hòa quyện sữa tươi chỉ mười chín ngàn thôi nè."
+Cảnh 4 (12s - 17s) (Quay ở Lần 2) [shot: slomo_orbit_table]
+ Hình ảnh: Bật Slo-mo 0.5x lộn ngược máy lướt sát qua topping trân châu trắng, thạch trái cây và toàn bàn nước.
+ Chữ trên màn hình: TOPPING ĐỒNG GIÁ 3K
+ Lời thoại: "Gọi thêm trân châu trắng, thạch trái cây hay lớp kem machiato béo ngậy đồng giá ba ngàn cực đã."
+Cảnh 5 (17s - 21s) (Quay ở Lần 1) [shot: upside_down_logo]
+ Hình ảnh: Lộn ngược điện thoại ở góc 0.5x giảm sáng -1.2 kéo từ bóng đèn trên cao xuống bảng hiệu Kim Bling.
+ Chữ trên màn hình: GHÉ M9 CƯ XÁ PHÚ LÂM A
+ Lời thoại: "Ghé ngay M9 Cư xá Phú Lâm A để thưởng thức nha!"`,
+
+            spa: `Cảnh 1 (00s - 04s) [shot: fg_reveal]
+ Hình ảnh: Hé nhẹ từ cửa kính phòng Spa/Phun xăm sạch sẽ sang trọng.
+ Chữ trên màn hình: KIMBLING BEAUTY • MASTER NGUYỄN HIỀN
+ Lời thoại: "Cùng theo chân một ca làm đẹp nhẹ nhàng không sưng đau tại KimBling Beauty nhé."
+Cảnh 2 (04s - 09s) [shot: paper_rack_focus]
+ Hình ảnh: Lướt nhẹ trên khăn trắng từ lọ tinh chất/mực hữu cơ phía sau rồi chuyển nét sang khay dụng cụ vô trùng.
+ Chữ trên màn hình: MỰC HỮU CƠ CHUẨN Y KHOA
+ Lời thoại: "Toàn bộ dụng cụ và mực hữu cơ đều được chuẩn bị riêng biệt an toàn tuyệt đối."
+Cảnh 3 (09s - 15s) [shot: macro_detail]
+ Hình ảnh: Quay đặc tả 15cm góc 45° từng nét đi sợi Hairstroke hoặc khử thâm môi nhẹ nhàng.
+ Chữ trên màn hình: KHÔNG SƯNG - KHÔNG ĐAU
+ Lời thoại: "Thao tác đi kim nhẹ nhàng tầng thượng bì giúp giữ hạt tơi mịn và lên màu cực trong."
+Cảnh 4 (15s - 20s) [shot: spa_before_after]
+ Hình ảnh: Giữ cố định 1 góc chính diện so sánh thành phẩm Trước và Sau khi vừa làm xong.
+ Chữ trên màn hình: INBOX ĐẶT LỊCH TƯ VẤN
+ Lời thoại: "Chị em muốn sở hữu cặp mày, đôi môi tự nhiên chuẩn sang thì nhắn ngay cho Master Nguyễn Hiền nha."`,
+
+            vlog: `Cảnh 1 (00s - 04s) [shot: vlog_talking]
+ Hình ảnh: Đặt máy ngang tầm mắt, nói thẳng ống kính mở đầu chủ đề hấp dẫn.
+ Chữ trên màn hình: 3 BÍ QUYẾT QUAY VIDEO ĐẸP
+ Lời thoại: "Hôm nay mình chia sẻ nhanh cách cầm điện thoại quay sao cho mượt như dùng gimbal nha."
+Cảnh 2 (04s - 09s) [shot: paper_rack_focus]
+ Hình ảnh: Quay cảnh tay lót tờ giấy dưới điện thoại trượt mượt trên mặt bàn.
+ Chữ trên màn hình: MẸO 1: TRƯỢT TRÊN TỜ GIẤY
+ Lời thoại: "Đặt điện thoại lên một tờ giấy hoặc khăn vải rồi đẩy nhẹ, bảo đảm mượt không thua máy chuyên."
+Cảnh 3 (09s - 14s) [shot: upside_down_logo]
+ Hình ảnh: Cầm lộn ngược điện thoại sát bàn hoặc sát bảng hiệu góc 0.5x.
+ Chữ trên màn hình: MẸO 2: LỘN NGƯỢC MÁY
+ Lời thoại: "Xoay ngược cụm camera xuống sát mặt bàn sẽ giúp góc quay trông cao cấp và sâu hơn hẳn."`,
+
+            product: `Cảnh 1 (00s - 04s) [shot: shelf_pullback]
+ Hình ảnh: Đặt sản phẩm trên nền sạch, tỳ tay cạnh bàn kéo lùi chậm khoe trọn bao bì.
+ Chữ trên màn hình: REVIEW CHÂN THẬT SẢN PHẨM HOT
+ Lời thoại: "Cầm trên tay em sản phẩm đang làm mưa làm gió mấy hôm nay xem có đáng tiền không nhé."
+Cảnh 2 (04s - 09s) [shot: macro_detail]
+ Hình ảnh: Cận cảnh 15cm mở nắp, test chất kem/chất liệu dưới ánh sáng tản đều (EV -0.5).
+ Chữ trên màn hình: CHẤT MỊN - THẤM NHANH
+ Lời thoại: "Chất bên trong mịn mướt, dễ tán và không hề bị bết dính luôn."
+Cảnh 3 (09s - 14s) [shot: slomo_orbit_table]
+ Hình ảnh: Bật Slo-mo lộn ngược máy lướt 1 vòng quanh combo sản phẩm.
+ Chữ trên màn hình: BẤM GIỎ HÀNG NGAY
+ Lời thoại: "Đang có ưu đãi tốt, bạn bấm ngay bên dưới để rinh về dùng thử nha!"`
+        };
+
+        async function initApp() {
+            updateMainKeyUI();
+            selectNiche(currentNiche, false);
+            const raw = localStorage.getItem(KBCore.STORAGE_RAW_SCRIPT);
+            if (raw) document.getElementById('scriptInputTextarea').value = raw;
+            const savedAudio = await KBCore.idbGet('master_audio');
+            if (savedAudio && savedAudio.arrayBuffer) { masterAudioData = savedAudio; updateMasterAudioUI(); }
+            const projStr = localStorage.getItem(KBCore.STORAGE_PROJECT);
+            if (projStr) {
+                try { currentProject = JSON.parse(projStr); if (currentProject?.scenes?.length) renderScriptBoard(); } catch (e) {}
+            }
+            window.addEventListener('message', handlePopupMessage);
+        }
+
+        // ====== POPUP BRIDGE (KIỂU TIKTOK) ======
+        function openPopup(url, title) {
+            document.getElementById('kbPopupTitle').innerText = title || 'KimBling Studio';
+            const back = document.getElementById('kbPopupBackdrop'), sheet = document.getElementById('kbPopupSheet'), iframe = document.getElementById('kbPopupIframe');
+            iframe.src = url;
+            back.classList.remove('hidden');
+            requestAnimationFrame(() => sheet.classList.add('kb-sheet-open'));
+        }
+        function closePopup() {
+            const back = document.getElementById('kbPopupBackdrop'), sheet = document.getElementById('kbPopupSheet'), iframe = document.getElementById('kbPopupIframe');
+            sheet.classList.remove('kb-sheet-open');
+            setTimeout(() => {
+                back.classList.add('hidden');
+                iframe.src = 'about:blank'; // Tắt hẳn camera/mic & giải phóng RAM
+            }, 200);
+        }
+        async function handlePopupMessage(ev) {
+            const msg = ev.data;
+            if (!msg || msg.source !== 'KB_POPUP') return;
+            if (msg.type === 'kb_close_popup') { closePopup(); return; }
+            if (msg.type === 'kb_studio_to_shoot') {
+                closePopup();
+                const savedAudio = await KBCore.idbGet('master_audio');
+                if (savedAudio && savedAudio.arrayBuffer) {
+                    masterAudioData = savedAudio; masterAudioBuffer = null; updateMasterAudioUI();
+                }
+                if (msg.payload && msg.payload.scriptText) {
+                    document.getElementById('scriptInputTextarea').value = msg.payload.scriptText;
+                }
+                await analyzeScriptWithAI();
+                return;
+            }
+            if (msg.type === 'kb_download' && msg.payload) {
+                const { buffer, mime, fileName, title } = msg.payload;
+                const blob = new Blob([buffer], { type: mime || 'application/octet-stream' });
+                const file = new File([blob], fileName, { type: blob.type });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try { await navigator.share({ files: [file], title: title || 'KimBling Studio' }); return; } catch (e) {}
+                }
+                const url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 15000);
+                return;
+            }
+            if (msg.type === 'kb_scene_checked' && msg.payload?.sceneId) {
+                const sc = currentProject?.scenes?.find(s => s.id === msg.payload.sceneId);
+                if (sc && !sc.done) toggleSceneDone(sc.id);
+            }
+        }
+
+        // ====== API KEY ======
+        function openMainKeyModal() { updateMainKeyUI(); document.getElementById('mainGeminiKeyInput').value = KBCore.getKey(); document.getElementById('mainKeyModal').classList.remove('hidden'); }
+        function closeMainKeyModal() { document.getElementById('mainKeyModal').classList.add('hidden'); }
+        function saveMainGeminiKey() { KBCore.setKey(document.getElementById('mainGeminiKeyInput').value); updateMainKeyUI(); closeMainKeyModal(); }
+        function clearMainGeminiKey() { KBCore.clearKey(); document.getElementById('mainGeminiKeyInput').value = ''; updateMainKeyUI(); }
+        function updateMainKeyUI() {
+            const has = KBCore.hasKey(), btn = document.getElementById('headerKeyBtn'), st = document.getElementById('mainKeyStatusText');
+            if (btn) {
+                btn.innerHTML = has ? '<span>🔑</span><span class="w-2 h-2 rounded-full bg-emerald-400"></span>' : '<span>🔑</span>';
+                btn.className = has ? 'px-2.5 py-2 rounded-xl bg-emerald-500/20 border-2 border-emerald-400 text-emerald-200 font-extrabold flex items-center space-x-1 active:scale-95' : 'px-2.5 py-2 rounded-xl bg-slate-800 border-2 border-slate-600 text-amber-300 font-extrabold flex items-center space-x-1 active:scale-95';
+            }
+            if (st) { st.innerText = has ? '✅ Đã có Key -> AI chia cảnh, Phòng thu 30 giọng & Soi góc sẵn sàng!' : 'Chưa có Key -> Dùng chế độ mẫu Offline.'; st.className = has ? 'text-emerald-300 font-bold' : 'text-slate-300 font-semibold'; }
+        }
+        async function runTestKeyBtn() {
+            const inputVal = document.getElementById('mainGeminiKeyInput').value.trim();
+            if (inputVal) KBCore.setKey(inputVal);
+            updateMainKeyUI();
+            const btn = document.getElementById('btnTestKey'), el = document.getElementById('mainKeyTestResult');
+            btn.disabled = true; btn.innerText = '⏳...';
+            el.classList.remove('hidden'); el.innerText = '⏳ Đang kiểm tra kết nối tới Google Gemini...';
+            const res = await KBCore.testKey();
+            btn.disabled = false; btn.innerText = '⚡ Test';
+            el.className = res.ok ? 'font-bold p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-400 text-emerald-300 whitespace-pre-wrap' : 'font-bold p-2.5 rounded-xl bg-rose-950/60 border border-rose-400 text-rose-200 whitespace-pre-wrap';
+            el.innerText = res.message;
+        }
+
+        // ====== NGÀNH & AUDIO ======
+        function selectNiche(niche, save = true) {
+            currentNiche = niche;
+            if (save) localStorage.setItem(KBCore.STORAGE_NICHE, niche);
+            ['fb','spa','vlog','product'].forEach(k => {
+                const b = document.getElementById(`niche_${k}`);
+                if (b) b.className = k === niche ? 'py-2 px-1 rounded-xl bg-rose-500 text-white font-black text-center' : 'py-2 px-1 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 font-bold text-center';
+            });
+        }
+        function loadDemoByNiche() { document.getElementById('scriptInputTextarea').value = NICHE_DEMOS[currentNiche] || NICHE_DEMOS.fb; analyzeScriptWithAI(); }
+        function toggleScriptInputCollapse() { const body = document.getElementById('scriptInputBody'), btn = document.getElementById('toggleInputCollapseBtn'); btn.innerText = body.classList.toggle('hidden') ? 'Mở ô dán' : 'Thu gọn'; }
+        async function pasteScriptFromClipboard() { try { const txt = await navigator.clipboard.readText(); if (txt) document.getElementById('scriptInputTextarea').value = txt; else alert('Bộ nhớ tạm trống.'); } catch (e) { alert('Chạm giữ vào ô chữ bên dưới rồi chọn Dán nhé!'); } }
+
+        async function handleMasterAudioSelected(input) {
+            const file = input.files && input.files[0]; input.value = ''; if (!file) return;
+            document.getElementById('masterAudioStatusText').innerText = '⏳ Đang nạp âm thanh...';
+            const ab = await file.arrayBuffer(), mime = file.type || 'audio/mp3';
+            const probed = await KBCore.probeAudioDuration(ab, mime);
+            masterAudioBuffer = probed.buffer;
+            masterAudioData = { name: file.name, type: mime, size: file.size, duration: probed.duration, arrayBuffer: ab };
+            await KBCore.idbPut('master_audio', masterAudioData);
+            updateMasterAudioUI();
+        }
+        function updateMasterAudioUI() {
+            const st = document.getElementById('masterAudioStatusText'), ctrls = document.getElementById('masterAudioMiniControls');
+            if (!masterAudioData) { st.innerText = 'Chưa có file — có thể tạo từ Phòng Thu AI'; st.className = 'text-slate-400 font-medium block truncate'; ctrls.classList.add('hidden'); }
+            else { st.innerText = `✅ ${masterAudioData.name} (${masterAudioData.duration.toFixed(1)}s)`; st.className = 'text-emerald-300 font-bold block truncate'; ctrls.classList.remove('hidden'); }
+        }
+        function stopActiveCardAudio() {
+            if (activeCardAudioNode) { try { activeCardAudioNode.stop(); } catch (e) {} activeCardAudioNode = null; }
+            activeCardPlayingSceneId = null;
+            document.getElementById('btnPlayMasterAudio').innerText = '▶️ Nghe thử';
+            document.querySelectorAll('.btn-scene-audio-play').forEach(b => b.innerText = '🎧 Nghe nhịp đoạn này');
+        }
+        async function togglePlayMasterAudioPreview() {
+            if (activeCardPlayingSceneId === 'MASTER') { stopActiveCardAudio(); return; }
+            stopActiveCardAudio(); if (!masterAudioData) return;
+            const ctx = KBCore.getAudioCtx(); if (!ctx) return; await ctx.resume();
+            if (!masterAudioBuffer) masterAudioBuffer = await KBCore.decodeAudioBuffer(masterAudioData.arrayBuffer);
+            if (!masterAudioBuffer) return;
+            const src = ctx.createBufferSource(); src.buffer = masterAudioBuffer; src.connect(ctx.destination);
+            src.onended = () => { if (activeCardPlayingSceneId === 'MASTER') stopActiveCardAudio(); };
+            src.start(0); activeCardAudioNode = src; activeCardPlayingSceneId = 'MASTER';
+            document.getElementById('btnPlayMasterAudio').innerText = '⏹️ Dừng';
+        }
+        async function playSceneAudioSlice(sceneId, btnEl) {
+            if (activeCardPlayingSceneId === sceneId) { stopActiveCardAudio(); return; }
+            stopActiveCardAudio(); if (!masterAudioData || !currentProject) return;
+            const sc = currentProject.scenes.find(s => s.id === sceneId); if (!sc) return;
+            const ctx = KBCore.getAudioCtx(); if (!ctx) return; await ctx.resume();
+            if (!masterAudioBuffer) masterAudioBuffer = await KBCore.decodeAudioBuffer(masterAudioData.arrayBuffer);
+            if (!masterAudioBuffer) return;
+            const st = Math.max(0, Math.min(masterAudioBuffer.duration - 0.2, sc.audioStartSec || 0));
+            const dur = Math.max(0.2, Math.min(masterAudioBuffer.duration - st, (sc.audioEndSec || st + 3) - st));
+            const src = ctx.createBufferSource(); src.buffer = masterAudioBuffer; src.connect(ctx.destination);
+            src.onended = () => { if (activeCardPlayingSceneId === sceneId) stopActiveCardAudio(); };
+            src.start(0, st, dur); activeCardAudioNode = src; activeCardPlayingSceneId = sceneId;
+            if (btnEl) btnEl.innerText = '⏹️ Dừng nghe';
+        }
+        async function removeMasterAudio() { stopActiveCardAudio(); masterAudioData = null; masterAudioBuffer = null; await KBCore.idbDel('master_audio'); updateMasterAudioUI(); }
+        async function clearAllTempCache() {
+            if (!confirm('Xoá sạch kịch bản, tiến độ quay & file âm thanh tạm?')) return;
+            stopActiveCardAudio(); localStorage.removeItem(KBCore.STORAGE_RAW_SCRIPT); localStorage.removeItem(KBCore.STORAGE_PROJECT);
+            await KBCore.idbDel('master_audio'); masterAudioData = null; masterAudioBuffer = null; currentProject = null;
+            document.getElementById('scriptInputTextarea').value = ''; document.getElementById('scriptBoardSection').classList.add('hidden');
+            document.getElementById('scriptInputBody').classList.remove('hidden'); document.getElementById('toggleInputCollapseBtn').innerText = 'Thu gọn';
+            updateMasterAudioUI();
+        }
+        function saveProjectToStorage() {
+            try {
+                localStorage.setItem(KBCore.STORAGE_RAW_SCRIPT, document.getElementById('scriptInputTextarea').value || '');
+                if (currentProject) localStorage.setItem(KBCore.STORAGE_PROJECT, JSON.stringify(currentProject));
+            } catch (e) {}
+        }
+
+        // ====== AI CHIA CẢNH & GÁN CÔNG THỨC QUAY TRỰC QUAN ======
+        function pickRecipeIdOffline(text) {
+            const s = (text || '').toLowerCase();
+            if (s.includes('lộn ngược') || s.includes('bảng hiệu') || s.includes('logo') || s.includes('đèn') || s.includes('địa chỉ')) return 'upside_down_logo';
+            if (s.includes('slo-mo') || s.includes('mâm') || s.includes('combo') || s.includes('topping') || s.includes('uốn lượn') || s.includes('toàn bàn')) return 'slomo_orbit_table';
+            if (s.includes('tờ giấy') || s.includes('khăn') || s.includes('chuyển nét') || s.includes('bình hoa') || s.includes('giá') || s.includes('19k')) return 'paper_rack_focus';
+            if (s.includes('cửa') || s.includes('tiền cảnh') || s.includes('không gian') || s.includes('bước vào')) return 'fg_reveal';
+            if (s.includes('trước') || s.includes('sau') || s.includes('before') || s.includes('after')) return 'spa_before_after';
+            if (s.includes('macro') || s.includes('đặc tả') || s.includes('rót') || s.includes('sợi') || s.includes('hạt') || s.includes('chất')) return 'macro_detail';
+            if (s.includes('ống kính') || s.includes('chia sẻ') || s.includes('bí quyết') || s.includes('tại sao')) return 'vlog_talking';
+            return 'shelf_pullback';
+        }
+
+        function buildSceneFromRecipe(rawSc, idx, totalFallbackDur) {
+            const recId = KBCore.SHOT_RECIPES[rawSc.recipeId] ? rawSc.recipeId : pickRecipeIdOffline((rawSc.visualDesc || '') + ' ' + (rawSc.speech || ''));
+            const rec = KBCore.SHOT_RECIPES[recId];
+            const dur = Math.max(2, Number(rawSc.durationSec) || totalFallbackDur || 4);
+            return {
+                id: `sc_${idx+1}_${Date.now()}_${idx}`,
+                sceneNum: Number(rawSc.sceneNum) || (idx + 1),
+                shootOrder: Number(rawSc.shootOrder) || (idx + 1),
+                durationSec: dur,
+                recSeconds: Math.max(3, Math.ceil(dur + 2)),
+                timeRange: rawSc.timeRange || `00s - ${String(Math.round(dur)).padStart(2,'0')}s`,
+                recipeId: rec.id,
+                recipeName: rawSc.recipeName || rec.name,
+                camMode: rawSc.camMode || rec.mode,
+                camLens: rawSc.camLens || rec.lens,
+                camResFps: rawSc.camResFps || rec.resFps,
+                camEv: rawSc.camEv || rec.ev,
+                holdMode: rawSc.holdMode || rec.holdMode,
+                svgType: rec.svgType,
+                angleDeg: Number(rawSc.angleDeg) || rec.angleDeg,
+                distance: rawSc.distance || rec.distance,
+                visualDesc: rawSc.visualDesc || 'Quay theo đúng hướng dẫn góc máy.',
+                propTip: rawSc.propTip || rec.propTip,
+                capcutGuide: rawSc.capcutGuide || rec.capcutGuide,
+                screenText: rawSc.screenText || '',
+                speech: rawSc.speech || '',
+                audioStartSec: 0,
+                audioEndSec: dur,
+                done: false
+            };
+        }
+
+        function parseScriptOffline(rawText) {
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const shootGroups = {}, scenes = [];
+            let cur = null;
+            const pushCur = () => { if (cur) scenes.push(buildSceneFromRecipe(cur, scenes.length, 4)); };
+            for (const line of lines) {
+                const gm = line.match(/(?:^\d+\.\s*)?Lần\s+quay\s+(\d+)\s*:\s*(.+)/i);
+                if (gm) { shootGroups[Number(gm[1])] = gm[2].trim(); continue; }
+                const hm = line.match(/^Cảnh\s+(\d+)\s*(?:\(([^)]+)\))?(?:\s*\((?:Quay\s*ở\s*)?Lần\s*(\d+)\))?(?:\s*\[shot:\s*([a-z_]+)\])?/i);
+                if (hm) {
+                    pushCur();
+                    const tM = (hm[2] || '').match(/(\d+(?:\.\d+)?)\s*s?\s*[-–]\s*(\d+(?:\.\d+)?)\s*s?/i);
+                    const d = tM ? Math.max(2, Number(tM[2]) - Number(tM[1])) : 4;
+                    cur = { sceneNum: Number(hm[1]), shootOrder: hm[3] ? Number(hm[3]) : Number(hm[1]), recipeId: hm[4] || '', durationSec: d, timeRange: hm[2] || '', visualDesc: '', screenText: '', speech: '' };
+                    continue;
+                }
+                if (cur) {
+                    const vm = line.match(/^Hình\s*ảnh\s*:\s*(.+)/i), tm = line.match(/^Chữ\s*trên\s*màn\s*hình\s*:\s*(.+)/i), sm = line.match(/^Lời\s*thoại\s*:\s*(.+)/i);
+                    if (vm) cur.visualDesc = vm[1].trim();
+                    else if (tm) cur.screenText = tm[1].trim();
+                    else if (sm) cur.speech = sm[1].trim().replace(/^["“]|["”]$/g, '');
+                    else cur.visualDesc = (cur.visualDesc ? cur.visualDesc + ' ' : '') + line;
+                }
+            }
+            pushCur();
+            if (!scenes.length) {
+                const chunks = rawText.split(/(?<=[.!?])\s+|\n+/).map(s => s.trim()).filter(s => s.length > 6);
+                for (let i = 0; i < chunks.length; i += 2) {
+                    const speech = chunks.slice(i, i + 2).join(' ');
+                    scenes.push(buildSceneFromRecipe({ sceneNum: scenes.length + 1, shootOrder: scenes.length + 1, speech, visualDesc: `Quay minh họa cho câu: ${speech}` }, scenes.length, 4));
+                }
+            }
+            return { title: 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'offline', hasAudio: !!masterAudioData, shootGroups, scenes };
+        }
+
+        async function analyzeScriptWithAI() {
+            const raw = document.getElementById('scriptInputTextarea').value.trim();
+            if (!raw && !masterAudioData) { alert('Hãy dán kịch bản/lời thoại hoặc chọn file Audio trước nhé!'); return; }
+            const btn = document.getElementById('analyzeScriptBtn'), orig = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>AI đang lập sơ đồ góc quay trực quan...</span>';
+            try {
+                let pauseRuns = [];
+                if (masterAudioData) {
+                    if (!masterAudioBuffer) masterAudioBuffer = await KBCore.decodeAudioBuffer(masterAudioData.arrayBuffer);
+                    if (masterAudioBuffer) pauseRuns = KBCore.detectAudioPauses(masterAudioBuffer);
+                }
+                let project = null;
+                if (KBCore.hasKey()) {
+                    const extraParts = [];
+                    if (masterAudioData && masterAudioData.size <= 14 * 1024 * 1024) {
+                        extraParts.push({ inline_data: { mime_type: masterAudioData.type || 'audio/mp3', data: KBCore.arrayBufferToBase64(masterAudioData.arrayBuffer) } });
+                    }
+                    const recipeKeys = Object.keys(KBCore.SHOT_RECIPES).join(' | ');
+                    const audioHint = masterAudioData ? `Audio dài ${masterAudioData.duration.toFixed(1)}s. Chia các cảnh ngắn 2.5s–5s bám đúng mạch câu trong audio.` : 'Chia các cảnh quay ngắn 3s–5s.';
+                    const textPart = raw ? `NỘI DUNG ĐẦU VÀO:\n"""${raw}"""` : 'CHỈ CÓ FILE AUDIO: Hãy nghe và chép chính xác lời nói từng cảnh.';
+                    const prompt = `Bạn là Đạo diễn dạy quay video điện thoại cho người mới (phong cách @datvairo) thuộc ngành: ${currentNiche}.
+${audioHint}
+${textPart}
+Mỗi cảnh chọn 1 recipeId phù hợp nhất trong: [${recipeKeys}].
+Gom nhóm "shootOrder" (Lần quay 1, 2...) để người quay tiện bày đồ quay 1 lượt.
+Đưa ra thông số iPhone cụ thể: camMode ("Video"|"Quay chậm (Slo-mo)"), camLens ("0.5x"|"1x"|"2x"), camResFps ("4K • 60fps"|"HD • 120fps"), camEv ("-0.5"|"-0.7"|"-1.0"|"-1.2"), holdMode ("normal"|"upside_down"), propTip (mẹo tỳ tay/lót tờ giấy trượt/chạm đổi nét/lộn ngược máy), capcutGuide (cách kéo Speed Ramp Uốn cong hoặc chuyển cảnh trên CapCut).
+TRẢ VỀ JSON: {"title":"...","shootGroups":{"1":"..."},"scenes":[{"sceneNum":1,"shootOrder":1,"recipeId":"shelf_pullback","camMode":"Video","camLens":"1x","camResFps":"4K • 60fps","camEv":"-1.0","holdMode":"normal","angleDeg":55,"distance":"20 - 30cm","visualDesc":"...","propTip":"...","capcutGuide":"...","screenText":"...","speech":"...","durationSec":4.0}]}`;
+
+                    const aiRes = await KBCore.callGemini(prompt, extraParts, { json: true, temp: 0.25, maxTokens: 4096, timeoutMs: 26000 });
+                    if (aiRes && Array.isArray(aiRes.scenes) && aiRes.scenes.length) {
+                        const mapped = aiRes.scenes.map((s, idx) => buildSceneFromRecipe(s, idx, 4));
+                        project = { title: aiRes.title || 'Kịch Bản Quay Trực Quan', niche: currentNiche, engine: 'gemini', hasAudio: !!masterAudioData, shootGroups: aiRes.shootGroups || {}, scenes: mapped };
+                    }
+                }
+                if (!project) {
+                    if (!raw) { alert('Chưa có Gemini Key hoặc AI chưa phản hồi để nghe Audio.'); return; }
+                    project = parseScriptOffline(raw);
+                }
+                if (masterAudioData && project.scenes.length) {
+                    KBCore.matchNaturalCuts(project.scenes, pauseRuns, masterAudioData.duration);
+                }
+                currentProject = project;
+                saveProjectToStorage();
+                renderScriptBoard();
+                document.getElementById('scriptInputBody').classList.add('hidden');
+                document.getElementById('toggleInputCollapseBtn').innerText = 'Mở ô dán';
+                document.getElementById('scriptBoardSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } finally {
+                btn.disabled = false; btn.innerHTML = orig;
+            }
+        }
+
+        // ====== SƠ ĐỒ SVG MINH HỌA TRỰC QUAN ======
+        function buildShotSvg(svgType, holdMode) {
+            const isUpside = holdMode === 'upside_down';
+            const phoneRect = (x, y, rot = 0) => `
+                <g transform="translate(${x},${y}) rotate(${rot})">
+                    <rect x="-14" y="-24" width="28" height="48" rx="5" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+                    <circle cx="0" cy="${isUpside ? 17 : -17}" r="3.5" fill="#f43f5e"/>
+                    ${isUpside ? '<text x="0" y="-5" text-anchor="middle" fill="#fbbf24" font-size="8" font-weight="bold">NGƯỢC</text>' : ''}
+                </g>`;
+            if (svgType === 'upside_down') {
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                    <circle cx="90" cy="14" r="7" fill="#fbbf24" opacity="0.9"/>
+                    <rect x="42" y="66" width="96" height="16" rx="4" fill="#334155" stroke="#fbbf24" stroke-width="1.5"/>
+                    <text x="90" y="77" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="bold">LOGO / BẢNG HIỆU</text>
+                    <g class="anim-pull">${phoneRect(44, 38, 12)}</g>
+                    <path d="M90 24 L90 58" stroke="#34d399" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <polygon points="90,62 85,54 95,54" fill="#34d399"/>
+                    <text x="136" y="42" fill="#94a3b8" font-size="8" font-weight="bold">Kéo từ đèn</text>
+                    <text x="136" y="53" fill="#94a3b8" font-size="8" font-weight="bold">xuống chữ</text>
+                </svg>`;
+            }
+            if (svgType === 'rack_focus') {
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                    <rect x="18" y="68" width="40" height="8" rx="2" fill="#f8fafc" opacity="0.85"/>
+                    <text x="38" y="85" text-anchor="middle" fill="#cbd5e1" font-size="7.5">Tờ giấy trượt</text>
+                    <g class="anim-slide">${phoneRect(38, 44, -8)}</g>
+                    <path d="M58 46 L112 46" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <polygon points="116,46 108,41 108,51" fill="#fbbf24"/>
+                    <circle cx="122" cy="56" r="11" fill="#f43f5e" opacity="0.85"/>
+                    <text x="122" y="79" text-anchor="middle" fill="#fda4af" font-size="8" font-weight="bold">Món chính</text>
+                    <rect x="148" y="24" width="16" height="32" rx="4" fill="#38bdf8" opacity="0.5"/>
+                    <text x="156" y="68" text-anchor="middle" fill="#7dd3fc" font-size="7.5">Nét sau</text>
+                </svg>`;
+            }
+            if (svgType === 'slomo_orbit') {
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                    <ellipse cx="110" cy="64" rx="52" ry="14" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                    <circle cx="88" cy="62" r="9" fill="#fb923c"/><circle cx="115" cy="64" r="8" fill="#f43f5e"/><circle cx="138" cy="60" r="7" fill="#38bdf8"/>
+                    <path d="M36 22 Q 80 56, 148 34" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="5 3"/>
+                    <g class="anim-orbit">${phoneRect(36, 36, 20)}</g>
+                    <text x="90" y="16" text-anchor="middle" fill="#6ee7b7" font-size="8.5" font-weight="bold">Slo-mo 120fps • Uốn lượn qua bàn</text>
+                </svg>`;
+            }
+            if (svgType === 'reveal') {
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                    <rect x="115" y="10" width="55" height="70" fill="#0f172a" stroke="#475569"/>
+                    <text x="142" y="48" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="bold">Mép tường</text>
+                    <text x="64" y="46" text-anchor="middle" fill="#34d399" font-size="9" font-weight="bold">Không gian quán</text>
+                    <g class="anim-slide">${phoneRect(82, 54, -15)}</g>
+                    <path d="M98 62 L52 62" stroke="#fbbf24" stroke-width="2.5"/>
+                    <polygon points="48,62 56,57 56,67" fill="#fbbf24"/>
+                </svg>`;
+            }
+            if (svgType === 'macro') {
+                return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                    <circle cx="122" cy="52" r="16" fill="#f43f5e" opacity="0.35" stroke="#fb7185" stroke-width="2" stroke-dasharray="4 3"/>
+                    <circle cx="122" cy="52" r="6" fill="#fbbf24"/>
+                    <g class="anim-slide">${phoneRect(56, 46, 35)}</g>
+                    <path d="M74 48 L104 51" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3"/>
+                    <text x="122" y="80" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="bold">Sát 15cm • Chạm khóa nét</text>
+                </svg>`;
+            }
+            return `<svg viewBox="0 0 180 90" class="w-full h-24 rounded-xl bg-slate-950 border border-slate-800">
+                <rect x="20" y="66" width="140" height="8" rx="3" fill="#334155"/>
+                <circle cx="118" cy="50" r="14" fill="#fbbf24" opacity="0.85"/>
+                <g class="anim-pull">${phoneRect(56, 44, 15)}</g>
+                <path d="M52 24 L26 24" stroke="#34d399" stroke-width="2.5"/>
+                <polygon points="22,24 30,19 30,29" fill="#34d399"/>
+                <text x="90" y="16" text-anchor="middle" fill="#7dd3fc" font-size="8.5" font-weight="bold">Tỳ tay cạnh bàn • Kéo lùi chậm</text>
+            </svg>`;
+        }
+
+        // ====== RENDER BẢNG CẢNH QUAY ======
+        function switchScriptViewMode(mode) {
+            currentViewMode = mode;
+            const bS = document.getElementById('viewTabShooting'), bT = document.getElementById('viewTabTimeline');
+            if (mode === 'shooting') { bS.className = 'py-3 px-2 rounded-xl font-black bg-rose-500 text-white shadow-lg text-center'; bT.className = 'py-3 px-2 rounded-xl font-black text-slate-300 bg-slate-950/60 text-center'; document.getElementById('viewModeDescText').innerText = 'Gom theo Lần quay để tiện set đèn & bày món'; }
+            else { bT.className = 'py-3 px-2 rounded-xl font-black bg-sky-500 text-slate-950 shadow-lg text-center'; bS.className = 'py-3 px-2 rounded-xl font-black text-slate-300 bg-slate-950/60 text-center'; document.getElementById('viewModeDescText').innerText = 'Xếp theo thứ tự Cảnh 1 → hết để ghép vào CapCut'; }
+            renderScenesList();
+        }
+        function toggleHideDoneScenes() {
+            hideDoneScenes = !hideDoneScenes; const b = document.getElementById('hideDoneBtn');
+            b.innerText = hideDoneScenes ? 'Ẩn cảnh xong: BẬT' : 'Ẩn cảnh xong: TẮT';
+            b.className = hideDoneScenes ? 'px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-bold' : 'px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-bold';
+            renderScenesList();
+        }
+        function toggleSceneDone(sceneId) {
+            const sc = currentProject?.scenes?.find(s => s.id === sceneId);
+            if (!sc) return; sc.done = !sc.done; saveProjectToStorage(); updateProgressUI(); renderScenesList();
+        }
+        function updateProgressUI() {
+            if (!currentProject) return;
+            const total = currentProject.scenes.length, doneCount = currentProject.scenes.filter(s => s.done).length;
+            const totalDur = currentProject.scenes.reduce((a, s) => a + (s.durationSec || 0), 0);
+            document.getElementById('scriptMetaSummary').innerText = `${total} cảnh • ~${totalDur.toFixed(1)}s thành phẩm`;
+            document.getElementById('scriptProgressBadge').innerText = `Đã quay: ${doneCount} / ${total}`;
+            document.getElementById('scriptProgressBar').style.width = `${total ? Math.round((doneCount / total) * 100) : 0}%`;
+        }
+        function renderScriptBoard() {
+            if (!currentProject) return;
+            document.getElementById('scriptBoardSection').classList.remove('hidden');
+            document.getElementById('scriptProjectTitle').innerText = currentProject.title || 'Kịch bản quay video';
+            document.getElementById('scriptEngineBadge').innerText = currentProject.engine === 'gemini' ? '🤖 AI Đạo Diễn (@datvairo Style)' : '⚡ Mẫu Thực Chiến';
+            updateProgressUI(); renderScenesList();
+        }
+
+        function openCoachForScene(sceneId) {
+            const sc = currentProject?.scenes?.find(s => s.id === sceneId);
+            if (!sc) return;
+            localStorage.setItem('kb_active_coach_scene', JSON.stringify(sc));
+            openPopup(`camera-coach.html?sceneId=${encodeURIComponent(sc.id)}`, `📐 Soi Góc Cảnh ${sc.sceneNum}`);
+        }
+        function openNativeCameraForScene(sceneId) {
+            pendingNativeCamSceneId = sceneId;
+            document.getElementById('nativeCameraCaptureInput').click();
+        }
+        function handleNativeCameraDone(input) {
+            const file = input.files && input.files[0]; input.value = '';
+            if (!file) return;
+            if (pendingNativeCamSceneId) {
+                const sc = currentProject?.scenes?.find(s => s.id === pendingNativeCamSceneId);
+                if (sc && !sc.done) toggleSceneDone(sc.id);
+                pendingNativeCamSceneId = null;
+            }
+            alert('✅ Đã ghi nhận cảnh quay nét bằng Camera Gốc iPhone!\n(Clip đã nằm trong Thư viện Ảnh iPhone để lát thả vào CapCut).');
+        }
+
+        function buildSceneCardHTML(sc) {
+            const doneCls = sc.done ? 'border-emerald-500/60 bg-emerald-950/15 opacity-85' : 'border-slate-800 bg-slate-900/95';
+            const upsideBadge = sc.holdMode === 'upside_down'
+                ? `<span class="px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black" style="font-size: 11px !important;">🙃 LỘN NGƯỢC MÁY</span>`
+                : `<span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-200 font-bold" style="font-size: 11px !important;">📱 Cầm xuôi</span>`;
+            const audioBar = masterAudioData ? `
+                <div class="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <span class="font-black text-emerald-300 block" style="font-size: 12px !important;">🎙️ Giọng đọc: ${sc.audioStartSec.toFixed(1)}s → ${sc.audioEndSec.toFixed(1)}s (${sc.durationSec.toFixed(1)}s)</span>
+                        <span class="text-slate-300 font-semibold" style="font-size: 11px !important;">Hãy quay Camera iPhone ~${sc.recSeconds}s (dư đầu đuôi)</span>
+                    </div>
+                    <button onclick="playSceneAudioSlice('${sc.id}', this)" class="btn-scene-audio-play px-2.5 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-black shrink-0" style="font-size: 12px !important;">🎧 Nghe nhịp đoạn này</button>
+                </div>` : '';
+
+            return `<div class="rounded-2xl border-2 p-4 space-y-3 shadow-xl ${doneCls}">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 font-black" style="font-size: 12px !important;">Lần ${sc.shootOrder}</span>
+                        <span class="px-2.5 py-1 rounded-xl bg-rose-500/25 border border-rose-400/50 text-rose-200 font-black" style="font-size: 12px !important;">Cảnh ${sc.sceneNum} • ~${sc.recSeconds}s</span>
+                    </div>
+                    <button onclick="toggleSceneDone('${sc.id}')" class="px-3 py-1 rounded-xl font-black shrink-0 ${sc.done ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300 border border-slate-700'}" style="font-size: 12px !important;">${sc.done ? '✅ Đã quay' : '⬜ Chưa quay'}</button>
+                </div>
+
+                <!-- HỘP CÀI ĐẶT CAMERA IPHONE -->
+                <div class="bg-slate-950 rounded-xl p-3 border border-sky-500/35 space-y-2">
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="font-black text-sky-300 truncate" style="font-size: 13px !important;">⚙️ Chỉnh Camera iPhone: ${KBCore.escHtml(sc.recipeName)}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <span class="px-2 py-0.5 rounded-lg bg-indigo-500/25 text-indigo-200 font-bold" style="font-size: 11px !important;">🎥 ${KBCore.escHtml(sc.camMode)}</span>
+                        <span class="px-2 py-0.5 rounded-lg bg-sky-500/25 text-sky-200 font-bold" style="font-size: 11px !important;">🔍 ${KBCore.escHtml(sc.camLens)}</span>
+                        <span class="px-2 py-0.5 rounded-lg bg-emerald-500/25 text-emerald-200 font-bold" style="font-size: 11px !important;">🎞️ ${KBCore.escHtml(sc.camResFps)}</span>
+                        <span class="px-2 py-0.5 rounded-lg bg-amber-500/25 text-amber-200 font-bold" style="font-size: 11px !important;">☀️ EV ${KBCore.escHtml(sc.camEv)}</span>
+                        ${upsideBadge}
+                    </div>
+                    ${buildShotSvg(sc.svgType, sc.holdMode)}
+                    <p class="text-slate-100 font-semibold leading-snug" style="font-size: 13px !important;">👉 <strong class="text-amber-300">Thao tác tay:</strong> ${KBCore.escHtml(sc.propTip)}</p>
+                </div>
+
+                ${audioBar}
+
+                <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                    <p class="text-slate-200 leading-snug" style="font-size: 14px !important;"><strong class="text-slate-400">🎬 Quay gì:</strong> ${KBCore.escHtml(sc.visualDesc)}</p>
+                    ${sc.screenText ? `<p class="text-amber-300 font-bold leading-snug" style="font-size: 13px !important;">🔤 Chữ gợi ý: "${KBCore.escHtml(sc.screenText)}"</p>` : ''}
+                    ${sc.speech ? `<p class="text-sky-200 italic font-semibold leading-snug" style="font-size: 14px !important;">💬 Thoại: "${KBCore.escHtml(sc.speech)}"</p>` : ''}
+                    <p class="text-indigo-300 font-bold leading-snug pt-1 border-t border-slate-800/80" style="font-size: 12px !important;">✂️ CapCut: ${KBCore.escHtml(sc.capcutGuide)}</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openCoachForScene('${sc.id}')" class="py-3 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-sky-400/50 text-sky-200 font-black active:scale-95" style="font-size: 13px !important;">📐 Thước Góc AR</button>
+                    <button onclick="openNativeCameraForScene('${sc.id}')" class="py-3 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow-lg active:scale-95" style="font-size: 13px !important;">📷 Camera Gốc iPhone</button>
+                </div>
+            </div>`;
+        }
+
+        function renderScenesList() {
+            const container = document.getElementById('scenesContainer');
+            if (!currentProject?.scenes?.length) { container.innerHTML = ''; return; }
+            let list = currentProject.scenes.slice();
+            if (hideDoneScenes) list = list.filter(s => !s.done);
+            if (!list.length) { container.innerHTML = `<div class="bg-emerald-950/30 border-2 border-emerald-500/40 rounded-2xl p-6 text-center"><p class="text-emerald-300 font-black">🎉 Đã quay xong hết! Bấm "🎬 Dựng CapCut" ở trên để ghép theo hướng dẫn nhé.</p></div>`; return; }
+
+            if (currentViewMode === 'timeline') {
+                list.sort((a, b) => a.sceneNum - b.sceneNum);
+                container.innerHTML = list.map(sc => buildSceneCardHTML(sc)).join('');
+            } else {
+                const groupsMap = new Map();
+                list.slice().sort((a, b) => (a.shootOrder - b.shootOrder) || (a.sceneNum - b.sceneNum)).forEach(sc => {
+                    const k = sc.shootOrder || 1;
+                    if (!groupsMap.has(k)) groupsMap.set(k, []);
+                    groupsMap.get(k).push(sc);
+                });
+                let html = '';
+                for (const [orderNum, groupScenes] of groupsMap.entries()) {
+                    const gDesc = currentProject.shootGroups?.[orderNum] || `Thực hiện cùng lúc: ${groupScenes.map(s => 'Cảnh ' + s.sceneNum).join(', ')}`;
+                    const doneInG = groupScenes.filter(s => s.done).length;
+                    html += `<div class="space-y-3 pt-1"><div class="bg-gradient-to-r from-amber-500/20 to-rose-500/15 border-2 border-amber-400/50 rounded-2xl p-3.5 space-y-1"><div class="flex items-center justify-between"><span class="font-black text-amber-300">🎬 LẦN QUAY ${orderNum}</span><span class="px-2.5 py-0.5 rounded-full bg-black/40 text-white font-bold" style="font-size: 12px !important;">${doneInG}/${groupScenes.length} xong</span></div><p class="text-slate-100 font-semibold leading-snug" style="font-size: 14px !important;">${KBCore.escHtml(gDesc)}</p></div><div class="space-y-3 pl-1">${groupScenes.map(sc => buildSceneCardHTML(sc)).join('')}</div></div>`;
+                }
+                container.innerHTML = html;
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

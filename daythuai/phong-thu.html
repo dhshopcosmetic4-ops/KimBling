@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phòng Thu AI 30 Giọng - KimBling Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="shared-core.js?v=1"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: clip; max-width: 100vw; }
+        input, select, textarea, button, p, span, label, h1, h2, h3 { font-size: 16px !important; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-16 antialiased">
+    <div class="max-w-md mx-auto space-y-4">
+
+        <!-- NHẬP Ý TƯỞNG / NỘI DUNG -->
+        <section class="bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/35 rounded-3xl border-2 border-rose-500/40 p-4 space-y-3 shadow-2xl">
+            <div>
+                <h2 class="font-black text-rose-300 flex items-center space-x-1.5"><span>🎙️</span><span>Phòng Thu AI (30 Giọng Google)</span></h2>
+                <p class="text-slate-400 font-semibold" style="font-size: 12px !important;">Đọc liền mạch tự nhiên (không &lt;long pause&gt;, không cười giả) để ghép CapCut</p>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+                <button onclick="pasteStudioProduct()" class="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-600 text-sky-300 font-bold" style="font-size: 12px !important;">📋 Dán</button>
+                <button onclick="loadSample('fb')" class="px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-bold" style="font-size: 12px !important;">☕ Bạc Sỉu</button>
+                <button onclick="loadSample('spa')" class="px-2.5 py-1 rounded-xl bg-rose-500/20 border border-rose-400/50 text-rose-200 font-bold" style="font-size: 12px !important;">💆 Spa/PMU</button>
+                <button onclick="loadSample('vlog')" class="px-2.5 py-1 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-200 font-bold" style="font-size: 12px !important;">🎥 Vlog</button>
+                <button onclick="clearStudioAll()" class="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold" style="font-size: 12px !important;">🗑️ Xoá</button>
+            </div>
+
+            <textarea id="studioProductInput" rows="4" placeholder="Nhập thông tin món ăn, dịch vụ Spa, sản phẩm hoặc ý tưởng video bạn muốn nói..." class="w-full bg-slate-950 border-2 border-slate-700 focus:border-rose-400 rounded-2xl p-3 text-slate-100 placeholder-slate-500 outline-none font-medium leading-relaxed"></textarea>
+
+            <!-- 4 PHONG CÁCH VIẾT THOẠI -->
+            <div class="space-y-1.5">
+                <span class="font-black text-amber-300 block" style="font-size: 13px !important;">🎭 Chọn Phong Cách Viết Thoại:</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectStudioStyle(1)" id="studioStyleBtn1" class="p-2.5 rounded-2xl border-2 border-rose-400 bg-rose-500/20 text-left">
+                        <span class="font-black text-white block" style="font-size: 13px !important;">🔥 1. Cuốn hút 3s đầu</span>
+                        <span class="text-slate-300 block" style="font-size: 11px !important;">Mở đầu tò mò, đủ ý</span>
+                    </button>
+                    <button onclick="selectStudioStyle(2)" id="studioStyleBtn2" class="p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left">
+                        <span class="font-black text-white block" style="font-size: 13px !important;">🍃 2. Nhẹ nhàng / Chill</span>
+                        <span class="text-slate-400 block" style="font-size: 11px !important;">Ấm áp, hợp Spa/Cafe</span>
+                    </button>
+                    <button onclick="selectStudioStyle(3)" id="studioStyleBtn3" class="p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left">
+                        <span class="font-black text-white block" style="font-size: 13px !important;">⚡ 3. Review Gọn Nhanh</span>
+                        <span class="text-slate-400 block" style="font-size: 11px !important;">Súc tích, chốt rõ ràng</span>
+                    </button>
+                    <button onclick="selectStudioStyle(4)" id="studioStyleBtn4" class="p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left">
+                        <span class="font-black text-white block" style="font-size: 13px !important;">💘 4. Kể chuyện (Vlog)</span>
+                        <span class="text-slate-400 block" style="font-size: 11px !important;">Tự nhiên như tâm sự</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-1">
+                <button onclick="runStudioScriptOnlyBtn()" id="btnStudioScriptOnly" class="py-3.5 px-2 rounded-2xl bg-slate-800 border border-slate-600 text-amber-300 font-black active:scale-95 text-center" style="font-size: 13px !important;">✍️ Viết thoại</button>
+                <button onclick="runStudioFullPipeline()" id="btnStudioFullRun" class="col-span-2 py-3.5 px-3 rounded-2xl bg-gradient-to-r from-rose-500 via-amber-500 to-indigo-600 text-white font-black shadow-xl active:scale-95 flex items-center justify-center space-x-1.5" style="font-size: 14px !important;">
+                    <span>✨</span><span>Viết Thoại &amp; Thu Âm</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- LỜI THOẠI & CHỌN 30 GIỌNG -->
+        <section class="bg-slate-900 rounded-3xl border-2 border-slate-800 p-4 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between">
+                <span class="font-black text-sky-300" style="font-size: 14px !important;">🎬 Lời Thoại Liền Mạch (Có thể sửa)</span>
+                <span id="studioCharCount" class="text-slate-400 font-bold" style="font-size: 12px !important;">0 ký tự</span>
+            </div>
+
+            <textarea id="studioTtsTranscript" rows="6" oninput="updateStudioCharCount()" placeholder="Lời thoại liền mạch tự nhiên sẽ hiện ở đây (không có <long pause> để giọng đọc trôi chảy khi ghép vào CapCut)..." class="w-full bg-slate-950 border-2 border-slate-700 focus:border-sky-400 rounded-2xl p-3 text-slate-100 placeholder-slate-500 outline-none font-medium leading-relaxed"></textarea>
+
+            <div class="flex flex-wrap gap-1.5">
+                <button onclick="insertStudioTag('<short pause>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">⏸️ Nghỉ nhịp</button>
+                <button onclick="insertStudioTag('<breath>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-slate-600 text-slate-200 font-bold" style="font-size: 12px !important;">😮‍💨 Lấy hơi</button>
+                <button onclick="insertStudioTag('<gasp>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-amber-500/40 text-amber-200 font-bold" style="font-size: 12px !important;">😮 Ngạc nhiên</button>
+                <button onclick="insertStudioTag('<whispering>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-sky-500/40 text-sky-200 font-bold" style="font-size: 12px !important;">🤫 Thủ thỉ</button>
+                <button onclick="insertStudioTag('<chuckle>')" class="px-2.5 py-1 rounded-full bg-slate-950 border border-rose-500/40 text-rose-200 font-bold" style="font-size: 12px !important;">😊 Cười nhẹ</button>
+            </div>
+
+            <!-- BỘ LỌC & CHỌN 30 GIỌNG GOOGLE TTS -->
+            <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="font-black text-amber-300" style="font-size: 13px !important;">🗣️ Chọn Giọng (30 giọng):</span>
+                    <div class="flex space-x-1">
+                        <button onclick="filterVoices('all')" id="vf_all" class="px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black" style="font-size: 11px !important;">Tất cả (30)</button>
+                        <button onclick="filterVoices('F')" id="vf_F" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold" style="font-size: 11px !important;">Nữ (14)</button>
+                        <button onclick="filterVoices('M')" id="vf_M" class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold" style="font-size: 11px !important;">Nam (16)</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <select id="studioVoiceSelect" onchange="onVoiceChanged()" class="flex-1 min-w-0 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-bold outline-none" style="font-size: 14px !important;"></select>
+                    <button onclick="auditionSelectedVoice()" id="btnAuditionVoice" class="px-3 py-2.5 rounded-xl bg-sky-500 text-slate-950 font-black shrink-0 active:scale-95" style="font-size: 13px !important;">🎧 Thử 2s</button>
+                </div>
+                <p id="voiceDescBadge" class="text-slate-400 font-semibold" style="font-size: 12px !important;"></p>
+
+                <input id="studioVoiceStyleInput" type="text" value="Giọng tiếng Việt tự nhiên, nói rõ chữ, truyền cảm vừa phải, không nhấn nhá gượng" placeholder="Mô tả sắc thái giọng đọc..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-amber-200 font-semibold outline-none" style="font-size: 13px !important;">
+
+                <select id="studioTtsModelSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-emerald-300 font-bold outline-none" style="font-size: 13px !important;">
+                    <option value="gemini-3.8-flash-tts">🎭 Đọc Tự Nhiên &amp; Cảm Xúc Tốt Nhất (gemini-3.8-flash-tts)</option>
+                    <option value="gemini-3.8-flash-lite-tts">⚡ Tạo Nhanh &amp; Tiết Kiệm Quota (gemini-3.8-flash-lite-tts)</option>
+                    <option value="gemini-2.5-flash-tts">🆓 Nhánh Free Tier (gemini-2.5-flash-tts)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="generateStudioAudioOnly()" id="btnStudioGenAudio" class="py-3 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black shadow-lg active:scale-95" style="font-size: 14px !important;">🔊 Thu Âm Cả Bài</button>
+                <button onclick="downloadStudioWav()" id="btnStudioDownloadWav" disabled class="py-3 px-3 rounded-xl bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-500 text-white font-black shadow-lg active:scale-95" style="font-size: 14px !important;">⬇️ Tải (.WAV)</button>
+            </div>
+
+            <p id="studioStatusMsg" class="text-slate-300 font-semibold text-center" style="font-size: 12px !important;">Sẵn sàng viết thoại liền mạch &amp; thu âm.</p>
+
+            <div id="studioAudioResultBox" class="hidden space-y-2.5 pt-2 border-t border-slate-800">
+                <audio id="studioAudioPlayer" controls class="w-full h-10"></audio>
+                <button onclick="sendStudioToShootPage()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-500 text-slate-950 font-black shadow-xl active:scale-95">🚀 Đưa Audio &amp; Thoại Sang Trang Quay (Tự Chia Cảnh)</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        let studioSelectedStyle = 1, voiceFilter = 'all';
+        let studioWavBuffer = null, studioWavDuration = 0, studioWavUrl = null;
+
+        const SAMPLES = {
+            fb: 'Bạc Sỉu Đá tại Kim Bling (M9 Cư xá Phú Lâm A): Giá 19.000đ ly chuẩn, upsize ly 1 lít thêm 10.000đ. Topping đồng giá 3.000đ gồm Trân Châu Trắng, Trân Châu Caramel, Thạch Trái Cây, Kem Machiato béo ngậy.',
+            spa: 'Dịch vụ Phun Mày Hairstroke & Khử Thâm Môi Collagen tại KimBling Beauty - Master Nguyễn Hiền: Không sưng đau, sợi mảnh tự nhiên như thật, mực hữu cơ an toàn, bảo hành dặm lại.',
+            vlog: '3 mẹo quay video đồ ăn và không gian quán bằng iPhone nhìn xịn như dùng gimbal: Lót tờ giấy trượt trên bàn, lộn ngược máy quay sát bàn và giảm phơi sáng -0.7 để màu lên đậm chất điện ảnh.'
+        };
+
+        function initStudioPage() {
+            renderVoicesDropdown('all');
+            updateStudioCharCount();
+        }
+
+        function filterVoices(gender) {
+            voiceFilter = gender;
+            ['all', 'F', 'M'].forEach(k => {
+                const b = document.getElementById(`vf_${k}`);
+                b.className = k === gender ? 'px-2 py-0.5 rounded-lg bg-rose-500 text-white font-black' : 'px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 font-bold';
+            });
+            renderVoicesDropdown(gender);
+        }
+
+        function renderVoicesDropdown(gender) {
+            const sel = document.getElementById('studioVoiceSelect'), prev = sel.value;
+            const filtered = KBCore.TTS_VOICES.filter(v => gender === 'all' || v.gender === gender);
+            const groups = new Map();
+            filtered.forEach(v => { if (!groups.has(v.group)) groups.set(v.group, []); groups.get(v.group).push(v); });
+            let html = '';
+            for (const [grpName, items] of groups.entries()) {
+                html += `<optgroup label="${KBCore.escHtml(grpName)}">` + items.map(v => `<option value="${v.id}">${v.gender === 'F' ? '👩' : '👨'} ${v.name} — ${v.desc}</option>`).join('') + `</optgroup>`;
+            }
+            sel.innerHTML = html;
+            if (filtered.some(v => v.id === prev)) sel.value = prev;
+            onVoiceChanged();
+        }
+
+        function onVoiceChanged() {
+            const id = document.getElementById('studioVoiceSelect').value;
+            const v = KBCore.TTS_VOICES.find(x => x.id === id);
+            document.getElementById('voiceDescBadge').innerText = v ? `ℹ️ ${v.group} • ${v.desc}` : '';
+        }
+
+        function loadSample(k) { document.getElementById('studioProductInput').value = SAMPLES[k] || ''; }
+        async function pasteStudioProduct() { try { const t = await navigator.clipboard.readText(); if (t) document.getElementById('studioProductInput').value = t; } catch (e) { alert('Chạm giữ vào ô chữ rồi chọn Dán nhé!'); } }
+        function clearStudioAll() { document.getElementById('studioProductInput').value = ''; document.getElementById('studioTtsTranscript').value = ''; updateStudioCharCount(); document.getElementById('studioAudioResultBox').classList.add('hidden'); document.getElementById('btnStudioDownloadWav').disabled = true; studioWavBuffer = null; }
+        function updateStudioCharCount() { document.getElementById('studioCharCount').innerText = `${(document.getElementById('studioTtsTranscript').value || '').length} ký tự`; }
+
+        function insertStudioTag(tag) {
+            const ta = document.getElementById('studioTtsTranscript'), s = ta.selectionStart || ta.value.length, e = ta.selectionEnd || ta.value.length;
+            const ins = (s > 0 && ta.value[s-1] !== ' ' && ta.value[s-1] !== '\n' ? ' ' : '') + tag + ' ';
+            ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
+            ta.focus(); ta.selectionStart = ta.selectionEnd = s + ins.length;
+            updateStudioCharCount();
+        }
+
+        function selectStudioStyle(num) {
+            studioSelectedStyle = num;
+            [1, 2, 3, 4].forEach(i => {
+                const b = document.getElementById(`studioStyleBtn${i}`);
+                b.className = i === num ? 'p-2.5 rounded-2xl border-2 border-rose-400 bg-rose-500/20 text-left' : 'p-2.5 rounded-2xl border-2 border-slate-800 bg-slate-950 text-left';
+            });
+        }
+
+        async function generateStudioScriptOnly() {
+            const info = document.getElementById('studioProductInput').value.trim();
+            if (!info) { alert('Hãy nhập nội dung/dịch vụ vào ô trước nhé!'); return null; }
+            if (!KBCore.hasKey()) { alert('Hãy bấm nút 🔑 ở trang chính để dán Gemini API Key trước nhé!'); return null; }
+            const styleMap = {
+                1: 'Bắt trend, mở đầu 3 giây gây tò mò thu hút ngay lập tức, đầy đủ thông tin & giá.',
+                2: 'Nhẹ nhàng, ấm áp, thủ thỉ kiểu Chill / Spa, nghe rất dễ chịu.',
+                3: 'Review gọn gàng, đi thẳng vào điểm nổi bật và giá, nhịp nhanh vừa phải.',
+                4: 'Storytelling kể chuyện tâm sự gần gũi, chân thật như người dùng chia sẻ lại.'
+            };
+            const prompt = `Bạn là biên kịch voiceover TikTok chuyên nghiệp. Hãy viết ĐÚNG 1 BẢN LỜI THOẠI HOÀN CHỈNH theo phong cách: ${styleMap[studioSelectedStyle]}
+
+QUY TẮC BẮT BUỘC:
+1. Đưa ĐẦY ĐỦ 100% thông tin từ phần ĐẦU VÀO. Đổi số tiền/đơn vị sang chữ tiếng Việt ("19k" -> "mười chín ngàn", "1 lít" -> "một lít").
+2. VIẾT LIỀN MẠCH TỰ NHIÊN ĐỂ DỰNG CAPCUT:
+   - TUYỆT ĐỐI KHÔNG dùng thẻ <long pause>. Giọng nói phải trôi chảy liền mạch từ đầu tới cuối.
+   - TUYỆT ĐỐI KHÔNG chèn tiếng cười <chuckle> / <giggle> lặp đi lặp lại ở đầu hay cuối các đoạn (nghe rất giả!). Chỉ giữ tối đa 1 chỗ tự nhiên nếu thật sự cần thiết.
+   - Tạo nhịp nói giống người thật bằng dấu phẩy, dấu chấm, dấu "..." và tối đa vài chỗ <short pause> hoặc <breath> nhẹ khi chuyển ý lớn.
+   - Không viết chú thích trong ngoặc đơn (). Không đánh số đoạn, không viết tiêu đề. Chỉ trả về thuần lời thoại.
+
+NỘI DUNG ĐẦU VÀO:
+"""${info}"""`;
+
+            const text = await KBCore.callGemini(prompt, [], { temp: 0.68, maxTokens: 2048, timeoutMs: 22000 });
+            if (text) {
+                const clean = text.replace(/<long pause>/gi, ' ').replace(/<\/[a-z\s]+>/gi, '').replace(/\s{2,}/g, ' ').trim();
+                document.getElementById('studioTtsTranscript').value = clean;
+                updateStudioCharCount();
+                return clean;
+            }
+            return null;
+        }
+
+        async function runStudioScriptOnlyBtn() {
+            const btn = document.getElementById('btnStudioScriptOnly'), st = document.getElementById('studioStatusMsg'), orig = btn.innerText;
+            btn.disabled = true; btn.innerText = '⏳...'; st.innerText = '✍️ AI đang viết lời thoại liền mạch tự nhiên...';
+            try {
+                const res = await generateStudioScriptOnly();
+                st.innerText = res ? '✅ Đã viết xong thoại mượt mà! Bấm Thu Âm để nghe.' : `❌ Lỗi: ${KBCore.getLastError()}`;
+            } finally { btn.disabled = false; btn.innerText = orig; }
+        }
+
+        async function auditionSelectedVoice() {
+            if (!KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở góc trên trang chính).'); return; }
+            const btn = document.getElementById('btnAuditionVoice'), st = document.getElementById('studioStatusMsg');
+            const voiceName = document.getElementById('studioVoiceSelect').value;
+            const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim();
+            const chosenModel = document.getElementById('studioTtsModelSelect').value;
+            btn.disabled = true; btn.innerText = '⏳...'; st.innerText = `🎧 Đang tạo mẫu nghe thử giọng ${voiceName}...`;
+            try {
+                const sampleTxt = 'Xin chào các bạn, hôm nay mình sẽ hướng dẫn cách quay video bằng điện thoại cực kỳ đơn giản và đẹp mắt nhé!';
+                const res = await KBCore.generateTTS({ text: sampleTxt, voiceName, voiceStyle, preferredModel: chosenModel, timeoutMs: 20000 });
+                if (!res) { st.innerText = `❌ Không thử được giọng: ${KBCore.getLastError()}`; return; }
+                const url = URL.createObjectURL(new Blob([res.wavBuffer], { type: 'audio/wav' }));
+                const player = document.getElementById('studioAudioPlayer');
+                player.src = url;
+                document.getElementById('studioAudioResultBox').classList.remove('hidden');
+                st.innerText = `🔊 Đang phát mẫu giọng ${voiceName} (${res.model})`;
+                try { await player.play(); } catch (e) {}
+            } finally { btn.disabled = false; btn.innerText = '🎧 Thử 2s'; }
+        }
+
+        async function generateStudioAudioOnly() {
+            const raw = document.getElementById('studioTtsTranscript').value.trim();
+            if (!raw) { alert('Ô lời thoại đang trống!'); return false; }
+            if (!KBCore.hasKey()) { alert('Chưa có Gemini Key (bấm 🔑 ở trang chính).'); return false; }
+            const btn = document.getElementById('btnStudioGenAudio'), st = document.getElementById('studioStatusMsg');
+            btn.disabled = true; btn.innerText = '⏳ Đang thu...'; st.innerText = '🎙️ Giọng AI đang thu âm cả bài...';
+            try {
+                const voiceName = document.getElementById('studioVoiceSelect').value;
+                const voiceStyle = document.getElementById('studioVoiceStyleInput').value.trim();
+                const preferredModel = document.getElementById('studioTtsModelSelect').value;
+                const res = await KBCore.generateTTS({ text: raw, voiceName, voiceStyle, preferredModel, timeoutMs: 32000 });
+                if (!res) {
+                    const err = KBCore.getLastError();
+                    st.innerText = `❌ Lỗi thu âm: ${err}`;
+                    alert(`Không thu âm được:\n${err}`);
+                    return false;
+                }
+                studioWavBuffer = res.wavBuffer;
+                const probed = await KBCore.probeAudioDuration(studioWavBuffer, 'audio/wav');
+                studioWavDuration = probed.duration;
+                if (studioWavUrl) URL.revokeObjectURL(studioWavUrl);
+                studioWavUrl = URL.createObjectURL(new Blob([studioWavBuffer], { type: 'audio/wav' }));
+                const player = document.getElementById('studioAudioPlayer'); player.src = studioWavUrl;
+                document.getElementById('studioAudioResultBox').classList.remove('hidden');
+                document.getElementById('btnStudioDownloadWav').disabled = false;
+                st.innerText = `✅ Thu xong (${studioWavDuration.toFixed(1)}s) • Giọng ${voiceName} (${res.model})`;
+                try { await player.play(); } catch (e) {}
+                return true;
+            } finally { btn.disabled = false; btn.innerText = '🔊 Thu Âm Cả Bài'; }
+        }
+
+        async function runStudioFullPipeline() {
+            const btn = document.getElementById('btnStudioFullRun'), st = document.getElementById('studioStatusMsg'), orig = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<span>⏳</span><span>Đang viết &amp; thu âm...</span>';
+            try {
+                st.innerText = '✍️ Bước 1/2: AI đang viết lời thoại liền mạch...';
+                const s = await generateStudioScriptOnly();
+                if (!s) { st.innerText = `❌ Lỗi viết thoại: ${KBCore.getLastError()}`; return; }
+                st.innerText = '🎙️ Bước 2/2: Đang thu âm...';
+                await generateStudioAudioOnly();
+            } finally { btn.disabled = false; btn.innerHTML = orig; }
+        }
+
+        async function downloadStudioWav() {
+            if (!studioWavBuffer) return;
+            await KBCore.saveOrShareBlob(new Blob([studioWavBuffer], { type: 'audio/wav' }), `KimBling-Voice-${Date.now()}.wav`, 'Giọng Đọc KimBling AI');
+        }
+
+        async function sendStudioToShootPage() {
+            if (!studioWavBuffer) { alert('Chưa có file âm thanh.'); return; }
+            const info = document.getElementById('studioProductInput').value.trim();
+            const transcript = document.getElementById('studioTtsTranscript').value.trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            const fullText = `${info ? 'NỘI DUNG:\n' + info + '\n\n' : ''}LỜI THOẠI CHÍNH THỨC:\n${transcript}`;
+            await KBCore.idbPut('master_audio', {
+                name: `KimBling-${document.getElementById('studioVoiceSelect').value}.wav`,
+                type: 'audio/wav',
+                size: studioWavBuffer.byteLength,
+                duration: studioWavDuration || 15,
+                arrayBuffer: studioWavBuffer
+            });
+            KBCore.notifyParent('kb_studio_to_shoot', { scriptText: fullText });
+            if (window.parent === window) {
+                localStorage.setItem(KBCore.STORAGE_RAW_SCRIPT, fullText);
+                location.href = 'tik.html';
+            }
+        }
+
+        window.onload = initStudioPage;
+    </script>
+</body>
+</html>
