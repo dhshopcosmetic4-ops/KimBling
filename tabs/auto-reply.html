@@ -1,10 +1,12 @@
 <style>
   .ar-card { background: #161823; border: 1px solid #262938; border-radius: 14px; padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
   .ar-label { font-size: 13px; color: #ccc; }
-  .ar-textarea { width: 100%; min-height: 95px; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #0d0e15; color: #fff; font-size: 14px; resize: vertical; }
+  .ar-textarea { width: 100%; min-height: 90px; padding: 11px; border-radius: 10px; border: 1px solid #2e3244; background: #0d0e15; color: #fff; font-size: 14px; resize: vertical; }
+  .ar-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .ar-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; }
   .ar-btn:disabled { opacity: 0.6; }
-  .ar-btn.primary { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
+  .ar-btn.fb { background: #1877f2; color: #fff; }
+  .ar-btn.yt { background: #ff0033; color: #fff; }
   .ar-btn.pink { background: #fe2c55; color: #fff; }
   .ar-btn.dark { background: #2a2e40; color: #fff; }
   .ar-status { font-size: 13px; color: #25f4ee; line-height: 1.5; }
@@ -13,18 +15,21 @@
   .ar-cmt-post { font-size: 11px; color: #8a8b91; }
 </style>
 
-<h2 style="margin-bottom: 14px;">💬 Auto Trả Lời Facebook</h2>
+<h2 style="margin-bottom: 14px;">💬 Auto Trả Lời (FB & YT)</h2>
 
 <div class="ar-card">
-  <div class="ar-label"><b>1. Kịch bản / Menu quán để AI trả lời khách:</b></div>
-  <textarea class="ar-textarea" id="ar-shop-prompt" placeholder="VD: Quán KimBling Coffee & Tea. Matcha Latte 20k, Mì tương đen cá viên 30k. Địa chỉ M9 Cư xá Phú Lâm A, Q6. Trả lời thân thiện, ngắn gọn 1-2 câu, mời khách nhắn tin đặt ship."></textarea>
-  <button class="ar-btn dark" id="ar-sync-btn" type="button">☁️ Lưu kịch bản lên Google (để chạy ngầm 24/24)</button>
+  <div class="ar-label"><b>1. Kịch bản / Menu quán (dùng chung cho cả FB & YouTube):</b></div>
+  <textarea class="ar-textarea" id="ar-shop-prompt" placeholder="VD: Quán KimBling Coffee & Tea. Matcha Latte 20k, Mì tương đen cá viên 30k. Địa chỉ M9 Cư xá Phú Lâm A, Q6. Trả lời thân thiện 1-2 câu, mời khách đặt món."></textarea>
+  <button class="ar-btn dark" id="ar-sync-btn" type="button">☁️ Lưu kịch bản lên Google (chạy ngầm 24/24)</button>
   <div class="ar-status" id="ar-sync-status"></div>
 </div>
 
 <div class="ar-card">
-  <div class="ar-label"><b>2. Quét bình luận khách chưa trả lời:</b></div>
-  <button class="ar-btn primary" id="ar-scan-btn" type="button">🔍 Quét bình luận mới & Nhờ AI soạn câu trả lời</button>
+  <div class="ar-label"><b>2. Quét bình luận mới chưa trả lời:</b></div>
+  <div class="ar-row">
+    <button class="ar-btn fb" id="ar-scan-fb" type="button">📘 Quét Facebook</button>
+    <button class="ar-btn yt" id="ar-scan-yt" type="button">▶️ Quét YouTube</button>
+  </div>
   <div class="ar-status" id="ar-scan-status"></div>
   <div id="ar-list" style="display:flex; flex-direction:column; gap:10px;"></div>
 </div>
@@ -33,7 +38,8 @@
   const promptEl = document.getElementById('ar-shop-prompt');
   const syncBtn = document.getElementById('ar-sync-btn');
   const syncStatus = document.getElementById('ar-sync-status');
-  const scanBtn = document.getElementById('ar-scan-btn');
+  const scanFbBtn = document.getElementById('ar-scan-fb');
+  const scanYtBtn = document.getElementById('ar-scan-yt');
   const scanStatus = document.getElementById('ar-scan-status');
   const listEl = document.getElementById('ar-list');
 
@@ -54,9 +60,8 @@
 
   syncBtn.onclick = async () => {
     const c = getCreds();
-    const shopPrompt = promptEl.value.trim();
-    if (!c.gasUrl || !c.geminiKey || !c.fbPageId || !c.fbPageToken) {
-      syncStatus.textContent = '⚠️ Hãy điền đủ 4 mục ở Tab Cài đặt ⚙️ trước!';
+    if (!c.gasUrl || !c.geminiKey) {
+      syncStatus.textContent = '⚠️ Hãy nhập đủ Link GAS và Gemini Key ở Tab Cài đặt ⚙️ trước!';
       return;
     }
     syncBtn.disabled = true;
@@ -70,7 +75,7 @@
           geminiKey: c.geminiKey,
           fbPageId: c.fbPageId,
           fbPageToken: c.fbPageToken,
-          shopPrompt
+          shopPrompt: promptEl.value.trim()
         })
       });
       const json = await res.json();
@@ -83,15 +88,21 @@
     }
   };
 
-  scanBtn.onclick = async () => {
+  async function scanPlatform(platform) {
     const c = getCreds();
-    if (!c.gasUrl || !c.geminiKey || !c.fbPageId || !c.fbPageToken) {
-      scanStatus.textContent = '⚠️ Vào Tab Cài đặt ⚙️ nhập đủ thông tin kết nối trước!';
+    if (!c.gasUrl || !c.geminiKey) {
+      scanStatus.textContent = '⚠️ Vào Tab Cài đặt ⚙️ nhập đủ Link GAS và Gemini Key trước!';
+      return;
+    }
+    if (platform === 'facebook' && (!c.fbPageId || !c.fbPageToken)) {
+      scanStatus.textContent = '⚠️ Chưa nhập Facebook Page ID / Token ở Tab Cài đặt ⚙️!';
       return;
     }
 
-    scanBtn.disabled = true;
-    scanStatus.textContent = '⏳ Đang đọc bình luận trên Fanpage & nhờ Gemini AI soạn trả lời...';
+    scanFbBtn.disabled = true;
+    scanYtBtn.disabled = true;
+    const label = platform === 'youtube' ? 'YouTube' : 'Facebook';
+    scanStatus.textContent = `⏳ Đang quét bình luận ${label} & nhờ Gemini AI soạn trả lời...`;
     listEl.innerHTML = '';
 
     try {
@@ -99,7 +110,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-          action: 'scan_fb_comments',
+          action: platform === 'youtube' ? 'scan_yt_comments' : 'scan_fb_comments',
           geminiKey: c.geminiKey,
           fbPageId: c.fbPageId,
           fbPageToken: c.fbPageToken,
@@ -111,20 +122,21 @@
 
       const items = json.comments || [];
       if (!items.length) {
-        scanStatus.textContent = '✅ Tuyệt vời! Hiện không có bình luận nào mới chưa trả lời.';
+        scanStatus.textContent = `✅ Tuyệt vời! Kênh ${label} hiện không có bình luận nào mới chưa trả lời.`;
         return;
       }
 
-      scanStatus.textContent = `Tìm thấy ${items.length} bình luận chưa trả lời. Bạn kiểm tra rồi bấm Gửi:`;
+      scanStatus.textContent = `Tìm thấy ${items.length} bình luận ${label} chưa trả lời:`;
 
       items.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'ar-cmt';
+        const badge = platform === 'youtube' ? '▶️ YouTube' : '📘 Facebook';
         card.innerHTML = `
-          <div class="ar-cmt-post">📌 Bài viết: ${escapeHtml(item.postSnippet || '(Ảnh/Video)')}</div>
+          <div class="ar-cmt-post"><b>${badge}</b> • ${escapeHtml(item.postSnippet || '(Video/Bài viết)')}</div>
           <div class="ar-cmt-user">👤 <b>${escapeHtml(item.authorName)}:</b> "${escapeHtml(item.commentText)}"</div>
           <textarea class="ar-textarea" style="min-height:65px;">${escapeHtml(item.suggestedReply)}</textarea>
-          <button class="ar-btn pink" type="button">💬 Gửi câu trả lời này</button>
+          <button class="ar-btn pink" type="button">💬 Gửi câu trả lời này lên ${label}</button>
           <div class="ar-status" style="font-size:12px;"></div>
         `;
         const replyBox = card.querySelector('textarea');
@@ -135,13 +147,13 @@
           const text = replyBox.value.trim();
           if (!text) return;
           replyBtn.disabled = true;
-          stEl.textContent = '⏳ Đang gửi lên Facebook...';
+          stEl.textContent = `⏳ Đang gửi lên ${label}...`;
           try {
             const r = await fetch(c.gasUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: JSON.stringify({
-                action: 'reply_fb_comment',
+                action: platform === 'youtube' ? 'reply_yt_comment' : 'reply_fb_comment',
                 commentId: item.commentId,
                 commentText: item.commentText,
                 replyText: text,
@@ -150,7 +162,7 @@
             });
             const rj = await r.json();
             if (!rj.ok) throw new Error(rj.error);
-            stEl.textContent = '✅ Đã trả lời xong lên Fanpage!';
+            stEl.textContent = `✅ Đã trả lời xong lên ${label}!`;
             replyBtn.style.display = 'none';
           } catch (e) {
             stEl.textContent = '❌ Lỗi: ' + e.message;
@@ -161,11 +173,15 @@
         listEl.appendChild(card);
       });
     } catch (err) {
-      scanStatus.textContent = '❌ Lỗi quét bình luận: ' + err.message;
+      scanStatus.textContent = `❌ Lỗi quét ${label}: ` + err.message;
     } finally {
-      scanBtn.disabled = false;
+      scanFbBtn.disabled = false;
+      scanYtBtn.disabled = false;
     }
-  };
+  }
+
+  scanFbBtn.onclick = () => scanPlatform('facebook');
+  scanYtBtn.onclick = () => scanPlatform('youtube');
 
   function escapeHtml(s) {
     return String(s || '')
