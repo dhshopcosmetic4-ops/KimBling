@@ -13,6 +13,7 @@
   .ar-cmt { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .ar-cmt-user { font-size: 13px; color: #fff; line-height: 1.4; }
   .ar-cmt-post { font-size: 11px; color: #8a8b91; }
+  .ar-chk { font-size: 12px; color: #ccc; display: flex; align-items: center; gap: 6px; }
 </style>
 
 <h2 style="margin-bottom: 14px;">💬 Auto Trả Lời (FB & YT)</h2>
@@ -30,6 +31,7 @@
     <button class="ar-btn fb" id="ar-scan-fb" type="button">📘 Quét Facebook</button>
     <button class="ar-btn yt" id="ar-scan-yt" type="button">▶️ Quét YouTube</button>
   </div>
+  <label class="ar-chk"><input type="checkbox" id="ar-yt-own" /> Quét cả bình luận của chính mình trên YouTube (để tự test)</label>
   <div class="ar-status" id="ar-scan-status"></div>
   <div id="ar-list" style="display:flex; flex-direction:column; gap:10px;"></div>
 </div>
@@ -40,6 +42,7 @@
   const syncStatus = document.getElementById('ar-sync-status');
   const scanFbBtn = document.getElementById('ar-scan-fb');
   const scanYtBtn = document.getElementById('ar-scan-yt');
+  const ytOwnChk = document.getElementById('ar-yt-own');
   const scanStatus = document.getElementById('ar-scan-status');
   const listEl = document.getElementById('ar-list');
 
@@ -114,7 +117,8 @@
           geminiKey: c.geminiKey,
           fbPageId: c.fbPageId,
           fbPageToken: c.fbPageToken,
-          shopPrompt: promptEl.value.trim()
+          shopPrompt: promptEl.value.trim(),
+          includeOwn: ytOwnChk.checked
         })
       });
       const json = await res.json();
@@ -122,7 +126,15 @@
 
       const items = json.comments || [];
       if (!items.length) {
-        scanStatus.textContent = `✅ Tuyệt vời! Kênh ${label} hiện không có bình luận nào mới chưa trả lời.`;
+        if (platform === 'youtube' && json.debug) {
+          const d = json.debug;
+          scanStatus.innerHTML = `ℹ️ Kênh: <b>${escapeHtml(d.channelTitle)}</b><br>`
+            + `Tìm thấy tổng <b>${d.totalThreads}</b> bình luận trên kênh.<br>`
+            + `(Đã lọc bỏ: ${d.skippedOwn} của chính bạn, ${d.skippedReplied} đã trả lời rồi).<br>`
+            + (d.skippedOwn > 0 ? '💡 <i>Hãy tích ô "Quét cả bình luận của chính mình" ở trên rồi bấm Quét YouTube lại để tự test!</i>' : '');
+        } else {
+          scanStatus.textContent = `✅ Tuyệt vời! Kênh ${label} hiện không có bình luận nào mới chưa trả lời.`;
+        }
         return;
       }
 
