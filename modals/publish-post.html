@@ -15,6 +15,10 @@
   .pub-btn:disabled { opacity: 0.6; }
   .pub-btn.ai { background: linear-gradient(90deg, #25f4ee, #4f8cff); color: #000; }
   .pub-btn.post { background: #fe2c55; color: #fff; }
+  .pub-copy-btn {
+    width: 100%; padding: 9px 12px; border: 1px solid #303448; border-radius: 8px;
+    background: #1d202e; color: #25f4ee; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
   .pub-card { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .pub-card h4 { font-size: 14px; color: #25f4ee; display: flex; justify-content: space-between; align-items: center; }
   .pub-status { font-size: 13px; color: #ccc; text-align: center; line-height: 1.5; background: #10121a; padding: 10px; border-radius: 8px; display: none; }
@@ -29,7 +33,7 @@
 
   <div class="pub-media-box" id="pub-media-box">
     <div id="pub-media-preview">
-      <p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh nào được chọn.</p>
+      <p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh (vẫn nhờ AI viết Tiêu đề & Copy được luôn).</p>
     </div>
     <div class="pub-pick-row">
       <button type="button" class="pub-pick-btn" id="pub-pick-vid" style="background:#fe2c55; color:#fff;">🎬 Nén Video</button>
@@ -39,7 +43,7 @@
     </div>
   </div>
 
-  <input class="pub-input pub-save-field" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Mì tương đen cá viên)" />
+  <input class="pub-input pub-save-field" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Matcha Latte 20k)" />
   <textarea class="pub-textarea pub-save-field" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, địa chỉ, ưu đãi..."></textarea>
 
   <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
@@ -47,10 +51,10 @@
 
   <div id="pub-results" style="display:flex; flex-direction:column; gap:10px;">
     <div class="pub-card">
-      <h4><span>▶️ YouTube Shorts</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-yt-enable" checked /> Đăng kênh này</label></h4>
-      <input class="pub-input pub-save-field" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
-      <textarea class="pub-textarea pub-save-field" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
-      <input class="pub-input pub-save-field" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
+      <h4><span>🎵 TikTok</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-tt-enable" /> Đẩy nháp qua API</label></h4>
+      <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
+      <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
+      <button type="button" class="pub-copy-btn" id="pub-copy-tt">📋 Copy Tiêu đề + 5 Hashtag TikTok</button>
     </div>
 
     <div class="pub-card">
@@ -58,12 +62,15 @@
       <input class="pub-input pub-save-field" id="pub-fb-title" placeholder="Tiêu đề mở đầu nổi bật" />
       <textarea class="pub-textarea pub-save-field" id="pub-fb-body" placeholder="Nội dung bài Facebook"></textarea>
       <input class="pub-input pub-save-field" id="pub-fb-tags" placeholder="5 Hashtag Facebook" />
+      <button type="button" class="pub-copy-btn" id="pub-copy-fb" style="color:#ccc;">📋 Copy nội dung Facebook</button>
     </div>
 
     <div class="pub-card">
-      <h4><span>🎵 TikTok</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-tt-enable" checked /> Đăng kênh này</label></h4>
-      <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
-      <input class="pub-input pub-save-field" id="pub-tt-tags" placeholder="5 Hashtag TikTok" />
+      <h4><span>▶️ YouTube Shorts</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-yt-enable" checked /> Đăng kênh này</label></h4>
+      <input class="pub-input pub-save-field" id="pub-yt-title" placeholder="Tiêu đề YouTube (có #shorts)" />
+      <textarea class="pub-textarea pub-save-field" id="pub-yt-body" placeholder="Mô tả chi tiết YouTube"></textarea>
+      <input class="pub-input pub-save-field" id="pub-yt-tags" placeholder="5 Hashtag YouTube" />
+      <button type="button" class="pub-copy-btn" id="pub-copy-yt" style="color:#ccc;">📋 Copy nội dung YouTube</button>
     </div>
   </div>
 
@@ -72,14 +79,14 @@
     <select class="pub-select" id="pub-yt-privacy" style="width:auto; padding:7px 10px;">
       <option value="private">Riêng tư (Test)</option>
       <option value="unlisted">Không công khai</option>
-      <option value="public">Công khai (Public)</option>
+      <option value="public" selected>Công khai (Public)</option>
     </select>
   </div>
 
-  <div class="pub-opt-row">
-    <span>🎵 Chế độ TikTok:</span>
+  <div class="pub-opt-row" id="pub-tt-mode-row" style="display:none;">
+    <span>🎵 Chế độ TikTok API:</span>
     <select class="pub-select" id="pub-tt-mode" style="width:auto; padding:7px 10px;">
-      <option value="draft">Đẩy vào Hộp nháp (Duyệt tay 1 chạm)</option>
+      <option value="draft" selected>Đẩy vào Hộp nháp (chọn nhạc)</option>
       <option value="direct_private">Đăng thẳng - Riêng tư (Sandbox)</option>
       <option value="direct_public">Đăng thẳng - Công khai (Sau Audit)</option>
     </select>
@@ -103,6 +110,7 @@
   const ytEnableEl = document.getElementById('pub-yt-enable');
   const fbEnableEl = document.getElementById('pub-fb-enable');
   const ttEnableEl = document.getElementById('pub-tt-enable');
+  const ttModeRow = document.getElementById('pub-tt-mode-row');
   const ytPrivacyEl = document.getElementById('pub-yt-privacy');
   const ttModeEl = document.getElementById('pub-tt-mode');
 
@@ -114,6 +122,52 @@
   ];
 
   let previewUrl = null;
+
+  ttEnableEl.onchange = () => {
+    ttModeRow.style.display = ttEnableEl.checked ? 'flex' : 'none';
+  };
+
+  async function copyTextToPhone(text, btn, defaultLabel) {
+    if (!text.trim()) {
+      btn.textContent = '⚠️ Chưa có chữ để copy!';
+      setTimeout(() => { btn.textContent = defaultLabel; }, 2000);
+      return;
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        throw new Error('no clipboard');
+      }
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    btn.textContent = '✅ Đã copy! Mở TikTok/App dán thôi';
+    setTimeout(() => { btn.textContent = defaultLabel; }, 2500);
+  }
+
+  document.getElementById('pub-copy-tt').onclick = function () {
+    const txt = (document.getElementById('pub-tt-title').value.trim() + '\n\n' + document.getElementById('pub-tt-tags').value.trim()).trim();
+    copyTextToPhone(txt, this, '📋 Copy Tiêu đề + 5 Hashtag TikTok');
+  };
+  document.getElementById('pub-copy-fb').onclick = function () {
+    const txt = (document.getElementById('pub-fb-title').value.trim() + '\n\n' + document.getElementById('pub-fb-body').value.trim() + '\n\n' + document.getElementById('pub-fb-tags').value.trim()).trim();
+    copyTextToPhone(txt, this, '📋 Copy nội dung Facebook');
+  };
+  document.getElementById('pub-copy-yt').onclick = function () {
+    const txt = (document.getElementById('pub-yt-title').value.trim() + '\n\n' + document.getElementById('pub-yt-body').value.trim() + '\n\n' + document.getElementById('pub-yt-tags').value.trim()).trim();
+    copyTextToPhone(txt, this, '📋 Copy nội dung YouTube');
+  };
 
   function saveAllDraftFields() {
     const data = {};
@@ -131,7 +185,7 @@
 
   function resetEmptyPreview() {
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
-    previewBox.innerHTML = '<p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh nào được chọn.</p>';
+    previewBox.innerHTML = '<p style="font-size:13px; color:#8a8b91;">Chưa có Video/Ảnh (vẫn nhờ AI viết Tiêu đề & Copy được luôn).</p>';
     directFileEl.value = '';
   }
 
@@ -144,7 +198,10 @@
       ? `<video src="${previewUrl}" controls playsinline></video>`
       : `<img src="${previewUrl}" alt="preview" />`;
     const extra = (media.files && media.files.length > 1) ? ` (${media.files.length} ảnh)` : '';
-    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b>${extra} (${mb} MB)</div>`;
+    const imgNote = media.type === 'image'
+      ? `<div style="font-size:11px; color:#8a8b91; margin-top:4px;">💡 Ảnh: FB sẽ đăng Album; TikTok hãy bấm nút 📋 Copy rồi chọn ảnh + nhạc bên TikTok.</div>`
+      : '';
+    previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b>${extra} (${mb} MB)</div>${imgNote}`;
   }
 
   document.querySelectorAll('.pub-save-field').forEach(el => {
@@ -229,7 +286,7 @@
 
       saveAllDraftFields();
       const used = d._usedModel ? ` (${d._usedModel})` : '';
-      showStatus(aiStatusEl, `✅ AI đã phối & lưu nháp xong${used}!`);
+      showStatus(aiStatusEl, `✅ AI đã phối xong${used}! Bấm <b>📋 Copy</b> để dán sang TikTok ngay.`);
     } catch (err) {
       showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
@@ -275,7 +332,7 @@
       return;
     }
     if (wantTT && !localStorage.getItem('tt_display_name')) {
-      showStatus(sendStatusEl, '⚠️ Bạn đang tích đăng TikTok nhưng chưa bấm <b>"🎵 Kết nối tài khoản TikTok"</b> ở Tab Cài đặt ⚙️!');
+      showStatus(sendStatusEl, '⚠️ Bạn đang tích đẩy TikTok nhưng chưa bấm <b>"🎵 Kết nối tài khoản TikTok"</b> ở Tab Cài đặt ⚙️!');
       return;
     }
     if (media.size > 35 * 1048576) {
@@ -362,8 +419,8 @@
         }
       }
 
-      sendBtn.textContent = '🎬 Đang đăng lên cả 3 kênh...';
-      showStatus(sendStatusEl, '⏳ Google đã nhận đủ file! Đang bắn lên YouTube, Facebook & TikTok...');
+      sendBtn.textContent = '🎬 Đang đăng lên các kênh...';
+      showStatus(sendStatusEl, '⏳ Google đã nhận đủ file! Đang bắn lên các kênh đã chọn...');
 
       const result = await postGas(gasUrl, finalizePayload);
       let html = `<b>Kết quả xử lý:</b><br>`;
