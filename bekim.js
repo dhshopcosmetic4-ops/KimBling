@@ -1,6 +1,9 @@
 /* =========================================================
- * BEKIM.JS (v4.9 - Bé Kim cử động mấp máy miệng/chớp mắt/vẫy tay trên menu.html)
+ * BEKIM.JS (v5.0 - Bé Kim cử động + Nhớ khách + Đánh giá 1 chạm & Khóa upsize Sữa tuyết)
  * - Tự nâng cấp nút .floating-ai-btn thành Bé Kim cử động theo giọng nói (lip-sync)
+ * - Gửi customerPhone lúc mở Live để Bé Kim chào đúng tên, nhắc số 💎, món ruột & đơn cũ chưa đánh giá
+ * - Hỗ trợ tool open_review_popup & save_product_review (gửi thẳng về POS GOOGLE_SCRIPT_URL)
+ * - Khóa upsize Sữa tuyết
  * - Chuẩn hóa linh hoạt mọi cách nói Giao hàng tận nơi / Tự ra quán lấy
  * - Xem ảnh / chi tiết món -> mở popup TikTok (#tiktokModal)
  * - Bỏ / thêm vào giỏ hàng -> mở bảng tùy chọn (#optionsModal)
@@ -52,6 +55,22 @@
       voiceCustomerDraft.payMethod = e.target.value;
     }
   });
+
+  function getSavedCustomerPhone() {
+    const mainEl = document.getElementById("mainCustomerPhone");
+    const val = (mainEl && mainEl.value ? mainEl.value : "") ||
+      localStorage.getItem("kimbling_cust_phone") ||
+      localStorage.getItem("kb_customer_phone") ||
+      "";
+    return String(val).replace(/\D/g, "").trim();
+  }
+
+  function getSavedCustomerName() {
+    const inp = document.getElementById("customerName");
+    return ((inp && inp.value ? inp.value : "") ||
+      localStorage.getItem("kimbling_cust_name") ||
+      "").trim();
+  }
 
   function upgradeFloatingKimButton() {
     const btn = document.querySelector(".floating-ai-btn");
@@ -439,11 +458,18 @@
       compressor.connect(liveAnalyser);
       liveAnalyser.connect(audioCtx.destination);
 
+      const savedPhone = getSavedCustomerPhone();
+
       const [tokenRes, micStream] = await Promise.all([
         fetch(BEKIM_AI_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "create_live_token", mode: "menu_control", keyIndex: reqIdx })
+          body: JSON.stringify({
+            action: "create_live_token",
+            mode: "menu_control",
+            keyIndex: reqIdx,
+            customerPhone: savedPhone
+          })
         }).then((r) => r.json()),
         navigator.mediaDevices.getUserMedia({
           audio: {
@@ -716,6 +742,7 @@
     if (typeof closeDinhViPopup === "function") closeDinhViPopup();
     if (typeof closeBannerPopup === "function") closeBannerPopup();
     if (typeof closeSuccessOrderPopup === "function") closeSuccessOrderPopup();
+    if (typeof closeReviewPopup === "function") closeReviewPopup();
 
     const contactEl = document.getElementById("contactModal");
     if (contactEl) contactEl.style.display = "none";
@@ -749,8 +776,12 @@
     if (!dish) return false;
     const isFood = getCategoryType(dish.name, dish.category) === "Food";
     const nameLower = dish.name.toLowerCase();
-    const forbidden = ["ly 1 lít", "1 lít", "ly khổng lồ", "khổng lồ", "ly nhỏ", "650ml"];
-    return !isFood && !forbidden.some((k) => nameLower.includes(k));
+    const nameNorm = removeDiacritics(dish.name);
+    const forbidden = ["ly 1 lít", "1 lít", "ly khổng lồ", "khổng lồ", "ly nhỏ", "650ml", "sữa tuyết"];
+    const forbiddenNorm = ["ly 1 lit", "1 lit", "ly khong lo", "khong lo", "ly nho", "650ml", "sua tuyet"];
+    return !isFood &&
+      !forbidden.some((k) => nameLower.includes(k)) &&
+      !forbiddenNorm.some((k) => nameNorm.includes(k));
   }
 
   function normalizeSugar(val) {
@@ -1076,6 +1107,86 @@
       return args.confirmSend
         ? await handleMenuToolCall("confirm_submit_order", { confirmed: true })
         : await handleMenuToolCall("open_checkout", {});
+    }
+
+    if (name === "open_review_popup") {
+      const dish = findDish(args.dishName);
+      const finalName = dish ? dish.name : String(args.dishName || "Món Kim Bling").trim();
+      const orderRef = String(args.orderRef || "").trim();
+      closeAllCustomerPopups();
+      if (typeof window.openReviewPopup === "function") {
+        window.openReviewPopup(finalName, orderRef, "bekim_voice");
+        return {
+          ok: true,
+          openedReviewPopup: true,
+          dishName: finalName,
+          message: "Đã mở bảng đánh giá 1 chạm trên màn hình. Khách chọn 5 sao sẽ nhận +2 💎!"
+        };
+      }
+      return { ok: false, error: "Chức năng bảng đánh giá chưa sẵn sàng trên trang." };
+    }
+
+    if (name === "save_product_review") {
+      const stars = Math.round(Number(args.stars || 0));
+      const dish = findDish(args.dishName);
+      const finalName = dish ? dish.name : String(args.dishName || "").trim();
+      const comment = String(args.comment || "").trim();
+      const phone = getSavedCustomerPhone();
+      const customerName = getSavedCustomerName();
+
+      if (stars < 4) {
+        return {
+          ok: true,
+          published: false,
+          rewarded: false,
+          message: "Đã ghi nhận góp ý riêng của khách (không hiển thị công khai và không tặng 💎)."
+        };
+      }
+
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            type: "save_product_review",
+            dishName: finalName,
+            dishId: dish ? String(dish.id || "") : "",
+            stars: stars,
+            comment: comment,
+            phone: phone,
+            customerName: customerName,
+            orderRef: String(args.orderRef || "").trim(),
+            source: "bekim_voice"
+          })
+        }).then((r) => r.json());
+
+        if (typeof window.closeReviewPopup === "function") {
+          window.closeReviewPopup();
+        }
+        if (res && res.reviews && typeof window.applyUpdatedReviewsFromServer === "function") {
+          window.applyUpdatedReviewsFromServer(res.reviews);
+        }
+        if (res && res.hatKim !== null && res.hatKim !== undefined && typeof window.updateDiamondDisplayAndProgress === "function") {
+          window.updateDiamondDisplayAndProgress(res.hatKim);
+        }
+        if (res && res.rewarded) {
+          showToast("🎉 Đã lưu đánh giá 5⭐ & tặng +2 💎!", 3200);
+        } else if (res && res.published) {
+          showToast("⭐ Đã ghi nhận đánh giá của bạn!", 2600);
+        } else {
+          showToast("🙏 Cảm ơn bạn đã chia sẻ với quán!", 2600);
+        }
+
+        return {
+          ok: !!(res && res.success),
+          published: !!(res && res.published),
+          rewarded: !!(res && res.rewarded),
+          rewardAmount: (res && res.rewardAmount) || 0,
+          message: (res && res.message) || "Đã xử lý đánh giá."
+        };
+      } catch (e) {
+        return { ok: false, error: "Không gửi được đánh giá lên máy chủ." };
+      }
     }
 
     if (name === "end_bekim_session") {
@@ -1416,13 +1527,20 @@
         if (phoneEl) phoneEl.value = phone;
         localStorage.setItem("kimbling_cust_phone", phone);
         localStorage.setItem("kb_customer_phone", phone);
+        if (typeof fetchCustomerDiamondBalance === "function") {
+          fetchCustomerDiamondBalance(phone);
+        }
         try {
           const data = await fetch(
             `${GOOGLE_SCRIPT_URL}?type=adminGetCustomerInfo&phone=${encodeURIComponent(phone)}`
           ).then((r) => r.json());
           const bal = data && data.hatKim ? parseInt(data.hatKim, 10) : 0;
-          const dispEl = document.getElementById("mainDiamondDisplay");
-          if (dispEl) dispEl.innerText = bal.toLocaleString("vi-VN") + " 💎";
+          if (typeof window.updateDiamondDisplayAndProgress === "function") {
+            window.updateDiamondDisplayAndProgress(bal);
+          } else {
+            const dispEl = document.getElementById("mainDiamondDisplay");
+            if (dispEl) dispEl.innerText = bal.toLocaleString("vi-VN") + " 💎";
+          }
           balanceInfo = { phone: phone, diamondBalance: bal };
         } catch (e) {
           balanceInfo = { phone: phone, error: "Không tra cứu được số dư lúc này." };
