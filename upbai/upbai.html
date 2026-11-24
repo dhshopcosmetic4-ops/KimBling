@@ -104,11 +104,16 @@
 
   <script type="module">
     async function boot() {
-      let AppBus;
-      try {
-        const mod = await import('./app-bus.js?v=4');
-        AppBus = mod.AppBus;
-      } catch (err) {
+      let AppBus = null;
+      const busPaths = ['./app-bus.js?v=4', './upbai/app-bus.js?v=4', './core/app-bus.js?v=4'];
+      for (const p of busPaths) {
+        try {
+          const mod = await import(p);
+          if (mod && mod.AppBus) { AppBus = mod.AppBus; break; }
+        } catch (e) {}
+      }
+
+      if (!AppBus) {
         AppBus = {
           state: {
             media: null,
@@ -140,20 +145,28 @@
       const backdrop = document.getElementById('sheet-backdrop');
       const sheetTitle = document.getElementById('sheet-title');
 
-      async function loadHtmlOnce(url, container) {
-        if (loadedCache.has(url)) return;
+      async function loadHtmlOnce(cacheKey, candidateUrls, container) {
+        if (loadedCache.has(cacheKey)) return;
         container.innerHTML = '<p style="color:#8a8b91;text-align:center;padding:30px;">Đang tải module...</p>';
         try {
-          const res = await fetch(url, { cache: 'no-store' });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const html = await res.text();
+          let html = null;
+          for (const url of candidateUrls) {
+            const res = await fetch(url, { cache: 'no-store' });
+            if (res.ok) {
+              html = await res.text();
+              break;
+            }
+          }
+          if (html === null) {
+            throw new Error('Không tìm thấy ở: ' + candidateUrls.join(' hoặc '));
+          }
           container.innerHTML = '';
           const frag = document.createRange().createContextualFragment(html);
           container.appendChild(frag);
-          loadedCache.add(url);
+          loadedCache.add(cacheKey);
         } catch (err) {
           container.innerHTML = `<div style="background:#2a151b;border:1px solid #fe2c55;padding:14px;border-radius:10px;font-size:13px;line-height:1.5;">
-            ❌ <b>Không tải được file:</b> <code>${url}</code><br>Lý do: ${err.message}
+            ❌ <b>Không tải được module:</b> <code>${cacheKey}</code><br>${err.message}
           </div>`;
         }
       }
@@ -170,7 +183,14 @@
           tabStage.appendChild(pane);
         }
         pane.classList.add('active');
-        await loadHtmlOnce(`./tab-${name}.html`, pane);
+        const urls = [
+          `./tab-${name}.html`,
+          `./upbai/tab-${name}.html`,
+          `./upbai/${name}.html`,
+          `./${name}.html`,
+          `./tabs/${name}.html`
+        ];
+        await loadHtmlOnce(`tab-${name}`, urls, pane);
       }
 
       async function openModal(name, title = 'Công cụ') {
@@ -187,7 +207,14 @@
         pane.classList.add('active');
         backdrop.classList.add('open');
         sheet.classList.add('open');
-        await loadHtmlOnce(`./modal-${name}.html`, pane);
+        const urls = [
+          `./modal-${name}.html`,
+          `./upbai/modal-${name}.html`,
+          `./upbai/${name}.html`,
+          `./${name}.html`,
+          `./modals/${name}.html`
+        ];
+        await loadHtmlOnce(`modal-${name}`, urls, pane);
       }
 
       function closeModal() {

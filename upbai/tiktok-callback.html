@@ -26,13 +26,15 @@
   <div class="box">
     <h2>🎵 Kết nối TikTok</h2>
     <p id="cb-msg">⏳ Đang xử lý xác thực với TikTok...</p>
-    <a href="./index.html" class="btn" id="cb-back" style="display:none;">⬅️ Quay lại Creator Studio</a>
+    <a href="./upbai.html" class="btn" id="cb-back" style="display:none;">⬅️ Quay lại Creator Studio</a>
   </div>
 
   <script>
     (async function () {
       const msgEl = document.getElementById('cb-msg');
       const backBtn = document.getElementById('cb-back');
+      const returnUrl = localStorage.getItem('tt_return_url') || './upbai.html';
+      backBtn.href = returnUrl;
 
       try {
         const searchStr = window.location.search || (window.location.hash ? '?' + window.location.hash.slice(1) : '');
@@ -47,7 +49,7 @@
         const savedState = localStorage.getItem('tt_oauth_state');
 
         if (!code) {
-          throw new Error('Không nhận được mã code từ TikTok. Hãy bấm nút "Kết nối tài khoản TikTok" từ Tab Cài đặt chứ đừng mở thẳng trang này.<br><br><small style="color:#8a8b91;">URL hiện tại: ' + window.location.href + '</small>');
+          throw new Error('Không nhận được mã code từ TikTok. Hãy bấm nút "Kết nối tài khoản TikTok" từ Tab Cài đặt.<br><br><small style="color:#8a8b91;">URL: ' + window.location.href + '</small>');
         }
         if (savedState && state !== savedState) throw new Error('Sai mã bảo mật state, hãy thử kết nối lại.');
 
@@ -81,7 +83,7 @@
 
         msgEl.innerHTML = `✅ Đã kết nối thành công với TikTok: <b style="color:#25f4ee;">${json.displayName || 'OK'}</b>!<br>Đang quay lại ứng dụng...`;
         backBtn.style.display = 'inline-block';
-        setTimeout(() => { window.location.href = './index.html'; }, 1500);
+        setTimeout(() => { window.location.href = returnUrl; }, 1500);
       } catch (e) {
         msgEl.innerHTML = '❌ <b>Lỗi kết nối:</b> ' + e.message;
         backBtn.style.display = 'inline-block';
