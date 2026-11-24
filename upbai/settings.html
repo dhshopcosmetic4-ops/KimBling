@@ -1,0 +1,167 @@
+<style>
+  .set-group { display: flex; flex-direction: column; gap: 12px; background: #161823; padding: 16px; border-radius: 14px; margin-bottom: 14px; }
+  .set-label { font-size: 13px; color: #ccc; margin-bottom: -6px; }
+  .set-row { display: flex; gap: 8px; }
+  .set-input { flex: 1; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0d0e15; color: #fff; font-size: 14px; }
+  .set-eye { padding: 0 12px; border-radius: 8px; border: 1px solid #333; background: #222533; color: #fff; cursor: pointer; }
+  .set-btn { padding: 13px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #fe2c55; color: #fff; font-size: 15px; }
+  .set-btn.tt { background: #25f4ee; color: #000; }
+  .set-btn:disabled { opacity: 0.6; }
+  .set-msg { font-size: 13px; color: #25f4ee; min-height: 20px; line-height: 1.5; }
+</style>
+
+<h2 style="margin-bottom: 14px;">Cài đặt kết nối</h2>
+<div class="set-group">
+  <div class="set-label">1. Link Web App Google Apps Script (/exec):</div>
+  <input class="set-input" id="set-gas-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" />
+
+  <div class="set-label">2. Gemini API Key:</div>
+  <div class="set-row">
+    <input class="set-input" id="set-gemini-key" type="password" autocomplete="off" placeholder="AIzaSy..." />
+    <button class="set-eye" id="set-toggle-key" type="button">👁️</button>
+  </div>
+
+  <div class="set-label">3. Facebook Page ID (Fanpage):</div>
+  <input class="set-input" id="set-fb-id" type="text" placeholder="VD: 1449848791548930" />
+
+  <div class="set-label">4. Facebook Page Token:</div>
+  <div class="set-row">
+    <input class="set-input" id="set-fb-token" type="password" autocomplete="off" placeholder="EAA..." />
+    <button class="set-eye" id="set-toggle-fb" type="button">👁️</button>
+  </div>
+
+  <div class="set-label">5. TikTok Sandbox Client Key:</div>
+  <input class="set-input" id="set-tt-key" type="text" autocomplete="off" placeholder="sbaw..." />
+
+  <div class="set-label">6. TikTok Sandbox Client Secret:</div>
+  <div class="set-row">
+    <input class="set-input" id="set-tt-secret" type="password" autocomplete="off" placeholder="Nhập Client Secret..." />
+    <button class="set-eye" id="set-toggle-tt" type="button">👁️</button>
+  </div>
+
+  <button class="set-btn" id="set-save-btn" type="button">Lưu tất cả & Kiểm tra kết nối</button>
+  <button class="set-btn tt" id="set-tt-connect" type="button">🎵 Kết nối tài khoản TikTok</button>
+  <div class="set-msg" id="set-msg"></div>
+</div>
+
+<script type="module">
+  const urlInput = document.getElementById('set-gas-url');
+  const keyInput = document.getElementById('set-gemini-key');
+  const fbIdInput = document.getElementById('set-fb-id');
+  const fbTokenInput = document.getElementById('set-fb-token');
+  const ttKeyInput = document.getElementById('set-tt-key');
+  const ttSecretInput = document.getElementById('set-tt-secret');
+  const saveBtn = document.getElementById('set-save-btn');
+  const ttConnectBtn = document.getElementById('set-tt-connect');
+  const msg = document.getElementById('set-msg');
+
+  urlInput.value = localStorage.getItem('gas_url') || AppBus.state.gasUrl || '';
+  keyInput.value = localStorage.getItem('gemini_key') || AppBus.state.geminiKey || '';
+  fbIdInput.value = localStorage.getItem('fb_page_id') || AppBus.state.fbPageId || '';
+  fbTokenInput.value = localStorage.getItem('fb_page_token') || AppBus.state.fbPageToken || '';
+  ttKeyInput.value = localStorage.getItem('tt_client_key') || AppBus.state.ttClientKey || '';
+  ttSecretInput.value = localStorage.getItem('tt_client_secret') || AppBus.state.ttClientSecret || '';
+
+  const ttName = localStorage.getItem('tt_display_name') || '';
+  if (ttName) {
+    msg.innerHTML = `🎵 Đang kết nối TikTok: <b>${ttName}</b>`;
+  }
+
+  document.getElementById('set-toggle-key').onclick = () => {
+    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+  };
+  document.getElementById('set-toggle-fb').onclick = () => {
+    fbTokenInput.type = fbTokenInput.type === 'password' ? 'text' : 'password';
+  };
+  document.getElementById('set-toggle-tt').onclick = () => {
+    ttSecretInput.type = ttSecretInput.type === 'password' ? 'text' : 'password';
+  };
+
+  function saveAllLocal() {
+    const url = urlInput.value.trim();
+    const key = keyInput.value.trim();
+    const fbId = fbIdInput.value.trim();
+    const fbToken = fbTokenInput.value.trim();
+    const ttKey = ttKeyInput.value.trim();
+    const ttSecret = ttSecretInput.value.trim();
+
+    AppBus.setGasUrl(url);
+    AppBus.setGeminiKey(key);
+    AppBus.state.fbPageId = fbId;
+    AppBus.state.fbPageToken = fbToken;
+    localStorage.setItem('fb_page_id', fbId);
+    localStorage.setItem('fb_page_token', fbToken);
+    AppBus.state.ttClientKey = ttKey;
+    AppBus.state.ttClientSecret = ttSecret;
+    localStorage.setItem('tt_client_key', ttKey);
+    localStorage.setItem('tt_client_secret', ttSecret);
+    return { url, key, fbId, fbToken, ttKey, ttSecret };
+  }
+
+  saveBtn.onclick = async () => {
+    try {
+      const d = saveAllLocal();
+      if (!d.url.startsWith('https://script.google.com/')) {
+        msg.textContent = '❌ Link GAS phải bắt đầu bằng https://script.google.com/...';
+        return;
+      }
+
+      saveBtn.disabled = true;
+      msg.textContent = '⏳ Đã lưu trên iPhone. Đang kiểm tra kết nối...';
+
+      const res = await fetch(d.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'ping',
+          fbPageId: d.fbId,
+          fbPageToken: d.fbToken
+        })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        if (json.upgradedPageToken) {
+          fbTokenInput.value = json.upgradedPageToken;
+          AppBus.state.fbPageToken = json.upgradedPageToken;
+          localStorage.setItem('fb_page_token', json.upgradedPageToken);
+        }
+        let html = `✅ ${json.msg}<br>${d.key ? '🔑 Đã lưu Gemini Key.' : '⚠️ Chưa có Gemini Key!'}`;
+        if (json.fbCheck) html += `<br>${json.fbCheck}`;
+        if (json.ttStatus) html += `<br>${json.ttStatus}`;
+        msg.innerHTML = html;
+      } else {
+        msg.textContent = '⚠️ GAS báo lỗi: ' + (json.error || 'Không rõ');
+      }
+    } catch (err) {
+      msg.textContent = '❌ Lỗi kiểm tra: ' + err.message;
+    } finally {
+      saveBtn.disabled = false;
+    }
+  };
+
+  ttConnectBtn.onclick = () => {
+    const d = saveAllLocal();
+    if (!d.url.startsWith('https://script.google.com/')) {
+      msg.textContent = '❌ Hãy nhập Link Google Apps Script (ô 1) trước!';
+      return;
+    }
+    if (!d.ttKey || !d.ttSecret) {
+      msg.textContent = '❌ Hãy nhập đủ TikTok Client Key (ô 5) và Client Secret (ô 6) trước!';
+      return;
+    }
+    const state = 'tt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('tt_oauth_state', state);
+
+    const baseDir = window.location.origin + window.location.pathname.replace(/[^/]*$/, '');
+    const redirectUri = baseDir + 'tiktok-callback.html';
+
+    const authUrl = 'https://www.tiktok.com/v2/auth/authorize/'
+      + '?client_key=' + encodeURIComponent(d.ttKey)
+      + '&scope=' + encodeURIComponent('user.info.basic,video.upload,video.publish')
+      + '&response_type=code'
+      + '&redirect_uri=' + encodeURIComponent(redirectUri)
+      + '&state=' + encodeURIComponent(state);
+
+    window.location.href = authUrl;
+  };
+</script>
