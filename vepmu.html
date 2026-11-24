@@ -672,6 +672,7 @@ const AI_BROW_PALETTE = [
     { id: 'nau_den', name: 'Nâu Đen', hex: '#261812', mix: '2 Nâu Đậm + 1 Đen + 0.5 Cam ấm' },
     { id: 'nau_khoi', name: 'Nâu Khói', hex: '#574a42', mix: '1 Nâu Đậm + 1 Nâu Nhạt + 1 Xám Khói' }
 ];
+
 const AI_LIP_PALETTE = [
     { id: 'hong_dao', name: 'Hồng Đào', hex: '#e86a68', mix: '2 Hồng + 1 Cam + 0.5 Trắng/Da' },
     { id: 'do_cam', name: 'Đỏ Cam', hex: '#e03e2d', mix: '2 Đỏ + 1 Cam' },
@@ -1275,11 +1276,24 @@ function setupInputListeners() {
 }
 
 // --- BÚT CẠO LÔNG / TẨY KHUYẾT ĐIỂM TÁI TẠO VÂN DA THẬT ---
+
+function getSoftHealStamp() {
+    if (window._healStamp) return window._healStamp;
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+    const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 4, 32, 32, 31);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.5, 'rgba(255,255,255,0.85)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    window._healStamp = c;
+    return c;
+}
+
 function drawHealPreview() {
     activeCtx.clearRect(0, 0, docW, docH);
     if (!strokePts.length) return;
-    const rad = Math.max(6, getEffectiveBrushWidth() * 1.4);
-    activeCtx.save(); activeCtx.globalAlpha = 0.52; activeCtx.strokeStyle = '#34d399'; activeCtx.fillStyle = '#34d399';
+    const rad = Math.max(5, getEffectiveBrushWidth() * 1.05);
+    activeCtx.save(); activeCtx.globalAlpha = 0.45; activeCtx.strokeStyle = '#34d399'; activeCtx.fillStyle = '#34d399';
     activeCtx.lineWidth = rad * 2; activeCtx.lineCap = 'round'; activeCtx.lineJoin = 'round';
     activeCtx.beginPath();
     if (strokePts.length === 1) { activeCtx.arc(strokePts[0].x, strokePts[0].y, rad, 0, Math.PI * 2); activeCtx.fill(); }
@@ -1290,76 +1304,121 @@ function drawHealPreview() {
 function finalizeSpotHeal() {
     activeCtx.clearRect(0, 0, docW, docH);
     if (!strokePts.length) { livePointerDocPt = null; return; }
-    const rad = Math.max(6, Math.round(getEffectiveBrushWidth() * 1.4));
-    const pad = Math.max(16, Math.round(rad * 1.9));
+
+    const rad = Math.max(5, Math.round(getEffectiveBrushWidth() * 1.05));
+    const pad = Math.max(14, Math.round(rad * 1.6));
     let minX = docW, minY = docH, maxX = 0, maxY = 0;
     strokePts.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+
     const x0 = Math.max(0, Math.floor(minX - rad - pad)), y0 = Math.max(0, Math.floor(minY - rad - pad));
     const x1 = Math.min(docW, Math.ceil(maxX + rad + pad)), y1 = Math.min(docH, Math.ceil(maxY + rad + pad));
     const bw = x1 - x0, bh = y1 - y0;
-    if (bw < 6 || bh < 6) { strokePts = []; livePointerDocPt = null; return; }
+    if (bw < 8 || bh < 8) { strokePts = []; livePointerDocPt = null; return; }
 
-    // 1. Tạo mặt nạ vùng cạo với biên mờ (feathered mask)
+    // 1. Tạo mặt nạ viền mờ bằng Radial Stamp (chạy mượt 100% trên iPhone Safari!)
     const mC = document.createElement('canvas'); mC.width = bw; mC.height = bh;
-    const mCtx = mC.getContext('2d');
-    if (mCtx.filter !== undefined) mCtx.filter = 'blur(3px)';
-    mCtx.strokeStyle = '#ffffff'; mCtx.fillStyle = '#ffffff'; mCtx.lineWidth = rad * 2; mCtx.lineCap = 'round'; mCtx.lineJoin = 'round';
-    mCtx.beginPath();
-    if (strokePts.length === 1) { mCtx.arc(strokePts[0].x - x0, strokePts[0].y - y0, rad, 0, Math.PI * 2); mCtx.fill(); }
-    else { mCtx.moveTo(strokePts[0].x - x0, strokePts[0].y - y0); for (let i = 1; i < strokePts.length; i++) mCtx.lineTo(strokePts[i].x - x0, strokePts[i].y - y0); mCtx.stroke(); }
+    const mCtx = mC.getContext('2d'), stamp = getSoftHealStamp();
+    for (let i = 0; i < strokePts.length; i++) {
+        const a = strokePts[Math.max(0, i - 1)], b = strokePts[i];
+        const dist = Math.hypot(b.x - a.x, b.y - a.y), steps = Math.max(1, Math.ceil(dist / Math.max(2, rad * 0.3)));
+        for (let s = 0; s <= steps; s++) {
+            const t = s / steps, cx = a.x + (b.x - a.x) * t - x0, cy = a.y + (b.y - a.y) * t - y0;
+            mCtx.drawImage(stamp, cx - rad, cy - rad, rad * 2, rad * 2);
+        }
+    }
 
     const maskData = mCtx.getImageData(0, 0, bw, bh).data;
     const imgObj = bgCtx.getImageData(x0, y0, bw, bh), px = imgObj.data;
+    const totalPx = bw * bh;
 
-    // 2. Gom mẫu da sạch từ vành ngoài vùng mask (bỏ qua 30% pixel tối nhất để tránh dính lông đen bên cạnh!)
-    const ringSamples = [];
-    for (let y = 1; y < bh - 1; y += 2) {
-        for (let x = 1; x < bw - 1; x += 2) {
-            const idx = (y * bw + x) * 4;
-            if (maskData[idx + 3] < 12) {
-                const r = px[idx], g = px[idx + 1], b = px[idx + 2];
-                ringSamples.push({ x, y, r, g, b, lum: 0.299 * r + 0.587 * g + 0.114 * b });
+    // 2. Tính độ sáng trung vị vùng da xung quanh (chỉ loại đúng các sợi lông quá tối, giữ nguyên da sáng & da bóng đổ!)
+    const outerLums = [];
+    for (let i = 0; i < totalPx; i++) {
+        if (maskData[i * 4 + 3] < 8) {
+            const o = i * 4;
+            outerLums.push(0.299 * px[o] + 0.587 * px[o + 1] + 0.114 * px[o + 2]);
+        }
+    }
+    if (outerLums.length < 16) { strokePts = []; livePointerDocPt = null; return; }
+
+    outerLums.sort((a, b) => a - b);
+    const skinMedianLum = outerLums[Math.floor(outerLums.length * 0.55)];
+    const hairCutoff = skinMedianLum - 22;
+
+    const R = new Float32Array(totalPx), G = new Float32Array(totalPx), B = new Float32Array(totalPx);
+    const isHair = new Uint8Array(totalPx), maskIdx = [];
+    let skinSumR = 0, skinSumG = 0, skinSumB = 0, skinCnt = 0;
+
+    for (let i = 0; i < totalPx; i++) {
+        const o = i * 4, r = px[o], g = px[o + 1], b = px[o + 2];
+        R[i] = r; G[i] = g; B[i] = b;
+        const mA = maskData[o + 3];
+        if (mA > 6) {
+            maskIdx.push(i);
+        } else {
+            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (lum < hairCutoff) isHair[i] = 1;
+            else { skinSumR += r; skinSumG += g; skinSumB += b; skinCnt++; }
+        }
+    }
+    if (!maskIdx.length || skinCnt < 8) { strokePts = []; livePointerDocPt = null; return; }
+
+    const avgR = skinSumR / skinCnt, avgG = skinSumG / skinCnt, avgB = skinSumB / skinCnt;
+
+    // 3. Nội suy chuyển sắc từ chính viền da thật bao quanh (giữ y nguyên hướng sáng & bóng đổ trên da!)
+    maskIdx.forEach(i => { R[i] = avgR; G[i] = avgG; B[i] = avgB; });
+    const passCount = clamp(Math.round(rad * 1.4), 22, 48);
+    for (let pass = 0; pass < passCount; pass++) {
+        for (let k = 0; k < maskIdx.length; k++) {
+            const i = maskIdx[k], x = i % bw, y = (i / bw) | 0;
+            let sr = 0, sg = 0, sb = 0, cnt = 0;
+            if (x > 0 && !isHair[i - 1]) { sr += R[i - 1]; sg += G[i - 1]; sb += B[i - 1]; cnt++; }
+            if (x < bw - 1 && !isHair[i + 1]) { sr += R[i + 1]; sg += G[i + 1]; sb += B[i + 1]; cnt++; }
+            if (y > 0 && !isHair[i - bw]) { sr += R[i - bw]; sg += G[i - bw]; sb += B[i - bw]; cnt++; }
+            if (y < bh - 1 && !isHair[i + bw]) { sr += R[i + bw]; sg += G[i + bw]; sb += B[i + bw]; cnt++; }
+            if (cnt > 0) { R[i] = sr / cnt; G[i] = sg / cnt; B[i] = sb / cnt; }
+        }
+    }
+
+    // 4. Tách vân lỗ chân lông thật từ vùng da sạch kế bên ghép vào (Mean = 0 nên không làm lệch sáng tối!)
+    const cleanTex = [];
+    for (let y = 2; y < bh - 2; y++) {
+        for (let x = 2; x < bw - 2; x++) {
+            const i = y * bw + x;
+            if (maskData[i * 4 + 3] < 4 && !isHair[i] && !isHair[i - 1] && !isHair[i + 1] && !isHair[i - bw] && !isHair[i + bw]) {
+                const o = i * 4;
+                const blurR = (px[o - 4] + px[o + 4] + px[o - bw * 4] + px[o + bw * 4]) * 0.25;
+                const blurG = (px[o - 3] + px[o + 5] + px[o - bw * 4 + 1] + px[o + bw * 4 + 1]) * 0.25;
+                const blurB = (px[o - 2] + px[o + 6] + px[o - bw * 4 + 2] + px[o + bw * 4 + 2]) * 0.25;
+                cleanTex.push({ dr: px[o] - blurR, dg: px[o + 1] - blurG, db: px[o + 2] - blurB });
             }
         }
     }
-    if (ringSamples.length > 10) {
-        ringSamples.sort((a, b) => a.lum - b.lum);
-        const cleanSamples = ringSamples.slice(Math.floor(ringSamples.length * 0.28)); // Lấy phần da sáng sạch!
-        let sumR = 0, sumG = 0, sumB = 0;
-        cleanSamples.forEach(s => { sumR += s.r; sumG += s.g; sumB += s.b; });
-        const avgR = sumR / cleanSamples.length, avgG = sumG / cleanSamples.length, avgB = sumB / cleanSamples.length;
 
-        // Đo độ nhiễu lỗ chân lông tự nhiên của vùng da sạch
-        let varSum = 0; cleanSamples.forEach(s => varSum += Math.abs((0.299 * s.r + 0.587 * s.g + 0.114 * s.b) - (0.299 * avgR + 0.587 * avgG + 0.114 * avgB)));
-        const skinGrainAmp = clamp(varSum / cleanSamples.length, 1.5, 6.5);
-        const rand = mulberry32((Date.now() & 65535) + x0);
-        const stepSample = Math.max(1, Math.floor(cleanSamples.length / 48));
-
-        for (let y = 0; y < bh; y++) {
-            for (let x = 0; x < bw; x++) {
-                const idx = (y * bw + x) * 4, mAlpha = maskData[idx + 3] / 255;
-                if (mAlpha <= 0.02) continue;
-
-                // Nội suy trọng số nghịch đảo khoảng cách theo vùng da sạch xung quanh
-                let wSum = 0, rAcc = 0, gAcc = 0, bAcc = 0;
-                for (let s = 0; s < cleanSamples.length; s += stepSample) {
-                    const sp = cleanSamples[s], d2 = (x - sp.x) * (x - sp.x) + (y - sp.y) * (y - sp.y) + 16;
-                    const w = 1 / (d2 * Math.sqrt(d2));
-                    wSum += w; rAcc += sp.r * w; gAcc += sp.g * w; bAcc += sp.b * w;
-                }
-                const noise = (rand() - 0.5) * skinGrainAmp * 1.9;
-                const healR = clamp(rAcc / wSum + noise, 0, 255), healG = clamp(gAcc / wSum + noise, 0, 255), healB = clamp(bAcc / wSum + noise, 0, 255);
-                px[idx] = px[idx] * (1 - mAlpha) + healR * mAlpha;
-                px[idx + 1] = px[idx + 1] * (1 - mAlpha) + healG * mAlpha;
-                px[idx + 2] = px[idx + 2] * (1 - mAlpha) + healB * mAlpha;
-            }
+    // 5. Trộn viền mềm vào ảnh gốc
+    const texLen = cleanTex.length;
+    for (let k = 0; k < maskIdx.length; k++) {
+        const i = maskIdx[k], o = i * 4, mA = clamp(maskData[o + 3] / 255, 0, 1);
+        let tr = 0, tg = 0, tb = 0;
+        if (texLen > 0) {
+            const x = i % bw, y = (i / bw) | 0;
+            const ti = ((y * 37 + x * 17) % texLen + texLen) % texLen;
+            tr = cleanTex[ti].dr * 0.85; tg = cleanTex[ti].dg * 0.85; tb = cleanTex[ti].db * 0.85;
         }
-        bgCtx.putImageData(imgObj, x0, y0);
-        pushUndoForBg();
-        showToast('🩹 Đã cạo sạch & tái tạo vân da!');
+        const nr = clamp(R[i] + tr, 0, 255), ng = clamp(G[i] + tg, 0, 255), nb = clamp(B[i] + tb, 0, 255);
+        px[o] = px[o] * (1 - mA) + nr * mA;
+        px[o + 1] = px[o + 1] * (1 - mA) + ng * mA;
+        px[o + 2] = px[o + 2] * (1 - mA) + nb * mA;
     }
+
+    bgCtx.putImageData(imgObj, x0, y0);
+    pushUndoForBg();
+    showToast('🩹 Đã cạo sạch & khớp màu da tự nhiên!');
     strokePts = []; livePointerDocPt = null; renderOverlay();
 }
+
+
+
 
 function triggerQuickShapeSnap() {
     if (strokePts.length < 5) return;
@@ -1768,6 +1827,20 @@ function rebuildAiGeometryAndRender() {
     renderAiDemoLayer(); updateAiFormulaBoxes();
 }
 
+
+
+
+function createAirbrushMistStamp(hex) {
+    const c = document.createElement('canvas'); c.width = 48; c.height = 48;
+    const x = c.getContext('2d'), g = x.createRadialGradient(24, 24, 1, 24, 24, 23);
+    const rgb = hexToRgb(hex);
+    g.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},1)`);
+    g.addColorStop(0.42, `rgba(${rgb.r},${rgb.g},${rgb.b},0.45)`);
+    g.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+    x.fillStyle = g; x.fillRect(0, 0, 48, 48);
+    return c;
+}
+
 function renderAiDemoLayer() {
     const demoLayer = ensureLayerById('L_ai_demo', '🤖 AI Thử Mẫu', 0), ctx = demoLayer.ctx;
     ctx.clearRect(0, 0, docW, docH);
@@ -1775,25 +1848,9 @@ function renderAiDemoLayer() {
 
     if (aiState.browTech !== 'none' && aiState.computedBrows.length) {
         aiState.computedBrows.forEach((b, bIdx) => {
-            // A. KỸ THUẬT NATUREBROWS (OMBRE TAN VIỀN TRÊN & ĐẦU, BỤNG DƯỚI NÉT SẠCH, ĐUÔI NHỌN SẮC, NÂU TÂY ÁNH VÀNG)
             if (aiState.browTech === 'nature' || aiState.browTech === 'shading' || aiState.browTech === 'hybrid') {
-                // 1. Sáng nhẹ sạch viền dưới cung mày (tạo hiệu ứng bật dáng mày như Ảnh 4)
-                if (aiState.browTech === 'nature') {
-                    ctx.save();
-                    if (ctx.filter !== undefined) ctx.filter = `blur(${Math.max(2, b.thick * 0.14)}px)`;
-                    ctx.strokeStyle = 'rgba(255, 240, 224, 0.25)';
-                    ctx.lineWidth = Math.max(3, b.thick * 0.22);
-                    ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    const offLow = b.lowerEdge.map(p => ({ x: p.x - b.vAxis.x * b.thick * 0.16, y: p.y - b.vAxis.y * b.thick * 0.16 }));
-                    buildPolySubpath(ctx, offLow, true, false);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-
-                // 2. Lớp nền tan biên (độ mờ blur mềm ở lưng trên & đầu mày, cắt gọn bụng dưới & đuôi nhọn!)
+                // Lớp nền tan biên
                 ctx.save();
-                // Tạo mặt nạ cắt dọc bụng dưới + vùng rộng phía trên để lưng trên tan tự nhiên!
                 const expandedTopPoly = {
                     pts: [
                         { x: b.poly.pts[0].x + b.vAxis.x * b.thick * 0.25, y: b.poly.pts[0].y + b.vAxis.y * b.thick * 0.25 },
@@ -1819,19 +1876,16 @@ function renderAiDemoLayer() {
                 ctx.fillStyle = g;
                 ctx.fill();
 
-                // 3. Rải 3.500 hạt Nano cát bụi mịn (tập trung ở lõi & bụng dưới, tơi tan dần lên lưng trên & đầu mày!)
                 if (ctx.filter !== undefined) ctx.filter = 'none';
                 const rand = mulberry32(9911 + bIdx);
                 const particleCount = aiState.browTech === 'nature' ? 3200 : 1400;
                 ctx.globalCompositeOperation = 'multiply';
                 for (let i = 0; i < particleCount; i++) {
-                    const uT = Math.pow(rand(), 0.78); // Hạt dày dần từ đầu (0) -> đuôi nhọn (1)
+                    const uT = Math.pow(rand(), 0.78);
                     const headFade = clamp((uT - 0.03) / 0.22, 0.05, 1.0);
-                    // Độ rộng tại vị trí uT thuôn về 0 ở đúng mũi nhọn đuôi!
                     const widthFactor = uT > 0.64 ? clamp(1 - (uT - 0.64) / 0.40, 0.03, 1.0) : 1.0;
                     const archAtU = uT < 0.64 ? (uT / 0.64) * b.archH : b.archH + ((uT - 0.64) / 0.40) * (b.tailH - b.archH);
 
-                    // Phân bố dọc v từ bụng dưới (-0.48) lên tan viền trên (+0.62)
                     const vNorm = -0.48 + Math.pow(rand(), 1.25) * 1.12;
                     const upperFade = vNorm > 0.28 ? clamp(1 - (vNorm - 0.28) / 0.36, 0, 1) : 1.0;
                     const vPx = vNorm * b.thick * widthFactor + archAtU * 0.65;
@@ -1840,14 +1894,13 @@ function renderAiDemoLayer() {
                     const py = b.headMid.y + b.uAxis.y * (uT * b.len) + b.vAxis.y * vPx;
                     const dotR = Math.max(0.55, b.thick * (0.016 + rand() * 0.018));
 
-                    ctx.fillStyle = rand() > 0.35 ? bCol.hex : '#966f42'; // Xen ánh vàng rêu tự nhiên!
+                    ctx.fillStyle = rand() > 0.35 ? bCol.hex : '#966f42';
                     ctx.globalAlpha = aiState.browAlpha * 0.38 * headFade * upperFade * (0.5 + rand() * 0.5);
                     ctx.beginPath(); ctx.arc(px, py, dotR, 0, Math.PI * 2); ctx.fill();
                 }
                 ctx.restore();
             }
 
-            // B. ĐI SỢI HAIRSTROKE TỰ ĐỘNG (NẾU CHỌN HAIR HOẶC HYBRID)
             if (aiState.browTech === 'hair' || aiState.browTech === 'hybrid') {
                 ctx.save(); applyFrameClip(ctx, [b.poly]);
                 const hairW = Math.max(1.1, b.thick * 0.09), hairAlpha = aiState.browAlpha * 0.88;
@@ -1860,7 +1913,6 @@ function renderAiDemoLayer() {
         });
     }
 
-    // MÔI (TỰ NÉ KẼ MIỆNG/RĂNG)
     const lCol = aiState.lipTech === 'neutralize' ? { hex: '#fb923c', name: 'Cam Cà Rốt Khử Thâm', mix: '3 Cam + 1 Vàng' } : (aiState.customLipHex ? { hex: aiState.customLipHex, name: 'Màu tự pha' } : (AI_LIP_PALETTE.find(c => c.id === aiState.lipColorId) || AI_LIP_PALETTE[0]));
     if (aiState.lipTech !== 'none' && aiState.computedLip) {
         const { outerPts, innerPts, lipC, lipH } = aiState.computedLip;
@@ -1885,6 +1937,12 @@ function renderAiDemoLayer() {
     }
     scheduleAutoSave();
 }
+
+
+
+
+
+
 
 function editAiBrowPointsManually(idx) {
     if (!aiState.computedBrows[idx]) return;
