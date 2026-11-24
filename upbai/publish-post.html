@@ -44,12 +44,20 @@
   </div>
 
   <input class="pub-input pub-save-field" id="pub-product" type="text" placeholder="Nhập tên sản phẩm (VD: Matcha Latte 20k)" />
-  <textarea class="pub-textarea pub-save-field" id="pub-notes" style="min-height:56px;" placeholder="Ghi chú thêm: Giá bán, địa chỉ, ưu đãi..."></textarea>
+  <textarea class="pub-textarea pub-save-field" id="pub-notes" style="min-height:56px;" placeholder="Giá bán, ưu đãi, địa chỉ quán..."></textarea>
 
-  <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)</button>
+  <button class="pub-btn ai" id="pub-gen-ai">✨ Gemini AI viết Hook 3s + Caption + 5 Hashtag</button>
   <div class="pub-status" id="pub-ai-status"></div>
 
   <div id="pub-results" style="display:flex; flex-direction:column; gap:10px;">
+    <div class="pub-card" style="border-color:#3a2f4d;">
+      <h4><span>💡 Mẹo kéo View thật (Chèn CapCut & Ghim)</span></h4>
+      <input class="pub-input pub-save-field" id="pub-hook-text" placeholder="Chữ to chèn 3 giây đầu video trên CapCut..." />
+      <button type="button" class="pub-copy-btn" id="pub-copy-hook" style="color:#ffd166;">📋 Copy chữ chèn 3s đầu</button>
+      <input class="pub-input pub-save-field" id="pub-pin-comment" placeholder="Câu bình luận tự ghim đầu bài để mồi khách hỏi..." />
+      <button type="button" class="pub-copy-btn" id="pub-copy-pin" style="color:#ffd166;">📋 Copy câu ghim bình luận</button>
+    </div>
+
     <div class="pub-card">
       <h4><span>🎵 TikTok</span><label style="font-size:12px;color:#fff;"><input type="checkbox" id="pub-tt-enable" /> Đẩy nháp qua API</label></h4>
       <input class="pub-input pub-save-field" id="pub-tt-title" placeholder="Tiêu đề / Caption TikTok" />
@@ -116,6 +124,7 @@
 
   const fieldIds = [
     'pub-product', 'pub-notes',
+    'pub-hook-text', 'pub-pin-comment',
     'pub-tt-title', 'pub-tt-tags',
     'pub-fb-title', 'pub-fb-body', 'pub-fb-tags',
     'pub-yt-title', 'pub-yt-body', 'pub-yt-tags'
@@ -152,10 +161,16 @@
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    btn.textContent = '✅ Đã copy! Mở TikTok/App dán thôi';
-    setTimeout(() => { btn.textContent = defaultLabel; }, 2500);
+    btn.textContent = '✅ Đã copy vào máy!';
+    setTimeout(() => { btn.textContent = defaultLabel; }, 2200);
   }
 
+  document.getElementById('pub-copy-hook').onclick = function () {
+    copyTextToPhone(document.getElementById('pub-hook-text').value.trim(), this, '📋 Copy chữ chèn 3s đầu');
+  };
+  document.getElementById('pub-copy-pin').onclick = function () {
+    copyTextToPhone(document.getElementById('pub-pin-comment').value.trim(), this, '📋 Copy câu ghim bình luận');
+  };
   document.getElementById('pub-copy-tt').onclick = function () {
     const txt = (document.getElementById('pub-tt-title').value.trim() + '\n\n' + document.getElementById('pub-tt-tags').value.trim()).trim();
     copyTextToPhone(txt, this, '📋 Copy Tiêu đề + 5 Hashtag TikTok');
@@ -169,6 +184,10 @@
     copyTextToPhone(txt, this, '📋 Copy nội dung YouTube');
   };
 
+  function getDefaultShopNotes() {
+    return localStorage.getItem('shop_default_notes') || AppBus.state.shopDefaultNotes || '';
+  }
+
   function saveAllDraftFields() {
     const data = {};
     fieldIds.forEach(id => { data[id] = document.getElementById(id).value; });
@@ -177,10 +196,14 @@
 
   function restoreDraftFields() {
     const saved = AppBus.getDraftText();
-    if (!saved) return;
-    fieldIds.forEach(id => {
-      if (saved[id] !== undefined) document.getElementById(id).value = saved[id];
-    });
+    if (saved) {
+      fieldIds.forEach(id => {
+        if (saved[id] !== undefined) document.getElementById(id).value = saved[id];
+      });
+    }
+    if (!notesEl.value.trim()) {
+      notesEl.value = getDefaultShopNotes();
+    }
   }
 
   function resetEmptyPreview() {
@@ -199,7 +222,7 @@
       : `<img src="${previewUrl}" alt="preview" />`;
     const extra = (media.files && media.files.length > 1) ? ` (${media.files.length} ảnh)` : '';
     const imgNote = media.type === 'image'
-      ? `<div style="font-size:11px; color:#8a8b91; margin-top:4px;">💡 Ảnh: FB sẽ đăng Album; TikTok hãy bấm nút 📋 Copy rồi chọn ảnh + nhạc bên TikTok.</div>`
+      ? `<div style="font-size:11px; color:#8a8b91; margin-top:4px;">💡 Ảnh: FB sẽ đăng Album; TikTok bấm 📋 Copy rồi chọn ảnh + nhạc bên TikTok.</div>`
       : '';
     previewBox.innerHTML = `${tag}<div style="font-size:12px; color:#25f4ee;">📦 Đã lưu tạm: <b>${media.name}</b>${extra} (${mb} MB)</div>${imgNote}`;
   }
@@ -221,10 +244,11 @@
   clearBtn.onclick = async () => {
     await AppBus.clearTempAll();
     fieldIds.forEach(id => { document.getElementById(id).value = ''; });
+    notesEl.value = getDefaultShopNotes(); // Tự điền lại địa chỉ quán mặc định!
     resetEmptyPreview();
     aiStatusEl.style.display = 'none';
     sendStatusEl.style.display = 'none';
-    hintEl.textContent = '🧹 Đã quét dọn sạch lưu tạm!';
+    hintEl.textContent = '🧹 Đã dọn sạch (giữ lại địa chỉ quán)!';
     setTimeout(() => { hintEl.textContent = '💾 Tự động lưu nháp trên máy'; }, 3000);
   };
 
@@ -232,6 +256,7 @@
   AppBus.on('media:cleared', resetEmptyPreview);
   AppBus.on('draft:cleared', () => {
     fieldIds.forEach(id => { document.getElementById(id).value = ''; });
+    notesEl.value = getDefaultShopNotes();
   });
 
   restoreDraftFields();
@@ -257,7 +282,7 @@
 
     genBtn.disabled = true;
     genBtn.textContent = '⏳ Gemini AI đang viết bài...';
-    showStatus(aiStatusEl, '✨ Đang phối Tiêu đề + 5 Hashtag cho 3 kênh...');
+    showStatus(aiStatusEl, '✨ Đang tạo Hook 3s đầu + Caption + 5 Hashtag cho 3 kênh...');
 
     try {
       const res = await fetch(gasUrl, {
@@ -275,6 +300,8 @@
       if (!json.ok) throw new Error(json.error || 'Lỗi từ GAS');
 
       const d = json.data;
+      document.getElementById('pub-hook-text').value = d.hook3s || '';
+      document.getElementById('pub-pin-comment').value = d.pinComment || '';
       document.getElementById('pub-tt-title').value = d.tiktok.caption;
       document.getElementById('pub-tt-tags').value = d.tiktok.hashtags.join(' ');
       document.getElementById('pub-fb-title').value = d.facebook.title;
@@ -286,12 +313,12 @@
 
       saveAllDraftFields();
       const used = d._usedModel ? ` (${d._usedModel})` : '';
-      showStatus(aiStatusEl, `✅ AI đã phối xong${used}! Bấm <b>📋 Copy</b> để dán sang TikTok ngay.`);
+      showStatus(aiStatusEl, `✅ AI đã phối xong${used}! Kéo xuống bấm <b>📋 Copy</b> để dùng.`);
     } catch (err) {
       showStatus(aiStatusEl, '❌ Lỗi AI: ' + err.message);
     } finally {
       genBtn.disabled = false;
-      genBtn.textContent = '✨ Gemini AI viết Tiêu đề + 5 Hashtag (3 kênh)';
+      genBtn.textContent = '✨ Gemini AI viết Hook 3s + Caption + 5 Hashtag';
     }
   };
 

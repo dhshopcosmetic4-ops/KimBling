@@ -8,6 +8,7 @@
   .ar-btn.fb { background: #1877f2; color: #fff; }
   .ar-btn.yt { background: #ff0033; color: #fff; }
   .ar-btn.pink { background: #fe2c55; color: #fff; }
+  .ar-btn.all { background: linear-gradient(90deg, #fe2c55, #ff7b00); color: #fff; display: none; }
   .ar-btn.dark { background: #2a2e40; color: #fff; }
   .ar-status { font-size: 13px; color: #25f4ee; line-height: 1.5; }
   .ar-cmt { background: #10121a; border: 1px solid #2a2e40; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -33,6 +34,7 @@
   </div>
   <label class="ar-chk"><input type="checkbox" id="ar-yt-own" /> Quét cả bình luận của chính mình trên YouTube (để tự test)</label>
   <div class="ar-status" id="ar-scan-status"></div>
+  <button class="ar-btn all" id="ar-reply-all" type="button">⚡ Gửi trả lời TẤT CẢ</button>
   <div id="ar-list" style="display:flex; flex-direction:column; gap:10px;"></div>
 </div>
 
@@ -44,6 +46,7 @@
   const scanYtBtn = document.getElementById('ar-scan-yt');
   const ytOwnChk = document.getElementById('ar-yt-own');
   const scanStatus = document.getElementById('ar-scan-status');
+  const replyAllBtn = document.getElementById('ar-reply-all');
   const listEl = document.getElementById('ar-list');
 
   const PROMPT_KEY = 'fb_shop_prompt';
@@ -51,6 +54,8 @@
   promptEl.addEventListener('input', () => {
     localStorage.setItem(PROMPT_KEY, promptEl.value);
   });
+
+  let pendingCards = [];
 
   function getCreds() {
     return {
@@ -91,6 +96,38 @@
     }
   };
 
+  async function sendOneReply(entry) {
+    const c = getCreds();
+    const label = entry.platform === 'youtube' ? 'YouTube' : 'Facebook';
+    const text = entry.replyBox.value.trim();
+    if (!text) return false;
+    entry.replyBtn.disabled = true;
+    entry.stEl.textContent = `⏳ Đang gửi lên ${label}...`;
+    try {
+      const r = await fetch(c.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: entry.platform === 'youtube' ? 'reply_yt_comment' : 'reply_fb_comment',
+          commentId: entry.item.commentId,
+          commentText: entry.item.commentText,
+          replyText: text,
+          fbPageToken: c.fbPageToken
+        })
+      });
+      const rj = await r.json();
+      if (!rj.ok) throw new Error(rj.error);
+      entry.done = true;
+      entry.stEl.textContent = `✅ Đã trả lời xong lên ${label}!`;
+      entry.replyBtn.style.display = 'none';
+      return true;
+    } catch (e) {
+      entry.stEl.textContent = '❌ Lỗi: ' + e.message;
+      entry.replyBtn.disabled = false;
+      return false;
+    }
+  }
+
   async function scanPlatform(platform) {
     const c = getCreds();
     if (!c.gasUrl || !c.geminiKey) {
@@ -104,9 +141,12 @@
 
     scanFbBtn.disabled = true;
     scanYtBtn.disabled = true;
+    replyAllBtn.style.display = 'none';
+    pendingCards = [];
+    listEl.innerHTML = '';
+
     const label = platform === 'youtube' ? 'YouTube' : 'Facebook';
     scanStatus.textContent = `⏳ Đang quét bình luận ${label} & nhờ Gemini AI soạn trả lời...`;
-    listEl.innerHTML = '';
 
     try {
       const res = await fetch(c.gasUrl, {
@@ -131,7 +171,7 @@
           scanStatus.innerHTML = `ℹ️ Kênh: <b>${escapeHtml(d.channelTitle)}</b><br>`
             + `Tìm thấy tổng <b>${d.totalThreads}</b> bình luận trên kênh.<br>`
             + `(Đã lọc bỏ: ${d.skippedOwn} của chính bạn, ${d.skippedReplied} đã trả lời rồi).<br>`
-            + (d.skippedOwn > 0 ? '💡 <i>Hãy tích ô "Quét cả bình luận của chính mình" ở trên rồi bấm Quét YouTube lại để tự test!</i>' : '');
+            + (d.skippedOwn > 0 ? '💡 <i>Tích ô "Quét cả bình luận của chính mình" rồi bấm Quét YouTube lại để tự test!</i>' : '');
         } else {
           scanStatus.textContent = `✅ Tuyệt vời! Kênh ${label} hiện không có bình luận nào mới chưa trả lời.`;
         }
@@ -139,6 +179,10 @@
       }
 
       scanStatus.textContent = `Tìm thấy ${items.length} bình luận ${label} chưa trả lời:`;
+      if (items.length > 1) {
+        replyAllBtn.textContent = `⚡ Gửi trả lời TẤT CẢ (${items.length} bình luận)`;
+        replyAllBtn.style.display = 'block';
+      }
 
       items.forEach((item) => {
         const card = document.createElement('div');
@@ -151,37 +195,16 @@
           <button class="ar-btn pink" type="button">💬 Gửi câu trả lời này lên ${label}</button>
           <div class="ar-status" style="font-size:12px;"></div>
         `;
-        const replyBox = card.querySelector('textarea');
-        const replyBtn = card.querySelector('button');
-        const stEl = card.querySelector('.ar-status');
-
-        replyBtn.onclick = async () => {
-          const text = replyBox.value.trim();
-          if (!text) return;
-          replyBtn.disabled = true;
-          stEl.textContent = `⏳ Đang gửi lên ${label}...`;
-          try {
-            const r = await fetch(c.gasUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({
-                action: platform === 'youtube' ? 'reply_yt_comment' : 'reply_fb_comment',
-                commentId: item.commentId,
-                commentText: item.commentText,
-                replyText: text,
-                fbPageToken: c.fbPageToken
-              })
-            });
-            const rj = await r.json();
-            if (!rj.ok) throw new Error(rj.error);
-            stEl.textContent = `✅ Đã trả lời xong lên ${label}!`;
-            replyBtn.style.display = 'none';
-          } catch (e) {
-            stEl.textContent = '❌ Lỗi: ' + e.message;
-            replyBtn.disabled = false;
-          }
+        const entry = {
+          platform,
+          item,
+          replyBox: card.querySelector('textarea'),
+          replyBtn: card.querySelector('button'),
+          stEl: card.querySelector('.ar-status'),
+          done: false
         };
-
+        entry.replyBtn.onclick = () => sendOneReply(entry);
+        pendingCards.push(entry);
         listEl.appendChild(card);
       });
     } catch (err) {
@@ -191,6 +214,19 @@
       scanYtBtn.disabled = false;
     }
   }
+
+  replyAllBtn.onclick = async () => {
+    const todo = pendingCards.filter(c => !c.done);
+    if (!todo.length) return;
+    replyAllBtn.disabled = true;
+    let okCount = 0;
+    for (let i = 0; i < todo.length; i++) {
+      replyAllBtn.textContent = `⏳ Đang gửi (${i + 1}/${todo.length})...`;
+      if (await sendOneReply(todo[i])) okCount++;
+    }
+    replyAllBtn.textContent = `✅ Đã gửi xong ${okCount}/${todo.length} bình luận!`;
+    replyAllBtn.disabled = false;
+  };
 
   scanFbBtn.onclick = () => scanPlatform('facebook');
   scanYtBtn.onclick = () => scanPlatform('youtube');

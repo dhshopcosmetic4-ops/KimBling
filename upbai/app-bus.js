@@ -95,7 +95,8 @@ export const AppBus = {
     fbPageToken: localStorage.getItem('fb_page_token') || '',
     ttClientKey: localStorage.getItem('tt_client_key') || '',
     ttClientSecret: localStorage.getItem('tt_client_secret') || '',
-    ttDisplayName: localStorage.getItem('tt_display_name') || ''
+    ttDisplayName: localStorage.getItem('tt_display_name') || '',
+    shopDefaultNotes: localStorage.getItem('shop_default_notes') || ''
   },
   listeners: {},
 
@@ -176,6 +177,11 @@ export const AppBus = {
     this.state.ttClientSecret = secret.trim();
     localStorage.setItem('tt_client_key', this.state.ttClientKey);
     localStorage.setItem('tt_client_secret', this.state.ttClientSecret);
+  },
+
+  setShopDefaultNotes(txt) {
+    this.state.shopDefaultNotes = txt;
+    localStorage.setItem('shop_default_notes', txt);
   },
 
   openTab: () => {},

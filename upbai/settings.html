@@ -2,7 +2,8 @@
   .set-group { display: flex; flex-direction: column; gap: 12px; background: #161823; padding: 16px; border-radius: 14px; margin-bottom: 14px; }
   .set-label { font-size: 13px; color: #ccc; margin-bottom: -6px; }
   .set-row { display: flex; gap: 8px; }
-  .set-input { flex: 1; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0d0e15; color: #fff; font-size: 14px; }
+  .set-input, .set-textarea { flex: 1; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0d0e15; color: #fff; font-size: 14px; }
+  .set-textarea { min-height: 75px; resize: vertical; }
   .set-eye { padding: 0 12px; border-radius: 8px; border: 1px solid #333; background: #222533; color: #fff; cursor: pointer; }
   .set-btn { padding: 13px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #fe2c55; color: #fff; font-size: 15px; }
   .set-btn.tt { background: #25f4ee; color: #000; }
@@ -39,6 +40,9 @@
     <button class="set-eye" id="set-toggle-tt" type="button">👁️</button>
   </div>
 
+  <div class="set-label">7. Thông tin quán mặc định (Tự điền sẵn khi tạo bài mới):</div>
+  <textarea class="set-textarea" id="set-shop-notes" placeholder="VD: Địa chỉ: M9 Cư xá Phú Lâm A, Q6. Hotline/Zalo đặt ship: 086..."></textarea>
+
   <button class="set-btn" id="set-save-btn" type="button">Lưu tất cả & Kiểm tra kết nối</button>
   <button class="set-btn tt" id="set-tt-connect" type="button">🎵 Kết nối tài khoản TikTok</button>
   <div class="set-msg" id="set-msg"></div>
@@ -51,6 +55,7 @@
   const fbTokenInput = document.getElementById('set-fb-token');
   const ttKeyInput = document.getElementById('set-tt-key');
   const ttSecretInput = document.getElementById('set-tt-secret');
+  const shopNotesInput = document.getElementById('set-shop-notes');
   const saveBtn = document.getElementById('set-save-btn');
   const ttConnectBtn = document.getElementById('set-tt-connect');
   const msg = document.getElementById('set-msg');
@@ -61,6 +66,7 @@
   fbTokenInput.value = localStorage.getItem('fb_page_token') || AppBus.state.fbPageToken || '';
   ttKeyInput.value = localStorage.getItem('tt_client_key') || AppBus.state.ttClientKey || '';
   ttSecretInput.value = localStorage.getItem('tt_client_secret') || AppBus.state.ttClientSecret || '';
+  shopNotesInput.value = localStorage.getItem('shop_default_notes') || AppBus.state.shopDefaultNotes || '';
 
   const ttName = localStorage.getItem('tt_display_name') || '';
   if (ttName) {
@@ -84,6 +90,7 @@
     const fbToken = fbTokenInput.value.trim();
     const ttKey = ttKeyInput.value.trim();
     const ttSecret = ttSecretInput.value.trim();
+    const shopNotes = shopNotesInput.value.trim();
 
     AppBus.setGasUrl(url);
     AppBus.setGeminiKey(key);
@@ -95,7 +102,9 @@
     AppBus.state.ttClientSecret = ttSecret;
     localStorage.setItem('tt_client_key', ttKey);
     localStorage.setItem('tt_client_secret', ttSecret);
-    return { url, key, fbId, fbToken, ttKey, ttSecret };
+    AppBus.state.shopDefaultNotes = shopNotes;
+    localStorage.setItem('shop_default_notes', shopNotes);
+    return { url, key, fbId, fbToken, ttKey, ttSecret, shopNotes };
   }
 
   saveBtn.onclick = async () => {
@@ -128,6 +137,7 @@
         let html = `✅ ${json.msg}<br>${d.key ? '🔑 Đã lưu Gemini Key.' : '⚠️ Chưa có Gemini Key!'}`;
         if (json.fbCheck) html += `<br>${json.fbCheck}`;
         if (json.ttStatus) html += `<br>${json.ttStatus}`;
+        if (d.shopNotes) html += `<br>🏪 Đã lưu ghi chú quán mặc định.`;
         msg.innerHTML = html;
       } else {
         msg.textContent = '⚠️ GAS báo lỗi: ' + (json.error || 'Không rõ');
