@@ -2,18 +2,18 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Kim Bling Garden Café 2.5D — Khám Phá & Đặt Món</title>
 
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
     <link rel="manifest" href="manifest.json">
 
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" crossorigin="anonymous"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #2d441f; color: #3b2314; user-select: none; -webkit-user-select: none; }
+        html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: #2d441f; color: #3b2314; user-select: none; -webkit-user-select: none; }
 
         /* === SÂN KHẤU BẢN ĐỒ 2.5D ISOMETRIC HD === */
         #mapStageWrap {
@@ -33,7 +33,7 @@
         }
         #mapCanvas:active { cursor: grabbing; }
 
-        /* === HUD TRÊN CÙNG (TÔNG GỖ ẤM & VÀNG HỔ PHÁCH RPG) === */
+        /* === HUD TRÊN CÙNG === */
         .hud-top {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -93,7 +93,6 @@
         }
         .btn-hud-icon.off { opacity: 0.55; border-color: #9ca3af; }
 
-        /* === THANH EVENT ĐẾM NGƯỢC === */
         .event-live-banner {
             display: none;
             padding: 5px 10px;
@@ -116,7 +115,6 @@
             margin-left: 4px;
         }
 
-        /* === KHUNG TÚI 💎 + TIẾN ĐỘ + ĐIỂM DANH === */
         .hud-diamond-panel {
             background: rgba(255, 250, 238, 0.92);
             border: 1.5px solid #d97706;
@@ -213,12 +211,11 @@
         }
         .fav-pill-3d.sold-out { opacity: 0.45; cursor: not-allowed; }
 
-        /* === THÔNG BÁO KHÔI PHỤC GIỎ HÀNG === */
         #cartRestoreToast {
             display: none;
             position: fixed;
             left: 50%;
-            bottom: 132px;
+            bottom: 134px;
             transform: translateX(-50%);
             z-index: 40;
             background: rgba(22, 101, 52, 0.95);
@@ -232,7 +229,6 @@
             white-space: nowrap;
         }
 
-        /* === THANH CÔNG CỤ ADMIN MAP EDITOR === */
         #adminMapToolbar {
             display: none;
             position: fixed;
@@ -253,13 +249,12 @@
             font-size: 11.5px; font-weight: bold; cursor: pointer;
         }
 
-        /* === JOYSTICK GAME ẢO === */
         .joystick-zone {
             position: fixed;
             left: 14px;
-            bottom: 120px;
-            width: 92px;
-            height: 92px;
+            bottom: calc(122px + env(safe-area-inset-bottom));
+            width: 88px;
+            height: 88px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(254, 243, 199, 0.35) 0%, rgba(69, 39, 19, 0.68) 100%);
             border: 2px solid rgba(251, 191, 36, 0.85);
@@ -272,8 +267,8 @@
             backdrop-filter: blur(4px);
         }
         .joystick-knob {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: linear-gradient(135deg, #fbbf24, #d97706);
             border: 2px solid #fffbeb;
@@ -292,12 +287,11 @@
             pointer-events: none;
         }
 
-        /* === NÚT MỞ QUẦY KHI ĐẾN GẦN === */
         #nearbyCounterPrompt {
             display: none;
             position: fixed;
             left: 50%;
-            bottom: 126px;
+            bottom: calc(128px + env(safe-area-inset-bottom));
             transform: translateX(-50%);
             z-index: 23;
             background: linear-gradient(135deg, #fbbf24, #d97706);
@@ -312,11 +306,10 @@
             white-space: nowrap;
         }
 
-        /* === BONG BÓNG LỜI THOẠI BÉ KIM === */
         #bekim3dSpeechBubble {
             position: fixed;
             right: 12px;
-            bottom: 194px;
+            bottom: calc(194px + env(safe-area-inset-bottom));
             max-width: min(225px, 58vw);
             background: rgba(255, 250, 238, 0.95);
             color: #3b2314;
@@ -448,13 +441,13 @@
             color: #78350f; width: 28px; height: 24px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
-        /* === THANH DƯỚI ĐÁY === */
+        /* === THANH DƯỚI ĐÁY (VỪA KHÍT IPHONE SAFE-AREA) === */
         .hud-bottom {
             position: fixed;
             bottom: 0; left: 0; right: 0;
             z-index: 25;
-            background: linear-gradient(0deg, rgba(44, 24, 12, 0.94) 0%, rgba(44, 24, 12, 0.72) 82%, rgba(44, 24, 12, 0) 100%);
-            padding: 8px 10px max(8px, env(safe-area-inset-bottom)) 10px;
+            background: linear-gradient(0deg, rgba(44, 24, 12, 0.95) 0%, rgba(44, 24, 12, 0.72) 82%, rgba(44, 24, 12, 0) 100%);
+            padding: 6px 10px max(12px, env(safe-area-inset-bottom)) 10px;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -465,7 +458,7 @@
             background: rgba(255, 250, 238, 0.94);
             color: #5c3415;
             border: 1.5px solid #d97706;
-            padding: 6px 11px;
+            padding: 5px 10px;
             border-radius: 16px;
             font-size: 12px;
             font-weight: 800;
@@ -483,19 +476,18 @@
             display: flex; justify-content: space-between; align-items: center;
             background: linear-gradient(135deg, #fffbeb, #fef3c7);
             border: 2px solid #b45309;
-            color: #3b2314; padding: 8px 12px; border-radius: 14px;
+            color: #3b2314; padding: 7px 11px; border-radius: 14px;
             box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.35);
         }
-        .cart-info { font-size: 12.5px; color: #78350f; cursor: pointer; font-weight: 600; }
-        .cart-info strong { font-size: 16px; color: #c2410c; }
+        .cart-info { font-size: 12px; color: #78350f; cursor: pointer; font-weight: 600; line-height: 1.3; }
+        .cart-info strong { font-size: 15px; color: #c2410c; }
         .btn-view-cart {
             background: linear-gradient(135deg, #16a34a, #15803d) !important; color: #fff !important;
-            font-size: 14px !important; font-weight: bold !important; padding: 9px 16px !important;
+            font-size: 13.5px !important; font-weight: bold !important; padding: 8px 14px !important;
             border-radius: 10px !important; border: none !important; cursor: pointer;
         }
         .btn-view-cart.empty { background: #d6c5ae !important; color: #785a3a !important; cursor: not-allowed; }
 
-        /* === NGĂN KÉO TIỆN ÍCH & ĐỔI NHÂN VẬT === */
         .utility-drawer-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
             z-index: 250; justify-content: flex-end; align-items: flex-end; backdrop-filter: blur(3px);
@@ -518,9 +510,8 @@
         }
         .avatar-preset-btn.selected { border-color: #d97706; background: #fef3c7; }
 
-        /* === MODAL CHUNG === */
         .floating-ai-btn {
-            position: fixed; right: 12px; bottom: 134px; width: 52px; height: 52px; padding: 0; overflow: hidden;
+            position: fixed; right: 12px; bottom: calc(134px + env(safe-area-inset-bottom)); width: 52px; height: 52px; padding: 0; overflow: hidden;
             border-radius: 50%; border: 2.5px solid #d32f2f;
             background: radial-gradient(circle at 50% 35%, #fff0f0 0%, #ffd7d7 100%);
             display: flex; align-items: center; justify-content: center;
@@ -625,6 +616,8 @@
 </head>
 <body>
 
+    <div id="canvas3dWrap" style="display:none;"></div>
+
     <!-- SÂN KHẤU BẢN ĐỒ 2.5D ISOMETRIC HD -->
     <div id="mapStageWrap">
         <canvas id="mapCanvas"></canvas>
@@ -672,6 +665,7 @@
     </div>
 
     <div id="cartRestoreToast"></div>
+    <div id="kbDiagBox" style="display:none;position:fixed;top:95px;left:12px;right:12px;z-index:99999;background:rgba(0,0,0,0.88);color:#fde047;border:2px solid #ef4444;border-radius:12px;padding:10px;font-size:12px;line-height:1.4;word-break:break-word;"></div>
 
     <!-- THANH CÔNG CỤ ADMIN MAP EDITOR -->
     <div id="adminMapToolbar">
@@ -1057,19 +1051,35 @@
         </div>
     </div>
 
+let joyVector = { x: 0, y: 0 };
+const keysPressed = {};
+
 <script>
-// ================= POLYFILL CHO SAFARI / TRÌNH DUYỆT CŨ =================
-if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-        const rad = Math.min(r || 0, Math.abs(w) / 2, Math.abs(h) / 2);
-        this.moveTo(x + rad, y);
-        this.arcTo(x + w, y, x + w, y + h, rad);
-        this.arcTo(x + w, y + h, x, y + h, rad);
-        this.arcTo(x, y + h, x, y, rad);
-        this.arcTo(x, y, x + w, y, rad);
-        this.closePath();
-        return this;
-    };
+// ================= VẼ BO GÓC ĐỘC LẬP (KHÔNG PHỤ THUỘC ROUNDRECT CỦA SAFARI) =================
+function rRect(ctx, x, y, w, h, r) {
+    const rw = Math.max(0, w), rh = Math.max(0, h);
+    const rad = Math.max(0, Math.min(r || 0, rw / 2, rh / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.arcTo(x + rw, y, x + rw, y + rh, rad);
+    ctx.arcTo(x + rw, y + rh, x, y + rh, rad);
+    ctx.arcTo(x, y + rh, x, y, rad);
+    ctx.arcTo(x, y, x + rw, y, rad);
+    ctx.closePath();
+}
+
+const diagUniqueErrors = [];
+function reportSafeDiag(label, err) {
+    const msg = label + ': ' + (err && (err.name + ' - ' + err.message) || String(err));
+    if (diagUniqueErrors.indexOf(msg) === -1 && diagUniqueErrors.length < 5) {
+        diagUniqueErrors.push(msg);
+        const box = document.getElementById('kbDiagBox');
+        if (box) {
+            box.style.display = 'block';
+            box.innerHTML = '<b>⚠️ Ghi nhận lỗi chi tiết:</b><br>' + diagUniqueErrors.join('<br>') +
+                '<br><button type="button" onclick="this.parentNode.style.display=\'none\'" style="margin-top:6px;padding:4px 10px;border:none;border-radius:6px;background:#fde047;color:#000;font-weight:bold;">Ẩn</button>';
+        }
+    }
 }
 
 // ================= CẤU HÌNH & BIẾN TOÀN CỤC =================
@@ -1152,7 +1162,6 @@ function getAudioCtx() {
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
     return audioCtx;
 }
-
 function isBekimAudioActive() {
     if (window.speechSynthesis && window.speechSynthesis.speaking) return true;
     if (window.__bekimSpeaking || window.isBekimSpeaking) return true;
@@ -1164,7 +1173,6 @@ function isBekimAudioActive() {
     }
     return false;
 }
-
 function startGentleBgmLoop() {
     const ctx = getAudioCtx();
     if (!ctx) return;
@@ -1174,53 +1182,37 @@ function startGentleBgmLoop() {
         masterBgmGain.connect(ctx.destination);
     }
     if (bgmLoopTimer) return;
-    // Giai điệu Noel / Acoustic êm dịu dễ thương
     const melody = [
-        659.25, 659.25, 659.25, 0,
-        659.25, 659.25, 659.25, 0,
-        659.25, 783.99, 523.25, 587.33,
-        659.25, 0, 0, 0,
-        698.46, 698.46, 698.46, 698.46,
-        698.46, 659.25, 659.25, 659.25,
-        659.25, 587.33, 587.33, 659.25,
-        587.33, 0, 783.99, 0
+        659.25, 659.25, 659.25, 0, 659.25, 659.25, 659.25, 0,
+        659.25, 783.99, 523.25, 587.33, 659.25, 0, 0, 0,
+        698.46, 698.46, 698.46, 698.46, 698.46, 659.25, 659.25, 659.25,
+        659.25, 587.33, 587.33, 659.25, 587.33, 0, 783.99, 0
     ];
     bgmLoopTimer = setInterval(() => {
         if (!audioCtx || audioCtx.state !== 'running' || !masterBgmGain) return;
         const targetGain = (!bgmEnabled || isBekimAudioActive()) ? 0.002 : 0.055;
         masterBgmGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.12);
         if (!bgmEnabled || isBekimAudioActive()) return;
-
         const freq = melody[bgmStep % melody.length];
         bgmStep++;
         if (freq > 0) {
-            const osc = audioCtx.createOscillator();
-            const noteGain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
+            const osc = audioCtx.createOscillator(), noteGain = ctx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
             const t0 = audioCtx.currentTime;
             noteGain.gain.setValueAtTime(0.001, t0);
             noteGain.gain.linearRampToValueAtTime(0.55, t0 + 0.04);
             noteGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.42);
-            osc.connect(noteGain);
-            noteGain.connect(masterBgmGain);
-            osc.start(t0);
-            osc.stop(t0 + 0.44);
+            osc.connect(noteGain); noteGain.connect(masterBgmGain);
+            osc.start(t0); osc.stop(t0 + 0.44);
         }
     }, 390);
 }
-
 function toggleBackgroundMusic() {
     bgmEnabled = !bgmEnabled;
     localStorage.setItem('kimbling_bgm_enabled', String(bgmEnabled));
     updateMusicButtonUI();
-    if (bgmEnabled) {
-        getAudioCtx();
-        startGentleBgmLoop();
-        playCustomerBellSFX();
-    } else if (masterBgmGain && audioCtx) {
-        masterBgmGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.06);
-    }
+    if (bgmEnabled) { getAudioCtx(); startGentleBgmLoop(); playCustomerBellSFX(); }
+    else if (masterBgmGain && audioCtx) masterBgmGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.06);
 }
 function updateMusicButtonUI() {
     const btn = document.getElementById('btnMusicToggle');
@@ -1230,72 +1222,53 @@ function updateMusicButtonUI() {
 }
 function unlockAudioOnFirstGesture() {
     if (audioUnlocked) return;
-    audioUnlocked = true;
-    getAudioCtx();
+    audioUnlocked = true; getAudioCtx();
     if (bgmEnabled) startGentleBgmLoop();
 }
 window.addEventListener('pointerdown', unlockAudioOnFirstGesture, { once: true });
 
-// Chuông leng keng báo khách khi lại gần quầy / bấm vào quầy
 function playCustomerBellSFX() {
     try {
-        const ctx = getAudioCtx();
-        if (!ctx || isBekimAudioActive()) return;
+        const ctx = getAudioCtx(); if (!ctx || isBekimAudioActive()) return;
         [1046.5, 1318.5, 1567.98].forEach((f, idx) => {
             const osc = ctx.createOscillator(), g = ctx.createGain();
             osc.type = 'triangle'; osc.frequency.value = f;
             const t0 = ctx.currentTime + idx * 0.07;
-            g.gain.setValueAtTime(0.09, t0);
-            g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
-            osc.connect(g); g.connect(ctx.destination);
-            osc.start(t0); osc.stop(t0 + 0.3);
+            g.gain.setValueAtTime(0.09, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+            osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(t0 + 0.3);
         });
     } catch(e) {}
 }
-// Tiếng bọt sủi vui nhộn khi xoay chọn món
 function playMenuTickSFX() {
     try {
-        const ctx = getAudioCtx();
-        if (!ctx || isBekimAudioActive()) return;
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sine';
-        const t0 = ctx.currentTime;
-        osc.frequency.setValueAtTime(480, t0);
-        osc.frequency.exponentialRampToValueAtTime(860, t0 + 0.07);
-        g.gain.setValueAtTime(0.08, t0);
-        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t0); osc.stop(t0 + 0.09);
+        const ctx = getAudioCtx(); if (!ctx || isBekimAudioActive()) return;
+        const osc = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime;
+        osc.type = 'sine'; osc.frequency.setValueAtTime(480, t0); osc.frequency.exponentialRampToValueAtTime(860, t0 + 0.07);
+        g.gain.setValueAtTime(0.08, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
+        osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(t0 + 0.09);
     } catch(e) {}
 }
-// Tiếng sảng khoái kích thích vị giác khi bấm Thêm vào giỏ hàng
 function playYummyAddSFX() {
     try {
-        const ctx = getAudioCtx();
-        if (!ctx || isBekimAudioActive()) return;
+        const ctx = getAudioCtx(); if (!ctx || isBekimAudioActive()) return;
         [587.33, 739.99, 880, 1174.66].forEach((f, idx) => {
             const osc = ctx.createOscillator(), g = ctx.createGain();
             osc.type = 'sine'; osc.frequency.value = f;
             const t0 = ctx.currentTime + idx * 0.055;
-            g.gain.setValueAtTime(0.11, t0);
-            g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
-            osc.connect(g); g.connect(ctx.destination);
-            osc.start(t0); osc.stop(t0 + 0.25);
+            g.gain.setValueAtTime(0.11, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
+            osc.connect(g); g.connect(ctx.destination); osc.start(t0); osc.stop(t0 + 0.25);
         });
     } catch(e) {}
 }
 function playOrderSuccessSound() {
     try {
-        const ctx = getAudioCtx();
-        if (!ctx) return;
+        const ctx = getAudioCtx(); if (!ctx) return;
         [523.25, 659.25, 783.99, 1046.50].forEach((freq, index) => {
             const osc = ctx.createOscillator(), gain = ctx.createGain();
             osc.type = 'triangle'; osc.frequency.value = freq;
             const t0 = ctx.currentTime + index * 0.12;
-            gain.gain.setValueAtTime(0.18, t0);
-            gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.3);
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.start(t0); osc.stop(t0 + 0.3);
+            gain.gain.setValueAtTime(0.18, t0); gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.3);
+            osc.connect(gain); gain.connect(ctx.destination); osc.start(t0); osc.stop(t0 + 0.3);
         });
     } catch(e) {}
 }
@@ -1630,14 +1603,12 @@ function loadMapStations() {
 function saveMapStations() { try { localStorage.setItem('kimbling_map_positions_v2', JSON.stringify(mapStations)); } catch(e) {} }
 
 let mapCanvas, mapCtx, canvasCssW = 390, canvasCssH = 844;
-let MAP_W = 1080, MAP_H = 1920; // Dùng đúng độ phân giải gốc HD khi ảnh load xong!
+let MAP_W = 768, MAP_H = 1328;
 let mapImg = null, mapImgLoaded = false, fallbackMapCanvas = null;
 
-// Camera Cách A (Zoom ~1.45x quanh lối vào, nét căng Retina 3x)
-let camX = 560, camY = 1520, camZoom = 1.0, minZoom = 0.4, maxZoom = 2.8;
+let camX = 399, camY = 980, camZoom = 0.85, minZoom = 0.4, maxZoom = 2.8;
 let manualPanLockUntil = 0;
 
-// Nhân vật chính & Bé Kim
 let playerPct = { x: 52, y: 84 };
 let playerFacing = 1, playerWalkPhase = 0;
 let walkWaypoints = [], pendingStationAfterWalk = null, targetGroundPing = null;
@@ -1645,7 +1616,6 @@ let walkWaypoints = [], pendingStationAfterWalk = null, targetGroundPing = null;
 let bekimPct = { x: 57.5, y: 85.5 };
 let bekimFacing = -1, bekimWalkPhase = 0;
 
-// Ảnh nguyên dáng đã tách nền trắng
 let playerDefaultImg = null, playerCustomImg = null, bekimFullImg = null;
 let playerPresetKey = 'file', playerDisplayName = 'Bạn | Khách VIP';
 let tempEditPreset = 'file', tempEditImgData = null;
@@ -1653,7 +1623,6 @@ let tempEditPreset = 'file', tempEditImgData = null;
 let isAdminMapEditing = false, draggingStationIdx = -1;
 let nearbyStationKey = null, lastBellStationKey = null;
 
-// Cảnh Noel (Ông già Noel tuần lộc bay + Cây thông đèn + Tuyết)
 let noelEnabled = localStorage.getItem('kimbling_noel_enabled') !== 'false';
 const snowParticles = Array.from({ length: 58 }, () => ({
     x: Math.random(), y: Math.random(), r: 1.4 + Math.random() * 2.8,
@@ -1661,28 +1630,30 @@ const snowParticles = Array.from({ length: 58 }, () => ({
 }));
 const santaState = { active: false, xPct: -15, yPct: 28, dir: 1, nextSpawnAt: 3500 };
 
-// Hạt nắng vàng bay nhẹ
 const sunParticles = Array.from({ length: 34 }, () => ({
     xPct: Math.random() * 100, yPct: Math.random() * 90 + 5, r: 1.6 + Math.random() * 2.4,
     vx: (Math.random() - 0.5) * 0.014, vy: -0.008 - Math.random() * 0.016, phase: Math.random() * Math.PI * 2
 }));
 
-// ================= TỰ ĐỘNG TÁCH NỀN TRẮNG CHO ẢNH NHÂN VẬT =================
+
+
 function processCutoutSprite(img, removeGroundPatch) {
+
+let joyVector = { x: 0, y: 0 };
+const keysPressed = {};
+
     try {
         const maxDim = 320;
-        const scale = Math.min(1, maxDim / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
-        const w = Math.max(2, Math.round((img.naturalWidth || img.width) * scale));
-        const h = Math.max(2, Math.round((img.naturalHeight || img.height) * scale));
+        const iw = img.naturalWidth || img.width || 100, ih = img.naturalHeight || img.height || 100;
+        const scale = Math.min(1, maxDim / Math.max(iw, ih));
+        const w = Math.max(2, Math.round(iw * scale)), h = Math.max(2, Math.round(ih * scale));
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         const ctx = c.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
         const imgData = ctx.getImageData(0, 0, w, h), d = imgData.data;
 
-        // Nếu góc đã trong suốt sẵn -> giữ nguyên
         if (d[3] < 240 && d[(w - 1) * 4 + 3] < 240) return c;
 
-        // Flood-fill từ 4 viền để tách nền trắng ngoài cùng (không làm thủng mắt/tạp dề trắng bên trong!)
         const isWhiteBg = (idx) => {
             const r = d[idx], g = d[idx + 1], b = d[idx + 2];
             return r > 224 && g > 224 && b > 224 && Math.max(r, g, b) - Math.min(r, g, b) < 26;
@@ -1708,7 +1679,6 @@ function processCutoutSprite(img, removeGroundPatch) {
             if (py < h - 1) pushIfBg(px, py + 1);
         }
 
-        // Làm mềm viền 1px & lọc bỏ bóng cỏ tròn xám/xanh nhạt dưới chân nếu có
         for (let py = 0; py < h; py++) {
             for (let px = 0; px < w; px++) {
                 const p = py * w + px, idx = p * 4;
@@ -1716,14 +1686,11 @@ function processCutoutSprite(img, removeGroundPatch) {
                 if (removeGroundPatch && py > h * 0.87) {
                     const r = d[idx], g = d[idx + 1], b = d[idx + 2];
                     if (r > 145 && g > 145 && b > 125 && Math.abs(r - g) < 30 && (r - b) < 38) {
-                        d[idx + 3] = 0;
-                        continue;
+                        d[idx + 3] = 0; continue;
                     }
                 }
                 const nearBg = (px > 0 && d[(p - 1) * 4 + 3] === 0) || (px < w - 1 && d[(p + 1) * 4 + 3] === 0) || (py > 0 && d[(p - w) * 4 + 3] === 0) || (py < h - 1 && d[(p + w) * 4 + 3] === 0);
-                if (nearBg && d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200) {
-                    d[idx + 3] = 90;
-                }
+                if (nearBg && d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200) d[idx + 3] = 90;
             }
         }
         ctx.putImageData(imgData, 0, 0);
@@ -1733,7 +1700,7 @@ function processCutoutSprite(img, removeGroundPatch) {
     }
 }
 
-// ================= HỆ THỐNG NPC: 8 NHÂN VIÊN QUẦY + KHÁCH XẾP HÀNG ĐỨNG NGỒI KHÔNG YÊN =================
+// ================= HỆ THỐNG NPC =================
 const STAFF_CHAT_LINES = [
     "Hôm nay khách đông vui quá!",
     "Quầy nướng thơm nức mũi luôn!",
@@ -1757,42 +1724,27 @@ const QUEUE_FIDGET_LINES = [
     "Hôm nay đông khách ghê!"
 ];
 
-let staffNpcs = [];
-let queueNpcs = [];
-let strollNpcs = [];
-let queueCycleTimer = 0;
+let staffNpcs = [], queueNpcs = [], strollNpcs = [], queueCycleTimer = 0;
 
 function initNpcEcosystem() {
     const staffPresets = ['vip', 'traveler', 'cat', 'bunny', 'traveler', 'vip', 'bunny', 'cat'];
     const drinkStalls = mapStations.filter(s => !s.isMiniGame);
     staffNpcs = drinkStalls.map((st, idx) => ({
-        id: idx,
-        stationKey: st.key,
-        name: `NV ${st.label.replace(/^[^\s]+\s/, '')}`,
-        preset: staffPresets[idx % staffPresets.length],
-        dotColor: st.dotColor,
-        homeX: st.xPct + (st.xPct > 55 ? -4.2 : 4.2),
-        homeY: st.yPct + 2.8,
-        xPct: st.xPct + (st.xPct > 55 ? -4.2 : 4.2),
-        yPct: st.yPct + 2.8,
-        targetX: st.xPct,
-        targetY: st.yPct + 2.8,
-        facing: st.xPct > 55 ? -1 : 1,
-        walkPhase: Math.random() * 6,
-        state: 'idle_roam', // 'idle_roam' | 'walk_to_chat' | 'chatting' | 'rush_home' | 'serving'
-        chatPartnerId: -1,
-        nextActionAt: performance.now() + 2000 + idx * 900,
-        bubbleText: '',
-        bubbleUntil: 0
+        id: idx, stationKey: st.key, name: `NV ${st.label.replace(/^[^\s]+\s/, '')}`,
+        preset: staffPresets[idx % staffPresets.length], dotColor: st.dotColor,
+        homeX: st.xPct + (st.xPct > 55 ? -4.2 : 4.2), homeY: st.yPct + 2.8,
+        xPct: st.xPct + (st.xPct > 55 ? -4.2 : 4.2), yPct: st.yPct + 2.8,
+        targetX: st.xPct, targetY: st.yPct + 2.8,
+        facing: st.xPct > 55 ? -1 : 1, walkPhase: Math.random() * 6,
+        state: 'idle_roam', chatPartnerId: -1,
+        nextActionAt: performance.now() + 2000 + idx * 900, bubbleText: '', bubbleUntil: 0
     }));
 
-    // 3 quầy đông khách xếp hàng ("đứng ngồi không yên")
     const busyKeys = ['MilkTea', 'Food', 'Coffee'];
     queueNpcs = [];
     const guestNames = ['Khách An', 'Khách Vy', 'Khách Minh', 'Khách Nhi', 'Khách Bảo', 'Khách Linh', 'Khách Khoa', 'Khách My'];
     const guestPresets = ['traveler', 'cat', 'bunny', 'vip'];
     let gIdx = 0;
-
     busyKeys.forEach(k => {
         const st = mapStations.find(s => s.key === k);
         if (!st) return;
@@ -1801,24 +1753,17 @@ function initNpcEcosystem() {
             const qx = st.walkXPct + (slot * (st.xPct > 50 ? -3.4 : 3.4));
             const qy = st.walkYPct + slot * 2.5 + 1.5;
             queueNpcs.push({
-                id: gIdx,
-                stationKey: k,
-                slot,
-                name: guestNames[gIdx % guestNames.length],
+                id: gIdx, stationKey: k, slot, name: guestNames[gIdx % guestNames.length],
                 preset: guestPresets[gIdx % guestPresets.length],
-                xPct: qx, yPct: qy,
-                targetX: qx, targetY: qy,
-                facing: st.xPct > qx ? 1 : -1,
-                fidgetPhase: Math.random() * 10,
+                xPct: qx, yPct: qy, targetX: qx, targetY: qy,
+                facing: st.xPct > qx ? 1 : -1, fidgetPhase: Math.random() * 10,
                 bubbleText: slot === 0 ? QUEUE_FIDGET_LINES[gIdx % QUEUE_FIDGET_LINES.length] : '',
-                bubbleUntil: performance.now() + 3500 + gIdx * 700,
-                nextBubbleAt: performance.now() + 3000 + gIdx * 1300
+                bubbleUntil: performance.now() + 3500 + gIdx * 700, nextBubbleAt: performance.now() + 3000 + gIdx * 1300
             });
             gIdx++;
         }
     });
 
-    // 2 khách dạo sân vườn (luân phiên vào xếp hàng)
     strollNpcs = [
         { name: 'Khách Tâm', preset: 'bunny', xPct: 54, yPct: 48, targetX: 48, targetY: 56, facing: 1, walkPhase: 0, bubbleText: 'Quán nay đẹp quá!', bubbleUntil: performance.now() + 4000, nextMoveAt: performance.now() + 2500 },
         { name: 'Khách Huy', preset: 'cat', xPct: 46, yPct: 86, targetX: 58, targetY: 82, facing: -1, walkPhase: 1, bubbleText: 'Mua ly trà sữa thôi~', bubbleUntil: performance.now() + 4500, nextMoveAt: performance.now() + 3200 }
@@ -1826,7 +1771,6 @@ function initNpcEcosystem() {
 }
 
 function updateNpcEcosystem(now, t) {
-    // 1. Cập nhật 8 Nhân viên Quầy
     staffNpcs.forEach(npc => {
         const st = mapStations.find(s => s.key === npc.stationKey);
         if (!st) return;
@@ -1835,93 +1779,67 @@ function updateNpcEcosystem(now, t) {
 
         if (playerComingHere) {
             if (npc.state !== 'rush_home' && npc.state !== 'serving') {
-                npc.state = 'rush_home';
-                npc.chatPartnerId = -1;
-                npc.targetX = npc.homeX;
-                npc.targetY = npc.homeY;
-                npc.bubbleText = 'Khách tới! Chờ xíu nha 🏃';
-                npc.bubbleUntil = now + 2200;
+                npc.state = 'rush_home'; npc.chatPartnerId = -1;
+                npc.targetX = npc.homeX; npc.targetY = npc.homeY;
+                npc.bubbleText = 'Khách tới! Chờ xíu nha 🏃'; npc.bubbleUntil = now + 2200;
             }
         } else if (npc.state === 'serving' || npc.state === 'rush_home') {
-            npc.state = 'idle_roam';
-            npc.nextActionAt = now + 2500 + Math.random() * 3500;
+            npc.state = 'idle_roam'; npc.nextActionAt = now + 2500 + Math.random() * 3500;
         }
 
         if (npc.state === 'rush_home') {
-            const dx = npc.homeX - npc.xPct, dy = npc.homeY - npc.yPct;
-            const d = Math.hypot(dx, dy);
+            const dx = npc.homeX - npc.xPct, dy = npc.homeY - npc.yPct, d = Math.hypot(dx, dy);
             if (d > 0.6) {
-                const spd = 0.42; // Chạy lẹ về quầy!
-                npc.xPct += (dx / d) * Math.min(d, spd);
-                npc.yPct += (dy / d) * Math.min(d, spd);
+                npc.xPct += (dx / d) * Math.min(d, 0.42); npc.yPct += (dy / d) * Math.min(d, 0.42);
                 if (Math.abs(dx) > 0.03) npc.facing = dx > 0 ? 1 : -1;
                 npc.walkPhase += 0.36;
             } else {
-                npc.state = 'serving';
-                npc.facing = playerPct.x > npc.xPct ? 1 : -1;
-                npc.bubbleText = STAFF_GREET_LINES[npc.id % STAFF_GREET_LINES.length];
-                npc.bubbleUntil = now + 4500;
+                npc.state = 'serving'; npc.facing = playerPct.x > npc.xPct ? 1 : -1;
+                npc.bubbleText = STAFF_GREET_LINES[npc.id % STAFF_GREET_LINES.length]; npc.bubbleUntil = now + 4500;
             }
         } else if (npc.state === 'serving') {
             npc.facing = playerPct.x > npc.xPct ? 1 : -1;
         } else if (npc.state === 'walk_to_chat') {
             const partner = staffNpcs[npc.chatPartnerId];
             if (!partner || partner.state === 'rush_home' || partner.state === 'serving') {
-                npc.state = 'idle_roam';
-                npc.nextActionAt = now + 1500;
+                npc.state = 'idle_roam'; npc.nextActionAt = now + 1500;
             } else {
-                const tx = partner.xPct + (npc.id % 2 === 0 ? -3.6 : 3.6);
-                const ty = partner.yPct + 0.5;
+                const tx = partner.xPct + (npc.id % 2 === 0 ? -3.6 : 3.6), ty = partner.yPct + 0.5;
                 const dx = tx - npc.xPct, dy = ty - npc.yPct, d = Math.hypot(dx, dy);
                 if (d > 0.8) {
-                    const spd = 0.14;
-                    npc.xPct += (dx / d) * Math.min(d, spd);
-                    npc.yPct += (dy / d) * Math.min(d, spd);
+                    npc.xPct += (dx / d) * Math.min(d, 0.14); npc.yPct += (dy / d) * Math.min(d, 0.14);
                     if (Math.abs(dx) > 0.03) npc.facing = dx > 0 ? 1 : -1;
                     npc.walkPhase += 0.22;
                 } else {
                     npc.state = 'chatting';
-                    npc.facing = partner.xPct > npc.xPct ? 1 : -1;
-                    partner.facing = npc.xPct > partner.xPct ? 1 : -1;
-                    npc.bubbleText = STAFF_CHAT_LINES[(npc.id + Math.floor(t)) % STAFF_CHAT_LINES.length];
-                    npc.bubbleUntil = now + 3800;
-                    partner.bubbleText = STAFF_CHAT_LINES[(partner.id + Math.floor(t) + 2) % STAFF_CHAT_LINES.length];
-                    partner.bubbleUntil = now + 3800;
+                    npc.facing = partner.xPct > npc.xPct ? 1 : -1; partner.facing = npc.xPct > partner.xPct ? 1 : -1;
+                    npc.bubbleText = STAFF_CHAT_LINES[(npc.id + Math.floor(t)) % STAFF_CHAT_LINES.length]; npc.bubbleUntil = now + 3800;
+                    partner.bubbleText = STAFF_CHAT_LINES[(partner.id + Math.floor(t) + 2) % STAFF_CHAT_LINES.length]; partner.bubbleUntil = now + 3800;
                     npc.nextActionAt = now + 4600;
                 }
             }
         } else if (npc.state === 'chatting') {
             if (now > npc.nextActionAt) {
-                npc.state = 'idle_roam';
-                npc.chatPartnerId = -1;
-                npc.targetX = npc.homeX + (Math.random() - 0.5) * 6;
-                npc.targetY = npc.homeY + (Math.random() - 0.5) * 4;
+                npc.state = 'idle_roam'; npc.chatPartnerId = -1;
+                npc.targetX = npc.homeX + (Math.random() - 0.5) * 6; npc.targetY = npc.homeY + (Math.random() - 0.5) * 4;
                 npc.nextActionAt = now + 4000 + Math.random() * 4000;
             }
         } else {
-            // idle_roam: đi tới đi lui quanh quầy hoặc rủ đồng nghiệp quầy kế bên nói chuyện
             const dx = npc.targetX - npc.xPct, dy = npc.targetY - npc.yPct, d = Math.hypot(dx, dy);
             if (d > 0.5) {
-                npc.xPct += (dx / d) * 0.1;
-                npc.yPct += (dy / d) * 0.1;
+                npc.xPct += (dx / d) * 0.1; npc.yPct += (dy / d) * 0.1;
                 if (Math.abs(dx) > 0.02) npc.facing = dx > 0 ? 1 : -1;
                 npc.walkPhase += 0.18;
             } else if (now > npc.nextActionAt) {
                 if (Math.random() < 0.48) {
-                    // Tìm đồng nghiệp gần nhất không bận để qua trò chuyện
                     let bestP = null, bestD = 38;
                     staffNpcs.forEach(other => {
-                        if (other.id !== npc.id && (other.state === 'idle_roam')) {
+                        if (other.id !== npc.id && other.state === 'idle_roam') {
                             const od = Math.hypot(other.xPct - npc.xPct, other.yPct - npc.yPct);
                             if (od < bestD) { bestD = od; bestP = other; }
                         }
                     });
-                    if (bestP) {
-                        npc.state = 'walk_to_chat';
-                        npc.chatPartnerId = bestP.id;
-                        npc.nextActionAt = now + 9000;
-                        return;
-                    }
+                    if (bestP) { npc.state = 'walk_to_chat'; npc.chatPartnerId = bestP.id; npc.nextActionAt = now + 9000; return; }
                 }
                 npc.targetX = Math.max(12, Math.min(88, npc.homeX + (Math.random() - 0.5) * 8));
                 npc.targetY = Math.max(12, Math.min(86, npc.homeY + (Math.random() - 0.5) * 5));
@@ -1930,74 +1848,53 @@ function updateNpcEcosystem(now, t) {
         }
     });
 
-    // 2. Cập nhật NPC Khách đứng xếp hàng "đứng ngồi không yên"
     queueNpcs.forEach(q => {
         const dx = q.targetX - q.xPct, dy = q.targetY - q.yPct, d = Math.hypot(dx, dy);
-        if (d > 0.4) {
-            q.xPct += (dx / d) * 0.12;
-            q.yPct += (dy / d) * 0.12;
-            q.fidgetPhase += 0.25;
-        } else {
-            // Đứng tại chỗ nhấp nhổm sốt ruột, ngó nghiêng trái/phải
+        if (d > 0.4) { q.xPct += (dx / d) * 0.12; q.yPct += (dy / d) * 0.12; q.fidgetPhase += 0.25; }
+        else {
             q.fidgetPhase += 0.34;
             if (Math.sin(t * 2.4 + q.id) > 0.65) q.facing = 1;
             else if (Math.sin(t * 2.4 + q.id) < -0.65) q.facing = -1;
         }
         if (now > q.nextBubbleAt) {
             q.bubbleText = QUEUE_FIDGET_LINES[Math.floor(Math.random() * QUEUE_FIDGET_LINES.length)];
-            q.bubbleUntil = now + 3200;
-            q.nextBubbleAt = now + 5500 + Math.random() * 6500;
+            q.bubbleUntil = now + 3200; q.nextBubbleAt = now + 5500 + Math.random() * 6500;
         }
     });
 
-    // Luân chuyển hàng chờ mỗi ~13 giây (người đầu nhận món đi dạo, người sau bước lên!)
     if (now > queueCycleTimer) {
         queueCycleTimer = now + 13000;
-        const keys = ['MilkTea', 'Food', 'Coffee'];
-        const chosenKey = keys[Math.floor(Math.random() * keys.length)];
+        const keys = ['MilkTea', 'Food', 'Coffee'], chosenKey = keys[Math.floor(Math.random() * keys.length)];
         const st = mapStations.find(s => s.key === chosenKey);
         const line = queueNpcs.filter(q => q.stationKey === chosenKey).sort((a, b) => a.slot - b.slot);
         if (st && line.length >= 2) {
             const first = line[0];
-            first.bubbleText = 'Yay! Có món rồi 🧋';
-            first.bubbleUntil = now + 3000;
-            // Đổi chỗ người đầu ra cuối hàng (giả lập người mới tới nối đuôi)
+            first.bubbleText = 'Yay! Có món rồi 🧋'; first.bubbleUntil = now + 3000;
             const lastSlot = line.length - 1;
             line.forEach((item, idx) => {
                 if (idx === 0) {
                     item.slot = lastSlot;
                     item.xPct = st.walkXPct + (lastSlot + 1) * (st.xPct > 50 ? -3.8 : 3.8);
                     item.yPct = st.walkYPct + (lastSlot + 1) * 3.0 + 4;
-                } else {
-                    item.slot = idx - 1;
-                }
+                } else item.slot = idx - 1;
                 item.targetX = st.walkXPct + (item.slot * (st.xPct > 50 ? -3.4 : 3.4));
                 item.targetY = st.walkYPct + item.slot * 2.5 + 1.5;
             });
         }
     }
 
-    // 3. Khách dạo sân vườn
     strollNpcs.forEach(s => {
         const dx = s.targetX - s.xPct, dy = s.targetY - s.yPct, d = Math.hypot(dx, dy);
-        if (d > 0.6) {
-            s.xPct += (dx / d) * 0.11;
-            s.yPct += (dy / d) * 0.11;
-            if (Math.abs(dx) > 0.02) s.facing = dx > 0 ? 1 : -1;
-            s.walkPhase += 0.22;
-        } else if (now > s.nextMoveAt) {
-            const spots = [
-                { x: 54, y: 46 }, { x: 47, y: 54 }, { x: 61, y: 53 },
-                { x: 43, y: 74 }, { x: 55, y: 80 }, { x: 52, y: 26 }
-            ];
+        if (d > 0.6) { s.xPct += (dx / d) * 0.11; s.yPct += (dy / d) * 0.11; if (Math.abs(dx) > 0.02) s.facing = dx > 0 ? 1 : -1; s.walkPhase += 0.22; }
+        else if (now > s.nextMoveAt) {
+            const spots = [{ x: 54, y: 46 }, { x: 47, y: 54 }, { x: 61, y: 53 }, { x: 43, y: 74 }, { x: 55, y: 80 }, { x: 52, y: 26 }];
             const pick = spots[Math.floor(Math.random() * spots.length)];
-            s.targetX = pick.x; s.targetY = pick.y;
-            s.nextMoveAt = now + 3500 + Math.random() * 4500;
+            s.targetX = pick.x; s.targetY = pick.y; s.nextMoveAt = now + 3500 + Math.random() * 4500;
         }
     });
 }
 
-// ================= VẼ CẢNH GIÁNG SINH: CÂY THÔNG ĐÈN + ÔNG GIÀ NOEL TUẦN LỘC + TUYẾT =================
+// ================= CẢNH NOEL =================
 function toggleNoelTheme() {
     noelEnabled = !noelEnabled;
     localStorage.setItem('kimbling_noel_enabled', String(noelEnabled));
@@ -2009,58 +1906,37 @@ function updateNoelButtonUI() {
 }
 
 function drawChristmasTree(ctx, x, y, sc, t) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(sc, sc);
-
-    // Bóng đổ dưới gốc
+    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
     ctx.fillStyle = 'rgba(20, 12, 4, 0.35)';
     ctx.beginPath(); ctx.ellipse(0, 6, 36, 13, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Hộp quà dưới gốc cây
     ctx.fillStyle = '#dc2626'; ctx.fillRect(-24, -4, 15, 13);
     ctx.fillStyle = '#fde047'; ctx.fillRect(-18, -4, 3, 13);
     ctx.fillStyle = '#2563eb'; ctx.fillRect(10, -2, 14, 11);
     ctx.fillStyle = '#fff'; ctx.fillRect(15.5, -2, 3, 11);
+    ctx.fillStyle = '#78350f'; ctx.fillRect(-6, -12, 12, 16);
 
-    // Thân gỗ
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-6, -12, 12, 16);
-
-    // 3 tầng tán thông xanh
     const tiers = [
         { topY: -54, botY: -10, halfW: 34, c: '#15803d' },
         { topY: -82, botY: -36, halfW: 26, c: '#16a34a' },
         { topY: -108, botY: -64, halfW: 18, c: '#22c55e' }
     ];
     tiers.forEach(tr => {
-        ctx.fillStyle = tr.c;
-        ctx.beginPath();
-        ctx.moveTo(0, tr.topY);
-        ctx.lineTo(-tr.halfW, tr.botY);
-        ctx.quadraticCurveTo(0, tr.botY + 7, tr.halfW, tr.botY);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillStyle = tr.c; ctx.beginPath(); ctx.moveTo(0, tr.topY);
+        ctx.lineTo(-tr.halfW, tr.botY); ctx.quadraticCurveTo(0, tr.botY + 7, tr.halfW, tr.botY);
+        ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#14532d'; ctx.lineWidth = 1.5; ctx.stroke();
     });
 
-    // Dây kim tuyến vàng
-    ctx.strokeStyle = 'rgba(253, 224, 71, 0.85)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.85)'; ctx.lineWidth = 2;
     [[-24, -22, 22, -16], [-18, -48, 17, -42], [-11, -74, 11, -69]].forEach(l => {
         ctx.beginPath(); ctx.moveTo(l[0], l[1]); ctx.quadraticCurveTo(0, (l[1]+l[3])/2 + 8, l[2], l[3]); ctx.stroke();
     });
 
-    // Bóng đèn LED nhấp nháy nhiều màu
-    const bulbs = [
-        [-18, -18], [0, -16], [16, -20], [-14, -34], [6, -32], [18, -40],
-        [-11, -54], [4, -52], [11, -60], [-6, -74], [6, -77], [0, -90]
-    ];
+    const bulbs = [[-18,-18],[0,-16],[16,-20],[-14,-34],[6,-32],[18,-40],[-11,-54],[4,-52],[11,-60],[-6,-74],[6,-77],[0,-90]];
     const bulbColors = ['#fde047', '#ef4444', '#38bdf8', '#f472b6', '#4ade80'];
     bulbs.forEach((b, idx) => {
         const blink = 0.5 + 0.5 * Math.sin(t * 5.2 + idx * 1.3);
-        const col = bulbColors[idx % bulbColors.length];
-        ctx.fillStyle = col;
+        ctx.fillStyle = bulbColors[idx % bulbColors.length];
         ctx.globalAlpha = 0.45 + blink * 0.55;
         ctx.beginPath(); ctx.arc(b[0], b[1], 3.2 + blink * 1.2, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 0.25 * blink;
@@ -2068,93 +1944,68 @@ function drawChristmasTree(ctx, x, y, sc, t) {
     });
     ctx.globalAlpha = 1;
 
-    // Ngôi sao vàng đỉnh cây thông phát sáng
     const starGlow = 0.7 + 0.3 * Math.sin(t * 4);
     ctx.fillStyle = `rgba(253, 224, 71, ${0.35 * starGlow})`;
     ctx.beginPath(); ctx.arc(0, -114, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fde047';
-    ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fde047'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('⭐', 0, -113);
-
     ctx.restore();
 }
 
 function updateAndDrawSanta(ctx, now, t, sc) {
     if (!noelEnabled) return;
     if (!santaState.active && now > santaState.nextSpawnAt) {
-        santaState.active = true;
-        santaState.dir = Math.random() > 0.5 ? 1 : -1;
-        santaState.xPct = santaState.dir > 0 ? -14 : 114;
-        santaState.yPct = 20 + Math.random() * 25;
+        santaState.active = true; santaState.dir = Math.random() > 0.5 ? 1 : -1;
+        santaState.xPct = santaState.dir > 0 ? -14 : 114; santaState.yPct = 20 + Math.random() * 25;
     }
     if (!santaState.active) return;
 
-    santaState.xPct += santaState.dir * 0.16;
-    santaState.yPct += Math.sin(t * 2.5) * 0.04;
+    santaState.xPct += santaState.dir * 0.16; santaState.yPct += Math.sin(t * 2.5) * 0.04;
     if ((santaState.dir > 0 && santaState.xPct > 116) || (santaState.dir < 0 && santaState.xPct < -16)) {
-        santaState.active = false;
-        santaState.nextSpawnAt = now + 11000 + Math.random() * 6000;
-        return;
+        santaState.active = false; santaState.nextSpawnAt = now + 11000 + Math.random() * 6000; return;
     }
 
     const pos = pctToWorld(santaState.xPct, santaState.yPct);
-    ctx.save();
-    ctx.translate(pos.x, pos.y);
-    ctx.scale(sc, sc);
-
-    // Bóng trượt mờ dưới mặt đất
+    ctx.save(); ctx.translate(pos.x, pos.y); ctx.scale(sc, sc);
     ctx.fillStyle = 'rgba(0,0,0,0.16)';
     ctx.beginPath(); ctx.ellipse(0, 75, 58, 12, 0, 0, Math.PI * 2); ctx.fill();
 
-    // Vệt bụi sao vàng lấp lánh sau xe tuần lộc
     for (let i = 1; i <= 6; i++) {
         ctx.fillStyle = `rgba(253, 224, 71, ${0.7 - i * 0.1})`;
         ctx.beginPath(); ctx.arc(-santaState.dir * (38 + i * 14), Math.sin(t * 6 + i) * 6, 4.5 - i * 0.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    ctx.save();
-    ctx.scale(santaState.dir, 1);
-    // Xe trượt tuyết gỗ đỏ vàng + Ông già Noel + 2 chú tuần lộc
-    ctx.fillStyle = '#b91c1c';
-    ctx.beginPath(); ctx.roundRect(-34, -14, 42, 18, 6); ctx.fill();
+    ctx.save(); ctx.scale(santaState.dir, 1);
+    ctx.fillStyle = '#b91c1c'; rRect(ctx, -34, -14, 42, 18, 6); ctx.fill();
     ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.moveTo(-38, 8); ctx.quadraticCurveTo(0, 12, 14, 2); ctx.stroke();
-
-    // Ông già Noel ngồi xe + Túi quà
     ctx.font = '26px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🎅', -10, -22);
-    ctx.font = '18px sans-serif';
-    ctx.fillText('🎁', -28, -20);
-
-    // Dây cương vàng nối tuần lộc
+    ctx.fillText('🎅', -10, -22); ctx.font = '18px sans-serif'; ctx.fillText('🎁', -28, -20);
     ctx.strokeStyle = '#fde047'; ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.moveTo(8, -8); ctx.lineTo(56, -12 + Math.sin(t * 8) * 3); ctx.stroke();
-
-    // 2 chú tuần lộc phi nước đại
     ctx.font = '26px sans-serif';
     ctx.fillText('🦌', 36, -12 + Math.sin(t * 8) * 4);
     ctx.fillText('🦌', 62, -16 + Math.cos(t * 8) * 4);
     ctx.restore();
 
-    // Bảng nhỏ "Ho Ho Ho! Quà Noel!"
     drawRpgNameTag(ctx, 0, -48, '🎅 Ông Già Noel | Phát Quà', '#ef4444', false);
     ctx.restore();
 }
 
-// ================= VẼ MAP CHÍNH & TẢI ẢNH GỐC HD =================
+// ================= VẼ MAP & TẢI ẢNH GỐC =================
 function buildFallbackIsometricMap() {
-    const c = document.createElement('canvas'); c.width = 1080; c.height = 1920;
+    const c = document.createElement('canvas'); c.width = 768; c.height = 1328;
     const g = c.getContext('2d');
-    const bg = g.createLinearGradient(0, 0, 0, 1920);
+    const bg = g.createLinearGradient(0, 0, 0, 1328);
     bg.addColorStop(0, '#4f7a2e'); bg.addColorStop(0.5, '#6fa142'); bg.addColorStop(1, '#588533');
-    g.fillStyle = bg; g.fillRect(0, 0, 1080, 1920);
-    g.strokeStyle = '#c8b295'; g.lineWidth = 90; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(540, 1850); g.bezierCurveTo(320, 1300, 760, 820, 440, 220); g.stroke();
+    g.fillStyle = bg; g.fillRect(0, 0, 768, 1328);
+    g.strokeStyle = '#c8b295'; g.lineWidth = 70; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(390, 1280); g.bezierCurveTo(220, 900, 560, 620, 320, 160); g.stroke();
     mapStations.forEach(st => {
-        const px = (st.xPct / 100) * 1080, py = (st.yPct / 100) * 1920;
-        g.fillStyle = '#78350f'; g.fillRect(px - 40, py - 12, 80, 36);
+        const px = (st.xPct / 100) * 768, py = (st.yPct / 100) * 1328;
+        g.fillStyle = '#78350f'; g.fillRect(px - 32, py - 10, 64, 28);
         g.fillStyle = st.dotColor || '#f59e0b';
-        g.beginPath(); g.moveTo(px - 48, py - 10); g.lineTo(px, py - 42); g.lineTo(px + 48, py - 10); g.closePath(); g.fill();
+        g.beginPath(); g.moveTo(px - 38, py - 8); g.lineTo(px, py - 34); g.lineTo(px + 38, py - 8); g.closePath(); g.fill();
     });
     fallbackMapCanvas = c;
 }
@@ -2163,31 +2014,24 @@ function loadMapImageSource() {
     const customMap = localStorage.getItem('kimbling_custom_map_b64');
     const img = new Image();
     img.onload = function() {
-        mapImg = img;
-        mapImgLoaded = true;
-        // Giữ nguyên độ phân giải gốc HD (chỉ cắt 3.5% mép dưới bỏ watermark nhỏ góc phải)
-        MAP_W = img.naturalWidth || 1080;
-        MAP_H = Math.round((img.naturalHeight || 1920) * 0.965);
+        mapImg = img; mapImgLoaded = true;
+        MAP_W = img.naturalWidth || 768;
+        MAP_H = Math.max(200, Math.floor((img.naturalHeight || 1376) * 0.965));
         recalcCameraBounds(true);
     };
     img.onerror = function() {
         if (!customMap && img.src.indexOf('map_quan.jpg') !== -1) img.src = 'map_quan.png';
-        else {
-            mapImgLoaded = false;
-            MAP_W = 1080; MAP_H = 1920;
-            buildFallbackIsometricMap();
-            recalcCameraBounds(true);
-        }
+        else { mapImgLoaded = false; MAP_W = 768; MAP_H = 1328; recalcCameraBounds(true); }
     };
     img.src = customMap || 'map_quan.jpg';
 }
 
 function recalcCameraBounds(snapDefault) {
     if (!mapCanvas) return;
-    canvasCssW = window.innerWidth;
-    canvasCssH = window.innerHeight;
-    // Mở DPR lên tối đa 3x để nét căng trên màn hình Retina điện thoại!
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const wrap = document.getElementById('mapStageWrap');
+    canvasCssW = Math.max(100, (wrap && wrap.clientWidth) || window.innerWidth || 390);
+    canvasCssH = Math.max(100, (wrap && wrap.clientHeight) || window.innerHeight || 844);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     mapCanvas.width = Math.round(canvasCssW * dpr);
     mapCanvas.height = Math.round(canvasCssH * dpr);
     mapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -2211,7 +2055,6 @@ function clampCamera() {
     camX = MAP_W <= halfW * 2 ? MAP_W / 2 : Math.max(halfW, Math.min(MAP_W - halfW, camX));
     camY = MAP_H <= halfH * 2 ? MAP_H / 2 : Math.max(halfH, Math.min(MAP_H - halfH, camY));
 }
-
 function screenToWorld(sx, sy) { return { x: (sx - canvasCssW / 2) / camZoom + camX, y: (sy - canvasCssH / 2) / camZoom + camY }; }
 function pctToWorld(xp, yp) { return { x: (xp / 100) * MAP_W, y: (yp / 100) * MAP_H }; }
 function worldToPct(wx, wy) { return { x: (wx / MAP_W) * 100, y: (wy / MAP_H) * 100 }; }
@@ -2220,20 +2063,14 @@ function loadCharacterPreferences() {
     playerDisplayName = localStorage.getItem('kimbling_player_rpg_name') || localStorage.getItem('kimbling_cust_name') || 'Bạn | Khách VIP';
     playerPresetKey = localStorage.getItem('kimbling_player_preset') || 'file';
 
-    // Nạp ảnh Bé Kim nguyên dáng (nv_bekim.png / .jpg) + tự tách nền trắng
     const bkImg = new Image();
     bkImg.onload = () => { bekimFullImg = processCutoutSprite(bkImg, false); };
-    bkImg.onerror = () => {
-        if (bkImg.src.indexOf('nv_bekim.png') !== -1) bkImg.src = 'nv_bekim.jpg';
-    };
+    bkImg.onerror = () => { if (bkImg.src.indexOf('nv_bekim.png') !== -1) bkImg.src = 'nv_bekim.jpg'; };
     bkImg.src = 'nv_bekim.png';
 
-    // Nạp ảnh Khách Lữ Hành mặc định (nv_khach.png / .jpg) + tự tách nền trắng & thảm cỏ tròn dưới chân
     const plDef = new Image();
     plDef.onload = () => { playerDefaultImg = processCutoutSprite(plDef, true); renderCharPreview(); };
-    plDef.onerror = () => {
-        if (plDef.src.indexOf('nv_khach.png') !== -1) plDef.src = 'nv_khach.jpg';
-    };
+    plDef.onerror = () => { if (plDef.src.indexOf('nv_khach.png') !== -1) plDef.src = 'nv_khach.jpg'; };
     plDef.src = 'nv_khach.png';
 
     const b64 = localStorage.getItem('kimbling_player_custom_b64');
@@ -2241,80 +2078,64 @@ function loadCharacterPreferences() {
         const img = new Image();
         img.onload = () => { playerCustomImg = processCutoutSprite(img, false); renderCharPreview(); };
         img.src = b64;
-    } else {
-        playerCustomImg = null;
-    }
+    } else playerCustomImg = null;
 }
 
 function drawCharacterSprite(ctx, x, y, sc, facing, walkPhase, isMoving, spriteImg, presetKey, nameLabel, dotColor, speechBubble, role) {
     const bob = isMoving ? Math.abs(Math.sin(walkPhase)) * 5.5 : Math.sin(performance.now() / 420 + x) * 1.4;
     const tilt = isMoving ? Math.sin(walkPhase) * 0.08 : 0;
 
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(sc, sc);
-
-    // 1. Bóng đổ mềm dưới chân
+    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
     ctx.fillStyle = 'rgba(20, 12, 4, 0.36)';
-    ctx.beginPath();
-    ctx.ellipse(0, 4, isMoving ? 19 : 21, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 4, isMoving ? 19 : 21, 8, 0, 0, Math.PI * 2); ctx.fill();
 
     if (role === 'player' || role === 'bekim') {
         ctx.strokeStyle = role === 'bekim' ? 'rgba(251, 191, 36, 0.9)' : 'rgba(255, 251, 235, 0.92)';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(0, 4, 24, 9.5, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 4, 24, 9.5, 0, 0, Math.PI * 2); ctx.stroke();
     }
 
-    // 2. Vẽ nguyên dáng ảnh PNG/tách nền HOẶC Chibi Canvas sắc nét
-    ctx.save();
-    ctx.translate(0, -bob);
-    ctx.rotate(tilt);
+    ctx.save(); ctx.translate(0, -bob); ctx.rotate(tilt);
 
     let topY = -68;
-    if (spriteImg) {
+    if (spriteImg && (spriteImg.width || spriteImg.naturalWidth)) {
         const targetH = (role === 'player' || role === 'bekim') ? 82 : 64;
         const aspect = (spriteImg.width || spriteImg.naturalWidth || 100) / Math.max(1, (spriteImg.height || spriteImg.naturalHeight || 100));
         const targetW = targetH * aspect;
-        ctx.save();
-        ctx.scale(facing, 1);
+        ctx.save(); ctx.scale(facing, 1);
         ctx.drawImage(spriteImg, -targetW / 2, -targetH + 4, targetW, targetH);
         ctx.restore();
         topY = -targetH - 4;
     } else {
-        ctx.save();
-        ctx.scale(facing, 1);
+        ctx.save(); ctx.scale(facing, 1);
         const legSwing = isMoving ? Math.sin(walkPhase) * 6 : 0;
         const chScale = (role === 'player' || role === 'bekim') ? 1 : 0.86;
         ctx.scale(chScale, chScale);
 
         ctx.fillStyle = role === 'bekim' ? '#ffd9c2' : '#1e293b';
-        ctx.beginPath(); ctx.roundRect(-8 + legSwing * 0.5, -13, 6.5, 13, 3); ctx.fill();
-        ctx.beginPath(); ctx.roundRect(1.5 - legSwing * 0.5, -13, 6.5, 13, 3); ctx.fill();
+        rRect(ctx, -8 + legSwing * 0.5, -13, 6.5, 13, 3); ctx.fill();
+        rRect(ctx, 1.5 - legSwing * 0.5, -13, 6.5, 13, 3); ctx.fill();
 
         ctx.fillStyle = role === 'bekim' ? '#dc2626' : '#f59e0b';
-        ctx.beginPath(); ctx.roundRect(-9 + legSwing * 0.5, -4, 8, 5, 2.5); ctx.fill();
-        ctx.beginPath(); ctx.roundRect(1 - legSwing * 0.5, -4, 8, 5, 2.5); ctx.fill();
+        rRect(ctx, -9 + legSwing * 0.5, -4, 8, 5, 2.5); ctx.fill();
+        rRect(ctx, 1 - legSwing * 0.5, -4, 8, 5, 2.5); ctx.fill();
 
         if (role === 'bekim') {
             ctx.fillStyle = '#dc2626';
             ctx.beginPath(); ctx.moveTo(-11, -30); ctx.lineTo(11, -30); ctx.lineTo(14, -12); ctx.lineTo(-14, -12); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#fffbeb';
-            ctx.beginPath(); ctx.roundRect(-7, -28, 14, 15, 3); ctx.fill();
+            ctx.fillStyle = '#fffbeb'; rRect(ctx, -7, -28, 14, 15, 3); ctx.fill();
         } else {
             const bodyColors = { traveler: '#2563eb', file: '#2563eb', vip: '#b45309', cat: '#f97316', bunny: '#ec4899', staff: '#059669' };
             ctx.fillStyle = bodyColors[presetKey] || '#2563eb';
-            ctx.beginPath(); ctx.roundRect(-11, -31, 22, 19, 6); ctx.fill();
+            rRect(ctx, -11, -31, 22, 19, 6); ctx.fill();
             ctx.fillStyle = '#fde047'; ctx.fillRect(-10, -30, 20, 4);
         }
 
         const armSwing = isMoving ? -Math.sin(walkPhase) * 6 : 0;
         ctx.fillStyle = '#ffd9c2';
-        ctx.beginPath(); ctx.roundRect(-15, -28 + armSwing * 0.4, 5.5, 12, 3); ctx.fill();
-        ctx.beginPath(); ctx.roundRect(9.5, -28 - armSwing * 0.4, 5.5, 12, 3); ctx.fill();
+        rRect(ctx, -15, -28 + armSwing * 0.4, 5.5, 12, 3); ctx.fill();
+        rRect(ctx, 9.5, -28 - armSwing * 0.4, 5.5, 12, 3); ctx.fill();
 
-        ctx.fillStyle = '#ffd9c2';
-        ctx.beginPath(); ctx.arc(0, -43, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd9c2'; ctx.beginPath(); ctx.arc(0, -43, 14, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
         ctx.beginPath(); ctx.ellipse(-7, -39, 3, 1.8, 0, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(7, -39, 3, 1.8, 0, 0, Math.PI * 2); ctx.fill();
@@ -2348,21 +2169,14 @@ function drawCharacterSprite(ctx, x, y, sc, facing, walkPhase, isMoving, spriteI
     }
     ctx.restore();
 
-    // 3. Thẻ tên RPG
     if (nameLabel) drawRpgNameTag(ctx, 0, topY - bob, nameLabel, dotColor, false);
 
-    // 4. Bong bóng thoại nhỏ của NPC khi tám chuyện / đón khách / sốt ruột đợi lượt
     if (speechBubble) {
-        ctx.save();
-        ctx.font = 'bold 10.5px sans-serif';
-        const tw = ctx.measureText(speechBubble).width;
-        const bw = tw + 16, bh = 22, by = topY - bob - 25;
-        ctx.fillStyle = 'rgba(255, 253, 245, 0.96)';
-        ctx.strokeStyle = '#d97706';
-        ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.roundRect(-bw / 2, by - bh / 2, bw, bh, 10); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#451a03';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.save(); ctx.font = 'bold 10.5px sans-serif';
+        const tw = ctx.measureText(speechBubble).width, bw = tw + 16, bh = 22, by = topY - bob - 25;
+        ctx.fillStyle = 'rgba(255, 253, 245, 0.96)'; ctx.strokeStyle = '#d97706'; ctx.lineWidth = 1.4;
+        rRect(ctx, -bw / 2, by - bh / 2, bw, bh, 10); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#451a03'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(speechBubble, 0, by + 0.5);
         ctx.restore();
     }
@@ -2378,31 +2192,25 @@ function drawRpgNameTag(ctx, x, y, label, dotColor, isActiveHighlight) {
     ctx.fillStyle = isActiveHighlight ? 'rgba(180, 83, 9, 0.94)' : 'rgba(28, 17, 9, 0.84)';
     ctx.strokeStyle = isActiveHighlight ? '#fde047' : 'rgba(251, 191, 36, 0.78)';
     ctx.lineWidth = isActiveHighlight ? 2 : 1.3;
-    ctx.beginPath(); ctx.roundRect(x - boxW / 2, y - boxH / 2, boxW, boxH, 12); ctx.fill(); ctx.stroke();
+    rRect(ctx, x - boxW / 2, y - boxH / 2, boxW, boxH, 12);
+    ctx.fill(); ctx.stroke();
 
     ctx.fillStyle = dotColor || '#22c55e';
     ctx.beginPath(); ctx.arc(x - boxW / 2 + 11, y, 4.2, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = '#fffbeb';
-    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#fffbeb'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     ctx.fillText(label, x - boxW / 2 + 19, y + 0.5);
     ctx.restore();
 }
 
-// Đi đường thông minh qua cầu thang đá & ngã ba đường đá xuyên suốt bản đồ
 function setPlayerWalkTo(targetXPct, targetYPct, stationAfter) {
     walkWaypoints = [];
     const curY = playerPct.y, tx = Math.max(8, Math.min(92, targetXPct)), ty = Math.max(10, Math.min(90, targetYPct));
-
-    // Đi từ dưới cỏ lên sân giữa hoặc ngược lại -> chọn cầu thang trái (42,67) hoặc đường đá phải (64,66)
     if ((curY > 68 && ty <= 68) || (curY <= 68 && ty > 68)) {
         const useLeftStair = Math.abs(playerPct.x - 42) + Math.abs(tx - 42) < Math.abs(playerPct.x - 64) + Math.abs(tx - 64);
         walkWaypoints.push(useLeftStair ? { x: 42, y: 67 } : { x: 64, y: 66 });
     }
-    // Lên đồi trên cùng (y < 26) -> đi qua ngã ba đường đá (54, 24)
-    if ((curY >= 26 && ty < 26) || (curY < 26 && ty >= 26)) {
-        walkWaypoints.push({ x: 54, y: 24 });
-    }
+    if ((curY >= 26 && ty < 26) || (curY < 26 && ty >= 26)) walkWaypoints.push({ x: 54, y: 24 });
     walkWaypoints.push({ x: tx, y: ty });
     pendingStationAfterWalk = stationAfter || null;
 }
@@ -2413,6 +2221,7 @@ function init2DIsometricMap() {
     mapCtx = mapCanvas.getContext('2d');
 
     loadMapStations();
+    buildFallbackIsometricMap();
     initNpcEcosystem();
     loadCharacterPreferences();
     loadMapImageSource();
@@ -2421,11 +2230,10 @@ function init2DIsometricMap() {
     let activePointers = new Map(), lastPinchDist = 0, pointerDownPos = null, totalDragDist = 0;
 
     mapCanvas.addEventListener('pointerdown', (e) => {
-        mapCanvas.setPointerCapture(e.pointerId);
+        try { mapCanvas.setPointerCapture(e.pointerId); } catch(err) {}
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (activePointers.size === 1) {
-            pointerDownPos = { x: e.clientX, y: e.clientY };
-            totalDragDist = 0;
+            pointerDownPos = { x: e.clientX, y: e.clientY }; totalDragDist = 0;
             if (isAdminMapEditing) {
                 const w = screenToWorld(e.clientX, e.clientY);
                 let bestIdx = -1, bestDist = (52 * (MAP_W / 1000)) / camZoom;
@@ -2444,8 +2252,7 @@ function init2DIsometricMap() {
 
     mapCanvas.addEventListener('pointermove', (e) => {
         if (!activePointers.has(e.pointerId)) return;
-        const prev = activePointers.get(e.pointerId);
-        const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+        const prev = activePointers.get(e.pointerId), dx = e.clientX - prev.x, dy = e.clientY - prev.y;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (activePointers.size === 1) {
             totalDragDist += Math.hypot(dx, dy);
@@ -2457,13 +2264,11 @@ function init2DIsometricMap() {
                 st.walkXPct = Math.max(8, Math.min(92, st.xPct + dirX));
                 st.walkYPct = Math.max(12, Math.min(90, st.yPct + 5));
             } else if (totalDragDist > 4) {
-                camX -= dx / camZoom; camY -= dy / camZoom;
-                clampCamera();
+                camX -= dx / camZoom; camY -= dy / camZoom; clampCamera();
                 manualPanLockUntil = performance.now() + 2600;
             }
         } else if (activePointers.size === 2) {
-            const pts = Array.from(activePointers.values());
-            const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            const pts = Array.from(activePointers.values()), dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
             if (lastPinchDist > 0) { camZoom *= dist / lastPinchDist; clampCamera(); manualPanLockUntil = performance.now() + 2600; }
             lastPinchDist = dist;
         }
@@ -2473,16 +2278,14 @@ function init2DIsometricMap() {
         activePointers.delete(e.pointerId);
         if (isAdminMapEditing && draggingStationIdx !== -1) { saveMapStations(); draggingStationIdx = -1; return; }
         if (activePointers.size === 0 && pointerDownPos && totalDragDist < 12 && !isAdminMapEditing) {
-            const w = screenToWorld(e.clientX, e.clientY);
-            const hitRadius = 62 * (MAP_W / 1000);
+            const w = screenToWorld(e.clientX, e.clientY), hitRadius = 62 * (MAP_W / 1000);
             let hitSt = null, hitDist = hitRadius;
             mapStations.forEach(st => {
                 const sp = pctToWorld(st.xPct, st.yPct), d = Math.hypot(w.x - sp.x, w.y - sp.y);
                 if (d < hitDist) { hitDist = d; hitSt = st; }
             });
-            if (hitSt) {
-                triggerStationInteraction(hitSt);
-            } else {
+            if (hitSt) triggerStationInteraction(hitSt);
+            else {
                 closeHologramCarousel();
                 const p = worldToPct(w.x, w.y);
                 setPlayerWalkTo(p.x, p.y, null);
@@ -2496,13 +2299,13 @@ function init2DIsometricMap() {
     mapCanvas.addEventListener('pointerup', onPointerEnd);
     mapCanvas.addEventListener('pointercancel', onPointerEnd);
     mapCanvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        camZoom *= (e.deltaY < 0 ? 1.09 : 0.92);
-        clampCamera();
-        manualPanLockUntil = performance.now() + 2000;
+        e.preventDefault(); camZoom *= (e.deltaY < 0 ? 1.09 : 0.92); clampCamera(); manualPanLockUntil = performance.now() + 2000;
     }, { passive: false });
 
     window.addEventListener('resize', () => recalcCameraBounds(false));
+    window.addEventListener('load', () => recalcCameraBounds(true));
+    setTimeout(() => recalcCameraBounds(false), 200);
+
     initVirtualJoystick();
     window.addEventListener('keydown', e => { keysPressed[e.key.toLowerCase()] = true; });
     window.addEventListener('keyup', e => { keysPressed[e.key.toLowerCase()] = false; });
@@ -2537,7 +2340,7 @@ function initVirtualJoystick() {
         if (dist > 4) { walkWaypoints = []; pendingStationAfterWalk = null; manualPanLockUntil = 0; }
     }
     function resetKnob() { activeId = null; knob.style.transform = 'translate3d(0,0,0)'; joyVector.x = 0; joyVector.y = 0; }
-    zone.addEventListener('pointerdown', e => { e.stopPropagation(); activeId = e.pointerId; zone.setPointerCapture(e.pointerId); updateKnob(e.clientX, e.clientY); });
+    zone.addEventListener('pointerdown', e => { e.stopPropagation(); activeId = e.pointerId; try{zone.setPointerCapture(e.pointerId);}catch(err){} updateKnob(e.clientX, e.clientY); });
     zone.addEventListener('pointermove', e => { if (activeId === e.pointerId) { e.stopPropagation(); updateKnob(e.clientX, e.clientY); } });
     zone.addEventListener('pointerup', e => { if (activeId === e.pointerId) { e.stopPropagation(); resetKnob(); } });
     zone.addEventListener('pointercancel', resetKnob);
@@ -2547,234 +2350,217 @@ function animate2DIsometricLoop() {
     requestAnimationFrame(animate2DIsometricLoop);
     if (!mapCtx) return;
 
-    const now = performance.now(), t = now / 1000;
-    const sc = MAP_W / 1000;
+    try {
+        const now = performance.now(), t = now / 1000, sc = MAP_W / 1000;
 
-    // 1. DI CHUYỂN NHÂN VẬT
-    let mx = joyVector.x, my = joyVector.y;
-    if (keysPressed['w'] || keysPressed['arrowup']) my -= 1;
-    if (keysPressed['s'] || keysPressed['arrowdown']) my += 1;
-    if (keysPressed['a'] || keysPressed['arrowleft']) mx -= 1;
-    if (keysPressed['d'] || keysPressed['arrowright']) mx += 1;
+        // 1. Di chuyển nhân vật
+        let mx = joyVector.x, my = joyVector.y;
+        if (keysPressed['w'] || keysPressed['arrowup']) my -= 1;
+        if (keysPressed['s'] || keysPressed['arrowdown']) my += 1;
+        if (keysPressed['a'] || keysPressed['arrowleft']) mx -= 1;
+        if (keysPressed['d'] || keysPressed['arrowright']) mx += 1;
 
-    let isMoving = false; const moveSpeedPct = 0.28;
-    if (Math.hypot(mx, my) > 0.12) {
-        walkWaypoints = []; pendingStationAfterWalk = null;
-        const mag = Math.max(1, Math.hypot(mx, my));
-        const dx = (mx / mag) * moveSpeedPct, dy = (my / mag) * moveSpeedPct * 0.65;
-        playerPct.x = Math.max(8, Math.min(92, playerPct.x + dx));
-        playerPct.y = Math.max(10, Math.min(90, playerPct.y + dy));
-        if (Math.abs(dx) > 0.02) playerFacing = dx > 0 ? 1 : -1;
-        isMoving = true;
-    } else if (walkWaypoints.length > 0) {
-        const wp = walkWaypoints[0], dx = wp.x - playerPct.x, dy = wp.y - playerPct.y, dist = Math.hypot(dx, dy);
-        if (dist > 0.5) {
-            const step = Math.min(dist, moveSpeedPct * 1.15);
-            playerPct.x += (dx / dist) * step; playerPct.y += (dy / dist) * step;
-            if (Math.abs(dx) > 0.05) playerFacing = dx > 0 ? 1 : -1;
+        let isMoving = false; const moveSpeedPct = 0.28;
+        if (Math.hypot(mx, my) > 0.12) {
+            walkWaypoints = []; pendingStationAfterWalk = null;
+            const mag = Math.max(1, Math.hypot(mx, my));
+            const dx = (mx / mag) * moveSpeedPct, dy = (my / mag) * moveSpeedPct * 0.65;
+            playerPct.x = Math.max(8, Math.min(92, playerPct.x + dx));
+            playerPct.y = Math.max(10, Math.min(90, playerPct.y + dy));
+            if (Math.abs(dx) > 0.02) playerFacing = dx > 0 ? 1 : -1;
             isMoving = true;
+        } else if (walkWaypoints.length > 0) {
+            const wp = walkWaypoints[0], dx = wp.x - playerPct.x, dy = wp.y - playerPct.y, dist = Math.hypot(dx, dy);
+            if (dist > 0.5) {
+                const step = Math.min(dist, moveSpeedPct * 1.15);
+                playerPct.x += (dx / dist) * step; playerPct.y += (dy / dist) * step;
+                if (Math.abs(dx) > 0.05) playerFacing = dx > 0 ? 1 : -1;
+                isMoving = true;
+            } else {
+                walkWaypoints.shift();
+                if (walkWaypoints.length === 0 && pendingStationAfterWalk) {
+                    const st = pendingStationAfterWalk; pendingStationAfterWalk = null;
+                    setBekim3DSpeech(st.speech);
+                    if (st.key === 'Gift') openLuckyGiftPopup();
+                    else if (st.key === 'Wheel') openWheelPopup();
+                    else openHologramCarousel();
+                }
+            }
+        }
+        if (isMoving) playerWalkPhase += 0.28;
+
+        // 2. Bé Kim theo cạnh
+        const bTargetX = playerPct.x + (playerFacing > 0 ? -5.5 : 5.5), bTargetY = playerPct.y + 1.8;
+        const bdx = bTargetX - bekimPct.x, bdy = bTargetY - bekimPct.y, bDist = Math.hypot(bdx, bdy);
+        let bekimMoving = false;
+        if (bDist > 0.8) {
+            bekimPct.x += (bdx / bDist) * Math.min(bDist, moveSpeedPct * 1.05);
+            bekimPct.y += (bdy / bDist) * Math.min(bDist, moveSpeedPct * 1.05);
+            if (Math.abs(bdx) > 0.05) bekimFacing = bdx > 0 ? 1 : -1;
+            bekimMoving = true; bekimWalkPhase += 0.28;
+        } else bekimFacing = playerFacing;
+
+        // 3. NPC
+        try { updateNpcEcosystem(now, t); } catch(e) { reportSafeDiag('NPC', e); }
+
+        // 4. Quầy gần nhất
+        let closestSt = null, closestDist = 9.5;
+        mapStations.forEach(st => {
+            const d = Math.hypot(playerPct.x - st.walkXPct, playerPct.y - st.walkYPct);
+            if (d < closestDist) { closestDist = d; closestSt = st; }
+        });
+        const promptBtn = document.getElementById('nearbyCounterPrompt');
+        const holoOpen = document.getElementById('hologramOverlay')?.classList.contains('active');
+        if (closestSt && !holoOpen && walkWaypoints.length === 0 && !isAdminMapEditing) {
+            if (nearbyStationKey !== closestSt.key) {
+                nearbyStationKey = closestSt.key;
+                setBekim3DSpeech(closestSt.speech);
+                if (lastBellStationKey !== closestSt.key) { lastBellStationKey = closestSt.key; playCustomerBellSFX(); }
+            }
+            if (promptBtn) {
+                promptBtn.innerText = closestSt.isMiniGame ? `✨ Mở ${closestSt.label}` : `🌻 Mở Quầy ${closestSt.label}`;
+                promptBtn.style.display = 'block';
+            }
         } else {
-            walkWaypoints.shift();
-            if (walkWaypoints.length === 0 && pendingStationAfterWalk) {
-                const st = pendingStationAfterWalk; pendingStationAfterWalk = null;
-                setBekim3DSpeech(st.speech);
-                if (st.key === 'Gift') openLuckyGiftPopup();
-                else if (st.key === 'Wheel') openWheelPopup();
-                else openHologramCarousel();
+            nearbyStationKey = null;
+            if (closestDist > 14) lastBellStationKey = null;
+            if (promptBtn) promptBtn.style.display = 'none';
+        }
+
+        // 5. Camera bám nhân vật
+        if (now > manualPanLockUntil && !isAdminMapEditing) {
+            const pw = pctToWorld(playerPct.x, playerPct.y);
+            camX += (pw.x - camX) * 0.08;
+            camY += (pw.y - (MAP_H * 0.03) - camY) * 0.08;
+            clampCamera();
+        }
+
+        // 6. VẼ CANVAS
+        mapCtx.clearRect(0, 0, canvasCssW, canvasCssH);
+        mapCtx.save();
+        mapCtx.translate(canvasCssW / 2, canvasCssH / 2);
+        mapCtx.scale(camZoom, camZoom);
+        mapCtx.translate(-camX, -camY);
+
+        try {
+            if (mapImgLoaded && mapImg && mapImg.naturalWidth > 0) {
+                const srcH = Math.max(100, Math.floor(mapImg.naturalHeight * 0.965));
+                mapCtx.drawImage(mapImg, 0, 0, mapImg.naturalWidth, srcH, 0, 0, MAP_W, MAP_H);
+            } else if (fallbackMapCanvas) {
+                mapCtx.drawImage(fallbackMapCanvas, 0, 0, MAP_W, MAP_H);
             }
+        } catch(e) { reportSafeDiag('DrawMap', e); }
+
+        if (targetGroundPing && targetGroundPing.alpha > 0) {
+            const tw = pctToWorld(targetGroundPing.xPct, targetGroundPing.yPct), radius = (16 + (1 - targetGroundPing.alpha) * 24) * sc;
+            mapCtx.strokeStyle = `rgba(253, 224, 71, ${targetGroundPing.alpha})`; mapCtx.lineWidth = 3 * sc;
+            mapCtx.beginPath(); mapCtx.ellipse(tw.x, tw.y, radius, radius * 0.55, 0, 0, Math.PI * 2); mapCtx.stroke();
+            targetGroundPing.alpha = Math.max(0, targetGroundPing.alpha - 0.025);
         }
-    }
-    if (isMoving) playerWalkPhase += 0.28;
 
-    // 2. BÉ KIM CHẠY THEO
-    const bTargetX = playerPct.x + (playerFacing > 0 ? -5.5 : 5.5), bTargetY = playerPct.y + 1.8;
-    const bdx = bTargetX - bekimPct.x, bdy = bTargetY - bekimPct.y, bDist = Math.hypot(bdx, bdy);
-    let bekimMoving = false;
-    if (bDist > 0.8) {
-        bekimPct.x += (bdx / bDist) * Math.min(bDist, moveSpeedPct * 1.05);
-        bekimPct.y += (bdy / bDist) * Math.min(bDist, moveSpeedPct * 1.05);
-        if (Math.abs(bdx) > 0.05) bekimFacing = bdx > 0 ? 1 : -1;
-        bekimMoving = true; bekimWalkPhase += 0.28;
-    } else {
-        bekimFacing = playerFacing;
-    }
+        mapStations.forEach(st => {
+            const sp = pctToWorld(st.xPct, st.yPct), pulse = 0.55 + Math.sin(t * 3 + st.xPct) * 0.2;
+            const grad = mapCtx.createRadialGradient(sp.x, sp.y, 4 * sc, sp.x, sp.y, 48 * sc);
+            grad.addColorStop(0, `rgba(253, 224, 71, ${0.26 * pulse})`); grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+            mapCtx.fillStyle = grad; mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 48 * sc, 0, Math.PI * 2); mapCtx.fill();
 
-    // 3. CẬP NHẬT HỆ SINH THÁI NPC (8 NHÂN VIÊN + KHÁCH XẾP HÀNG)
-    updateNpcEcosystem(now, t);
-
-    // 4. PHÁT HIỆN QUẦY GẦN NHẤT + CHUÔNG BÁO KHÁCH
-    let closestSt = null, closestDist = 9.5;
-    mapStations.forEach(st => {
-        const d = Math.hypot(playerPct.x - st.walkXPct, playerPct.y - st.walkYPct);
-        if (d < closestDist) { closestDist = d; closestSt = st; }
-    });
-    const promptBtn = document.getElementById('nearbyCounterPrompt');
-    const holoOpen = document.getElementById('hologramOverlay')?.classList.contains('active');
-    if (closestSt && !holoOpen && walkWaypoints.length === 0 && !isAdminMapEditing) {
-        if (nearbyStationKey !== closestSt.key) {
-            nearbyStationKey = closestSt.key;
-            setBekim3DSpeech(closestSt.speech);
-            if (lastBellStationKey !== closestSt.key) {
-                lastBellStationKey = closestSt.key;
-                playCustomerBellSFX();
-            }
-        }
-        if (promptBtn) {
-            promptBtn.innerText = closestSt.isMiniGame ? `✨ Mở ${closestSt.label}` : `🌻 Mở Quầy ${closestSt.label}`;
-            promptBtn.style.display = 'block';
-        }
-    } else {
-        nearbyStationKey = null;
-        if (closestDist > 14) lastBellStationKey = null;
-        if (promptBtn) promptBtn.style.display = 'none';
-    }
-
-    // 5. CAMERA BÁM THEO NHÂN VẬT
-    if (now > manualPanLockUntil && !isAdminMapEditing) {
-        const pw = pctToWorld(playerPct.x, playerPct.y);
-        camX += (pw.x - camX) * 0.08;
-        camY += (pw.y - (MAP_H * 0.03) - camY) * 0.08;
-        clampCamera();
-    }
-
-    // 6. VẼ SÂN KHẤU HD LÊN CANVAS
-    mapCtx.clearRect(0, 0, canvasCssW, canvasCssH);
-    mapCtx.save();
-    mapCtx.translate(canvasCssW / 2, canvasCssH / 2);
-    mapCtx.scale(camZoom, camZoom);
-    mapCtx.translate(-camX, -camY);
-
-    if (mapImgLoaded && mapImg) {
-        mapCtx.drawImage(mapImg, 0, 0, mapImg.naturalWidth, mapImg.naturalHeight * 0.965, 0, 0, MAP_W, MAP_H);
-    } else if (fallbackMapCanvas) {
-        mapCtx.drawImage(fallbackMapCanvas, 0, 0, MAP_W, MAP_H);
-    }
-
-    if (targetGroundPing && targetGroundPing.alpha > 0) {
-        const tw = pctToWorld(targetGroundPing.xPct, targetGroundPing.yPct);
-        const radius = (16 + (1 - targetGroundPing.alpha) * 24) * sc;
-        mapCtx.strokeStyle = `rgba(253, 224, 71, ${targetGroundPing.alpha})`;
-        mapCtx.lineWidth = 3 * sc;
-        mapCtx.beginPath(); mapCtx.ellipse(tw.x, tw.y, radius, radius * 0.55, 0, 0, Math.PI * 2); mapCtx.stroke();
-        targetGroundPing.alpha = Math.max(0, targetGroundPing.alpha - 0.025);
-    }
-
-    // Ánh đèn ấm & hơi nước/khói thơm tại các quầy
-    mapStations.forEach(st => {
-        const sp = pctToWorld(st.xPct, st.yPct), pulse = 0.55 + Math.sin(t * 3 + st.xPct) * 0.2;
-        const grad = mapCtx.createRadialGradient(sp.x, sp.y, 4 * sc, sp.x, sp.y, 48 * sc);
-        grad.addColorStop(0, `rgba(253, 224, 71, ${0.26 * pulse})`);
-        grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
-        mapCtx.fillStyle = grad;
-        mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 48 * sc, 0, Math.PI * 2); mapCtx.fill();
-
-        if (st.key === 'Food' || st.key === 'Coffee' || st.key === 'MilkTea') {
-            for (let k = 0; k < 2; k++) {
-                const prog = ((t * 0.6 + k * 0.5 + st.xPct) % 1);
-                mapCtx.fillStyle = `rgba(255, 255, 255, ${(1 - prog) * 0.35})`;
-                mapCtx.beginPath();
-                mapCtx.arc(sp.x + Math.sin(t * 3 + k) * 6 * sc, sp.y - (18 + prog * 34) * sc, (4 + prog * 6) * sc, 0, Math.PI * 2);
-                mapCtx.fill();
-            }
-        }
-    });
-
-    // Sắp xếp chiều sâu (Y-sorting): Cây thông Noel + NPC Nhân viên + NPC Xếp hàng + Khách dạo + Bé Kim + Người chơi
-    const drawEntities = [];
-
-    if (noelEnabled) {
-        const treePos = pctToWorld(53, 44);
-        drawEntities.push({ y: treePos.y, fn: () => drawChristmasTree(mapCtx, treePos.x, treePos.y, sc, t) });
-    }
-
-    const activePlayerSprite = playerCustomImg || (playerPresetKey === 'file' ? playerDefaultImg : null);
-    const pW = pctToWorld(playerPct.x, playerPct.y);
-    drawEntities.push({ y: pW.y, fn: () => drawCharacterSprite(mapCtx, pW.x, pW.y, sc, playerFacing, playerWalkPhase, isMoving, activePlayerSprite, playerPresetKey, playerDisplayName, '#22c55e', null, 'player') });
-
-    const bW = pctToWorld(bekimPct.x, bekimPct.y);
-    drawEntities.push({ y: bW.y, fn: () => drawCharacterSprite(mapCtx, bW.x, bW.y, sc, bekimFacing, bekimWalkPhase, bekimMoving, bekimFullImg, null, 'Bé Kim | Trợ lý AI', '#f59e0b', null, 'bekim') });
-
-    staffNpcs.forEach(npc => {
-        const nw = pctToWorld(npc.xPct, npc.yPct);
-        const moving = (npc.state === 'rush_home' || npc.state === 'walk_to_chat' || Math.hypot(npc.targetX - npc.xPct, npc.targetY - npc.yPct) > 0.6);
-        const bubble = now < npc.bubbleUntil ? npc.bubbleText : null;
-        drawEntities.push({ y: nw.y, fn: () => drawCharacterSprite(mapCtx, nw.x, nw.y, sc, npc.facing, npc.walkPhase, moving, null, npc.preset, npc.name, npc.dotColor, bubble, 'npc') });
-    });
-
-    queueNpcs.forEach(q => {
-        const qw = pctToWorld(q.xPct, q.yPct);
-        const bubble = now < q.bubbleUntil ? q.bubbleText : null;
-        // Hiệu ứng đứng ngồi không yên: isMoving = true liên tục với fidgetPhase nhanh!
-        drawEntities.push({ y: qw.y, fn: () => drawCharacterSprite(mapCtx, qw.x, qw.y, sc, q.facing, q.fidgetPhase, true, null, q.preset, q.name, '#fbbf24', bubble, 'npc') });
-    });
-
-    strollNpcs.forEach(s => {
-        const sw = pctToWorld(s.xPct, s.yPct);
-        const moving = Math.hypot(s.targetX - s.xPct, s.targetY - s.yPct) > 0.6;
-        const bubble = now < s.bubbleUntil ? s.bubbleText : null;
-        drawEntities.push({ y: sw.y, fn: () => drawCharacterSprite(mapCtx, sw.x, sw.y, sc, s.facing, s.walkPhase, moving, null, s.preset, s.name, '#38bdf8', bubble, 'npc') });
-    });
-
-    mapStations.filter(s => s.isMiniGame).forEach(st => {
-        const sw = pctToWorld(st.xPct, st.yPct), hoverY = Math.sin(t * 2.8 + st.xPct) * 4 * sc;
-        drawEntities.push({
-            y: sw.y,
-            fn: () => {
-                mapCtx.save(); mapCtx.translate(sw.x, sw.y + hoverY); mapCtx.scale(sc, sc);
-                mapCtx.fillStyle = 'rgba(255,251,235,0.92)'; mapCtx.strokeStyle = '#d97706'; mapCtx.lineWidth = 2.5;
-                mapCtx.beginPath(); mapCtx.arc(0, -14, 18, 0, Math.PI * 2); mapCtx.fill(); mapCtx.stroke();
-                mapCtx.font = '20px sans-serif'; mapCtx.textAlign = 'center'; mapCtx.textBaseline = 'middle';
-                mapCtx.fillText(st.key === 'Gift' ? '🎁' : '🎡', 0, -13);
-                mapCtx.restore();
+            if (st.key === 'Food' || st.key === 'Coffee' || st.key === 'MilkTea') {
+                for (let k = 0; k < 2; k++) {
+                    const prog = ((t * 0.6 + k * 0.5 + st.xPct) % 1);
+                    mapCtx.fillStyle = `rgba(255, 255, 255, ${(1 - prog) * 0.35})`;
+                    mapCtx.beginPath(); mapCtx.arc(sp.x + Math.sin(t * 3 + k) * 6 * sc, sp.y - (18 + prog * 34) * sc, (4 + prog * 6) * sc, 0, Math.PI * 2); mapCtx.fill();
+                }
             }
         });
-    });
 
-    drawEntities.sort((a, b) => a.y - b.y);
-    drawEntities.forEach(item => item.fn());
+        const drawEntities = [];
+        if (noelEnabled) {
+            const treePos = pctToWorld(53, 44);
+            drawEntities.push({ y: treePos.y, fn: () => drawChristmasTree(mapCtx, treePos.x, treePos.y, sc, t) });
+        }
 
-    // Bảng tên 10 quầy RPG
-    mapStations.forEach((st, idx) => {
-        const sp = pctToWorld(st.xPct, st.yPct);
-        const isNear = (nearbyStationKey === st.key);
-        const floatY = (isAdminMapEditing ? 0 : Math.sin(t * 2 + idx) * 2) * sc;
-        mapCtx.save();
-        mapCtx.translate(sp.x, sp.y - 38 * sc + floatY);
-        mapCtx.scale(sc, sc);
-        drawRpgNameTag(mapCtx, 0, 0, st.label, st.dotColor, isNear || (isAdminMapEditing && draggingStationIdx === idx));
+        const activePlayerSprite = playerCustomImg || (playerPresetKey === 'file' ? playerDefaultImg : null);
+        const pW = pctToWorld(playerPct.x, playerPct.y);
+        drawEntities.push({ y: pW.y, fn: () => drawCharacterSprite(mapCtx, pW.x, pW.y, sc, playerFacing, playerWalkPhase, isMoving, activePlayerSprite, playerPresetKey, playerDisplayName, '#22c55e', null, 'player') });
+
+        const bW = pctToWorld(bekimPct.x, bekimPct.y);
+        drawEntities.push({ y: bW.y, fn: () => drawCharacterSprite(mapCtx, bW.x, bW.y, sc, bekimFacing, bekimWalkPhase, bekimMoving, bekimFullImg, null, 'Bé Kim | Trợ lý AI', '#f59e0b', null, 'bekim') });
+
+        staffNpcs.forEach(npc => {
+            const nw = pctToWorld(npc.xPct, npc.yPct);
+            const moving = (npc.state === 'rush_home' || npc.state === 'walk_to_chat' || Math.hypot(npc.targetX - npc.xPct, npc.targetY - npc.yPct) > 0.6);
+            const bubble = now < npc.bubbleUntil ? npc.bubbleText : null;
+            drawEntities.push({ y: nw.y, fn: () => drawCharacterSprite(mapCtx, nw.x, nw.y, sc, npc.facing, npc.walkPhase, moving, null, npc.preset, npc.name, npc.dotColor, bubble, 'npc') });
+        });
+
+        queueNpcs.forEach(q => {
+            const qw = pctToWorld(q.xPct, q.yPct), bubble = now < q.bubbleUntil ? q.bubbleText : null;
+            drawEntities.push({ y: qw.y, fn: () => drawCharacterSprite(mapCtx, qw.x, qw.y, sc, q.facing, q.fidgetPhase, true, null, q.preset, q.name, '#fbbf24', bubble, 'npc') });
+        });
+
+        strollNpcs.forEach(s => {
+            const sw = pctToWorld(s.xPct, s.yPct), moving = Math.hypot(s.targetX - s.xPct, s.targetY - s.yPct) > 0.6;
+            const bubble = now < s.bubbleUntil ? s.bubbleText : null;
+            drawEntities.push({ y: sw.y, fn: () => drawCharacterSprite(mapCtx, sw.x, sw.y, sc, s.facing, s.walkPhase, moving, null, s.preset, s.name, '#38bdf8', bubble, 'npc') });
+        });
+
+        mapStations.filter(s => s.isMiniGame).forEach(st => {
+            const sw = pctToWorld(st.xPct, st.yPct), hoverY = Math.sin(t * 2.8 + st.xPct) * 4 * sc;
+            drawEntities.push({
+                y: sw.y,
+                fn: () => {
+                    mapCtx.save(); mapCtx.translate(sw.x, sw.y + hoverY); mapCtx.scale(sc, sc);
+                    mapCtx.fillStyle = 'rgba(255,251,235,0.92)'; mapCtx.strokeStyle = '#d97706'; mapCtx.lineWidth = 2.5;
+                    mapCtx.beginPath(); mapCtx.arc(0, -14, 18, 0, Math.PI * 2); mapCtx.fill(); mapCtx.stroke();
+                    mapCtx.font = '20px sans-serif'; mapCtx.textAlign = 'center'; mapCtx.textBaseline = 'middle';
+                    mapCtx.fillText(st.key === 'Gift' ? '🎁' : '🎡', 0, -13);
+                    mapCtx.restore();
+                }
+            });
+        });
+
+        drawEntities.sort((a, b) => a.y - b.y);
+        drawEntities.forEach(item => { try { item.fn(); } catch(e) { reportSafeDiag('Entity', e); } });
+
+        mapStations.forEach((st, idx) => {
+            try {
+                const sp = pctToWorld(st.xPct, st.yPct), isNear = (nearbyStationKey === st.key);
+                const floatY = (isAdminMapEditing ? 0 : Math.sin(t * 2 + idx) * 2) * sc;
+                mapCtx.save(); mapCtx.translate(sp.x, sp.y - 38 * sc + floatY); mapCtx.scale(sc, sc);
+                drawRpgNameTag(mapCtx, 0, 0, st.label, st.dotColor, isNear || (isAdminMapEditing && draggingStationIdx === idx));
+                mapCtx.restore();
+                if (isAdminMapEditing) {
+                    mapCtx.strokeStyle = '#fde047'; mapCtx.lineWidth = 2.5 * sc;
+                    mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 14 * sc, 0, Math.PI * 2); mapCtx.stroke();
+                    mapCtx.fillStyle = st.dotColor || '#ef4444';
+                    mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 7 * sc, 0, Math.PI * 2); mapCtx.fill();
+                }
+            } catch(e) { reportSafeDiag('Tag', e); }
+        });
+
+        try { updateAndDrawSanta(mapCtx, now, t, sc); } catch(e) { reportSafeDiag('Santa', e); }
+
+        sunParticles.forEach(p => {
+            p.xPct += p.vx; p.yPct += p.vy;
+            if (p.yPct < 5) p.yPct = 92; if (p.xPct < 0) p.xPct = 100; if (p.xPct > 100) p.xPct = 0;
+            const pw = pctToWorld(p.xPct, p.yPct), alpha = 0.35 + 0.45 * Math.sin(t * 2.2 + p.phase);
+            mapCtx.fillStyle = `rgba(254, 240, 138, ${alpha})`;
+            mapCtx.beginPath(); mapCtx.arc(pw.x, pw.y, p.r * sc, 0, Math.PI * 2); mapCtx.fill();
+        });
+
         mapCtx.restore();
 
-        if (isAdminMapEditing) {
-            mapCtx.strokeStyle = '#fde047'; mapCtx.lineWidth = 2.5 * sc;
-            mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 14 * sc, 0, Math.PI * 2); mapCtx.stroke();
-            mapCtx.fillStyle = st.dotColor || '#ef4444';
-            mapCtx.beginPath(); mapCtx.arc(sp.x, sp.y, 7 * sc, 0, Math.PI * 2); mapCtx.fill();
+        if (noelEnabled) {
+            snowParticles.forEach(s => {
+                s.y += s.vy; s.x += s.vx + Math.sin(t * 1.5 + s.phase) * 0.0003;
+                if (s.y > 1) { s.y = -0.02; s.x = Math.random(); }
+                if (s.x < 0) s.x = 1; if (s.x > 1) s.x = 0;
+                mapCtx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+                mapCtx.beginPath(); mapCtx.arc(s.x * canvasCssW, s.y * canvasCssH, s.r, 0, Math.PI * 2); mapCtx.fill();
+            });
         }
-    });
-
-    // Ông già Noel cưỡi xe tuần lộc bay ngang trời
-    updateAndDrawSanta(mapCtx, now, t, sc);
-
-    // Hạt nắng vàng bay nhẹ
-    sunParticles.forEach(p => {
-        p.xPct += p.vx; p.yPct += p.vy;
-        if (p.yPct < 5) p.yPct = 92; if (p.xPct < 0) p.xPct = 100; if (p.xPct > 100) p.xPct = 0;
-        const pw = pctToWorld(p.xPct, p.yPct), alpha = 0.35 + 0.45 * Math.sin(t * 2.2 + p.phase);
-        mapCtx.fillStyle = `rgba(254, 240, 138, ${alpha})`;
-        mapCtx.beginPath(); mapCtx.arc(pw.x, pw.y, p.r * sc, 0, Math.PI * 2); mapCtx.fill();
-    });
-
-    mapCtx.restore();
-
-    // Tuyết rơi nhẹ trên màn hình khi bật Noel
-    if (noelEnabled) {
-        snowParticles.forEach(s => {
-            s.y += s.vy; s.x += s.vx + Math.sin(t * 1.5 + s.phase) * 0.0003;
-            if (s.y > 1) { s.y = -0.02; s.x = Math.random(); }
-            if (s.x < 0) s.x = 1; if (s.x > 1) s.x = 0;
-            mapCtx.fillStyle = 'rgba(255, 255, 255, 0.72)';
-            mapCtx.beginPath(); mapCtx.arc(s.x * canvasCssW, s.y * canvasCssH, s.r, 0, Math.PI * 2); mapCtx.fill();
-        });
+    } catch(err) {
+        reportSafeDiag('Loop', err);
     }
 }
 
@@ -2819,8 +2605,7 @@ function selectPresetAvatar(key) {
     renderCharPreview();
 }
 function handlePlayerAvatarUpload(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(ev) {
         const img = new Image();
@@ -2832,70 +2617,52 @@ function handlePlayerAvatarUpload(e) {
         };
         img.src = ev.target.result;
     };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    reader.readAsDataURL(file); e.target.value = '';
 }
 function renderCharPreview() {
     const cv = document.getElementById('charPreviewCanvas'); if (!cv) return;
     const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, 96, 96);
     if (tempEditImgData) {
         const img = new Image();
-        img.onload = () => {
-            const asp = img.width / Math.max(1, img.height);
-            const h = 84, w = h * asp;
-            ctx.drawImage(img, 48 - w / 2, 6, w, h);
-        };
+        img.onload = () => { const asp = img.width / Math.max(1, img.height), h = 84, w = h * asp; ctx.drawImage(img, 48 - w / 2, 6, w, h); };
         img.src = tempEditImgData;
     } else if (tempEditPreset === 'file' && playerDefaultImg) {
-        const asp = playerDefaultImg.width / Math.max(1, playerDefaultImg.height);
-        const h = 84, w = h * asp;
+        const asp = playerDefaultImg.width / Math.max(1, playerDefaultImg.height), h = 84, w = h * asp;
         ctx.drawImage(playerDefaultImg, 48 - w / 2, 6, w, h);
     } else {
         drawCharacterSprite(ctx, 48, 86, 1, 1, 0, false, null, tempEditPreset, '', '#22c55e', null, 'player');
     }
 }
-function resetPlayerAvatar() {
-    tempEditPreset = 'file'; tempEditImgData = null;
-    document.getElementById('playerNameInput').value = 'Bạn | Khách VIP';
-    renderCharPreview();
-}
+function resetPlayerAvatar() { tempEditPreset = 'file'; tempEditImgData = null; document.getElementById('playerNameInput').value = 'Bạn | Khách VIP'; renderCharPreview(); }
 function saveCharacterSettings() {
     const nm = (document.getElementById('playerNameInput').value || '').trim() || 'Bạn | Khách VIP';
     playerDisplayName = nm; playerPresetKey = tempEditPreset;
-    localStorage.setItem('kimbling_player_rpg_name', nm);
-    localStorage.setItem('kimbling_player_preset', tempEditPreset);
+    localStorage.setItem('kimbling_player_rpg_name', nm); localStorage.setItem('kimbling_player_preset', tempEditPreset);
     if (tempEditImgData) {
         try { localStorage.setItem('kimbling_player_custom_b64', tempEditImgData); } catch(err) { alert('Ảnh hơi nặng, hãy chọn ảnh nhẹ hơn!'); }
         const img = new Image(); img.onload = () => { playerCustomImg = img; }; img.src = tempEditImgData;
-    } else {
-        localStorage.removeItem('kimbling_player_custom_b64');
-        playerCustomImg = null;
-    }
+    } else { localStorage.removeItem('kimbling_player_custom_b64'); playerCustomImg = null; }
     closeCharacterModal();
 }
 
 // ================= CHẾ ĐỘ ADMIN MAP EDITOR =================
 function enterAdminMapEditor() {
     closeAdminModal(); closeHologramCarousel();
-    isAdminMapEditing = true;
-    camZoom = minZoom; clampCamera();
+    isAdminMapEditing = true; camZoom = minZoom; clampCamera();
     document.getElementById('adminMapToolbar').style.display = 'block';
     document.getElementById('hudTopBar').classList.add('compact-hidden');
 }
 function exitAdminMapEditor() {
-    isAdminMapEditing = false; draggingStationIdx = -1;
-    saveMapStations();
+    isAdminMapEditing = false; draggingStationIdx = -1; saveMapStations();
     document.getElementById('adminMapToolbar').style.display = 'none';
     document.getElementById('hudTopBar').classList.remove('compact-hidden');
-    recalcCameraBounds(true);
-    alert('✅ Đã lưu vị trí 10 quầy!');
+    recalcCameraBounds(true); alert('✅ Đã lưu vị trí 10 quầy!');
 }
 function resetAdminMapCoords() {
     if (!confirm('Khôi phục tọa độ mặc định cho 10 quầy?')) return;
     mapStations = JSON.parse(JSON.stringify(DEFAULT_MAP_STATIONS));
     localStorage.removeItem('kimbling_custom_map_b64');
-    saveMapStations(); loadMapImageSource();
-    alert('🔄 Đã khôi phục mặc định!');
+    saveMapStations(); loadMapImageSource(); alert('🔄 Đã khôi phục mặc định!');
 }
 function copyMapConfigJson() {
     const txt = JSON.stringify(mapStations, null, 2);
@@ -2913,7 +2680,7 @@ function handleAdminMapUpload(e) {
             c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
             try { localStorage.setItem('kimbling_custom_map_b64', c.toDataURL('image/jpeg', 0.9)); } catch(err) { alert('Ảnh hơi lớn, đang hiển thị trong phiên này!'); }
             mapImg = img; mapImgLoaded = true;
-            MAP_W = img.naturalWidth; MAP_H = Math.round(img.naturalHeight * 0.965);
+            MAP_W = img.naturalWidth; MAP_H = Math.floor(img.naturalHeight * 0.965);
             recalcCameraBounds(false); camZoom = minZoom; clampCamera();
         };
         img.src = ev.target.result;
@@ -2951,7 +2718,8 @@ function renderHologramCards() {
         const rev = !isTop ? getDishReviewStats(item.name) : null;
         const rateBadge = (rev && rev.count > 0) ? `<span class="holo-card-rating">⭐ ${rev.avg} (${rev.count})</span>` : '';
         const sold = item.isSoldOut === true;
-        const buyBtn = isTop ? `<button type="button" class="holo-btn-buy" disabled>Topping chọn kèm món</button>` : (sold ? `<button type="button" class="holo-btn-buy" disabled>Tạm hết món</button>` : `<button type="button" class="holo-btn-buy" onclick="event.stopPropagation(); openOptionsModal(${item.id});">🛒 Chọn mua</button>`);
+        const idArg = typeof item.id === 'number' ? item.id : `'${String(item.id).replace(/'/g, '')}'`;
+        const buyBtn = isTop ? `<button type="button" class="holo-btn-buy" disabled>Topping chọn kèm món</button>` : (sold ? `<button type="button" class="holo-btn-buy" disabled>Tạm hết món</button>` : `<button type="button" class="holo-btn-buy" onclick="event.stopPropagation(); openOptionsModal(${idArg});">🛒 Chọn mua</button>`);
         const detBtn = isTop ? '' : `<button type="button" class="holo-btn-detail" onclick="event.stopPropagation(); openTiktokModal(${idx});">🎬 Chi tiết</button>`;
         return `<div class="holo-card ${sold ? 'sold-out' : ''}" onclick="spinHologramToIndex(${idx})"><div class="holo-card-img">${imgHtml}${rateBadge}</div><div class="holo-card-title">${escapeSafeText(item.name)}</div><div class="holo-card-price">${formatDynamicPrice(item.price)}</div><div class="holo-card-btns">${buyBtn}${detBtn}</div></div>`;
     }).join('');
@@ -3005,28 +2773,39 @@ function spinHologramToIndex(idx) {
 })();
 
 // ================= LỌC DANH MỤC, CHẠY TỚI QUẦY & TÌM KIẾM =================
-function filterCategory(cat, btn) {
-    currentCategory = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    renderMenu();
-    playCustomerBellSFX();
+function setBekim3DSpeech(htmlText) {
+    const el = document.getElementById('bekim3dSpeechText');
+    if (el) el.innerHTML = htmlText;
+}
 
-    const st = mapStations.find(s => s.key === cat);
-    if (st) {
-        closeHologramCarousel();
-        manualPanLockUntil = 0;
-        const dist = Math.hypot(playerPct.x - st.walkXPct, playerPct.y - st.walkYPct);
-        if (dist < 4.5) {
-            walkWaypoints = []; pendingStationAfterWalk = null;
-            setBekim3DSpeech(st.speech);
-            openHologramCarousel();
+function filterCategory(cat, btn) {
+    try {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const st = mapStations.find(s => s.key === cat);
+        if (st) {
+            closeHologramCarousel();
+            manualPanLockUntil = 0;
+            const dist = Math.hypot(playerPct.x - st.walkXPct, playerPct.y - st.walkYPct);
+            if (dist < 4.5) {
+                walkWaypoints = []; pendingStationAfterWalk = null;
+                setBekim3DSpeech(st.speech);
+                renderMenu();
+                openHologramCarousel();
+            } else {
+                setPlayerWalkTo(st.walkXPct, st.walkYPct, st);
+                setBekim3DSpeech(`Đang dẫn bạn chạy tới <b>${st.label}</b> nhé! Nhân viên đang chạy ra đón đó 🏃🌻`);
+                renderMenu();
+            }
         } else {
-            setPlayerWalkTo(st.walkXPct, st.walkYPct, st);
-            setBekim3DSpeech(`Đang dẫn bạn chạy tới <b>${st.label}</b> nhé! Nhân viên đang chạy ra đón đó 🏃🌻`);
+            renderMenu();
+            openHologramCarousel();
         }
-    } else {
-        openHologramCarousel();
+        playCustomerBellSFX();
+    } catch(e) {
+        reportSafeDiag('Filter', e);
     }
 }
 
@@ -3107,9 +2886,9 @@ function confirmAddFromTiktok() { const it = filteredMenu[currentTiktokIndex]; i
 function toggleMediaView(id) { isShowingVideoState[id] = !isShowingVideoState[id]; renderTiktokCard(); }
 function toggleHeart(btn) { const c = document.getElementById('heartCount'); let n = parseInt(c.innerText) || 128; btn.classList.toggle('liked'); c.innerText = btn.classList.contains('liked') ? n + 1 : n - 1; }
 
-// ================= CHỌN TÙY CHỌN MÓN (KHÓA UPSIZE SỮA TUYẾT) =================
+// ================= CHỌN TÙY CHỌN MÓN =================
 function openOptionsModal(id) {
-    selectedProduct = menu.find(m => m.id === id); if (!selectedProduct) return;
+    selectedProduct = menu.find(m => m.id == id); if (!selectedProduct) return;
     playMenuTickSFX();
     document.getElementById('modalDishName').innerText = selectedProduct.name;
     const isFood = getCategoryType(selectedProduct.name, selectedProduct.category) === 'Food';
@@ -3460,5 +3239,10 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script src="bekim.js?v=5.0"></script>
+<script>
+// Đảm bảo hàm filterCategory của bản đồ 2.5D không bị script ngoài ghi đè
+window.filterCategory = filterCategory;
+</script>
 </body>
 </html>
+
