@@ -1051,10 +1051,11 @@
         </div>
     </div>
 
+<script>
+
 let joyVector = { x: 0, y: 0 };
 const keysPressed = {};
 
-<script>
 // ================= VẼ BO GÓC ĐỘC LẬP (KHÔNG PHỤ THUỘC ROUNDRECT CỦA SAFARI) =================
 function rRect(ctx, x, y, w, h, r) {
     const rw = Math.max(0, w), rh = Math.max(0, h);
@@ -1637,11 +1638,32 @@ const sunParticles = Array.from({ length: 34 }, () => ({
 
 
 
+async function loadCutoutFromUrl(urlList, removeGroundPatch, onReady) {
+    for (let i = 0; i < urlList.length; i++) {
+        try {
+            const res = await fetch(urlList[i], { cache: 'reload' });
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            const dataUrl = await new Promise((resolve, reject) => {
+                const fr = new FileReader();
+                fr.onload = () => resolve(fr.result);
+                fr.onerror = reject;
+                fr.readAsDataURL(blob);
+            });
+            const img = new Image();
+            img.onload = () => onReady(processCutoutSprite(img, removeGroundPatch));
+            img.src = dataUrl;
+            return;
+        } catch(e) {}
+    }
+    const fallbackImg = new Image();
+    fallbackImg.crossOrigin = 'anonymous';
+    fallbackImg.onload = () => onReady(processCutoutSprite(fallbackImg, removeGroundPatch));
+    fallbackImg.onerror = () => { if (urlList[1] && fallbackImg.src.indexOf(urlList[1]) === -1) fallbackImg.src = urlList[1]; };
+    fallbackImg.src = urlList[0];
+}
+
 function processCutoutSprite(img, removeGroundPatch) {
-
-let joyVector = { x: 0, y: 0 };
-const keysPressed = {};
-
     try {
         const maxDim = 320;
         const iw = img.naturalWidth || img.width || 100, ih = img.naturalHeight || img.height || 100;
@@ -1652,11 +1674,10 @@ const keysPressed = {};
         ctx.drawImage(img, 0, 0, w, h);
         const imgData = ctx.getImageData(0, 0, w, h), d = imgData.data;
 
-        if (d[3] < 240 && d[(w - 1) * 4 + 3] < 240) return c;
-
-        const isWhiteBg = (idx) => {
+        const isBgPixel = (idx) => {
+            if (d[idx + 3] < 90) return true;
             const r = d[idx], g = d[idx + 1], b = d[idx + 2];
-            return r > 224 && g > 224 && b > 224 && Math.max(r, g, b) - Math.min(r, g, b) < 26;
+            return r > 205 && g > 205 && b > 205 && (Math.max(r, g, b) - Math.min(r, g, b) < 38);
         };
         const visited = new Uint8Array(w * h);
         const queue = new Int32Array(w * h);
@@ -1664,7 +1685,7 @@ const keysPressed = {};
 
         const pushIfBg = (px, py) => {
             const p = py * w + px;
-            if (!visited[p] && isWhiteBg(p * 4)) { visited[p] = 1; queue[tail++] = p; }
+            if (!visited[p] && isBgPixel(p * 4)) { visited[p] = 1; queue[tail++] = p; }
         };
         for (let x = 0; x < w; x++) { pushIfBg(x, 0); pushIfBg(x, h - 1); }
         for (let y = 0; y < h; y++) { pushIfBg(0, y); pushIfBg(w - 1, y); }
@@ -1683,14 +1704,16 @@ const keysPressed = {};
             for (let px = 0; px < w; px++) {
                 const p = py * w + px, idx = p * 4;
                 if (d[idx + 3] === 0) continue;
-                if (removeGroundPatch && py > h * 0.87) {
-                    const r = d[idx], g = d[idx + 1], b = d[idx + 2];
-                    if (r > 145 && g > 145 && b > 125 && Math.abs(r - g) < 30 && (r - b) < 38) {
+                const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+                if (removeGroundPatch && py > h * 0.85) {
+                    if (r > 135 && g > 135 && b > 115 && Math.abs(r - g) < 35 && (r - b) < 42) {
                         d[idx + 3] = 0; continue;
                     }
                 }
                 const nearBg = (px > 0 && d[(p - 1) * 4 + 3] === 0) || (px < w - 1 && d[(p + 1) * 4 + 3] === 0) || (py > 0 && d[(p - w) * 4 + 3] === 0) || (py < h - 1 && d[(p + w) * 4 + 3] === 0);
-                if (nearBg && d[idx] > 200 && d[idx + 1] > 200 && d[idx + 2] > 200) d[idx + 3] = 90;
+                if (nearBg && r > 180 && g > 180 && b > 180 && (Math.max(r, g, b) - Math.min(r, g, b) < 40)) {
+                    d[idx + 3] = 0;
+                }
             }
         }
         ctx.putImageData(imgData, 0, 0);
