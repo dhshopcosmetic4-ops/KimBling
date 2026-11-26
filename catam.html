@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI V6 - Mẫu Hook 4 Tầng Khởi Nghiệp & Cắt Nhịp Biến Thiên</title>
+  <title>AI V7 - Dán Link TikTok + Lớp Phủ Nền Đen Siêu Nét</title>
   <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
@@ -20,6 +20,7 @@
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
     button { background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 700; cursor: pointer; }
+    button.tiktok { background: linear-gradient(135deg, #fe2c55, #25f4ee); color: #000; }
     button.orange { background: linear-gradient(135deg, #ea580c, #dc2626); }
     button.green { background: linear-gradient(135deg, #059669, #10b981); }
     button.purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
@@ -27,43 +28,57 @@
     .stage-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
     canvas#previewCanvas {
       width: 260px; height: 462px; background: #000; border-radius: 16px;
-      border: 2px solid #334155; box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+      border: 2px solid #334155;
     }
     audio { width: 100%; margin: 6px 0 10px; }
     .status { font-size: 13px; color: #34d399; text-align: center; min-height: 20px; margin-bottom: 6px; }
     .clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
     .clip-btn {
-      background: #1e293b; border: 1px solid #38bdf8; color: #e0f2fe; padding: 8px;
+      background: #1e293b; border: 1px solid #38bdf8; color: #e0f2fe; padding: 9px;
       border-radius: 9px; font-size: 12px; text-align: center; text-decoration: none; display: block;
     }
     .clip-btn b { display: block; color: #fde047; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { border-bottom: 1px solid #243352; padding: 7px 5px; text-align: left; }
-    th { color: #38bdf8; }
+    .tk-result { display: none; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🔥 AI V6: Mẫu Hook "32 Tuổi Khởi Nghiệp" & Cắt Nhịp Theo Phách</h1>
+  <h1>🔥 AI V7: Dán Link TikTok + Lớp Phủ Nền Đen Không Biến Dạng Chữ</h1>
+
+  <!-- MỤC MỚI: DÁN LINK TIKTOK -->
+  <div class="card">
+    <label>🔗 Cách nhanh: Dán Link TikTok để lấy Video Không Logo & Âm Thanh</label>
+    <div class="row">
+      <input type="text" id="tkUrlInput" placeholder="Dán link dạng https://vt.tiktok.com/..." value="https://vt.tiktok.com/ZSsMqCVQ9/" />
+      <button class="tiktok" id="fetchTkBtn">⚡ Lấy Video Không Logo & Nhạc</button>
+    </div>
+    <div class="status" id="tkStatus"></div>
+    <div class="tk-result" id="tkResultBox">
+      <div class="row">
+        <a id="tkNoLogoLink" class="clip-btn" target="_blank" download="tiktok-khong-logo.mp4"><b>⬇️ Tải Video Không Logo</b><span>Bấm giữ hoặc tải về máy</span></a>
+        <a id="tkAudioLink" class="clip-btn" target="_blank" download="tiktok-nhac.mp3"><b>🎵 Tải Riêng Nhạc MP3</b><span>Nếu máy chưa tự nạp được</span></a>
+      </div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="row">
       <div>
-        <label>1. File Nhạc (Video TikTok / Quay iPhone / MP3)</label>
+        <label>1. Hoặc chọn File Nhạc / Video có sẵn trong máy</label>
         <input type="file" id="audioFile" accept="video/*,audio/*" />
       </div>
       <div>
-        <label>2. Video thật để xem thử (Chọn nhiều clip càng đẹp)</label>
+        <label>2. Video thật để xem thử (Tùy chọn)</label>
         <input type="file" id="videoFiles" accept="video/*" multiple />
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>3. Chọn Kiểu Dựng Tự Động</label>
+        <label>3. Kiểu dựng tự động</label>
         <select id="templateMode">
-          <option value="story">Mẫu Bánh Tráng Nướng (Hook 4 tầng + Cắt nhanh khoe món)</option>
-          <option value="remix3s">Mẫu 3 Chàng Trai (3s Đen Trắng chớp ➔ Bùng màu)</option>
+          <option value="story">Mẫu Khởi Nghiệp (Hook 4 tầng + Cắt nhanh khoe món)</option>
+          <option value="remix3s">Mẫu Nhảy Remix (3s Đen Trắng chớp ➔ Bùng màu)</option>
         </select>
       </div>
       <div>
@@ -72,35 +87,20 @@
       </div>
     </div>
 
-    <label>4. Chỉnh chữ Hook 3 giây đầu (Hoặc gõ chủ đề bấm nút AI tự viết)</label>
+    <label>4. Chỉnh chữ Hook 3 giây đầu</label>
     <div class="row">
-      <input type="text" id="topicInput" value="bán trà sữa vỉa hè" placeholder="Nhập ý chính (VD: mở tiệm tóc, bán phở)..." />
+      <input type="text" id="topicInput" value="bán trà sữa" placeholder="Nhập ý chính..." />
       <button class="orange" id="aiWriteHookBtn">✍️ AI Tự Soạn Hook 4 Tầng (0đ)</button>
     </div>
 
     <div class="row3">
-      <div>
-        <label>Số / Từ bật vào (Trắng to)</label>
-        <input type="text" id="hNum" value="32" />
-      </div>
-      <div>
-        <label>Chữ viết tay 1 (Vàng)</label>
-        <input type="text" id="hScript1" value="Tuổi" />
-      </div>
-      <div>
-        <label>Dòng dẫn (Trắng)</label>
-        <input type="text" id="hLead" value="Khởi nghiệp" />
-      </div>
+      <div><label>Số bật vào (Trắng)</label><input type="text" id="hNum" value="43" /></div>
+      <div><label>Chữ viết tay (Vàng)</label><input type="text" id="hScript1" value="Tuổi" /></div>
+      <div><label>Dòng dẫn (Trắng)</label><input type="text" id="hLead" value="Quyết định bỏ phố" /></div>
     </div>
     <div class="row">
-      <div>
-        <label>Từ khóa chính (Chạy máy đánh chữ | )</label>
-        <input type="text" id="hMain" value="BÁN BÁNH TRÁNG NƯỚNG" />
-      </div>
-      <div>
-        <label>Câu hỏi chốt (Vàng viết tay)</label>
-        <input type="text" id="hEnd" value="Sẽ như thế nào ?" />
-      </div>
+      <div><label>Từ khóa chính (Gõ máy | )</label><input type="text" id="hMain" value="BÁN TRÀ SỮA" /></div>
+      <div><label>Câu hỏi chốt (Vàng viết tay)</label><input type="text" id="hEnd" value="Liệu có thành công ?" /></div>
     </div>
 
     <button id="analyzeBtn" disabled>🤖 Bước 1: Phân Tích Phách Nhạc & Xem Trước</button>
@@ -114,7 +114,7 @@
     <button id="playAllBtn">▶️ Phát Xem Thử Thành Phẩm</button>
     <audio id="audioPlayer" controls></audio>
 
-    <button class="purple" id="exportAllBtn">🎬 Bước 2: Xuất Bộ Phách Mẫu (.MP4) + Hook Phông Xanh (.MP4) + Nhạc (.WAV)</button>
+    <button class="purple" id="exportAllBtn">🎬 Bước 2: Xuất Bộ Phách Mẫu (.MP4) + Lớp Phủ Chữ Nền Đen (.MP4)</button>
     <div class="status" id="exportStatus"></div>
 
     <div id="downloadArea" style="display:none;">
@@ -126,14 +126,6 @@
       <div class="clip-grid" id="clipGrid"></div>
     </div>
   </div>
-
-  <div class="card" id="tableCard" style="display:none;">
-    <label>Bảng Phách Biến Thiên (2-3s đầu giữ vừa để đọc chữ ➔ Sau 3s cắt theo phách đánh của nhạc)</label>
-    <table>
-      <thead><tr><th>Phách</th><th>Thời gian</th><th>Độ dài</th><th>Loại nhịp</th></tr></thead>
-      <tbody id="beatTableBody"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
@@ -144,19 +136,56 @@
   const audioPlayer = document.getElementById('audioPlayer');
   const statusText = document.getElementById('statusText');
   const exportStatus = document.getElementById('exportStatus');
+  const tkStatus = document.getElementById('tkStatus');
+
+  // --- LẤY VIDEO KHÔNG LOGO & ÂM THANH TỪ LINK TIKTOK ---
+  document.getElementById('fetchTkBtn').addEventListener('click', async () => {
+    const url = document.getElementById('tkUrlInput').value.trim();
+    if (!url) return;
+    tkStatus.textContent = '⏳ Đang bóc tách link TikTok không logo...';
+    document.getElementById('tkResultBox').style.display = 'none';
+    try {
+      const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`);
+      const json = await res.json();
+      if (json.code !== 0 || !json.data) throw new Error(json.msg || 'Không lấy được dữ liệu từ link này.');
+
+      const fixUrl = (u) => !u ? '' : (u.startsWith('http') ? u : 'https://www.tikwm.com' + u);
+      const videoNoLogo = fixUrl(json.data.hdplay || json.data.play);
+      const musicUrl = fixUrl(json.data.music);
+
+      document.getElementById('tkNoLogoLink').href = videoNoLogo;
+      document.getElementById('tkAudioLink').href = musicUrl || videoNoLogo;
+      document.getElementById('tkResultBox').style.display = 'block';
+      tkStatus.textContent = '✅ Đã lấy xong Video Không Logo! Đang thử nạp nhạc thẳng vào App...';
+
+      // Thử nạp âm thanh tự động qua fetch (nếu CDN cho phép CORS)
+      try {
+        const aRes = await fetch(musicUrl || videoNoLogo);
+        const buf = await aRes.arrayBuffer();
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        decodedBuffer = await actx.decodeAudioData(buf);
+        await actx.close();
+        statusText.textContent = `✅ Đã nạp nhạc từ TikTok (${decodedBuffer.duration.toFixed(1)}s). Bấm Bước 1 ngay!`;
+        document.getElementById('analyzeBtn').disabled = false;
+        tkStatus.textContent = '🎉 Ngon lành! Đã nạp thẳng nhạc từ link vào App, bấm Bước 1 bên dưới!';
+      } catch {
+        tkStatus.textContent = '✅ Đã có link tải! (Trình duyệt chặn nạp thẳng — hãy bấm "Tải Riêng Nhạc MP3" rồi chọn vào ô số 1 bên dưới).';
+      }
+    } catch (err) {
+      tkStatus.textContent = '❌ Không lấy được link: ' + err.message;
+    }
+  });
 
   document.getElementById('aiWriteHookBtn').addEventListener('click', () => {
-    const topic = (document.getElementById('topicInput').value || 'bán đồ ăn đêm').trim().toUpperCase();
+    const topic = (document.getElementById('topicInput').value || 'bán trà sữa').trim().toUpperCase();
     const samples = [
-      { n: '30', s1: 'Tuổi', lead: 'Quyết định bỏ phố', main: topic, end: 'Liệu có thành công ?' },
-      { n: '28', s1: 'Tuổi', lead: 'Thử thách khởi nghiệp', main: topic, end: 'Sẽ như thế nào ?' },
-      { n: '100%', s1: 'Thật sự', lead: 'Bí mật đằng sau', main: topic, end: 'Ít ai biết được !' }
+      { n: '43', s1: 'Tuổi', lead: 'Quyết định bỏ phố', main: topic, end: 'Liệu có thành công ?' },
+      { n: '32', s1: 'Tuổi', lead: 'Khởi nghiệp', main: topic, end: 'Sẽ như thế nào ?' },
+      { n: '100%', s1: 'Sự thật', lead: 'Bí quyết đằng sau', main: topic, end: 'Ít ai ngờ tới !' }
     ];
     const p = samples[Math.floor(Math.random() * samples.length)];
-    document.getElementById('hNum').value = p.n;
-    document.getElementById('hScript1').value = p.s1;
-    document.getElementById('hLead').value = p.lead;
-    document.getElementById('hMain').value = p.main;
+    document.getElementById('hNum').value = p.n; document.getElementById('hScript1').value = p.s1;
+    document.getElementById('hLead').value = p.lead; document.getElementById('hMain').value = p.main;
     document.getElementById('hEnd').value = p.end;
   });
 
@@ -171,7 +200,7 @@
 
   document.getElementById('audioFile').addEventListener('change', async (e) => {
     const f = e.target.files[0]; if (!f) return;
-    statusText.textContent = '⏳ Đang đọc âm thanh...';
+    statusText.textContent = '⏳ Đang giải mã âm thanh...';
     const actx = new (window.AudioContext || window.webkitAudioContext)();
     decodedBuffer = await actx.decodeAudioData(await f.arrayBuffer());
     await actx.close();
@@ -181,20 +210,16 @@
 
   document.getElementById('analyzeBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
-    statusText.textContent = '🎛️ Đang phân tích phách đánh & tạo Hook 3 giây đầu...';
+    statusText.textContent = '🎛️ Đang phân tích phách nhạc...';
     wavBlob = encodeWAV(decodedBuffer);
     audioPlayer.src = URL.createObjectURL(wavBlob);
-
     const totalSegs = Math.max(6, parseInt(document.getElementById('beatCount').value || 12, 10));
     const mode = document.getElementById('templateMode').value;
     plan = await buildDynamicBeats(decodedBuffer, totalSegs, mode);
-
-    renderTable(plan);
     document.getElementById('previewCard').style.display = 'block';
-    document.getElementById('tableCard').style.display = 'block';
     document.getElementById('downloadArea').style.display = 'none';
     drawFrame(ctx, 0, 540, 960, false);
-    statusText.textContent = '✅ Xong! Bấm Phát Xem Thử để coi chữ gõ máy & phách cắt.';
+    statusText.textContent = '✅ Xong! Bấm Phát Xem Thử hoặc bấm Bước 2 để xuất MP4.';
   });
 
   async function buildDynamicBeats(buffer, totalSegs, mode) {
@@ -211,8 +236,6 @@
       e.push(Math.sqrt(s / (end - i)));
     }
     const meanE = e.reduce((a, b) => a + b, 0) / (e.length || 1);
-
-    // Nếu là Mẫu Bánh Tráng Nướng: 2.6s đầu giữ 2 cảnh rõ (~1.3s/cảnh) để người xem kịp đọc chữ!
     const hookEnd = mode === 'story' ? Math.min(2.6, buffer.duration * 0.3) : Math.min(3.0, buffer.duration * 0.35);
     const hookPts = mode === 'story' ? [hookEnd * 0.48, hookEnd] : [hookEnd * 0.33, hookEnd * 0.66, hookEnd];
 
@@ -222,169 +245,120 @@
       let loc = 0, s = Math.max(0, i - 18), end = Math.min(e.length, i + 18);
       for (let k = s; k < end; k++) loc += e[k];
       loc /= (end - s);
-      if (e[i] > e[i - 1] && e[i] > e[i + 1] && e[i] > loc * 1.22) {
-        candidates.push({ time: i * 0.02, score: e[i] / (loc + 1e-6), energy: e[i] });
-      }
+      if (e[i] > e[i - 1] && e[i] > e[i + 1] && e[i] > loc * 1.22) candidates.push({ time: i * 0.02, score: e[i] / (loc + 1e-6), energy: e[i] });
     }
     candidates.sort((a, b) => b.score - a.score);
-
     const bodyCuts = [];
     for (const c of candidates) {
       if (bodyCuts.length >= bodyNeeded) break;
-      // Đoạn nhạc đánh mạnh cho phép cắt sát 0.48s (phách kép), đoạn nhẹ giãn 0.95s -> biến thiên tự nhiên!
       const minGap = c.energy > meanE * 1.15 ? 0.48 : 0.92;
-      if (Math.abs(c.time - hookEnd) >= 0.45 && !bodyCuts.some(t => Math.abs(t - c.time) < minGap)) {
-        bodyCuts.push(c.time);
-      }
+      if (Math.abs(c.time - hookEnd) >= 0.45 && !bodyCuts.some(t => Math.abs(t - c.time) < minGap)) bodyCuts.push(c.time);
     }
     bodyCuts.sort((a, b) => a - b);
-
     let pts = [0, ...hookPts, ...bodyCuts, buffer.duration];
     while (pts.length - 1 < totalSegs) {
       let maxG = 0, idx = 0;
-      for (let i = hookPts.length; i < pts.length - 1; i++) {
-        if (pts[i + 1] - pts[i] > maxG) { maxG = pts[i + 1] - pts[i]; idx = i; }
-      }
+      for (let i = hookPts.length; i < pts.length - 1; i++) if (pts[i + 1] - pts[i] > maxG) { maxG = pts[i + 1] - pts[i]; idx = i; }
       pts.splice(idx + 1, 0, (pts[idx] + pts[idx + 1]) / 2);
     }
-
-    const res = [];
-    let cumF = 0;
-    const hookSegCount = hookPts.length;
+    const res = []; let cumF = 0;
     for (let i = 0; i < pts.length - 1; i++) {
-      const startF = cumF;
-      const endF = Math.max(startF + 5, Math.round(pts[i + 1] * FPS));
-      cumF = endF;
-      res.push({
-        idx: i + 1, start: startF / FPS, end: endF / FPS, dur: (endF - startF) / FPS,
-        frames: endF - startF, startF, endF, isHook: i < hookSegCount, mode
-      });
+      const startF = cumF, endF = Math.max(startF + 5, Math.round(pts[i + 1] * FPS)); cumF = endF;
+      res.push({ idx: i + 1, start: startF / FPS, end: endF / FPS, dur: (endF - startF) / FPS, frames: endF - startF, startF, endF, isHook: i < hookPts.length, mode });
     }
     return res;
   }
 
-  function getHookValues() {
-    return {
+  function fitText(c, text, fontTemplate, maxW, startSize) {
+    let size = startSize;
+    while (size > 18) {
+      c.font = fontTemplate.replace('{S}', size);
+      if (c.measureText(text).width <= maxW) break;
+      size -= 2;
+    }
+    return size;
+  }
+
+  function drawStoryHookText(c, t, W, H, isBlackOverlay) {
+    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0) || 2.6;
+    if (t > hookTotal) return;
+    const h = {
       num: document.getElementById('hNum').value.trim(),
       s1: document.getElementById('hScript1').value.trim(),
       lead: document.getElementById('hLead').value.trim(),
       main: document.getElementById('hMain').value.trim(),
       end: document.getElementById('hEnd').value.trim()
     };
-  }
-
-  // Vẽ đúng cụm Hook 4 tầng giống mẫu Bánh Tráng Nướng
-  function drawStoryHookText(c, t, W, H) {
-    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0) || 2.6;
-    if (t > hookTotal) return; // Sau 2.6s - 3s biến mất sạch để khoe đồ ăn!
-
-    const h = getHookValues();
     const fadeOut = t > hookTotal - 0.25 ? Math.max(0, (hookTotal - t) / 0.25) : 1;
-    c.save();
-    c.globalAlpha = fadeOut;
-    c.shadowColor = 'rgba(0,0,0,0.95)'; c.shadowBlur = 12; c.shadowOffsetY = 3;
+    c.save(); c.globalAlpha = fadeOut;
+    if (!isBlackOverlay) { c.shadowColor = 'rgba(0,0,0,0.9)'; c.shadowBlur = 12; }
 
-    // 1. Dòng "32 Tuổi": chữ "Tuổi" hiện trước, số "32" bật vào lúc 0.55s (y hệt video mẫu 00:00 -> 00:01)
     const showNum = t >= 0.55;
     const numPop = showNum && t < 0.78 ? 1 + (1 - (t - 0.55) / 0.23) * 0.35 : 1;
-
     c.textBaseline = 'middle';
-    c.font = 'italic bold 78px "Brush Script MT", "Segoe Script", Georgia, serif';
+    c.font = 'italic bold 76px "Brush Script MT", "Segoe Script", Georgia, serif';
     const wS1 = c.measureText(h.s1).width;
-    c.font = '900 84px system-ui';
+    c.font = '900 82px system-ui';
     const wNum = showNum ? c.measureText(h.num + ' ').width : 0;
     const startX = W / 2 - (wNum + wS1) / 2;
 
     if (showNum) {
-      c.save();
-      c.translate(startX + wNum / 2, H * 0.43);
-      c.scale(numPop, numPop);
-      c.font = '900 84px system-ui';
-      c.fillStyle = '#ffffff'; c.textAlign = 'center';
-      c.fillText(h.num, 0, 0);
-      c.restore();
+      c.save(); c.translate(startX + wNum / 2, H * 0.43); c.scale(numPop, numPop);
+      c.font = '900 82px system-ui'; c.fillStyle = '#ffffff'; c.textAlign = 'center';
+      c.fillText(h.num, 0, 0); c.restore();
     }
-
-    c.font = 'italic bold 78px "Brush Script MT", "Segoe Script", Georgia, serif';
+    c.font = 'italic bold 76px "Brush Script MT", "Segoe Script", Georgia, serif';
     c.fillStyle = '#fde047'; c.textAlign = 'left';
     c.fillText(h.s1, startX + wNum, H * 0.43);
 
-    // 2. Dòng dẫn ("Khởi nghiệp")
     c.textAlign = 'center';
-    c.font = 'bold 34px Georgia, serif';
-    c.fillStyle = '#ffffff';
-    c.fillText(h.lead, W / 2, H * 0.50);
+    fitText(c, h.lead, 'bold {S}px Georgia, serif', W - 60, 34);
+    c.fillStyle = '#ffffff'; c.fillText(h.lead, W / 2, H * 0.50);
 
-    // 3. Từ khóa chính gõ từng chữ kèm dấu nháy | (Typewriter)
-    const typeProg = Math.min(1, t / 1.15);
-    const charCount = Math.max(1, Math.floor(h.main.length * typeProg));
+    const charCount = Math.max(1, Math.floor(h.main.length * Math.min(1, t / 1.15)));
     const cursor = (t < 1.35 && Math.floor(t * 6) % 2 === 0) ? '|' : '';
-    const typedStr = h.main.slice(0, charCount) + cursor;
+    fitText(c, h.main + '|', '900 {S}px Georgia, serif', W - 50, 34);
+    c.fillStyle = '#ffffff'; c.fillText(h.main.slice(0, charCount) + cursor, W / 2, H * 0.555);
 
-    c.font = '900 32px Georgia, serif';
-    c.fillStyle = '#fef08a';
-    c.fillText(typedStr, W / 2, H * 0.555);
-
-    // 4. Câu hỏi chốt ("Sẽ như thế nào ?") bật ra ở giây 0.95s
     if (t >= 0.95) {
       const popEnd = t < 1.15 ? 1 + (1 - (t - 0.95) / 0.2) * 0.25 : 1;
-      c.save();
-      c.translate(W / 2, H * 0.615);
-      c.scale(popEnd, popEnd);
-      c.font = 'italic bold 50px "Brush Script MT", "Segoe Script", Georgia, serif';
-      c.fillStyle = '#fde047';
-      c.fillText(h.end, 0, 0);
-      c.restore();
+      c.save(); c.translate(W / 2, H * 0.615); c.scale(popEnd, popEnd);
+      fitText(c, h.end, 'italic bold {S}px "Brush Script MT", "Segoe Script", Georgia, serif', W - 60, 48);
+      c.fillStyle = '#fde047'; c.fillText(h.end, 0, 0); c.restore();
     }
     c.restore();
   }
 
-  function drawFrame(c, t, W, H, isGreenExport) {
-    if (isGreenExport) {
-      c.fillStyle = '#00FF00'; // Phông xanh chuẩn Chroma Key CapCut
+  function drawFrame(c, t, W, H, isBlackOverlay) {
+    if (isBlackOverlay) {
+      c.fillStyle = '#000000'; // NỀN ĐEN CHUẨN HÒA TRỘN BỘ LỌC (FILTER/SCREEN) -> CHỮ KHÔNG BAO GIỜ BIẾN DẠNG!
       c.fillRect(0, 0, W, H);
-      drawStoryHookText(c, t, W, H);
+      drawStoryHookText(c, t, W, H, true);
       return;
     }
-
     let seg = plan[0];
     for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
     const dt = t - seg.start, pulse = dt < 0.22 ? (1 - dt / 0.22) : 0;
-
     c.fillStyle = '#090d16'; c.fillRect(0, 0, W, H);
 
-    // Vẽ video thật (nếu người dùng đã chọn) hoặc nền mẫu
     c.save();
     if (seg.mode === 'remix3s' && seg.isHook) c.filter = `grayscale(100%) brightness(${0.7 + pulse * 0.6})`;
     else c.filter = `brightness(${1 + pulse * 0.18})`;
-
     const zoom = 1 + pulse * 0.08;
     c.translate(W / 2, H / 2); c.scale(zoom, zoom); c.translate(-W / 2, -H / 2);
-
     if (videoEls.length > 0) {
       const v = videoEls[(seg.idx - 1) % videoEls.length];
       if (v.readyState >= 2) {
-        const scale = Math.max(W / v.videoWidth, H / v.videoHeight);
-        const dw = v.videoWidth * scale, dh = v.videoHeight * scale;
-        c.drawImage(v, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        const sc = Math.max(W / v.videoWidth, H / v.videoHeight);
+        c.drawImage(v, (W - v.videoWidth * sc) / 2, (H - v.videoHeight * sc) / 2, v.videoWidth * sc, v.videoHeight * sc);
       }
     } else {
       const g = c.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, seg.isHook ? '#7c2d12' : '#1e3a8a');
-      g.addColorStop(1, seg.isHook ? '#18181b' : '#701a75');
+      g.addColorStop(0, seg.isHook ? '#7c2d12' : '#1e3a8a'); g.addColorStop(1, '#18181b');
       c.fillStyle = g; c.fillRect(0, 0, W, H);
-      c.fillStyle = 'rgba(255,255,255,0.22)'; c.font = '900 44px system-ui'; c.textAlign = 'center';
-      c.fillText(`CẢNH ${seg.idx}`, W / 2, H * 0.25);
     }
     c.restore();
-
-    // Vẽ chữ Hook 4 tầng
-    drawStoryHookText(c, t, W, H);
-
-    // Badge hiển thị nhịp trên góc
-    c.fillStyle = 'rgba(0,0,0,0.6)'; c.fillRect(16, 16, 220, 38);
-    c.fillStyle = '#fde047'; c.font = 'bold 18px system-ui'; c.textAlign = 'left';
-    c.fillText(`Phách ${seg.idx}/${plan.length} (${seg.dur.toFixed(2)}s)`, 28, 41);
+    drawStoryHookText(c, t, W, H, false);
   }
 
   document.getElementById('playAllBtn').addEventListener('click', () => {
@@ -397,23 +371,19 @@
   function loop() {
     if (!audioPlayer.paused && plan.length) {
       const t = audioPlayer.currentTime;
-      let seg = plan[0];
-      for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
+      let seg = plan[0]; for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
       if (seg.idx !== lastSeg) {
         lastSeg = seg.idx;
-        if (videoEls.length === 1 && videoEls[0].duration) {
-          videoEls[0].currentTime = ((seg.idx - 1) / plan.length) * Math.max(0.5, videoEls[0].duration - seg.dur);
-        }
+        if (videoEls.length === 1 && videoEls[0].duration) videoEls[0].currentTime = ((seg.idx - 1) / plan.length) * Math.max(0.5, videoEls[0].duration - seg.dur);
       }
       drawFrame(ctx, t, 540, 960, false);
     }
     animId = requestAnimationFrame(loop);
   }
 
-  // Xuất MP4
   async function pickCodec(W, H) {
     for (const codec of ['avc1.420028', 'avc1.42001f', 'avc1.4d001f']) {
-      try { if ((await VideoEncoder.isConfigSupported({ codec, width: W, height: H, bitrate: 1_200_000, framerate: FPS })).supported) return codec; } catch {}
+      try { if ((await VideoEncoder.isConfigSupported({ codec, width: W, height: H, bitrate: 1_500_000, framerate: FPS })).supported) return codec; } catch {}
     }
     return null;
   }
@@ -424,7 +394,7 @@
     if (!codec || typeof Mp4Muxer === 'undefined') throw new Error('Hãy mở bằng Chrome/Edge/Safari mới để xuất MP4.');
     const muxer = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), video: { codec: 'avc', width: W, height: H }, fastStart: 'in-memory' });
     const enc = new VideoEncoder({ output: (ch, m) => muxer.addVideoChunk(ch, m), error: console.error });
-    enc.configure({ codec, width: W, height: H, bitrate: 1_200_000, framerate: FPS });
+    enc.configure({ codec, width: W, height: H, bitrate: 1_500_000, framerate: FPS });
     for (let f = 0; f < frameCount; f++) {
       fn(c2d, f, frameCount, W, H);
       const vf = new VideoFrame(c, { timestamp: Math.round((f * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
@@ -446,32 +416,30 @@
           c2d.fillStyle = s.isHook ? '#1e1b4b' : '#0f172a'; c2d.fillRect(0, 0, W, H);
           c2d.strokeStyle = s.isHook ? '#facc15' : '#38bdf8'; c2d.lineWidth = 10; c2d.strokeRect(20, 20, W - 40, H - 40);
           c2d.textAlign = 'center'; c2d.fillStyle = '#fde047'; c2d.font = '900 72px system-ui';
-          c2d.fillText(`PHÁCH ${String(s.idx).padStart(2, '0')}`, W / 2, 340);
+          c2d.fillText(`PHÁCH ${String(s.idx).padStart(2, '0')}`, W / 2, 360);
           c2d.fillStyle = '#fff'; c2d.font = 'bold 34px system-ui';
-          c2d.fillText(`${s.dur.toFixed(2)}s (${s.frames}f)`, W / 2, 415);
-          c2d.fillStyle = '#94a3b8'; c2d.font = 'bold 26px system-ui';
-          c2d.fillText(s.isHook ? 'Giữ cảnh rõ để đọc chữ Hook' : 'Cắt nhanh khoe sản phẩm / món', W / 2, 500);
+          c2d.fillText(`${s.dur.toFixed(2)}s (${s.frames}f)`, W / 2, 435);
           c2d.fillStyle = s.isHook ? '#facc15' : '#10b981';
           c2d.fillRect(60, H - 140, (W - 120) * ((f + 1) / tot), 18);
         });
         const name = `${String(s.idx).padStart(2, '0')}_${s.isHook ? 'HOOK' : 'NHIP'}_${s.dur.toFixed(2)}s.mp4`;
         exportedFiles.push({ name, blob });
         const a = document.createElement('a'); a.className = 'clip-btn'; a.href = URL.createObjectURL(blob); a.download = name;
-        a.innerHTML = `<b>⬇️ ${name}</b><span>${s.isHook ? 'Hook 3s' : 'Phách nhanh'}</span>`; grid.appendChild(a);
+        a.innerHTML = `<b>⬇️ ${name}</b><span>${s.isHook ? 'Hook' : 'Phách nhanh'}</span>`; grid.appendChild(a);
       }
 
-      exportStatus.textContent = '🟢 Đang xuất Lớp Phủ Chữ Hook Phông Xanh (3 giây đầu)...';
+      exportStatus.textContent = '⬛ Đang xuất Lớp Phủ Chữ Nền Đen (Siêu mịn)...';
       const hookFrames = plan.filter(s => s.isHook).reduce((a, b) => a + b.frames, 0) + 15;
       const hookBlob = await encodeMp4(hookFrames, (c2d, f, tot, W, H) => drawFrame(c2d, f / FPS, W, H, true));
-      const hName = '00_LOP_PHU_HOOK_PHONG_XANH.mp4';
+      const hName = '00_LOP_PHU_CHU_NEN_DEN.mp4';
       exportedFiles.push({ name: hName, blob: hookBlob });
-      const ha = document.createElement('a'); ha.className = 'clip-btn'; ha.style.borderColor = '#10b981';
+      const ha = document.createElement('a'); ha.className = 'clip-btn'; ha.style.borderColor = '#fde047';
       ha.href = URL.createObjectURL(hookBlob); ha.download = hName;
-      ha.innerHTML = `<b>⬇️ Tải Lớp Phủ Chữ Hook Phông Xanh (${hName})</b><span>Vào CapCut ➔ Lớp phủ ➔ Cắt ảnh ➔ Phông xanh</span>`;
+      ha.innerHTML = `<b>⬇️ Tải Lớp Phủ Nền Đen (${hName})</b><span>Vào CapCut ➔ Hòa trộn ➔ Bộ lọc (Filter/Screen)</span>`;
       ovBox.appendChild(ha);
 
       document.getElementById('downloadArea').style.display = 'block';
-      exportStatus.textContent = '🎉 Đã xuất xong trọn bộ! Tải ZIP hoặc từng file bỏ vào CapCut.';
+      exportStatus.textContent = '🎉 Đã xuất xong trọn bộ! Tải về bỏ vào CapCut thôi.';
     } catch (e) { exportStatus.textContent = '❌ ' + e.message; } finally { btn.disabled = false; }
   });
 
@@ -481,22 +449,13 @@
     if (wavBlob) zip.file('00_NHAC_GOC.wav', wavBlob);
     exportedFiles.forEach(f => zip.file(f.name, f.blob));
     const a = document.createElement('a'); a.href = URL.createObjectURL(await zip.generateAsync({ type: 'blob' }));
-    a.download = 'BO_PHACH_VA_HOOK_CAPCUT.zip'; a.click();
+    a.download = 'BO_PHACH_VA_CHU_NEN_DEN.zip'; a.click();
   });
 
   document.getElementById('downloadWavBtn').addEventListener('click', () => {
     if (!wavBlob) return;
     const a = document.createElement('a'); a.href = URL.createObjectURL(wavBlob); a.download = '00_NHAC_GOC.wav'; a.click();
   });
-
-  function renderTable(list) {
-    document.getElementById('beatTableBody').innerHTML = list.map(s => `<tr>
-      <td><b>Phách ${s.idx}</b></td>
-      <td>${s.start.toFixed(2)}s ➔ ${s.end.toFixed(2)}s</td>
-      <td><b>${s.dur.toFixed(2)}s</b> (${s.frames}f)</td>
-      <td>${s.isHook ? '🟡 Hook đọc chữ' : (s.dur < 0.7 ? '🔥 Phách kép nhanh' : '🎵 Phách nhịp')}</td>
-    </tr>`).join('');
-  }
 
   function encodeWAV(buf) {
     const numCh = Math.min(buf.numberOfChannels, 2), sr = buf.sampleRate, len = buf.length;
