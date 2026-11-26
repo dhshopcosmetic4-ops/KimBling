@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video HD (AI Đọc Cốt Truyện Chống Trùng)</title>
+  <title>App Cắt Nhạc & Dựng Video HD (Xuất Nhanh + Tiến Trình Chi Tiết)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <!-- Giữ nguyên 2 file mẫu cùng cấp -->
   <script src="./hook-templates.js"></script>
   <script src="./ai-presets.js"></script>
@@ -28,7 +27,6 @@
       width: 100%; padding: 10px 11px; border-radius: 10px; border: 1px solid #334155;
       background: #070b14; color: #fff; font-size: 14px; margin-bottom: 10px;
     }
-    /* Ô nhập có nút Xóa nhanh X bên phải */
     .input-x { position: relative; display: flex; align-items: center; margin-bottom: 10px; }
     .input-x input { margin-bottom: 0; padding-right: 36px; }
     .clear-x {
@@ -49,7 +47,6 @@
     button.tiktok { background: linear-gradient(135deg, #fe2c55, #25f4ee); color: #000; }
     button.orange { background: linear-gradient(135deg, #ea580c, #dc2626); }
     button.green { background: linear-gradient(135deg, #059669, #10b981); }
-    button.purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
     button.gold { background: linear-gradient(135deg, #d97706, #eab308); color: #000; }
     button.dark { background: #1e293b; border: 1px solid #475569; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -74,7 +71,6 @@
     .badge.hook { background: #dc2626; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
     .small-btn { padding: 7px 10px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
-    .beat-save-bar { display: none; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #334155; }
     input[type="range"] { padding: 0; margin: 4px 0; accent-color: #38bdf8; }
     .strip-wrap { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 4px; margin-top: 4px; }
     .strip-item {
@@ -91,19 +87,20 @@
     .ai-note-row .input-x { margin-bottom: 0; }
     .ai-note-row input { font-size: 12px; padding: 8px 30px 8px 9px; }
     .ai-reason { font-size: 12px; color: #7dd3fc; margin-top: 4px; line-height: 1.4; }
-    /* Thanh tiến trình xuất video */
+    /* Bảng Tiến Trình Cắt + Gộp Render chi tiết */
     .progress-box {
       display: none; background: #0b1120; border: 1px solid #38bdf8;
-      border-radius: 12px; padding: 12px; margin-top: 10px;
+      border-radius: 12px; padding: 14px; margin-top: 8px;
     }
-    .progress-top { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; color: #fde047; margin-bottom: 6px; }
-    .progress-track { width: 100%; height: 14px; background: #1e293b; border-radius: 99px; overflow: hidden; }
-    .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #10b981); transition: width 0.15s; }
-    .progress-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; text-align: center; }
+    .progress-top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #fde047; margin-bottom: 8px; }
+    .progress-track { width: 100%; height: 16px; background: #1e293b; border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+    .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #10b981); transition: width 0.12s; }
+    .step-list { font-size: 12px; line-height: 1.7; color: #94a3b8; }
+    .step-item.active { color: #38bdf8; font-weight: 800; }
+    .step-item.done { color: #34d399; font-weight: 700; }
+    .progress-sub { font-size: 11px; color: #cbd5e1; margin-top: 8px; text-align: center; }
     .tk-fallback { display: none; margin-top: 6px; font-size: 12px; color: #cbd5e1; }
     .tk-fallback a { color: #38bdf8; font-weight: 700; margin-right: 12px; }
-    .chk-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 10px; }
-    .chk-row input { width: auto; margin: 0; }
     #videoPoolDom {
       position: fixed; left: 0; top: 0; width: 4px; height: 4px;
       opacity: 0.001; pointer-events: none; overflow: hidden; z-index: -1;
@@ -118,7 +115,7 @@
 </div>
 
 <div class="wrap">
-  <h1>🎬 Cắt Nhạc & Dựng Video HD (AI Theo Cốt Truyện Chống Trùng)</h1>
+  <h1>🎬 Cắt Nhạc & Dựng Video HD (Xuất Siêu Nhanh + AI Theo Cốt Truyện)</h1>
 
   <div class="draft-bar">
     <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
@@ -243,8 +240,8 @@
       <div>
         <label>Tốc độ khung hình (FPS)</label>
         <select id="fpsSelect">
-          <option value="30" selected>30 FPS (Nhanh gấp đôi)</option>
-          <option value="60">60 FPS (Mượt nhưng chậm hơn)</option>
+          <option value="30" selected>30 FPS (Xuất nhanh nhất)</option>
+          <option value="60">60 FPS (Mượt nhưng lâu hơn)</option>
         </select>
       </div>
       <div>
@@ -262,7 +259,7 @@
     <div class="status" id="statusText"></div>
   </div>
 
-  <!-- 3. XEM TRƯỚC + BẢNG TỪNG PHÁCH -->
+  <!-- 3. XEM TRƯỚC + BẢNG TỪNG PHÁCH (GỌN GÀNG, BỎ XUẤT LẺ) -->
   <div class="card" id="editorCard" style="display:none;">
     <div class="stage-wrap">
       <canvas id="previewCanvas" width="720" height="1280"></canvas>
@@ -273,36 +270,34 @@
     <button class="gold" id="aiGeminiAllBtn">🧠 AI Gemini Tự Chọn Hết Các Phách (Đúng Mạch Truyện & Không Trùng)</button>
     <div class="status" id="aiAllStatus"></div>
 
-    <div class="chk-row">
-      <input type="checkbox" id="chkHookOnSingle" checked />
-      <span>Gắn chữ Hook lên video phách đầu khi xuất lẻ (nếu đã nạp video thật)</span>
-    </div>
-
     <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini từng phách — Tự tránh trùng giây):</label>
     <div id="beatsContainer"></div>
   </div>
 
-  <!-- 4. XUẤT HÀNG LOẠT HOẶC XUẤT GỘP -->
+  <!-- 4. XUẤT GỘP 1 FILE DUY NHẤT + TIẾN TRÌNH CHI TIẾT -->
   <div class="card" id="exportCard" style="display:none;">
-    <div class="row">
-      <button class="purple" id="exportAllZipBtn">📦 Xuất Từng Phách Rời (01..N + Nhạc .ZIP)</button>
-      <button class="green" id="exportFinalBtn">🚀 Xuất Gộp Thành 1 Video (.MP4 Có Nhạc)</button>
-    </div>
+    <button class="green" id="exportFinalBtn" style="font-size:16px;padding:14px;">🚀 Xuất Gộp Thành 1 Video Hoàn Chỉnh (.MP4 Có Nhạc)</button>
 
-    <!-- THANH TIẾN TRÌNH RÕ RÀNG KHI ĐANG XUẤT -->
+    <!-- TIẾN TRÌNH CHẠY CẮT VIDEO & GỘP RENDER % -->
     <div class="progress-box" id="exportProgressBox">
       <div class="progress-top">
-        <span id="exportProgressLabel">⏳ Đang xử lý...</span>
+        <span id="exportProgressLabel">⏳ Đang khởi động...</span>
         <span id="exportProgressPct">0%</span>
       </div>
       <div class="progress-track"><div class="progress-fill" id="exportProgressFill"></div></div>
-      <div class="progress-sub" id="exportProgressSub">Vui lòng giữ màn hình sáng, không thoát Safari trong lúc ghép video...</div>
+      <div class="step-list">
+        <div class="step-item" id="stepCutEl">✂️ Bước 1 (Cắt từng phách): Chờ xử lý...</div>
+        <div class="step-item" id="stepRenderEl">🎬 Bước 2 (Gộp & Render khung hình): 0%</div>
+        <div class="step-item" id="stepAudioEl">🎵 Bước 3 (Ghép âm thanh AAC & đóng gói MP4): Chờ...</div>
+      </div>
+      <div class="progress-sub" id="exportProgressSub">Xin giữ màn hình sáng trong lúc xuất video...</div>
     </div>
+
     <div class="status" id="exportStatus" style="margin-top:8px;"></div>
 
     <div class="row" id="saveButtonsBox" style="display:none;margin-top:8px;">
-      <button class="green" id="saveIphonePhotosBtn">📱 Lưu Video Gộp Vào Ảnh iPhone</button>
-      <button id="downloadMp4Btn">⬇️ Tải Video Gộp (.MP4)</button>
+      <button class="green" id="saveIphonePhotosBtn">📱 Lưu Video Vào Ảnh iPhone</button>
+      <button id="downloadMp4Btn">⬇️ Tải Video (.MP4)</button>
     </div>
   </div>
 </div>
@@ -332,27 +327,21 @@
   window.clearField = function (id, saveKey = false) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.value = '';
-    el.focus();
+    el.value = ''; el.focus();
     if (saveKey && id === 'geminiKeyInput') localStorage.removeItem('catamthanh_gemini_key');
     if (saveKey && id === 'storyContextInput') localStorage.removeItem('catamthanh_story_ctx');
     scheduleAutoSave();
   };
   window.setStory = function (txt) {
     const el = document.getElementById('storyContextInput');
-    el.value = txt;
-    localStorage.setItem('catamthanh_story_ctx', txt);
-    scheduleAutoSave();
+    el.value = txt; localStorage.setItem('catamthanh_story_ctx', txt); scheduleAutoSave();
   };
   window.setTopic = function (txt) {
-    document.getElementById('topicInput').value = txt;
-    document.getElementById('aiFillBtn').click();
+    document.getElementById('topicInput').value = txt; document.getElementById('aiFillBtn').click();
   };
   document.getElementById('pasteTkBtn').addEventListener('click', async () => {
-    try {
-      const txt = await navigator.clipboard.readText();
-      if (txt) document.getElementById('tkUrlInput').value = txt.trim();
-    } catch { alert('Hãy chạm vào ô Link rồi bấm Dán nhé!'); }
+    try { const txt = await navigator.clipboard.readText(); if (txt) document.getElementById('tkUrlInput').value = txt.trim(); }
+    catch { alert('Hãy chạm vào ô Link rồi bấm Dán nhé!'); }
   });
 
   // --- GEMINI API KEY ---
@@ -366,10 +355,7 @@
 
   geminiKeyInput.addEventListener('input', () => localStorage.setItem('catamthanh_gemini_key', geminiKeyInput.value.trim()));
   geminiModelSelect.addEventListener('change', () => localStorage.setItem('catamthanh_gemini_model', geminiModelSelect.value));
-  storyContextInput.addEventListener('input', () => {
-    localStorage.setItem('catamthanh_story_ctx', storyContextInput.value);
-    scheduleAutoSave();
-  });
+  storyContextInput.addEventListener('input', () => { localStorage.setItem('catamthanh_story_ctx', storyContextInput.value); scheduleAutoSave(); });
   document.getElementById('toggleKeyBtn').addEventListener('click', () => {
     geminiKeyInput.type = geminiKeyInput.type === 'password' ? 'text' : 'password';
   });
@@ -430,8 +416,8 @@
         beatDensity: currentBeatDensity,
         planMeta: plan.map(s => ({
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
-          energy: s.energy || 0.5, isHook: s.isHook, fileName: s.fileName,
-          trimStart: s.trimStart, hasPicked: !!s.hasPicked, customVideo: !!s.customVideo,
+          energy: s.energy || 0.5, isHook: s.isHook, trimStart: s.trimStart,
+          hasPicked: !!s.hasPicked, customVideo: !!s.customVideo,
           blobKey: s.blobKey || null, beatNote: s.beatNote || '', aiReason: s.aiReason || ''
         }))
       };
@@ -479,7 +465,7 @@
       if (draft.planMeta && draft.planMeta.length) {
         wavBlob = encodeWAV(decodedBuffer);
         audioPlayer.src = URL.createObjectURL(wavBlob);
-        plan = draft.planMeta.map(m => ({ ...m, thumbCanvas: null, mp4Blob: null }));
+        plan = draft.planMeta.map(m => ({ ...m, thumbCanvas: null }));
         renderBeatsUI();
         document.getElementById('editorCard').style.display = 'block';
         document.getElementById('exportCard').style.display = 'block';
@@ -502,7 +488,7 @@
     location.reload();
   });
 
-  // --- MẪU CHỮ HOOK (CÓ NÚT XÓA NHANH X Ở MỖI Ô) ---
+  // --- MẪU CHỮ HOOK ---
   function initTemplates() {
     const list = window.HOOK_TEMPLATES || [];
     templateSelect.innerHTML = list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
@@ -715,21 +701,10 @@
       let segSum = 0; for (let k = i0; k < Math.min(i1, e.length); k++) segSum += e[k];
       res.push({
         idx: i + 1, numStr, start, end, dur, energy: (segSum / Math.max(1, i1 - i0)) / (meanE || 1), isHook,
-        fileName: `${numStr}_PHACH_${isHook ? 'HOOK' : 'NHIP'}_${dur.toFixed(2)}s.mp4`,
-        blobKey: null, trimStart: 0, hasPicked: false, customVideo: false, beatNote: '', aiReason: '', thumbCanvas: null, mp4Blob: null
+        blobKey: null, trimStart: 0, hasPicked: false, customVideo: false, beatNote: '', aiReason: '', thumbCanvas: null
       });
     }
     return res;
-  }
-
-  function unlockVideoImmediate(v) {
-    if (!v || v._unlocked) return Promise.resolve();
-    v.muted = true; v.playsInline = true;
-    try {
-      const p = v.play();
-      if (p && p.then) return p.then(() => { v.pause(); v._unlocked = true; }).catch(() => {});
-    } catch {}
-    return Promise.resolve();
   }
 
   async function ensureVideoReady(video) {
@@ -744,7 +719,6 @@
     });
   }
 
-  // fastMode = true khi xuất video (bỏ chờ requestAnimationFrame 16.6ms mỗi frame -> xuất nhanh hơn hẳn!)
   async function seekVideo(video, targetTime, fastMode = false) {
     if (!video || !video.src) return;
     await ensureVideoReady(video);
@@ -773,82 +747,80 @@
     return true;
   }
 
+  // Trích mẫu ảnh siêu nhanh bằng Mediabunny VideoSampleSink (fallback về <video> nếu cần)
+  async function extractSamplesFast(blobKey, count, W, H, jpegQuality) {
+    try {
+      const MB = await getMediabunny();
+      const input = new MB.Input({ formats: MB.ALL_FORMATS, source: new MB.BlobSource(blobStore[blobKey]) });
+      try {
+        const track = await input.getPrimaryVideoTrack();
+        if (track && await track.canDecode()) {
+          const dur = await input.computeDuration() || 10;
+          videoDurationCache[blobKey] = dur;
+          const sink = new MB.VideoSampleSink(track);
+          const timestamps = [];
+          for (let i = 0; i < count; i++) timestamps.push(Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2)));
+          const c = document.createElement('canvas'); c.width = W; c.height = H;
+          const cctx = c.getContext('2d', { willReadFrequently: true });
+          const results = [];
+          let idx = 0;
+          for await (const sample of sink.samplesAtTimestamps(timestamps)) {
+            const t = timestamps[idx++];
+            if (sample) {
+              const sw = sample.displayWidth, sh = sample.displayHeight;
+              const sc = Math.max(W / sw, H / sh);
+              sample.draw(cctx, (W - sw * sc) / 2, (H - sh * sc) / 2, sw * sc, sh * sc);
+              sample.close();
+            }
+            results.push({ t, canvas: c, cctx, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
+          }
+          if (results.length > 0) return { dur, results };
+        }
+      } finally { input.dispose(); }
+    } catch {}
+
+    // Fallback về thẻ <video> nếu thiết bị chưa hỗ trợ VideoDecoder
+    scannerVideo.src = getBlobUrl(blobKey);
+    await ensureVideoReady(scannerVideo);
+    const dur = scannerVideo.duration || 10;
+    videoDurationCache[blobKey] = dur;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const cctx = c.getContext('2d', { willReadFrequently: true });
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const t = Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2));
+      await seekVideo(scannerVideo, t, false);
+      drawCover(cctx, scannerVideo, W, H);
+      results.push({ t, canvas: c, cctx, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
+    }
+    scannerVideo.pause(); scannerVideo.removeAttribute('src'); scannerVideo.load();
+    return { dur, results };
+  }
+
   function enqueueScanStrip(blobKey) {
     scanQueue = scanQueue.then(async () => {
       if (!blobKey || !blobStore[blobKey]) return [];
       if (stripCache[blobKey]) return stripCache[blobKey];
-
-      scannerVideo.src = getBlobUrl(blobKey);
-      await ensureVideoReady(scannerVideo);
-      const dur = scannerVideo.duration || 1;
-      videoDurationCache[blobKey] = dur;
-
-      // Lấy 8-10 mốc cho video dài để có nhiều góc không bị trùng nhau!
-      const count = dur >= 18 ? 10 : 7;
-      const W = 108, H = 192;
-      const sc = document.createElement('canvas'); sc.width = W; sc.height = H;
-      const sctx = sc.getContext('2d', { willReadFrequently: true });
-      const items = [];
-
-      for (let i = 0; i < count; i++) {
-        const t = Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2));
-        await seekVideo(scannerVideo, t, false);
-        drawCover(sctx, scannerVideo, W, H);
-
-        const img = sctx.getImageData(0, 0, W, H).data;
-        let lumSum = 0, edgeSum = 0;
-        for (let y = 0; y < H; y += 3) {
-          for (let x = 0; x < W; x += 3) {
-            const p = (y * W + x) * 4;
-            const lum = 0.299 * img[p] + 0.587 * img[p + 1] + 0.114 * img[p + 2];
-            lumSum += lum;
-            if (x + 3 < W) {
-              const pr = p + 12;
-              edgeSum += Math.abs(lum - (0.299 * img[pr] + 0.587 * img[pr + 1] + 0.114 * img[pr + 2]));
-            }
-          }
-        }
-        const px = (W / 3) * (H / 3), avgLum = (lumSum / px) / 255;
-        const sharp = Math.min(1, (edgeSum / px) / 28);
-        const lightOk = (avgLum < 0.15 || avgLum > 0.92) ? 0.2 : 1.0;
-
-        items.push({ t, dataUrl: sc.toDataURL('image/jpeg', 0.65), score0d: sharp * 0.7 + lightOk * 0.3 });
-      }
-      scannerVideo.pause(); scannerVideo.removeAttribute('src'); scannerVideo.load();
+      const count = 8, W = 108, H = 192;
+      const { results } = await extractSamplesFast(blobKey, count, W, H, 0.65);
+      const items = results.map((r, i) => ({ t: r.t, dataUrl: r.dataUrl, score0d: i === 0 ? 0.6 : 0.8 }));
       stripCache[blobKey] = items;
       return items;
     }).catch(() => []);
     return scanQueue;
   }
 
-  // Đệm ảnh <=384px gửi Gemini (quét 1 lần dùng chung cho mọi phách dùng cùng video)
   async function getFramesForGemini(blobKey) {
     if (geminiCache[blobKey]) return geminiCache[blobKey];
     return await (scanQueue = scanQueue.then(async () => {
       if (geminiCache[blobKey]) return geminiCache[blobKey];
-      scannerVideo.src = getBlobUrl(blobKey);
-      await ensureVideoReady(scannerVideo);
-      const dur = scannerVideo.duration || 10;
-      videoDurationCache[blobKey] = dur;
-      const count = dur >= 18 ? 10 : 7;
-      const W = 216, H = 384;
-      const c = document.createElement('canvas'); c.width = W; c.height = H;
-      const cctx = c.getContext('2d');
-      const frames = [];
-
-      for (let i = 0; i < count; i++) {
-        const t = Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2));
-        await seekVideo(scannerVideo, t, false);
-        drawCover(cctx, scannerVideo, W, H);
-        frames.push({ idx: i, t, b64: c.toDataURL('image/jpeg', 0.72).split(',')[1] });
-      }
-      scannerVideo.pause(); scannerVideo.removeAttribute('src'); scannerVideo.load();
+      const { results } = await extractSamplesFast(blobKey, 10, 216, 384, 0.72);
+      const frames = results.map((r, idx) => ({ idx, t: r.t, b64: r.dataUrl.split(',')[1] }));
       geminiCache[blobKey] = frames;
       return frames;
     }));
   }
 
-  // GEMINI CHỌN CẢNH THEO CỐT TRUYỆN + LOẠI BỎ CÁC ĐOẠN ĐÃ DÙNG Ở PHÁCH KHÁC!
   async function askGeminiPickClip(seg) {
     const apiKey = geminiKeyInput.value.trim();
     if (!apiKey) throw new Error('Bạn chưa dán Gemini API Key ở mục đầu trang!');
@@ -858,24 +830,15 @@
     const dur = videoDurationCache[seg.blobKey] || 10;
     const maxStart = Math.max(0.1, dur - seg.dur);
 
-    // Lấy danh sách các đoạn đã chọn ở những phách khác dùng chung video này
     const usedBeats = plan
       .filter(s => s.idx !== seg.idx && s.blobKey === seg.blobKey && s.hasPicked)
-      .map(s => ({ idx: s.idx, t: s.trimStart, end: s.trimStart + s.dur, reason: s.aiReason || '' }));
+      .map(s => ({ idx: s.idx, t: s.trimStart, reason: s.aiReason || '' }));
 
-    // Lọc ra các ảnh CHƯA BỊ TRÙNG (cách các đoạn đã dùng tối thiểu 1.6s hoặc độ dài phách)
     const minSep = Math.max(1.6, seg.dur);
-    let candidateFrames = allFrames.filter(f => {
-      const clampedT = Math.min(maxStart, f.t);
-      return !usedBeats.some(u => Math.abs(u.t - clampedT) < minSep);
-    });
-
-    // Nếu video ngắn dùng hết các đoạn rồi thì lọc ít nhất không trùng phách liền kề trước đó
+    let candidateFrames = allFrames.filter(f => !usedBeats.some(u => Math.abs(u.t - Math.min(maxStart, f.t)) < minSep));
     if (candidateFrames.length === 0) {
       const prevBeat = plan.find(s => s.idx === seg.idx - 1 && s.blobKey === seg.blobKey);
-      candidateFrames = prevBeat
-        ? allFrames.filter(f => Math.abs(Math.min(maxStart, f.t) - prevBeat.trimStart) >= 1.2)
-        : allFrames;
+      candidateFrames = prevBeat ? allFrames.filter(f => Math.abs(Math.min(maxStart, f.t) - prevBeat.trimStart) >= 1.2) : allFrames;
       if (candidateFrames.length === 0) candidateFrames = allFrames;
     }
 
@@ -883,45 +846,31 @@
     const story = storyContextInput.value.trim();
     const note = seg.beatNote ? seg.beatNote.trim() : '';
     const progressPct = Math.round((seg.idx / plan.length) * 100);
-
-    const usedDesc = usedBeats.length
-      ? usedBeats.map(u => `- Phách ${u.idx}: đã lấy giây ${u.t.toFixed(1)}s (${u.reason || 'đã dùng'})`).join('\n')
-      : 'Chưa có phách nào chọn trước đó.';
-
+    const usedDesc = usedBeats.length ? usedBeats.map(u => `- Phách ${u.idx}: giây ${u.t.toFixed(1)}s (${u.reason})`).join('\n') : 'Chưa có.';
     const timeMapStr = candidateFrames.map((f, pos) => `Ảnh ${pos}: giây ${Math.min(maxStart, f.t).toFixed(1)}s`).join(', ');
 
-    const prompt = `Bạn là đạo diễn dựng video TikTok chuyên nghiệp.
-Cốt truyện tổng thể: "${story || 'Giới thiệu sản phẩm/quán'}".
-Hiện tại bạn đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (đang ở khoảng ${progressPct}% mạch câu chuyện; thời lượng phách: ${seg.dur.toFixed(2)}s; vai trò: ${seg.isHook ? 'Mở đầu 3s đầu thu hút' : 'Diễn biến tiếp theo'}).
-${note ? `Yêu cầu riêng của phách này: "${note}".` : ''}
-
-CÁC PHÁCH KHÁC ĐÃ CHỌN (BẮT BUỘC TRÁNH TRÙNG LẶP):
+    const prompt = `Bạn là đạo diễn dựng video TikTok.
+Cốt truyện tổng thể: "${story || 'Giới thiệu quán'}".
+Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu 3s đầu' : 'Diễn biến tiếp theo'}).
+${note ? `Yêu cầu riêng: "${note}".` : ''}
+CÁC PHÁCH KHÁC ĐÃ CHỌN (TRÁNH TRÙNG):
 ${usedDesc}
-
-Dưới đây là ${candidateFrames.length} ảnh ứng viên MỚI chưa trùng lặp (${timeMapStr}).
-Hãy chọn ĐÚNG 1 ảnh tiếp nối hợp lý nhất với mạch câu chuyện ở vị trí ${progressPct}% và rõ nét.
-Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ngắn dưới 14 chữ bằng tiếng Việt"}`;
+Các ảnh ứng viên MỚI (${timeMapStr}). Hãy chọn ĐÚNG 1 ảnh tiếp nối hợp mạch truyện nhất và rõ nét.
+Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ tiếng Việt"}`;
 
     const parts = candidateFrames.map(f => ({ inline_data: { mime_type: 'image/jpeg', data: f.b64 } }));
     parts.push({ text: prompt });
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: { temperature: 0.2, responseMimeType: 'application/json' }
-      })
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json' } })
     });
-
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || 'Lỗi kết nối Gemini API.');
 
     const parsed = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
     const pos = Math.max(0, Math.min(candidateFrames.length - 1, parseInt(parsed.choicePos, 10) || 0));
-    const chosenT = Number(Math.min(maxStart, candidateFrames[pos].t).toFixed(2));
-    return { t: chosenT, reason: parsed.reason || 'Cảnh mới tiếp nối cốt truyện.' };
+    return { t: Number(Math.min(maxStart, candidateFrames[pos].t).toFixed(2)), reason: parsed.reason || 'Cảnh mới tiếp nối cốt truyện.' };
   }
 
   function applySharedVideosToPlan() {
@@ -949,9 +898,6 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
     c.fillStyle = '#FFFFFF';
     c.font = `800 ${Math.round(42 * sc)}px "Be Vietnam Pro", sans-serif`;
     c.fillText(`${seg.dur.toFixed(2)} giây`, W / 2, H * 0.57);
-    c.fillStyle = '#1e293b'; c.fillRect(80 * sc, H * 0.80, W - 160 * sc, 18 * sc);
-    c.fillStyle = seg.isHook ? '#ef4444' : '#10b981';
-    c.fillRect(80 * sc, H * 0.80, (W - 160 * sc) * Math.min(1, (fLocal + 1) / Math.max(1, totalFrames)), 18 * sc);
   }
 
   function drawCover(ctx, video, W, H) {
@@ -966,9 +912,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
     if (strip && strip.length) {
       let nearest = strip[0];
       strip.forEach(it => { if (Math.abs(it.t - seg.trimStart) < Math.abs(nearest.t - seg.trimStart)) nearest = it; });
-      const im = new Image();
-      im.onload = () => tc.drawImage(im, 0, 0, 156, 276);
-      im.src = nearest.dataUrl;
+      const im = new Image(); im.onload = () => tc.drawImage(im, 0, 0, 156, 276); im.src = nearest.dataUrl;
     } else drawBlackPlaceholder(tc, seg, 0, 30, 156, 276);
   }
 
@@ -1018,10 +962,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
       playOneBtn.className = 'small-btn'; playOneBtn.textContent = '👁️ Xem Phách';
       playOneBtn.onclick = () => playSingleBeat(seg);
 
-      const exportOneBtn = document.createElement('button');
-      exportOneBtn.className = 'small-btn purple'; exportOneBtn.textContent = '🎬 Xuất Phách';
-
-      btnGroup.append(pickBtn, clearBtn, playOneBtn, exportOneBtn);
+      btnGroup.append(pickBtn, clearBtn, playOneBtn);
 
       const rangeLabel = document.createElement('label');
       const slider = document.createElement('input');
@@ -1031,7 +972,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
       slider.value = seg.trimStart;
       rangeLabel.textContent = seg.blobKey
         ? `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`
-        : 'Đang dùng: Video Nền Đen đánh số phách';
+        : 'Đang dùng: Video Nền Đen';
 
       const stripWrap = document.createElement('div'); stripWrap.className = 'strip-wrap';
       const aiRow = document.createElement('div'); aiRow.className = 'ai-note-row';
@@ -1055,7 +996,6 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
       aiBtnGroup.append(zeroAiBtn, geminiBtn);
       aiRow.append(noteWrap, aiBtnGroup);
 
-      // Chip gợi ý bối cảnh nhanh 1 chạm cho từng phách
       const noteChips = document.createElement('div'); noteChips.className = 'chips-row';
       noteChips.style.marginTop = '6px';
       const quickNotes = seg.isHook ? ['Mở đầu thu hút', 'Toàn cảnh quán'] : ['Thao tác pha chế', 'Cận cảnh món', 'Thành phẩm / Cười'];
@@ -1069,20 +1009,14 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
       const reasonBox = document.createElement('div'); reasonBox.className = 'ai-reason';
       reasonBox.textContent = seg.aiReason || '';
 
-      const oneStatus = document.createElement('div');
-      oneStatus.style.cssText = 'font-size:12px;color:#34d399;margin-top:4px;';
-      const saveBar = document.createElement('div'); saveBar.className = 'beat-save-bar';
-
       function syncBeatUiAfterPick() {
         const maxStart = Math.max(0, (videoDurationCache[seg.blobKey] || 10) - seg.dur);
-        slider.max = maxStart.toFixed(2);
-        slider.value = seg.trimStart;
+        slider.max = maxStart.toFixed(2); slider.value = seg.trimStart;
         rangeLabel.textContent = `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
         reasonBox.textContent = seg.aiReason || '';
         highlightStripNearest(stripWrap, seg.trimStart, maxStart);
         drawThumbFromStripOrBlack(seg);
       }
-      seg._syncUi = syncBeatUiAfterPick;
 
       async function populateStrip() {
         stripWrap.innerHTML = '';
@@ -1098,12 +1032,10 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
         items.forEach(it => {
           const itemT = Math.min(maxStart, it.t);
           const div = document.createElement('div');
-          div.className = 'strip-item';
-          div.dataset.time = itemT.toFixed(2);
+          div.className = 'strip-item'; div.dataset.time = itemT.toFixed(2);
           div.innerHTML = `<img src="${it.dataUrl}" /><span class="strip-time">${itemT.toFixed(1)}s</span>`;
           div.onclick = async () => {
-            seg.trimStart = Number(itemT.toFixed(2));
-            seg.hasPicked = true;
+            seg.trimStart = Number(itemT.toFixed(2)); seg.hasPicked = true;
             syncBeatUiAfterPick();
             await loadStageVideoKey(seg.blobKey, seg.trimStart);
             renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
@@ -1127,7 +1059,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
 
       clearBtn.onclick = () => {
         seg.blobKey = null; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false; seg.aiReason = '';
-        reasonBox.textContent = ''; rangeLabel.textContent = 'Đang dùng: Video Nền Đen đánh số phách';
+        reasonBox.textContent = ''; rangeLabel.textContent = 'Đang dùng: Video Nền Đen';
         stripWrap.innerHTML = ''; drawThumbFromStripOrBlack(seg);
         renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, null);
         scheduleAutoSave();
@@ -1141,12 +1073,10 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
         const used = plan.filter(s => s.idx !== seg.idx && s.blobKey === seg.blobKey && s.hasPicked).map(s => s.trimStart);
         const unused = items.filter(it => !used.some(ut => Math.abs(ut - Math.min(maxStart, it.t)) < 1.3));
         const pool = unused.length ? unused : items;
-        let best = pool[0];
-        pool.forEach(it => { if (it.score0d > best.score0d) best = it; });
-
-        seg.trimStart = Number(Math.min(maxStart, best.t).toFixed(2));
+        const chosen = pool[seg.idx % pool.length];
+        seg.trimStart = Number(Math.min(maxStart, chosen.t).toFixed(2));
         seg.hasPicked = true;
-        seg.aiReason = `⚡ 0đ: Chọn giây ${seg.trimStart.toFixed(1)}s (sáng nét & không trùng)`;
+        seg.aiReason = `⚡ 0đ: Chọn giây ${seg.trimStart.toFixed(1)}s (không trùng)`;
         syncBeatUiAfterPick();
         await loadStageVideoKey(seg.blobKey, seg.trimStart);
         renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
@@ -1158,8 +1088,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
         reasonBox.textContent = '🧠 Gemini đang đọc cốt truyện & tránh đoạn đã dùng...';
         try {
           const ans = await askGeminiPickClip(seg);
-          seg.trimStart = ans.t;
-          seg.hasPicked = true;
+          seg.trimStart = ans.t; seg.hasPicked = true;
           seg.aiReason = `🤖 Gemini (${ans.t.toFixed(1)}s): ${ans.reason}`;
           syncBeatUiAfterPick();
           await loadStageVideoKey(seg.blobKey, seg.trimStart);
@@ -1173,8 +1102,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
 
       let isSliding = false;
       slider.oninput = async () => {
-        seg.trimStart = parseFloat(slider.value);
-        seg.hasPicked = true;
+        seg.trimStart = parseFloat(slider.value); seg.hasPicked = true;
         const maxStart = Math.max(0, (videoDurationCache[seg.blobKey] || 10) - seg.dur);
         rangeLabel.textContent = `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
         highlightStripNearest(stripWrap, seg.trimStart, maxStart);
@@ -1188,80 +1116,61 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
         isSliding = false;
       };
 
-      exportOneBtn.onclick = async () => {
-        exportOneBtn.disabled = true;
-        oneStatus.textContent = `⏳ Đang xuất ${seg.fileName}...`;
-        try {
-          if (seg.blobKey) await unlockVideoImmediate(exportVideo);
-          const fps = getExportFps(), totalF = Math.max(2, Math.round(seg.dur * fps));
-          const blob = await exportViaMediabunny(totalF, seg.start, seg.end, (f) => ({
-            seg, fLocal: f, totalLocal: totalF, singleOverride: true, includeHook: document.getElementById('chkHookOnSingle').checked
-          }), (pct) => { oneStatus.textContent = `⏳ Đang xuất Phách ${seg.numStr}: ${pct}%`; });
-          seg.mp4Blob = blob; saveBar.innerHTML = ''; saveBar.style.display = 'flex';
-          const iosBtn = document.createElement('button');
-          iosBtn.className = 'small-btn green'; iosBtn.textContent = '📱 Lưu Vào Ảnh iPhone';
-          iosBtn.onclick = () => shareToIphonePhotos(blob, seg.fileName);
-          const dlBtn = document.createElement('button');
-          dlBtn.className = 'small-btn'; dlBtn.textContent = `⬇️ Tải ${seg.fileName}`;
-          dlBtn.onclick = () => triggerDownload(blob, seg.fileName);
-          saveBar.append(iosBtn, dlBtn);
-          oneStatus.textContent = `✅ Đã xuất Phách ${seg.numStr} (${fps}fps + Có âm thanh)!`;
-        } catch (err) { oneStatus.textContent = '❌ Lỗi: ' + err.message; }
-        finally { exportOneBtn.disabled = false; }
-      };
-
       right.append(btnGroup, pickInput, rangeLabel, slider);
       top.append(thumb, right);
-      card.append(top, stripWrap, aiRow, noteChips, reasonBox, oneStatus, saveBar);
+      card.append(top, stripWrap, aiRow, noteChips, reasonBox);
       box.appendChild(card);
 
       populateStrip();
     });
   }
 
-  // NÚT CHẠY GEMINI TUẦN TỰ TỪ PHÁCH 01 -> HẾT (KHÔNG TRÙNG NHAU)
   document.getElementById('aiGeminiAllBtn').addEventListener('click', async () => {
     if (!geminiKeyInput.value.trim()) return alert('Bạn chưa dán Gemini API Key ở mục trên cùng!');
-    const btn = document.getElementById('aiGeminiAllBtn');
-    const st = document.getElementById('aiAllStatus');
+    const btn = document.getElementById('aiGeminiAllBtn'), st = document.getElementById('aiAllStatus');
     btn.disabled = true;
     try {
-      // Đặt lại trạng thái để xếp mạch mới từ đầu
       plan.forEach(s => { if (s.blobKey) s.hasPicked = false; });
       for (let i = 0; i < plan.length; i++) {
         const seg = plan[i];
         if (!seg.blobKey || !seg._runGemini) continue;
-        st.textContent = `🧠 Gemini đang xếp Phách ${seg.numStr}/${plan.length} theo đúng mạch truyện...`;
+        st.textContent = `🧠 Gemini đang xếp Phách ${seg.numStr}/${plan.length} theo mạch truyện...`;
         await seg._runGemini();
       }
-      st.textContent = '✅ Gemini đã xếp xong toàn bộ các phách liên kết mạch truyện & không trùng cảnh!';
+      st.textContent = '✅ Gemini đã xếp xong toàn bộ các phách liên kết mạch truyện!';
     } finally { btn.disabled = false; }
   });
 
-  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, includeHookText, videoSourceEl) {
+  // Vẽ 1 khung hình tổng hợp (dùng chung cho cả Preview & Fast Export Sample!)
+  function drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, drawFn) {
     const tpl = getCurrentTemplate();
-    let seg = singleSegOverride || plan[0];
-    if (!singleSegOverride) for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
-
-    if (!seg.blobKey || !videoSourceEl || !videoSourceEl.videoWidth) {
+    if (!seg.blobKey || !drawFn) {
       drawBlackPlaceholder(ctx, seg, fLocal, totalLocal, W, H);
       return;
     }
-
     const dt = Math.max(0, t - seg.start), pulse = dt < 0.22 ? (1 - dt / 0.22) : 0;
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     ctx.save();
     if (tpl.bwFirst3s && seg.isHook) ctx.filter = `grayscale(100%) brightness(${0.7 + pulse * 0.6})`;
-    else ctx.filter = `brightness(${1 + pulse * 0.14})`;
-    const zoom = 1 + pulse * 0.06;
+    const zoom = 1 + pulse * 0.055;
     ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
-    drawCover(ctx, videoSourceEl, W, H);
+    drawFn(ctx, W, H);
     ctx.restore();
 
-    if (includeHookText) {
-      const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
-      tpl.render(ctx, t, W, H, getHookData(), hookTotal);
+    if (pulse > 0.05 && !(tpl.bwFirst3s && seg.isHook)) {
+      ctx.fillStyle = `rgba(255,255,255,${(pulse * 0.14).toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
     }
+
+    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
+    tpl.render(ctx, t, W, H, getHookData(), hookTotal);
+  }
+
+  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, includeHookText, videoSourceEl) {
+    let seg = singleSegOverride || plan[0];
+    if (!singleSegOverride) for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
+    const hasVid = seg.blobKey && videoSourceEl && videoSourceEl.videoWidth > 0;
+    drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, hasVid ? (c, w, h) => drawCover(c, videoSourceEl, w, h) : null);
   }
 
   function drawMainPreview(t) {
@@ -1270,10 +1179,8 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
 
   async function playSingleBeat(seg) {
     activeSingleSeg = seg; lastPlayingIdx = seg.idx;
-    if (seg.blobKey) {
-      await loadStageVideoKey(seg.blobKey, seg.trimStart);
-      sharedStageVideo.play().catch(() => {});
-    } else sharedStageVideo.pause();
+    if (seg.blobKey) { await loadStageVideoKey(seg.blobKey, seg.trimStart); sharedStageVideo.play().catch(() => {}); }
+    else sharedStageVideo.pause();
     audioPlayer.currentTime = seg.start; audioPlayer.play().catch(() => {});
     previewCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
     cancelAnimationFrame(animId); previewLoop();
@@ -1281,10 +1188,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
 
   document.getElementById('playAllBtn').addEventListener('click', async () => {
     activeSingleSeg = null; lastPlayingIdx = -1;
-    if (plan[0]?.blobKey) {
-      await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart);
-      sharedStageVideo.play().catch(() => {});
-    }
+    if (plan[0]?.blobKey) { await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart); sharedStageVideo.play().catch(() => {}); }
     audioPlayer.currentTime = 0; audioPlayer.play().catch(() => {});
     cancelAnimationFrame(animId); previewLoop();
   });
@@ -1296,8 +1200,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
       const t = audioPlayer.currentTime;
       if (activeSingleSeg) {
         if (!audioPlayer.seeking && t >= activeSingleSeg.end) {
-          audioPlayer.pause(); sharedStageVideo.pause();
-          activeSingleSeg = null; return;
+          audioPlayer.pause(); sharedStageVideo.pause(); activeSingleSeg = null; return;
         }
         if (activeSingleSeg.blobKey && sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
         renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * 30), Math.round(activeSingleSeg.dur * 30), true, activeSingleSeg.blobKey ? sharedStageVideo : null);
@@ -1311,10 +1214,7 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
               if (sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
             } else {
               switchingStage = true;
-              loadStageVideoKey(seg.blobKey, seg.trimStart + Math.max(0, t - seg.start)).then(() => {
-                sharedStageVideo.play().catch(() => {});
-                switchingStage = false;
-              });
+              loadStageVideoKey(seg.blobKey, seg.trimStart + Math.max(0, t - seg.start)).then(() => { sharedStageVideo.play().catch(() => {}); switchingStage = false; });
             }
           } else sharedStageVideo.pause();
         }
@@ -1337,135 +1237,220 @@ Trả về JSON đúng mẫu: {"choicePos": 0, "reason": "Giải thích cực ng
     return await off.startRendering();
   }
 
-  function showProgress(label, pct, sub = '') {
-    document.getElementById('exportProgressBox').style.display = 'block';
+  function updateExportProgressUI({ pct, label, cutText, cutState, renderText, renderState, audioText, audioState, sub }) {
+    const box = document.getElementById('exportProgressBox');
+    box.style.display = 'block';
     document.getElementById('exportProgressLabel').textContent = label;
     document.getElementById('exportProgressPct').textContent = `${pct}%`;
     document.getElementById('exportProgressFill').style.width = `${pct}%`;
     if (sub) document.getElementById('exportProgressSub').textContent = sub;
+
+    const cEl = document.getElementById('stepCutEl');
+    const rEl = document.getElementById('stepRenderEl');
+    const aEl = document.getElementById('stepAudioEl');
+    if (cutText) cEl.textContent = cutText;
+    if (cutState !== undefined) cEl.className = `step-item ${cutState}`;
+    if (renderText) rEl.textContent = renderText;
+    if (renderState !== undefined) rEl.className = `step-item ${renderState}`;
+    if (audioText) aEl.textContent = audioText;
+    if (audioState !== undefined) aEl.className = `step-item ${audioState}`;
   }
 
-  async function exportViaMediabunny(totalFrames, startSec, endSec, frameInfoFn, onProgress) {
-    await document.fonts.ready;
-    const MB = await getMediabunny();
-    const { W, H, bitrate, fps } = getQualitySpec();
-
-    const expCanvas = document.createElement('canvas'); expCanvas.width = W; expCanvas.height = H;
-    const eCtx = expCanvas.getContext('2d');
-
-    const output = new MB.Output({
-      format: new MB.Mp4OutputFormat({ metadataFormat: 'mdta' }),
-      target: new MB.BufferTarget(),
-    });
-
-    const metaOpt = document.getElementById('deviceMetaSelect').value;
-    if (metaOpt !== 'none') {
-      const [make, model, sw] = metaOpt.split('|'), now = new Date();
-      try {
-        output.setMetadataTags({
-          date: now, creationTime: now,
-          raw: {
-            'com.apple.quicktime.make': make, 'com.apple.quicktime.model': model,
-            'com.apple.quicktime.software': sw, 'com.apple.quicktime.creationdate': now.toISOString(),
-          }
-        });
-      } catch {}
-    }
-
-    const videoSource = new MB.CanvasSource(expCanvas, { codec: 'avc', bitrate });
-    output.addVideoTrack(videoSource, { frameRate: fps });
-
-    const audioSlice = await make48kStereoSlice(decodedBuffer, startSec, endSec);
-    const audioSource = new MB.AudioBufferSource({ codec: 'aac', bitrate: 128_000 });
-    output.addAudioTrack(audioSource);
-
-    await output.start();
-    sharedStageVideo.pause();
-    let activeExportBlobKey = null;
-
-    try {
-      for (let f = 0; f < totalFrames; f++) {
-        const info = frameInfoFn(f), seg = info.seg;
-        if (seg.blobKey && blobStore[seg.blobKey]) {
-          if (activeExportBlobKey !== seg.blobKey) {
-            activeExportBlobKey = seg.blobKey;
-            exportVideo.src = getBlobUrl(seg.blobKey);
-            await ensureVideoReady(exportVideo);
-          }
-          // fastMode = true -> bỏ rAF sleep mỗi frame để xuất nhanh hơn hẳn!
-          await seekVideo(exportVideo, seg.trimStart + (info.fLocal / fps), true);
-        }
-        renderCompositeFrame(eCtx, startSec + (f / fps), W, H, info.singleOverride ? seg : null, info.fLocal, info.totalLocal, info.includeHook, seg.blobKey ? exportVideo : null);
-        await videoSource.add(f / fps, 1 / fps);
-
-        if (onProgress && (f % 8 === 0 || f === totalFrames - 1)) {
-          onProgress(Math.round(((f + 1) / totalFrames) * 100), f + 1, totalFrames);
-          await new Promise(r => setTimeout(r, 0));
-        }
-      }
-
-      if (onProgress) onProgress(99, totalFrames, totalFrames, '🎵 Đang ghép âm thanh AAC...');
-      await audioSource.add(audioSlice);
-      await output.finalize();
-      return new Blob([output.target.buffer], { type: 'video/mp4' });
-    } finally {
-      exportVideo.pause(); exportVideo.removeAttribute('src'); exportVideo.load();
-    }
-  }
-
-  document.getElementById('exportAllZipBtn').addEventListener('click', async () => {
-    if (!plan.length || typeof JSZip === 'undefined') return;
-    const btn = document.getElementById('exportAllZipBtn'); btn.disabled = true;
-    try {
-      await unlockVideoImmediate(exportVideo);
-      const zip = new JSZip();
-      if (wavBlob) zip.file('00_NHAC_GOC_LIEN_MACH.wav', wavBlob);
-      const incHook = document.getElementById('chkHookOnSingle').checked, fps = getExportFps();
-      for (let i = 0; i < plan.length; i++) {
-        const seg = plan[i];
-        showProgress(`📦 Đang xuất Phách ${seg.numStr}/${plan.length}`, Math.round((i / plan.length) * 100), `Đang nén ${seg.fileName}...`);
-        const totalF = Math.max(2, Math.round(seg.dur * fps));
-        const blob = await exportViaMediabunny(totalF, seg.start, seg.end, (f) => ({
-          seg, fLocal: f, totalLocal: totalF, singleOverride: true, includeHook: incHook
-        }));
-        seg.mp4Blob = blob; zip.file(seg.fileName, blob);
-      }
-      showProgress('🗜️ Đang đóng gói file ZIP...', 99);
-      triggerDownload(await zip.generateAsync({ type: 'blob' }), 'BO_PHACH_CO_NHAC_CAPCUT.zip');
-      showProgress('✅ Hoàn tất xuất file ZIP!', 100, 'Tất cả phách rời đã được lưu.');
-      exportStatus.textContent = '🎉 Đã tải xong file BO_PHACH_CO_NHAC_CAPCUT.zip!';
-    } catch (err) { exportStatus.textContent = '❌ ' + err.message; }
-    finally { btn.disabled = false; }
-  });
-
+  // --- XUẤT GỘP SIÊU NHANH BẰNG HARDWARE DECODER (VideoSampleSink.samplesAtTimestamps) ---
   document.getElementById('exportFinalBtn').addEventListener('click', async () => {
     if (!plan.length || !decodedBuffer) return;
     const btn = document.getElementById('exportFinalBtn'); btn.disabled = true;
     document.getElementById('saveButtonsBox').style.display = 'none';
     exportStatus.textContent = '';
+
+    const inputCache = {}; // Cache Input theo blobKey trong suốt quá trình xuất rồi dispose sạch
+    const sinkCache = {};
+    const durCache = {};
+    let activeFallbackBlobKey = null;
+
     try {
-      await unlockVideoImmediate(exportVideo);
-      const fps = getExportFps(), beatRanges = []; let cumF = 0;
+      await document.fonts.ready;
+      const MB = await getMediabunny();
+      const { W, H, bitrate, fps } = getQualitySpec();
+
+      const beatRanges = []; let cumF = 0;
       plan.forEach(s => {
-        const fCount = Math.max(2, Math.round(s.dur * fps));
-        beatRanges.push({ seg: s, startF: cumF, endF: cumF + fCount, count: fCount });
-        cumF += fCount;
+        const count = Math.max(2, Math.round(s.dur * fps));
+        beatRanges.push({ seg: s, startF: cumF, endF: cumF + count, count });
+        cumF += count;
       });
       const totalFrames = cumF;
-      showProgress(`🚀 Đang chuẩn bị (${fps} FPS)...`, 1, `Tổng cộng ${totalFrames} khung hình cần xử lý`);
 
-      finalMp4Blob = await exportViaMediabunny(totalFrames, 0, totalFrames / fps, (f) => {
-        let br = beatRanges[0]; for (const r of beatRanges) if (f >= r.startF && f < r.endF) { br = r; break; }
-        return { seg: br.seg, fLocal: f - br.startF, totalLocal: br.count, singleOverride: false, includeHook: true };
-      }, (pct, curF, totF, customMsg) => {
-        showProgress(customMsg || `🚀 Đang ghép Video (${fps} FPS)`, pct, `Đang xử lý khung hình ${curF} / ${totF} — Xin giữ màn hình sáng`);
+      updateExportProgressUI({
+        pct: 2, label: `🚀 Đang khởi tạo (${W}×${H} • ${fps} FPS)`,
+        cutText: `✂️ Bước 1 (Cắt từng phách): Đang mở ${plan.length} phách video...`, cutState: 'active',
+        renderText: `🎬 Bước 2 (Gộp & Render khung hình): 0% (0/${totalFrames})`, renderState: '',
+        audioText: `🎵 Bước 3 (Ghép âm thanh AAC): Đang chuẩn bị...`, audioState: '',
+        sub: 'Đang dùng bộ giải mã phần cứng tốc độ cao...'
+      });
+      document.getElementById('exportProgressBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Chuẩn bị bộ giải mã phần cứng VideoSampleSink cho từng video khác nhau
+      const uniqueKeys = [...new Set(plan.map(s => s.blobKey).filter(Boolean))];
+      for (const k of uniqueKeys) {
+        try {
+          const inp = new MB.Input({ formats: MB.ALL_FORMATS, source: new MB.BlobSource(blobStore[k]) });
+          inputCache[k] = inp;
+          const vTrack = await inp.getPrimaryVideoTrack();
+          if (vTrack && await vTrack.canDecode()) {
+            sinkCache[k] = new MB.VideoSampleSink(vTrack);
+            durCache[k] = (await inp.computeDuration()) || 10;
+          }
+        } catch {}
+      }
+
+      const expCanvas = document.createElement('canvas'); expCanvas.width = W; expCanvas.height = H;
+      const eCtx = expCanvas.getContext('2d');
+      const fallbackFrameCanvas = document.createElement('canvas'); fallbackFrameCanvas.width = W; fallbackFrameCanvas.height = H;
+      const fbCtx = fallbackFrameCanvas.getContext('2d');
+
+      const output = new MB.Output({
+        format: new MB.Mp4OutputFormat({ metadataFormat: 'mdta' }),
+        target: new MB.BufferTarget(),
       });
 
-      showProgress('🎉 Hoàn tất 100%!', 100, 'Video đã sẵn sàng lưu vào Ảnh iPhone');
+      const metaOpt = document.getElementById('deviceMetaSelect').value;
+      if (metaOpt !== 'none') {
+        const [make, model, sw] = metaOpt.split('|'), now = new Date();
+        try {
+          output.setMetadataTags({
+            date: now, creationTime: now,
+            raw: {
+              'com.apple.quicktime.make': make, 'com.apple.quicktime.model': model,
+              'com.apple.quicktime.software': sw, 'com.apple.quicktime.creationdate': now.toISOString(),
+            }
+          });
+        } catch {}
+      }
+
+      const videoSource = new MB.CanvasSource(expCanvas, { codec: 'avc', bitrate });
+      output.addVideoTrack(videoSource, { frameRate: fps });
+
+      const audioSlice = await make48kStereoSlice(decodedBuffer, 0, totalFrames / fps);
+      const audioSource = new MB.AudioBufferSource({ codec: 'aac', bitrate: 128_000 });
+      output.addAudioTrack(audioSource);
+
+      await output.start();
+      sharedStageVideo.pause();
+
+      const tStart = performance.now();
+      let renderedFrames = 0;
+
+      // Xử lý tuần tự TỪNG PHÁCH -> VideoSampleSink giải mã thẳng mạch siêu nhanh!
+      for (let bIdx = 0; bIdx < beatRanges.length; bIdx++) {
+        const br = beatRanges[bIdx], seg = br.seg;
+        updateExportProgressUI({
+          pct: Math.max(5, Math.round((renderedFrames / totalFrames) * 92)),
+          label: `⚡ Đang cắt & gộp Phách ${seg.numStr}/${plan.length}`,
+          cutText: `✂️ Bước 1 (Cắt từng phách): Đang cắt Phách ${seg.numStr}/${plan.length} (${seg.dur.toFixed(2)}s)`,
+          cutState: 'active'
+        });
+
+        if (seg.blobKey && sinkCache[seg.blobKey]) {
+          const maxVidT = Math.max(0.05, (durCache[seg.blobKey] || 10) - 0.04);
+          const timestamps = [];
+          let lastT = 0;
+          for (let f = 0; f < br.count; f++) {
+            const tVal = Math.max(lastT, Math.min(maxVidT, seg.trimStart + (f / fps)));
+            lastT = tVal;
+            timestamps.push(tVal);
+          }
+
+          let fLocal = 0;
+          let hasValidFallback = false;
+          for await (const sample of sinkCache[seg.blobKey].samplesAtTimestamps(timestamps)) {
+            const globalF = br.startF + fLocal;
+            if (sample) {
+              try {
+                const sw = sample.displayWidth, sh = sample.displayHeight;
+                const sc = Math.max(W / sw, H / sh);
+                sample.draw(fbCtx, (W - sw * sc) / 2, (H - sh * sc) / 2, sw * sc, sh * sc);
+                hasValidFallback = true;
+              } finally { sample.close(); }
+            }
+
+            drawSourceToFrame(eCtx, seg, globalF / fps, W, H, fLocal, br.count,
+              hasValidFallback ? (c, w, h) => c.drawImage(fallbackFrameCanvas, 0, 0, w, h) : null);
+            await videoSource.add(globalF / fps, 1 / fps);
+
+            fLocal++; renderedFrames++;
+            if (renderedFrames % 10 === 0 || renderedFrames === totalFrames) {
+              const pct = Math.min(94, Math.round((renderedFrames / totalFrames) * 94));
+              const elapsedSec = (performance.now() - tStart) / 1000;
+              const speedFps = renderedFrames / Math.max(0.2, elapsedSec);
+              const etaSec = Math.max(0, Math.round((totalFrames - renderedFrames) / Math.max(1, speedFps)));
+              updateExportProgressUI({
+                pct,
+                label: `🎬 Đang gộp & render Video: ${pct}%`,
+                renderText: `🎬 Bước 2 (Gộp & Render): ${pct}% (${renderedFrames}/${totalFrames} khung • ~${Math.round(speedFps)} fps)`,
+                renderState: 'active',
+                sub: `Ước tính còn khoảng ${etaSec} giây — Xin giữ sáng màn hình...`
+              });
+              await new Promise(r => setTimeout(r, 0));
+            }
+          }
+        } else {
+          // Phách nền đen hoặc fallback <video>
+          for (let fLocal = 0; fLocal < br.count; fLocal++) {
+            const globalF = br.startF + fLocal;
+            if (seg.blobKey && blobStore[seg.blobKey]) {
+              if (activeFallbackBlobKey !== seg.blobKey) {
+                activeFallbackBlobKey = seg.blobKey;
+                exportVideo.src = getBlobUrl(seg.blobKey);
+                await ensureVideoReady(exportVideo);
+              }
+              await seekVideo(exportVideo, seg.trimStart + (fLocal / fps), true);
+            }
+            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, true, seg.blobKey ? exportVideo : null);
+            await videoSource.add(globalF / fps, 1 / fps);
+            renderedFrames++;
+
+            if (renderedFrames % 10 === 0 || renderedFrames === totalFrames) {
+              const pct = Math.min(94, Math.round((renderedFrames / totalFrames) * 94));
+              updateExportProgressUI({
+                pct, label: `🎬 Đang render: ${pct}%`,
+                renderText: `🎬 Bước 2 (Gộp & Render): ${pct}% (${renderedFrames}/${totalFrames} khung)`,
+                renderState: 'active'
+              });
+              await new Promise(r => setTimeout(r, 0));
+            }
+          }
+        }
+      }
+
+      updateExportProgressUI({
+        pct: 96, label: '🎵 Đang ghép âm thanh AAC...',
+        cutText: `✂️ Bước 1 (Cắt từng phách): Đã cắt xong ${plan.length}/${plan.length} phách ✓`, cutState: 'done',
+        renderText: `🎬 Bước 2 (Gộp & Render): Đã gộp xong ${totalFrames}/${totalFrames} khung hình ✓`, renderState: 'done',
+        audioText: '🎵 Bước 3 (Ghép âm thanh AAC & đóng gói MP4): Đang xử lý...', audioState: 'active',
+        sub: 'Sắp xong rồi...'
+      });
+
+      await audioSource.add(audioSlice);
+      await output.finalize();
+
+      finalMp4Blob = new Blob([output.target.buffer], { type: 'video/mp4' });
+      const totalSec = ((performance.now() - tStart) / 1000).toFixed(1);
+      updateExportProgressUI({
+        pct: 100, label: '🎉 Hoàn tất 100%!',
+        audioText: `🎵 Bước 3 (Ghép âm thanh & thẻ iPhone): Hoàn tất trong ${totalSec}s ✓`, audioState: 'done',
+        sub: 'Đã xuất xong video có âm thanh chuẩn HD! Bấm nút bên dưới để lưu vào Ảnh iPhone.'
+      });
+
       document.getElementById('saveButtonsBox').style.display = 'grid';
-      exportStatus.textContent = '🎉 Đã xuất xong Video Hoàn Chỉnh CÓ ÂM THANH + THẺ IPHONE!';
-    } catch (err) { exportStatus.textContent = '❌ Lỗi xuất video: ' + err.message; }
-    finally { btn.disabled = false; }
+      exportStatus.textContent = `🎉 Xuất thành công trong ${totalSec} giây!`;
+    } catch (err) {
+      exportStatus.textContent = '❌ Lỗi xuất video: ' + err.message;
+    } finally {
+      for (const inp of Object.values(inputCache)) { try { inp.dispose(); } catch {} }
+      exportVideo.pause(); exportVideo.removeAttribute('src'); exportVideo.load();
+      btn.disabled = false;
+    }
   });
 
   async function shareToIphonePhotos(blob, fileName) {
