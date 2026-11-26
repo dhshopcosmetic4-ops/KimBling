@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video HD (Có Âm Thanh + Tự Lưu Nháp)</title>
+  <title>App Cắt Nhạc & Dựng Video HD (7 Mẫu Chữ + AI Tự Cắt Khúc Đẹp)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;800;900&family=Dancing+Script:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
+  <!-- Nạp thêm Font Baloo 2 (Cute), Chakra Petch (Neon), Oswald (Review) hỗ trợ đầy đủ Tiếng Việt -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <!-- Giữ nguyên 2 file mẫu cùng cấp -->
+  <!-- Nạp 2 file mẫu đặt cùng cấp -->
   <script src="./hook-templates.js"></script>
   <script src="./ai-presets.js"></script>
   <style>
@@ -35,6 +36,7 @@
     button.orange { background: linear-gradient(135deg, #ea580c, #dc2626); }
     button.green { background: linear-gradient(135deg, #059669, #10b981); }
     button.purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
+    button.gold { background: linear-gradient(135deg, #d97706, #eab308); color: #000; }
     button.dark { background: #1e293b; border: 1px solid #475569; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     .status { font-size: 13px; color: #34d399; text-align: center; min-height: 18px; margin-bottom: 6px; }
@@ -75,7 +77,7 @@
 <body>
 <div id="videoPoolDom"></div>
 <div class="wrap">
-  <h1>🎬 Cắt Nhạc & Xuất Video HD (Đủ Âm Thanh + Lưu Nháp Tự Động)</h1>
+  <h1>🎬 Dựng Video Theo Phách (7 Kiểu Chữ Cute/Đủ Màu + AI Tự Chọn Cảnh Đẹp)</h1>
 
   <div class="draft-bar">
     <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
@@ -84,7 +86,7 @@
 
   <!-- 1. LẤY LINK TIKTOK -->
   <div class="card">
-    <label>🔗 Dán Link TikTok (Lấy Video Không Logo & Add thẳng vào Nhạc + Video)</label>
+    <label>🔗 Dán Link TikTok (Lấy Nhạc hoặc Video làm mẫu nhịp)</label>
     <div class="row">
       <input type="text" id="tkUrlInput" placeholder="https://vt.tiktok.com/..." value="https://vt.tiktok.com/ZSsMqCVQ9/" />
       <button class="tiktok" id="fetchTkBtn">⚡ Lấy & Add Thẳng Vào App</button>
@@ -97,7 +99,7 @@
     </div>
   </div>
 
-  <!-- 2. NGUỒN FILE & AI ĐỀ XUẤT PHÁCH -->
+  <!-- 2. NGUỒN FILE & CHỌN 7 KIỂU CHỮ -->
   <div class="card">
     <div class="row">
       <div>
@@ -105,14 +107,14 @@
         <input type="file" id="audioFile" accept="video/*,audio/*" />
       </div>
       <div>
-        <label>2. Video gốc chung (Hoặc để trống để xuất nền đen)</label>
+        <label>2. Video bạn tự quay (1 video dài HOẶC chọn nhiều đoạn ngắn cùng lúc)</label>
         <input type="file" id="mainVideoFiles" accept="video/*" multiple />
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>3. Chọn Mẫu Chữ & Kiểu Hook (từ hook-templates.js)</label>
+        <label>3. Chọn Kiểu Chữ & Màu Sắc Hook (7 kiểu từ hook-templates.js)</label>
         <select id="templateSelect"></select>
       </div>
       <div>
@@ -121,7 +123,6 @@
       </div>
     </div>
 
-    <!-- MỤC AI ĐỀ XUẤT CHIA PHÁCH -->
     <button class="dark" id="aiSuggestBtn" disabled>✨ AI Đề Xuất Cách Chia Phách Tối Ưu Cho Bài Này</button>
     <div class="ai-suggest-box" id="aiSuggestBox">
       <div class="title" id="aiSuggestSummary">🤖 Đang phân tích...</div>
@@ -134,24 +135,44 @@
 
     <div class="row">
       <input type="text" id="topicInput" value="bán bánh tráng nướng" placeholder="Gõ ý chính để AI tự soạn..." />
-      <button class="orange" id="aiFillBtn">✍️ AI Tự Soạn Chữ Hook (0đ)</button>
+      <button class="orange" id="aiFillBtn">✍️ AI Tự Soạn Chữ Theo Kiểu Đã Chọn (0đ)</button>
     </div>
 
     <div class="row" id="dynamicFields"></div>
 
-    <div class="row">
+    <div class="row3">
       <div>
-        <label>Chất lượng xuất Video</label>
+        <label>Độ phân giải</label>
         <select id="qualitySelect">
-          <option value="720">HD 720x1280 (Nhanh & Nét - Khuyên dùng)</option>
-          <option value="1080">Full HD 1080x1920 (Siêu nét)</option>
-          <option value="540">Nhanh 540x960 (Siêu nhẹ)</option>
+          <option value="1080">Full HD 1080×1920</option>
+          <option value="720" selected>HD 720×1280 (Nhanh)</option>
+          <option value="540">Nhẹ 540×960</option>
         </select>
       </div>
-      <div style="display:flex;align-items:flex-end;">
-        <button id="analyzeBtn" disabled>🤖 Bước 1: Chia Phách & Mở Bảng Cắt Video</button>
+      <div>
+        <label>Tốc độ khung hình (FPS)</label>
+        <select id="fpsSelect">
+          <option value="60">60 FPS (Mượt như iPhone gốc)</option>
+          <option value="30" selected>30 FPS (Xuất nhanh gấp đôi)</option>
+        </select>
+      </div>
+      <div>
+        <label>Thẻ thiết bị quay (Metadata)</label>
+        <select id="deviceMetaSelect">
+          <option value="Apple|iPhone 12 Pro Max|18.5">Apple iPhone 12 Pro Max</option>
+          <option value="Apple|iPhone 15 Pro Max|18.5">Apple iPhone 15 Pro Max</option>
+          <option value="Apple|iPhone 16 Pro Max|18.5">Apple iPhone 16 Pro Max</option>
+          <option value="none">Không gắn thẻ thiết bị</option>
+        </select>
       </div>
     </div>
+
+    <div class="chk-row">
+      <input type="checkbox" id="chkAutoSmartPick" checked />
+      <span>🧠 Tự động cho AI quét video & chọn khúc đẹp nhất ngay khi bấm Bước 1</span>
+    </div>
+
+    <button id="analyzeBtn" disabled>🤖 Bước 1: Chia Phách & Tự Cắt Video Đẹp Theo Nhạc</button>
     <div class="status" id="statusText"></div>
   </div>
 
@@ -163,16 +184,19 @@
     <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ</button>
     <audio id="audioPlayer" controls></audio>
 
+    <button class="gold" id="aiPickClipsBtn">🧠 Quét Lại Video Thô & Chọn Khúc Đẹp Khớp Nhịp</button>
+    <div class="status" id="aiPickStatus"></div>
+
     <div class="chk-row">
       <input type="checkbox" id="chkHookOnSingle" checked />
       <span>Gắn chữ Hook lên video phách đầu khi xuất lẻ (nếu đã nạp video thật)</span>
     </div>
 
-    <label>✂️ Danh Sách Từng Phách (Tự động lưu mỗi khi bạn kéo trượt):</label>
+    <label>✂️ Danh Sách Từng Phách (AI đã tự cắt — có thể kéo trượt chỉnh lại nếu thích):</label>
     <div id="beatsContainer"></div>
   </div>
 
-  <!-- 4. XUẤT HÀNG LOẠT HOẶC XUẤT GỘP CÓ ÂM THANH -->
+  <!-- 4. XUẤT HÀNG LOẠT HOẶC XUẤT GỘP -->
   <div class="card" id="exportCard" style="display:none;">
     <div class="row">
       <button class="purple" id="exportAllZipBtn">📦 Xuất Từng Phách Rời (01..N + Nhạc .ZIP)</button>
@@ -188,12 +212,11 @@
 </div>
 
 <script>
-  const FPS = 30;
   let decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
-  let blobStore = {}; // { key: Blob } để lưu nháp không bị trùng lặp
+  let blobStore = {}, videoScanCache = {};
   let plan = [], sharedBlobKeys = [], animId = null, lastPlayingIdx = -1, activeSingleSeg = null;
-  let currentBeatDensity = 'balanced'; // 'balanced' | 'fast' | 'chill'
+  let currentBeatDensity = 'balanced';
   let mediabunnyPromise = null;
 
   const previewCanvas = document.getElementById('previewCanvas');
@@ -202,27 +225,26 @@
   const statusText = document.getElementById('statusText');
   const tkStatus = document.getElementById('tkStatus');
   const exportStatus = document.getElementById('exportStatus');
+  const aiPickStatus = document.getElementById('aiPickStatus');
   const draftStatus = document.getElementById('draftStatus');
   const videoPoolDom = document.getElementById('videoPoolDom');
   const templateSelect = document.getElementById('templateSelect');
   const dynamicFields = document.getElementById('dynamicFields');
 
-  // --- NẠP MEDIABUNNY + WASM AAC ENCODER (SỬA LỖI MẤT TIẾNG TRÊN IPHONE SAFARI) ---
+  function getExportFps() { return parseInt(document.getElementById('fpsSelect').value || '30', 10); }
+
   function getMediabunny() {
     if (!mediabunnyPromise) {
       mediabunnyPromise = (async () => {
         const mb = await import('https://cdn.jsdelivr.net/npm/mediabunny@1.66.4/+esm');
         const { registerAacEncoder } = await import('https://cdn.jsdelivr.net/npm/@mediabunny/aac-encoder@1.66.4/+esm');
-        if (!(await mb.canEncodeAudio('aac'))) {
-          registerAacEncoder();
-        }
+        if (!(await mb.canEncodeAudio('aac'))) registerAacEncoder();
         return mb;
       })();
     }
     return mediabunnyPromise;
   }
 
-  // --- INDEXEDDB LƯU NHÁP TỰ ĐỘNG (THOÁT RA VÀO LẠI VẪN CÒN) ---
   function openStudioDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open('CatAmThanhStudioDB', 1);
@@ -236,10 +258,7 @@
   }
 
   let saveTimer = null;
-  function scheduleAutoSave() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(saveDraftNow, 500);
-  }
+  function scheduleAutoSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraftNow, 500); }
 
   async function saveDraftNow() {
     if (!rawAudioBlob) return;
@@ -251,21 +270,18 @@
       usedKeys.forEach(k => { if (blobStore[k]) savedBlobs[k] = blobStore[k]; });
 
       const payload = {
-        savedAt: Date.now(),
-        rawAudioBlob,
-        rawAudioName,
-        videoBlobs: savedBlobs,
-        sharedBlobKeys,
-        templateId: templateSelect.value,
-        hookData: getHookData(),
+        savedAt: Date.now(), rawAudioBlob, rawAudioName, videoBlobs: savedBlobs, sharedBlobKeys,
+        templateId: templateSelect.value, hookData: getHookData(),
         beatCount: document.getElementById('beatCount').value,
         quality: document.getElementById('qualitySelect').value,
+        fps: document.getElementById('fpsSelect').value,
+        deviceMeta: document.getElementById('deviceMetaSelect').value,
         topic: document.getElementById('topicInput').value,
         beatDensity: currentBeatDensity,
         planMeta: plan.map(s => ({
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
-          frames: s.frames, startF: s.startF, endF: s.endF, isHook: s.isHook,
-          fileName: s.fileName, trimStart: s.trimStart, customVideo: !!s.customVideo, blobKey: s.blobKey || null
+          energy: s.energy || 0.5, isHook: s.isHook, fileName: s.fileName,
+          trimStart: s.trimStart, customVideo: !!s.customVideo, blobKey: s.blobKey || null
         }))
       };
       await new Promise((res, rej) => {
@@ -284,16 +300,13 @@
       const draft = await new Promise((res) => {
         const tx = db.transaction('drafts', 'readonly');
         const r = tx.objectStore('drafts').get('current');
-        r.onsuccess = () => res(r.result);
-        r.onerror = () => res(null);
+        r.onsuccess = () => res(r.result); r.onerror = () => res(null);
       });
       if (!draft || !draft.rawAudioBlob) return;
 
-      draftStatus.textContent = '⏳ Đang khôi phục dự án đang làm dở...';
-      rawAudioBlob = draft.rawAudioBlob;
-      rawAudioName = draft.rawAudioName || 'Nhạc đã lưu';
-      blobStore = draft.videoBlobs || {};
-      sharedBlobKeys = draft.sharedBlobKeys || [];
+      draftStatus.textContent = '⏳ Đang khôi phục dự án...';
+      rawAudioBlob = draft.rawAudioBlob; rawAudioName = draft.rawAudioName || 'Nhạc đã lưu';
+      blobStore = draft.videoBlobs || {}; sharedBlobKeys = draft.sharedBlobKeys || [];
       currentBeatDensity = draft.beatDensity || 'balanced';
 
       if (draft.templateId) templateSelect.value = draft.templateId;
@@ -305,6 +318,8 @@
       }
       if (draft.beatCount) document.getElementById('beatCount').value = draft.beatCount;
       if (draft.quality) document.getElementById('qualitySelect').value = draft.quality;
+      if (draft.fps) document.getElementById('fpsSelect').value = draft.fps;
+      if (draft.deviceMeta) document.getElementById('deviceMetaSelect').value = draft.deviceMeta;
       if (draft.topic) document.getElementById('topicInput').value = draft.topic;
 
       await loadAudioFromBlob(rawAudioBlob, rawAudioName, false);
@@ -325,10 +340,9 @@
         await document.fonts.ready;
         drawMainPreview(0);
       }
-
       const hm = new Date(draft.savedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
       draftStatus.textContent = `📂 Đã khôi phục bản nháp lưu lúc ${hm}`;
-    } catch (e) { console.warn('Restore error:', e); }
+    } catch (e) { console.warn('Restore skip:', e); }
   }
 
   document.getElementById('clearDraftBtn').addEventListener('click', async () => {
@@ -336,13 +350,11 @@
     const db = await openStudioDB();
     await new Promise(res => {
       const tx = db.transaction('drafts', 'readwrite');
-      tx.objectStore('drafts').delete('current');
-      tx.oncomplete = res;
+      tx.objectStore('drafts').delete('current'); tx.oncomplete = res;
     });
     location.reload();
   });
 
-  // --- MẪU CHỮ HOOK ---
   function initTemplates() {
     const list = window.HOOK_TEMPLATES || [];
     templateSelect.innerHTML = list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
@@ -356,14 +368,24 @@
     dynamicFields.innerHTML = tpl.fields.map(f => `
       <div><label>${f.label}</label><input type="text" class="tpl-field" data-key="${f.key}" value="${f.default}" /></div>
     `).join('');
-    document.querySelectorAll('.tpl-field').forEach(el => el.addEventListener('input', scheduleAutoSave));
+    document.querySelectorAll('.tpl-field').forEach(el => el.addEventListener('input', () => {
+      if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+      scheduleAutoSave();
+    }));
   }
   function getHookData() {
     const obj = {};
     document.querySelectorAll('.tpl-field').forEach(el => obj[el.dataset.key] = el.value);
     return obj;
   }
-  templateSelect.addEventListener('change', () => { renderTemplateFields(); scheduleAutoSave(); });
+  templateSelect.addEventListener('change', () => {
+    renderTemplateFields();
+    if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+    scheduleAutoSave();
+  });
+  ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount'].forEach(id => {
+    document.getElementById(id).addEventListener('change', scheduleAutoSave);
+  });
   initTemplates();
 
   document.getElementById('aiFillBtn').addEventListener('click', () => {
@@ -378,9 +400,10 @@
 
   function getQualitySpec() {
     const q = parseInt(document.getElementById('qualitySelect').value, 10);
-    if (q === 1080) return { W: 1080, H: 1920, bitrate: 6_500_000 };
-    if (q === 540) return { W: 540, H: 960, bitrate: 2_200_000 };
-    return { W: 720, H: 1280, bitrate: 4_200_000 };
+    const fps = getExportFps(), fpsMult = fps === 60 ? 1.45 : 1.0;
+    if (q === 1080) return { W: 1080, H: 1920, bitrate: Math.round(7_000_000 * fpsMult), fps };
+    if (q === 540) return { W: 540, H: 960, bitrate: Math.round(2_200_000 * fpsMult), fps };
+    return { W: 720, H: 1280, bitrate: Math.round(4_200_000 * fpsMult), fps };
   }
 
   async function loadAudioFromBlob(blob, label, shouldSave = true) {
@@ -405,8 +428,7 @@
     sharedBlobKeys = [];
     files.forEach((f, idx) => {
       const k = `shared_${Date.now()}_${idx}`;
-      blobStore[k] = f;
-      sharedBlobKeys.push(k);
+      blobStore[k] = f; sharedBlobKeys.push(k);
     });
     if (plan.length) applySharedVideosToPlan();
     scheduleAutoSave();
@@ -414,7 +436,7 @@
 
   document.getElementById('fetchTkBtn').addEventListener('click', async () => {
     const url = document.getElementById('tkUrlInput').value.trim(); if (!url) return;
-    tkStatus.textContent = '⏳ Đang lấy link video TikTok không logo...';
+    tkStatus.textContent = '⏳ Đang lấy link video TikTok...';
     document.getElementById('tkFallback').style.display = 'none';
     try {
       const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`);
@@ -428,18 +450,15 @@
 
       tkStatus.textContent = '⏳ Đang kéo video add thẳng vào App...';
       const vBlob = await (await fetch(vUrl)).blob();
-      const k = `tk_${Date.now()}`;
-      blobStore[k] = vBlob;
-      sharedBlobKeys = [k];
+      const k = `tk_${Date.now()}`; blobStore[k] = vBlob; sharedBlobKeys = [k];
       await loadAudioFromBlob(vBlob, 'TikTok Không Logo', true);
-      tkStatus.textContent = '🎉 Đã add thẳng Video Không Logo + Nhạc vào App! Bấm AI Đề Xuất hoặc Bước 1.';
+      tkStatus.textContent = '🎉 Đã add thẳng Video + Nhạc vào App! Bấm AI Đề Xuất hoặc Bước 1.';
     } catch {
-      tkStatus.textContent = '⚠️ CDN TikTok chặn tải trực tiếp — hãy bấm 2 link bên dưới rồi chọn vào mục 1 & 2.';
+      tkStatus.textContent = '⚠️ Trình duyệt chặn tải trực tiếp — bấm link tải bên dưới rồi chọn vào mục 1 & 2.';
       document.getElementById('tkFallback').style.display = 'block';
     }
   });
 
-  // --- AI ĐỀ XUẤT CÁCH CHIA PHÁCH TỐI ƯU ---
   async function analyzeAudioMetrics(buffer) {
     const sr = buffer.sampleRate;
     const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, buffer.length, sr);
@@ -468,15 +487,13 @@
   document.getElementById('aiSuggestBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
     const m = await analyzeAudioMetrics(decodedBuffer);
-    const dur = decodedBuffer.duration;
-    const bodyDur = Math.max(2, dur - 2.8);
-
+    const dur = decodedBuffer.duration, bodyDur = Math.max(2, dur - 2.8);
     const recBalanced = Math.max(6, Math.min(24, 2 + Math.round(bodyDur / (m.bpm > 120 ? 1.05 : 1.35))));
     const recFast = Math.max(8, Math.min(30, 3 + Math.round(bodyDur / 0.65)));
     const recChill = Math.max(5, Math.min(16, 2 + Math.round(bodyDur / 2.1)));
 
     document.getElementById('aiSuggestSummary').textContent =
-      `🤖 Nhạc dài ${dur.toFixed(1)}s • Nhịp ~${m.bpm} BPM (${m.bpm >= 122 ? 'Sôi động / Remix' : 'Vừa / Kể chuyện'}). Chọn 1 kiểu AI đề xuất:`;
+      `🤖 Nhạc dài ${dur.toFixed(1)}s • Nhịp ~${m.bpm} BPM (${m.bpm >= 122 ? 'Sôi động / Remix' : 'Vừa / Kể chuyện'}). Chọn 1 kiểu:`;
     document.getElementById('sugBalancedBtn').textContent = `⚖️ Chuẩn Điệu (${recBalanced} phách)`;
     document.getElementById('sugFastBtn').textContent = `🔥 Cắt Nhanh (${recFast} phách)`;
     document.getElementById('sugChillBtn').textContent = `🌿 Kể Chuyện (${recChill} phách)`;
@@ -493,7 +510,6 @@
     document.getElementById('analyzeBtn').click();
   }
 
-  // --- BƯỚC 1: CHIA PHÁCH ---
   document.getElementById('analyzeBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
     await document.fonts.ready;
@@ -511,7 +527,14 @@
     document.getElementById('exportCard').style.display = 'block';
     document.getElementById('saveButtonsBox').style.display = 'none';
     drawMainPreview(0);
-    statusText.textContent = '✅ Đã chia xong! Kéo thanh trượt từng phách để căn đúng cảnh đẹp.';
+
+    // Tự động cho AI quét video tìm khúc đẹp luôn nếu người dùng tick (mặc định bật)
+    if (document.getElementById('chkAutoSmartPick').checked && sharedBlobKeys.length > 0) {
+      statusText.textContent = '🧠 Đã chia phách xong — AI đang tự quét video tìm khúc đẹp nhất...';
+      await new Promise(r => setTimeout(r, 300)); // Chờ video metadata sẵn sàng
+      await runAiSmartPickClips();
+    }
+    statusText.textContent = '✅ Đã chia phách & chọn khúc đẹp xong! Bấm Phát Xem Trước để kiểm tra.';
     saveDraftNow();
   });
 
@@ -544,15 +567,19 @@
       pts.splice(idx + 1, 0, (pts[idx] + pts[idx + 1]) / 2);
     }
 
-    const res = []; let cumF = 0;
+    const res = [];
     for (let i = 0; i < pts.length - 1; i++) {
-      const startF = cumF, endF = Math.max(startF + 6, Math.round(pts[i + 1] * FPS)); cumF = endF;
-      const dur = (endF - startF) / FPS;
+      const start = Number(pts[i].toFixed(3)), end = Number(pts[i + 1].toFixed(3));
+      const dur = Math.max(0.2, end - start);
       const numStr = String(i + 1).padStart(2, '0');
       const isHook = i < hookPts.length;
+      const i0 = Math.floor(start / 0.02), i1 = Math.max(i0 + 1, Math.floor(end / 0.02));
+      let segSum = 0;
+      for (let k = i0; k < Math.min(i1, e.length); k++) segSum += e[k];
+      const segEnergy = (segSum / Math.max(1, i1 - i0)) / (meanE || 1);
+
       res.push({
-        idx: i + 1, numStr, start: startF / FPS, end: endF / FPS, dur,
-        frames: endF - startF, startF, endF, isHook,
+        idx: i + 1, numStr, start, end, dur, energy: segEnergy, isHook,
         fileName: `${numStr}_PHACH_${isHook ? 'HOOK' : 'NHIP'}_${dur.toFixed(2)}s.mp4`,
         videoEl: null, blobKey: null, trimStart: 0, thumbCanvas: null, mp4Blob: null
       });
@@ -560,13 +587,117 @@
     return res;
   }
 
+  async function scanVideoHighlights(video, blobKey, onPct) {
+    if (blobKey && videoScanCache[blobKey]) return videoScanCache[blobKey];
+    await ensureVideoReady(video);
+    const dur = video.duration || 1;
+    const W = 80, H = 142;
+    const sc = document.createElement('canvas'); sc.width = W; sc.height = H;
+    const sctx = sc.getContext('2d', { willReadFrequently: true });
+
+    const sampleCount = Math.min(28, Math.max(8, Math.floor(dur / 0.35)));
+    const step = dur / sampleCount;
+    let prevData = null; const metrics = [];
+
+    for (let i = 0; i < sampleCount; i++) {
+      const t = Math.min(dur - 0.1, i * step);
+      await seekVideo(video, t);
+      sctx.drawImage(video, 0, 0, W, H);
+      const img = sctx.getImageData(0, 0, W, H).data;
+
+      let sumLum = 0, edgeSum = 0, motionSum = 0;
+      for (let y = 0; y < H; y += 2) {
+        for (let x = 0; x < W; x += 2) {
+          const p = (y * W + x) * 4;
+          const lum = 0.299 * img[p] + 0.587 * img[p + 1] + 0.114 * img[p + 2];
+          sumLum += lum;
+          if (x + 2 < W) {
+            const pr = p + 8;
+            edgeSum += Math.abs(lum - (0.299 * img[pr] + 0.587 * img[pr + 1] + 0.114 * img[pr + 2]));
+          }
+          if (prevData) motionSum += Math.abs(lum - (0.299 * prevData[p] + 0.587 * prevData[p + 1] + 0.114 * prevData[p + 2]));
+        }
+      }
+      const pxCount = (W / 2) * (H / 2), avgLum = (sumLum / pxCount) / 255;
+      metrics.push({
+        t,
+        sharpness: Math.min(1, (edgeSum / pxCount) / 28),
+        motion: prevData ? Math.min(1, (motionSum / pxCount) / 30) : 0.25,
+        lightOk: (avgLum < 0.15 || avgLum > 0.92) ? 0.2 : 1.0
+      });
+      prevData = img;
+      if (onPct) onPct(Math.round(((i + 1) / sampleCount) * 100));
+    }
+    if (blobKey) videoScanCache[blobKey] = metrics;
+    return metrics;
+  }
+
+  async function runAiSmartPickClips() {
+    const btn = document.getElementById('aiPickClipsBtn');
+    const beatsWithVid = plan.filter(s => s.videoEl);
+    if (!beatsWithVid.length) {
+      aiPickStatus.textContent = '⚠️ Bạn chưa add video nào vào mục 2 hoặc từng phách.';
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const pickedTimesByBlob = {};
+      for (let i = 0; i < plan.length; i++) {
+        const seg = plan[i];
+        if (!seg.videoEl) continue;
+        await unlockVideoImmediate(seg.videoEl);
+        await ensureVideoReady(seg.videoEl);
+        const key = seg.blobKey || `v_${seg.idx}`;
+        const metrics = await scanVideoHighlights(seg.videoEl, key, (pct) => {
+          aiPickStatus.textContent = `🧠 AI đang quét chuyển động & độ nét Phách ${seg.numStr}: ${pct}%...`;
+        });
+
+        const maxStart = Math.max(0, (seg.videoEl.duration || 1) - seg.dur);
+        if (maxStart <= 0.15) { seg.trimStart = 0; continue; }
+
+        const approxCenter = (i / plan.length) * maxStart;
+        const winRadius = Math.max(2.0, maxStart * 0.35);
+        const usedList = pickedTimesByBlob[key] || [];
+
+        let bestT = seg.trimStart, bestScore = -1;
+        for (const m of metrics) {
+          const candT = Math.min(maxStart, m.t);
+          const inWindow = Math.abs(candT - approxCenter) <= winRadius;
+          const notDuplicate = !usedList.some(ut => Math.abs(ut - candT) < Math.min(0.9, maxStart / 4));
+          const isHighBeat = seg.energy > 1.1;
+
+          let score = seg.isHook
+            ? (0.55 * m.sharpness + 0.30 * m.lightOk + 0.15 * (1 - Math.abs(m.motion - 0.35)))
+            : (isHighBeat ? (0.62 * m.motion + 0.28 * m.sharpness + 0.10 * m.lightOk)
+                          : (0.45 * m.sharpness + 0.35 * m.motion + 0.20 * m.lightOk));
+          if (inWindow) score += 0.25;
+          if (!notDuplicate) score -= 0.45;
+          if (score > bestScore) { bestScore = score; bestT = candT; }
+        }
+
+        seg.trimStart = Number(bestT.toFixed(2));
+        usedList.push(seg.trimStart); pickedTimesByBlob[key] = usedList;
+
+        if (seg.sliderEl) {
+          seg.sliderEl.max = maxStart.toFixed(2);
+          seg.sliderEl.value = seg.trimStart;
+          seg.rangeLabel.textContent = `🤖 AI chọn: ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+        }
+        await seekAndDrawThumb(seg, i === 0);
+      }
+      aiPickStatus.textContent = '✅ AI đã tự chọn xong các khúc sáng nét & đúng chuyển động nhất!';
+      scheduleAutoSave();
+    } catch (e) { aiPickStatus.textContent = '❌ Lỗi quét video: ' + e.message; }
+    finally { btn.disabled = false; }
+  }
+
+  document.getElementById('aiPickClipsBtn').addEventListener('click', runAiSmartPickClips);
+
   function applySharedVideosToPlan() {
     plan.forEach((s, i) => {
       if (!s.customVideo && sharedBlobKeys.length > 0) {
         const key = sharedBlobKeys[i % sharedBlobKeys.length];
-        if (blobStore[key]) {
-          attachVideoToBeat(s, URL.createObjectURL(blobStore[key]), sharedBlobKeys.length === 1, key, false);
-        }
+        if (blobStore[key]) attachVideoToBeat(s, URL.createObjectURL(blobStore[key]), sharedBlobKeys.length === 1, key, false);
       }
     });
     renderBeatsUI();
@@ -587,12 +718,9 @@
       if (!keepTrim) {
         if (autoOffset) seg.trimStart = Number(((seg.idx - 1) / plan.length * maxStart).toFixed(2));
         else seg.trimStart = Math.min(seg.trimStart, maxStart);
-      } else {
-        seg.trimStart = Math.min(seg.trimStart, maxStart);
-      }
+      } else seg.trimStart = Math.min(seg.trimStart, maxStart);
       if (seg.sliderEl) {
-        seg.sliderEl.max = maxStart.toFixed(2);
-        seg.sliderEl.value = seg.trimStart;
+        seg.sliderEl.max = maxStart.toFixed(2); seg.sliderEl.value = seg.trimStart;
         seg.rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
       }
       seekAndDrawThumb(seg, false);
@@ -638,7 +766,7 @@
     await new Promise(r => requestAnimationFrame(r));
   }
 
-  function drawBlackPlaceholder(c, seg, fLocal, W, H) {
+  function drawBlackPlaceholder(c, seg, fLocal, totalFrames, W, H) {
     const sc = W / 720;
     c.fillStyle = '#000000'; c.fillRect(0, 0, W, H);
     c.strokeStyle = seg.isHook ? '#ef4444' : '#38bdf8';
@@ -652,10 +780,10 @@
     c.fillText(`PHÁCH ${seg.numStr}`, W / 2, H * 0.48);
     c.fillStyle = '#FFFFFF';
     c.font = `800 ${Math.round(42 * sc)}px "Be Vietnam Pro", sans-serif`;
-    c.fillText(`${seg.dur.toFixed(2)} giây (${seg.frames}f)`, W / 2, H * 0.57);
+    c.fillText(`${seg.dur.toFixed(2)} giây`, W / 2, H * 0.57);
     c.fillStyle = '#1e293b'; c.fillRect(80 * sc, H * 0.80, W - 160 * sc, 18 * sc);
     c.fillStyle = seg.isHook ? '#ef4444' : '#10b981';
-    c.fillRect(80 * sc, H * 0.80, (W - 160 * sc) * ((fLocal + 1) / seg.frames), 18 * sc);
+    c.fillRect(80 * sc, H * 0.80, (W - 160 * sc) * Math.min(1, (fLocal + 1) / Math.max(1, totalFrames)), 18 * sc);
   }
 
   function drawCover(ctx, video, W, H) {
@@ -669,9 +797,9 @@
     if (seg.videoEl) {
       await seekVideo(seg.videoEl, seg.trimStart);
       if (seg.videoEl.videoWidth > 0) drawCover(tc, seg.videoEl, 164, 292);
-      else drawBlackPlaceholder(tc, seg, 0, 164, 292);
-    } else drawBlackPlaceholder(tc, seg, 0, 164, 292);
-    if (updateBigPreview) renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, true);
+      else drawBlackPlaceholder(tc, seg, 0, 30, 164, 292);
+    } else drawBlackPlaceholder(tc, seg, 0, 30, 164, 292);
+    if (updateBigPreview) renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true);
   }
 
   function renderBeatsUI() {
@@ -686,7 +814,7 @@
       right.innerHTML = `
         <div class="beat-head">
           <span><b>Phách ${seg.numStr}</b> <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP'}</span></span>
-          <span style="color:#fde047;font-weight:800;">Dài: ${seg.dur.toFixed(2)}s (${seg.frames}f)</span>
+          <span style="color:#fde047;font-weight:800;">Dài: ${seg.dur.toFixed(2)}s</span>
         </div>
       `;
 
@@ -699,8 +827,7 @@
       pickInput.onchange = (e) => {
         const f = e.target.files[0]; if (!f) return;
         const k = `custom_${seg.idx}_${Date.now()}`;
-        blobStore[k] = f;
-        seg.customVideo = true;
+        blobStore[k] = f; seg.customVideo = true;
         attachVideoToBeat(seg, URL.createObjectURL(f), false, k, false);
         scheduleAutoSave();
       };
@@ -711,8 +838,7 @@
         if (seg.videoEl && seg.videoEl.parentNode) seg.videoEl.remove();
         seg.videoEl = null; seg.blobKey = null; seg.customVideo = true;
         rangeLabel.textContent = 'Đang dùng: Video Nền Đen đánh số phách';
-        seekAndDrawThumb(seg, true);
-        scheduleAutoSave();
+        seekAndDrawThumb(seg, true); scheduleAutoSave();
       };
 
       const playOneBtn = document.createElement('button');
@@ -728,14 +854,14 @@
 
       exportOneBtn.onclick = async () => {
         exportOneBtn.disabled = true;
-        oneStatus.textContent = `⏳ Đang chuẩn bị & xuất ${seg.fileName}...`;
+        oneStatus.textContent = `⏳ Đang xuất ${seg.fileName}...`;
         try {
           if (seg.videoEl) await unlockVideoImmediate(seg.videoEl);
-          const blob = await exportViaMediabunny(seg.frames, seg.start, seg.end, (f) => {
-            return { seg, fLocal: f, includeHook: document.getElementById('chkHookOnSingle').checked };
-          }, (pct) => { oneStatus.textContent = `⏳ Đang xuất Phách ${seg.numStr}: ${pct}%`; });
-          seg.mp4Blob = blob;
-          saveBar.innerHTML = ''; saveBar.style.display = 'flex';
+          const fps = getExportFps(), totalF = Math.max(2, Math.round(seg.dur * fps));
+          const blob = await exportViaMediabunny(totalF, seg.start, seg.end, (f) => ({
+            seg, fLocal: f, totalLocal: totalF, singleOverride: true, includeHook: document.getElementById('chkHookOnSingle').checked
+          }), (pct) => { oneStatus.textContent = `⏳ Đang xuất Phách ${seg.numStr}: ${pct}%`; });
+          seg.mp4Blob = blob; saveBar.innerHTML = ''; saveBar.style.display = 'flex';
           const iosBtn = document.createElement('button');
           iosBtn.className = 'small-btn green'; iosBtn.textContent = '📱 Lưu Vào Ảnh iPhone';
           iosBtn.onclick = () => shareToIphonePhotos(blob, seg.fileName);
@@ -743,7 +869,7 @@
           dlBtn.className = 'small-btn'; dlBtn.textContent = `⬇️ Tải ${seg.fileName}`;
           dlBtn.onclick = () => triggerDownload(blob, seg.fileName);
           saveBar.append(iosBtn, dlBtn);
-          oneStatus.textContent = `✅ Đã xuất xong Phách ${seg.numStr} (Có âm thanh + Chuyển động HD)!`;
+          oneStatus.textContent = `✅ Đã xuất Phách ${seg.numStr} (${fps}fps + Có âm thanh)!`;
         } catch (err) { oneStatus.textContent = '❌ Lỗi: ' + err.message; }
         finally { exportOneBtn.disabled = false; }
       };
@@ -775,14 +901,13 @@
     });
   }
 
-  function renderCompositeFrame(ctx, t, W, H, singleSegOverride = null, fLocal = 0, includeHookText = true) {
+  function renderCompositeFrame(ctx, t, W, H, singleSegOverride = null, fLocal = 0, totalLocal = 30, includeHookText = true) {
     const tpl = getCurrentTemplate();
     let seg = singleSegOverride || plan[0];
     if (!singleSegOverride) for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
 
     if (!seg.videoEl || !seg.videoEl.videoWidth) {
-      const localFrame = singleSegOverride ? fLocal : Math.max(0, Math.round((t - seg.start) * FPS));
-      drawBlackPlaceholder(ctx, seg, localFrame, W, H);
+      drawBlackPlaceholder(ctx, seg, fLocal, totalLocal, W, H);
       return;
     }
 
@@ -838,7 +963,7 @@
           activeSingleSeg = null; return;
         }
         if (activeSingleSeg.videoEl && activeSingleSeg.videoEl.paused) activeSingleSeg.videoEl.play().catch(() => {});
-        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * FPS), true);
+        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * 30), Math.round(activeSingleSeg.dur * 30), true);
       } else {
         let seg = plan[0]; for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
         if (seg.idx !== lastPlayingIdx) {
@@ -852,40 +977,49 @@
     animId = requestAnimationFrame(previewLoop);
   }
 
-  // Chuẩn hóa đoạn AudioBuffer về 48.000Hz Stereo để 100% tương thích AAC trên mọi iPhone
   async function make48kStereoSlice(buffer, startSec, endSec) {
     const sr = buffer.sampleRate;
-    const s0 = Math.max(0, Math.floor(startSec * sr));
-    const s1 = Math.min(buffer.length, Math.ceil(endSec * sr));
-    const len = Math.max(1, s1 - s0);
-    const ch = Math.min(2, buffer.numberOfChannels);
+    const s0 = Math.max(0, Math.floor(startSec * sr)), s1 = Math.min(buffer.length, Math.ceil(endSec * sr));
+    const len = Math.max(1, s1 - s0), ch = Math.min(2, buffer.numberOfChannels);
     const slice = new AudioBuffer({ length: len, numberOfChannels: ch, sampleRate: sr });
     for (let c = 0; c < ch; c++) slice.copyToChannel(buffer.getChannelData(c).subarray(s0, s0 + len), c);
     if (sr === 48000 && ch === 2) return slice;
-
     const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, Math.max(1, Math.ceil(slice.duration * 48000)), 48000);
     const src = off.createBufferSource(); src.buffer = slice;
     src.connect(off.destination); src.start(0);
     return await off.startRendering();
   }
 
-  // BỘ XUẤT MP4 CHUNG (Dùng Mediabunny + WASM AAC fallback -> Luôn có âm thanh trên mọi iPhone & PC)
   async function exportViaMediabunny(totalFrames, startSec, endSec, frameInfoFn, onProgress) {
     await document.fonts.ready;
     const MB = await getMediabunny();
-    const { W, H, bitrate } = getQualitySpec();
+    const { W, H, bitrate, fps } = getQualitySpec();
 
-    const expCanvas = document.createElement('canvas');
-    expCanvas.width = W; expCanvas.height = H;
+    const expCanvas = document.createElement('canvas'); expCanvas.width = W; expCanvas.height = H;
     const eCtx = expCanvas.getContext('2d');
 
     const output = new MB.Output({
-      format: new MB.Mp4OutputFormat(),
+      format: new MB.Mp4OutputFormat({ metadataFormat: 'mdta' }),
       target: new MB.BufferTarget(),
     });
 
+    const metaOpt = document.getElementById('deviceMetaSelect').value;
+    if (metaOpt !== 'none') {
+      const [make, model, sw] = metaOpt.split('|');
+      const now = new Date();
+      try {
+        output.setMetadataTags({
+          date: now, creationTime: now,
+          raw: {
+            'com.apple.quicktime.make': make, 'com.apple.quicktime.model': model,
+            'com.apple.quicktime.software': sw, 'com.apple.quicktime.creationdate': now.toISOString(),
+          }
+        });
+      } catch (e) { console.warn('Metadata skip:', e); }
+    }
+
     const videoSource = new MB.CanvasSource(expCanvas, { codec: 'avc', bitrate });
-    output.addVideoTrack(videoSource, { frameRate: FPS });
+    output.addVideoTrack(videoSource, { frameRate: fps });
 
     const audioSlice = await make48kStereoSlice(decodedBuffer, startSec, endSec);
     const audioSource = new MB.AudioBufferSource({ codec: 'aac', bitrate: 128_000 });
@@ -895,11 +1029,10 @@
     plan.forEach(s => { if (s.videoEl) s.videoEl.pause(); });
 
     for (let f = 0; f < totalFrames; f++) {
-      const info = frameInfoFn(f);
-      const seg = info.seg;
-      if (seg.videoEl) await seekVideo(seg.videoEl, seg.trimStart + (info.fLocal / FPS));
-      renderCompositeFrame(eCtx, startSec + (f / FPS), W, H, info.singleOverride ? seg : null, info.fLocal, info.includeHook);
-      await videoSource.add(f / FPS, 1 / FPS);
+      const info = frameInfoFn(f), seg = info.seg;
+      if (seg.videoEl) await seekVideo(seg.videoEl, seg.trimStart + (info.fLocal / fps));
+      renderCompositeFrame(eCtx, startSec + (f / fps), W, H, info.singleOverride ? seg : null, info.fLocal, info.totalLocal, info.includeHook);
+      await videoSource.add(f / fps, 1 / fps);
 
       if (onProgress && f % 6 === 0) {
         onProgress(Math.round(((f + 1) / totalFrames) * 100));
@@ -919,14 +1052,14 @@
       await Promise.all(plan.map(s => unlockVideoImmediate(s.videoEl)));
       const zip = new JSZip();
       if (wavBlob) zip.file('00_NHAC_GOC_LIEN_MACH.wav', wavBlob);
-      const incHook = document.getElementById('chkHookOnSingle').checked;
+      const incHook = document.getElementById('chkHookOnSingle').checked, fps = getExportFps();
       for (const seg of plan) {
-        exportStatus.textContent = `📦 Đang xuất Phách ${seg.numStr}/${plan.length} (Có âm thanh)...`;
-        const blob = await exportViaMediabunny(seg.frames, seg.start, seg.end, (f) => ({
-          seg, fLocal: f, singleOverride: true, includeHook: incHook
+        exportStatus.textContent = `📦 Đang xuất Phách ${seg.numStr}/${plan.length} (${fps}fps + Âm thanh)...`;
+        const totalF = Math.max(2, Math.round(seg.dur * fps));
+        const blob = await exportViaMediabunny(totalF, seg.start, seg.end, (f) => ({
+          seg, fLocal: f, totalLocal: totalF, singleOverride: true, includeHook: incHook
         }));
-        seg.mp4Blob = blob;
-        zip.file(seg.fileName, blob);
+        seg.mp4Blob = blob; zip.file(seg.fileName, blob);
       }
       exportStatus.textContent = '🗜️ Đang nén thành file ZIP...';
       triggerDownload(await zip.generateAsync({ type: 'blob' }), 'BO_PHACH_CO_NHAC_CAPCUT.zip');
@@ -941,16 +1074,22 @@
     document.getElementById('saveButtonsBox').style.display = 'none';
     try {
       await Promise.all(plan.map(s => unlockVideoImmediate(s.videoEl)));
-      const totalFrames = plan[plan.length - 1].endF;
-      exportStatus.textContent = '🚀 Đang nạp bộ ghép hình & âm thanh AAC...';
+      const fps = getExportFps(), beatRanges = []; let cumF = 0;
+      plan.forEach(s => {
+        const fCount = Math.max(2, Math.round(s.dur * fps));
+        beatRanges.push({ seg: s, startF: cumF, endF: cumF + fCount, count: fCount });
+        cumF += fCount;
+      });
+      const totalFrames = cumF;
+      exportStatus.textContent = `🚀 Đang ghép hình ${fps}fps + âm thanh AAC + Metadata...`;
 
-      finalMp4Blob = await exportViaMediabunny(totalFrames, 0, totalFrames / FPS, (f) => {
-        let seg = plan[0]; for (const s of plan) if (f >= s.startF && f < s.endF) { seg = s; break; }
-        return { seg, fLocal: f - seg.startF, singleOverride: false, includeHook: true };
-      }, (pct) => { exportStatus.textContent = `🚀 Đang xuất Video Gộp (Có Nhạc): ${pct}%`; });
+      finalMp4Blob = await exportViaMediabunny(totalFrames, 0, totalFrames / fps, (f) => {
+        let br = beatRanges[0]; for (const r of beatRanges) if (f >= r.startF && f < r.endF) { br = r; break; }
+        return { seg: br.seg, fLocal: f - br.startF, totalLocal: br.count, singleOverride: false, includeHook: true };
+      }, (pct) => { exportStatus.textContent = `🚀 Đang xuất Video Gộp (${fps}fps + Có Nhạc): ${pct}%`; });
 
       document.getElementById('saveButtonsBox').style.display = 'grid';
-      exportStatus.textContent = '🎉 Đã xuất xong Video Hoàn Chỉnh CÓ ĐẦY ĐỦ ÂM THANH! Bấm lưu vào Ảnh iPhone ngay.';
+      exportStatus.textContent = '🎉 Đã xuất xong Video Hoàn Chỉnh CÓ ÂM THANH + THẺ IPHONE! Lưu vào Ảnh ngay.';
     } catch (err) { exportStatus.textContent = '❌ Lỗi xuất video: ' + err.message; }
     finally { btn.disabled = false; }
   });
@@ -966,10 +1105,10 @@
   }
 
   document.getElementById('saveIphonePhotosBtn').addEventListener('click', () => {
-    if (finalMp4Blob) shareToIphonePhotos(finalMp4Blob, 'video-thanh-pham-HD.mp4');
+    if (finalMp4Blob) shareToIphonePhotos(finalMp4Blob, 'IMG_EDIT_HD.mp4');
   });
   document.getElementById('downloadMp4Btn').addEventListener('click', () => {
-    if (finalMp4Blob) triggerDownload(finalMp4Blob, 'video-thanh-pham-HD.mp4');
+    if (finalMp4Blob) triggerDownload(finalMp4Blob, 'IMG_EDIT_HD.mp4');
   });
 
   function encodeWAV(buf) {
