@@ -1,16 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video HD (Nhịp Thở Theo Bass + 8 Mẫu Chữ)</title>
+  <title>App Cắt Nhạc & Dựng Video HD (Nhịp Thở + Sóng Nhạc Tinh Tế)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <!-- Giữ nguyên 2 file mẫu cùng cấp -->
+  <!-- Nạp 3 file module đặt cùng cấp -->
   <script src="./hook-templates.js"></script>
   <script src="./ai-presets.js"></script>
+  <script src="./visualizer.js"></script>
   <style>
     * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
     body { margin: 0; background: #070b14; color: #f8fafc; padding: 14px; }
@@ -115,7 +115,7 @@
 </div>
 
 <div class="wrap">
-  <h1>🎬 Cắt Nhạc & Dựng Video HD (Nhịp Thở Theo Bass + 8 Mẫu Chữ)</h1>
+  <h1>🎬 Cắt Nhạc & Dựng Video HD (Nhịp Thở + Sóng Nhạc Tinh Tế)</h1>
 
   <div class="draft-bar">
     <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
@@ -176,7 +176,7 @@
     </div>
   </div>
 
-  <!-- 2. NGUỒN FILE, MẪU CHỮ & CHẾ ĐỘ NHỊP THỞ -->
+  <!-- 2. NGUỒN FILE, MẪU CHỮ, NHỊP THỞ & SÓNG NHẠC -->
   <div class="card">
     <div class="row">
       <div>
@@ -202,11 +202,35 @@
 
     <label>🫁 Chế độ giật / Nhịp thở theo điệu nhạc cho Video</label>
     <select id="motionModeSelect">
-      <option value="breath-all" selected>🫁 Nhịp thở theo Bass toàn bài (2.5s đầu sáng dần ➔ Thân bài thở theo trống - Khuyên dùng)</option>
-      <option value="breath-drop">🔥 Chỉ thở mạnh ở các phách Drop sôi động (Phách nhẹ giữ êm)</option>
+      <option value="breath-all" selected>🫁 Nhịp thở theo Bass toàn bài (2.5s đầu sáng dần ➔ Thân bài thở theo trống)</option>
+      <option value="breath-drop">🔥 Chỉ thở mạnh ở các phách Drop sôi động</option>
       <option value="beat-hit">⚡ Chỉ giật nhẹ ngay đầu mỗi phách cắt</option>
-      <option value="smooth">🌿 Mượt mà không giật (Zoom chậm nhẹ)</option>
+      <option value="smooth">🌿 Mượt mà không giật</option>
     </select>
+
+    <!-- SÓNG NHẠC TINH TẾ KHÔNG CHE CHỦ THỂ -->
+    <div class="row">
+      <div>
+        <label>🌊 Sóng Nhạc (Audio Spectrum - Không che chủ thể)</label>
+        <select id="vizStyleSelect">
+          <option value="mini-top-left" selected>🎵 Mini Góc Trên Trái (Sang như iPhone, không che mặt)</option>
+          <option value="top-slim">🌊 Dải Mảnh Trên Đỉnh (Tránh nút TikTok & chủ thể)</option>
+          <option value="bottom-mirror">✨ Dải Đối Xứng Mảnh Gần Đáy (Mờ nhẹ)</option>
+          <option value="left-edge">⚡ Cột Mảnh Sát Mép Trái</option>
+          <option value="none">🚫 Tắt Sóng Nhạc</option>
+        </select>
+      </div>
+      <div>
+        <label>Màu Sóng Nhạc</label>
+        <select id="vizColorSelect">
+          <option value="#FFFFFF" selected>⚪ Trắng Tinh Tế</option>
+          <option value="#FDE047">🟡 Vàng Kem Nổi Bật</option>
+          <option value="#FB7185">🌸 Hồng Cute Pastel</option>
+          <option value="#38BDF8">🔵 Xanh Neon Hiện Đại</option>
+          <option value="#34D399">🟢 Xanh Matcha Tươi</option>
+        </select>
+      </div>
+    </div>
 
     <button class="dark" id="aiSuggestBtn" disabled>✨ AI Đề Xuất Số Phách Tối Ưu Cho Bài Này</button>
     <div class="ai-suggest-box" id="aiSuggestBox">
@@ -237,7 +261,7 @@
 
     <div class="row3">
       <div>
-        <label>Độ phân giải</label>
+        <label>Độ phân giải (Giữ 100% nét gốc)</label>
         <select id="qualitySelect">
           <option value="1080">Full HD 1080×1920</option>
           <option value="720" selected>HD 720×1280 (Nhanh)</option>
@@ -271,17 +295,17 @@
     <div class="stage-wrap">
       <canvas id="previewCanvas" width="720" height="1280"></canvas>
     </div>
-    <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ (Có Nhịp Thở Theo Nhạc)</button>
+    <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ (Nhịp Thở + Sóng Nhạc)</button>
     <audio id="audioPlayer" controls></audio>
 
     <button class="gold" id="aiGeminiAllBtn">🧠 AI Gemini Tự Chọn Hết Các Phách (Đúng Mạch Truyện & Không Trùng)</button>
     <div class="status" id="aiAllStatus"></div>
 
-    <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini — ô Bối cảnh phách tự hiện lên nhãn của Mẫu 8 OOTD nếu có nhập):</label>
+    <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini):</label>
     <div id="beatsContainer"></div>
   </div>
 
-  <!-- 4. XUẤT GỘP 1 FILE DUY NHẤT + TIẾN TRÌNH CHI TIẾT -->
+  <!-- 4. XUẤT GỘP 1 FILE DUY NHẤT -->
   <div class="card" id="exportCard" style="display:none;">
     <button class="green" id="exportFinalBtn" style="font-size:16px;padding:14px;">🚀 Xuất Gộp Thành 1 Video Hoàn Chỉnh (.MP4 Có Nhạc)</button>
 
@@ -312,7 +336,7 @@
   let decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
   let blobStore = {}, blobUrlMap = {}, stripCache = {}, geminiCache = {}, videoDurationCache = {};
-  let bassBreathData = null; // { hopSec: 0.02, curve: Float32Array }
+  let bassBreathData = null;
   let plan = [], sharedBlobKeys = [], animId = null, lastPlayingIdx = -1, activeSingleSeg = null;
   let currentStageBlobKey = null, currentBeatDensity = 'balanced';
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
@@ -330,6 +354,8 @@
   const templateSelect = document.getElementById('templateSelect');
   const dynamicFields = document.getElementById('dynamicFields');
   const motionModeSelect = document.getElementById('motionModeSelect');
+  const vizStyleSelect = document.getElementById('vizStyleSelect');
+  const vizColorSelect = document.getElementById('vizColorSelect');
 
   window.clearField = function (id, saveKey = false) {
     const el = document.getElementById(id);
@@ -413,6 +439,8 @@
         savedAt: Date.now(), rawAudioBlob, rawAudioName, videoBlobs: savedBlobs, sharedBlobKeys,
         templateId: templateSelect.value, hookData: getHookData(),
         motionMode: motionModeSelect.value,
+        vizStyle: vizStyleSelect.value,
+        vizColor: vizColorSelect.value,
         beatCount: document.getElementById('beatCount').value,
         quality: document.getElementById('qualitySelect').value,
         fps: document.getElementById('fpsSelect').value,
@@ -460,6 +488,8 @@
         });
       }
       if (draft.motionMode) motionModeSelect.value = draft.motionMode;
+      if (draft.vizStyle) vizStyleSelect.value = draft.vizStyle;
+      if (draft.vizColor) vizColorSelect.value = draft.vizColor;
       if (draft.beatCount) document.getElementById('beatCount').value = draft.beatCount;
       if (draft.quality) document.getElementById('qualitySelect').value = draft.quality;
       if (draft.fps) document.getElementById('fpsSelect').value = draft.fps;
@@ -468,7 +498,8 @@
       if (draft.storyContext) storyContextInput.value = draft.storyContext;
 
       await loadAudioFromBlob(rawAudioBlob, rawAudioName, false);
-      await analyzeAudioMetrics(decodedBuffer); // Khôi phục lại đường sóng Nhịp Thở Bass
+      await analyzeAudioMetrics(decodedBuffer);
+      if (window.AUDIO_VIZ) window.AUDIO_VIZ.analyze(decodedBuffer);
 
       if (draft.planMeta && draft.planMeta.length) {
         wavBlob = encodeWAV(decodedBuffer);
@@ -530,9 +561,9 @@
     if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
     scheduleAutoSave();
   });
-  ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount', 'motionModeSelect'].forEach(id => {
+  ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount', 'motionModeSelect', 'vizStyleSelect', 'vizColorSelect'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
-      if (id === 'motionModeSelect' && plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+      if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
       scheduleAutoSave();
     });
   });
@@ -548,12 +579,13 @@
     scheduleAutoSave();
   });
 
+  // Tăng nhẹ Bitrate khi vẽ thêm sóng nhạc nét mảnh -> Giữ nguyên 100% độ nét video gốc!
   function getQualitySpec() {
     const q = parseInt(document.getElementById('qualitySelect').value, 10);
     const fps = getExportFps(), fpsMult = fps === 60 ? 1.45 : 1.0;
-    if (q === 1080) return { W: 1080, H: 1920, bitrate: Math.round(7_000_000 * fpsMult), fps };
-    if (q === 540) return { W: 540, H: 960, bitrate: Math.round(2_200_000 * fpsMult), fps };
-    return { W: 720, H: 1280, bitrate: Math.round(4_200_000 * fpsMult), fps };
+    if (q === 1080) return { W: 1080, H: 1920, bitrate: Math.round(7_800_000 * fpsMult), fps };
+    if (q === 540) return { W: 540, H: 960, bitrate: Math.round(2_500_000 * fpsMult), fps };
+    return { W: 720, H: 1280, bitrate: Math.round(4_600_000 * fpsMult), fps };
   }
 
   async function loadAudioFromBlob(blob, label, shouldSave = true) {
@@ -609,7 +641,6 @@
     }
   });
 
-  // --- PHÂN TÍCH SÓNG BASS + TẠO ĐƯỜNG NHỊP THỞ MƯỢT (ATTACK-RELEASE ENVELOPE) ---
   async function analyzeAudioMetrics(buffer) {
     const sr = buffer.sampleRate;
     const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, buffer.length, sr);
@@ -633,24 +664,20 @@
     }
     const bpm = Math.round(3000 / bestLag);
     const meanE = e.reduce((a, b) => a + b, 0) / (e.length || 1);
-
-    // Tính ngưỡng 95% để chuẩn hóa độ mạnh Bass của mọi bài nhạc về [0..1]
     const sortedE = [...e].sort((a, b) => a - b);
     const p95 = sortedE[Math.floor(sortedE.length * 0.95)] || meanE || 0.1;
 
-    // Tạo đường Nhịp Thở (Attack nhanh khi trống đập -> Release êm đàn hồi như hơi thở)
     const curve = new Float32Array(e.length);
     let env = 0;
     for (let i = 0; i < e.length; i++) {
       const level = Math.min(1.2, e[i] / (p95 + 1e-6));
       const kick = Math.min(1.5, onset[i] / (p95 * 0.35 + 1e-6));
       const target = Math.min(1.0, Math.max(0, kick * 0.72 + Math.max(0, level - 0.35) * 0.45));
-      if (target > env) env += (target - env) * 0.58; // Hít vào nhanh
-      else env = env * 0.85 + target * 0.15;          // Thở ra êm ái
+      if (target > env) env += (target - env) * 0.58;
+      else env = env * 0.85 + target * 0.15;
       curve[i] = Math.max(0, Math.min(1, env));
     }
     bassBreathData = { hopSec: 0.02, curve };
-
     return { e, bpm, meanE };
   }
 
@@ -659,8 +686,7 @@
     const pos = Math.max(0, t / bassBreathData.hopSec);
     const i0 = Math.min(bassBreathData.curve.length - 1, Math.floor(pos));
     const i1 = Math.min(bassBreathData.curve.length - 1, i0 + 1);
-    const frac = pos - i0;
-    return bassBreathData.curve[i0] * (1 - frac) + bassBreathData.curve[i1] * frac;
+    return bassBreathData.curve[i0] * (1 - (pos - i0)) + bassBreathData.curve[i1] * (pos - i0);
   }
 
   document.getElementById('aiSuggestBtn').addEventListener('click', async () => {
@@ -685,9 +711,11 @@
   document.getElementById('analyzeBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
     await document.fonts.ready;
-    statusText.textContent = '🎛️ Đang chia phách & dựng đường nhịp thở theo Bass...';
+    statusText.textContent = '🎛️ Đang phân tích phách, nhịp thở Bass & phổ sóng nhạc...';
     wavBlob = encodeWAV(decodedBuffer);
     audioPlayer.src = URL.createObjectURL(wavBlob);
+
+    if (window.AUDIO_VIZ) window.AUDIO_VIZ.analyze(decodedBuffer);
 
     const totalSegs = Math.max(5, parseInt(document.getElementById('beatCount').value || 10, 10));
     const tpl = getCurrentTemplate();
@@ -699,7 +727,7 @@
     document.getElementById('saveButtonsBox').style.display = 'none';
     if (plan[0].blobKey) await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart);
     drawMainPreview(0);
-    statusText.textContent = '✅ Đã xong! Bấm Phát Xem Trước để coi video thở theo nhịp Bass.';
+    statusText.textContent = '✅ Đã xong! Bấm Phát Xem Trước để coi nhịp thở & sóng nhạc tinh tế.';
     saveDraftNow();
   });
 
@@ -1177,7 +1205,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     } finally { btn.disabled = false; }
   });
 
-  // VẼ KHUNG HÌNH VỚI HIỆU ỨNG "NHỊP THỞ THEO BASS" (BREATHING ZOOM)
+  // VẼ VIDEO CHÍNH + NHỊP THỞ BASS + CHỮ HOOK + SÓNG NHẠC TINH TẾ
   function drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, drawFn) {
     const tpl = getCurrentTemplate();
     if (!seg.blobKey || !drawFn) {
@@ -1188,21 +1216,15 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     const mode = motionModeSelect.value;
     const dt = Math.max(0, t - seg.start);
     const hitPulse = dt < 0.18 ? (1 - dt / 0.18) : 0;
-    const breath = getBreathAt(t); // Độ phập phồng [0..1] bám theo sóng Bass thật của nhạc!
+    const breath = getBreathAt(t);
 
-    let zoom = 1.0;
-    let flashAlpha = 0;
-    let introDarkness = 0;
-
+    let zoom = 1.0, flashAlpha = 0, introDarkness = 0;
     if (mode === 'breath-all') {
       if (seg.isHook) {
-        // 2.5s đầu: Thở rất khẽ + Sáng dần lên mượt mà như video OOTD mẫu!
         const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0) || 2.5;
-        const hookProg = Math.min(1, t / hookTotal);
-        introDarkness = Math.max(0, (1 - hookProg) * 0.28);
+        introDarkness = Math.max(0, (1 - Math.min(1, t / hookTotal)) * 0.28);
         zoom = 1.0 + breath * 0.018;
       } else {
-        // Tất cả phách thân bài: Thở theo sóng Bass thật + nhấn đàn hồi đầu phách chuyển cảnh!
         zoom = 1.0 + breath * 0.068 + hitPulse * 0.025;
         flashAlpha = breath * 0.06 + hitPulse * 0.05;
       }
@@ -1210,9 +1232,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       if (!seg.isHook && seg.energy >= 1.02) {
         zoom = 1.0 + breath * 0.075 + hitPulse * 0.025;
         flashAlpha = breath * 0.07;
-      } else {
-        zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.03;
-      }
+      } else zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.03;
     } else if (mode === 'beat-hit') {
       zoom = 1.0 + hitPulse * 0.065;
       flashAlpha = hitPulse * 0.12;
@@ -1236,10 +1256,16 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       ctx.fillRect(0, 0, W, H);
     }
 
+    // Vẽ chữ từ hook-templates.js
     const hookCount = plan.filter(s => s.isHook).length;
     const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
     const segInfo = { seg, dt, bodyBeatIdx: Math.max(0, seg.idx - 1 - hookCount) };
     tpl.render(ctx, t, W, H, getHookData(), hookTotal, segInfo);
+
+    // Vẽ Sóng Nhạc tinh tế từ visualizer.js (không làm mờ/đổi chất lượng video gốc)
+    if (window.AUDIO_VIZ) {
+      window.AUDIO_VIZ.draw(ctx, t, W, H, vizStyleSelect.value, vizColorSelect.value);
+    }
   }
 
   function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, videoSourceEl) {
@@ -1330,7 +1356,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     if (audioState !== undefined) aEl.className = `step-item ${audioState}`;
   }
 
-  // --- XUẤT GỘP NHANH BẰNG VideoSampleSink ---
   document.getElementById('exportFinalBtn').addEventListener('click', async () => {
     if (!plan.length || !decodedBuffer) return;
     const btn = document.getElementById('exportFinalBtn'); btn.disabled = true;
@@ -1469,88 +1494,4 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
               }
               await seekVideo(exportVideo, seg.trimStart + (fLocal / fps), true);
             }
-            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, seg.blobKey ? exportVideo : null);
-            await videoSource.add(globalF / fps, 1 / fps);
-            renderedFrames++;
-
-            if (renderedFrames % 10 === 0 || renderedFrames === totalFrames) {
-              const pct = Math.min(94, Math.round((renderedFrames / totalFrames) * 94));
-              updateExportProgressUI({
-                pct, label: `🎬 Đang render: ${pct}%`,
-                renderText: `🎬 Bước 2 (Gộp & Render): ${pct}% (${renderedFrames}/${totalFrames} khung)`,
-                renderState: 'active'
-              });
-              await new Promise(r => setTimeout(r, 0));
-            }
-          }
-        }
-      }
-
-      updateExportProgressUI({
-        pct: 96, label: '🎵 Đang ghép âm thanh AAC...',
-        cutText: `✂️ Bước 1 (Cắt từng phách): Đã cắt xong ${plan.length}/${plan.length} phách ✓`, cutState: 'done',
-        renderText: `🎬 Bước 2 (Gộp & Render): Đã gộp xong ${totalFrames}/${totalFrames} khung hình ✓`, renderState: 'done',
-        audioText: '🎵 Bước 3 (Ghép âm thanh AAC & đóng gói MP4): Đang xử lý...', audioState: 'active',
-        sub: 'Sắp xong rồi...'
-      });
-
-      await audioSource.add(audioSlice);
-      await output.finalize();
-
-      finalMp4Blob = new Blob([output.target.buffer], { type: 'video/mp4' });
-      const totalSec = ((performance.now() - tStart) / 1000).toFixed(1);
-      updateExportProgressUI({
-        pct: 100, label: '🎉 Hoàn tất 100%!',
-        audioText: `🎵 Bước 3 (Ghép âm thanh & thẻ iPhone): Hoàn tất trong ${totalSec}s ✓`, audioState: 'done',
-        sub: 'Đã xuất xong video có âm thanh chuẩn HD! Bấm nút bên dưới để lưu vào Ảnh iPhone.'
-      });
-
-      document.getElementById('saveButtonsBox').style.display = 'grid';
-      exportStatus.textContent = `🎉 Xuất thành công trong ${totalSec} giây!`;
-    } catch (err) {
-      exportStatus.textContent = '❌ Lỗi xuất video: ' + err.message;
-    } finally {
-      for (const inp of Object.values(inputCache)) { try { inp.dispose(); } catch {} }
-      exportVideo.pause(); exportVideo.removeAttribute('src'); exportVideo.load();
-      btn.disabled = false;
-    }
-  });
-
-  async function shareToIphonePhotos(blob, fileName) {
-    const file = new File([blob], fileName, { type: 'video/mp4' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: fileName }); } catch {}
-    } else alert('Hãy bấm nút Tải file rồi mở Tệp -> Chia sẻ -> Lưu video để vào Ảnh iPhone!');
-  }
-  function triggerDownload(blob, fileName) {
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
-  }
-
-  document.getElementById('saveIphonePhotosBtn').addEventListener('click', () => {
-    if (finalMp4Blob) shareToIphonePhotos(finalMp4Blob, 'IMG_EDIT_HD.mp4');
-  });
-  document.getElementById('downloadMp4Btn').addEventListener('click', () => {
-    if (finalMp4Blob) triggerDownload(finalMp4Blob, 'IMG_EDIT_HD.mp4');
-  });
-
-  function encodeWAV(buf) {
-    const numCh = Math.min(buf.numberOfChannels, 2), sr = buf.sampleRate, len = buf.length;
-    const dataBytes = len * numCh * 2, ab = new ArrayBuffer(44 + dataBytes), v = new DataView(ab);
-    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-    w(0, 'RIFF'); v.setUint32(4, 36 + dataBytes, true); w(8, 'WAVE'); w(12, 'fmt ');
-    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, numCh, true);
-    v.setUint32(24, sr, true); v.setUint32(28, sr * numCh * 2, true);
-    v.setUint16(32, numCh * 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, dataBytes, true);
-    const chs = Array.from({ length: numCh }, (_, c) => buf.getChannelData(c));
-    let off = 44;
-    for (let i = 0; i < len; i++) for (let c = 0; c < numCh; c++) {
-      const s = Math.max(-1, Math.min(1, chs[c][i]));
-      v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2;
-    }
-    return new Blob([ab], { type: 'audio/wav' });
-  }
-
-  window.addEventListener('DOMContentLoaded', restoreDraftOnLoad);
-</script>
-</body>
-</html>
+            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, seg.blobKey
