@@ -1,1 +1,883 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Cắt Nhạc & Xuất Từng Phách Video HD cho CapCut</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@700;800;900&family=Dancing+Script:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- Giữ nguyên 2 file mẫu cùng cấp -->
+  <script src="./hook-templates.js"></script>
+  <script src="./ai-presets.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+    body { margin: 0; background: #070b14; color: #f8fafc; padding: 14px; }
+    .wrap { max-width: 840px; margin: 0 auto; }
+    h1 { font-size: 18px; text-align: center; color: #fde047; margin: 4px 0 14px; }
+    .card { background: #11192b; border-radius: 14px; padding: 15px; margin-bottom: 14px; border: 1px solid #243352; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; font-weight: 700; }
+    input, select, button {
+      width: 100%; padding: 10px 11px; border-radius: 10px; border: 1px solid #334155;
+      background: #070b14; color: #fff; font-size: 14px; margin-bottom: 10px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 800; cursor: pointer; }
+    button.tiktok { background: linear-gradient(135deg, #fe2c55, #25f4ee); color: #000; }
+    button.orange { background: linear-gradient(135deg, #ea580c, #dc2626); }
+    button.green { background: linear-gradient(135deg, #059669, #10b981); }
+    button.purple { background: linear-gradient(135deg, #7c3aed, #db2777); }
+    button.dark { background: #1e293b; border: 1px solid #475569; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status { font-size: 13px; color: #34d399; text-align: center; min-height: 18px; margin-bottom: 6px; }
+    .stage-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+    canvas#previewCanvas {
+      width: 250px; height: 444px; background: #000; border-radius: 16px;
+      border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    audio { width: 100%; margin-bottom: 10px; }
+    .beat-card {
+      background: #0b1120; border: 1px solid #263552; border-radius: 12px; padding: 12px;
+      margin-bottom: 10px; display: grid; grid-template-columns: 82px 1fr; gap: 12px; align-items: start;
+    }
+    .beat-thumb { width: 82px; height: 146px; background: #000; border-radius: 8px; border: 1px solid #334155; }
+    .beat-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
+    .badge { background: #1d4ed8; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; }
+    .badge.hook { background: #dc2626; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+    .small-btn { padding: 7px 10px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
+    .beat-save-bar { display: none; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #334155; }
+    input[type="range"] { padding: 0; margin: 4px 0; accent-color: #38bdf8; }
+    .tk-fallback { display: none; margin-top: 6px; font-size: 12px; color: #cbd5e1; }
+    .tk-fallback a { color: #38bdf8; font-weight: 700; margin-right: 12px; }
+    .chk-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 10px; }
+    .chk-row input { width: auto; margin: 0; }
+    /* Vùng chứa video ẩn nhưng vẫn được trình duyệt iOS/Chrome giải mã đầy đủ từng khung hình */
+    #videoPoolDom {
+      position: fixed; left: 0; top: 0; width: 4px; height: 4px;
+      opacity: 0.001; pointer-events: none; overflow: hidden; z-index: -1;
+    }
+  </style>
+</head>
+<body>
+<div id="videoPoolDom"></div>
+<div class="wrap">
+  <h1>🎬 Cắt Nhạc & Xuất Từng Phách Video HD Đánh Số Thứ Tự</h1>
 
+  <!-- 1. LẤY LINK TIKTOK -->
+  <div class="card">
+    <label>🔗 Dán Link TikTok (Lấy Video Không Logo & Add thẳng vào Nhạc + Video)</label>
+    <div class="row">
+      <input type="text" id="tkUrlInput" placeholder="https://vt.tiktok.com/..." value="https://vt.tiktok.com/ZSsMqCVQ9/" />
+      <button class="tiktok" id="fetchTkBtn">⚡ Lấy & Add Thẳng Vào App</button>
+    </div>
+    <div class="status" id="tkStatus"></div>
+    <div class="tk-fallback" id="tkFallback">
+      Nếu trình duyệt chặn tải tự động do CORS, tải nhanh tại đây rồi chọn ở mục 1 & 2:
+      <a id="tkVidLink" target="_blank" download="tiktok.mp4">⬇️ Video Không Logo</a>
+      <a id="tkAudLink" target="_blank" download="tiktok.mp3">🎵 Nhạc MP3</a>
+    </div>
+  </div>
+
+  <!-- 2. NGUỒN FILE & CHỌN MẪU -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>1. File Nhạc (Tự nạp từ TikTok hoặc chọn từ máy)</label>
+        <input type="file" id="audioFile" accept="video/*,audio/*" />
+      </div>
+      <div>
+        <label>2. Video gốc chung (Hoặc để trống để xuất nền đen đánh số)</label>
+        <input type="file" id="mainVideoFiles" accept="video/*" multiple />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>3. Chọn Mẫu Chữ & Kiểu Hook (từ hook-templates.js)</label>
+        <select id="templateSelect"></select>
+      </div>
+      <div>
+        <label>Tổng số phách muốn cắt</label>
+        <input type="number" id="beatCount" value="10" min="5" max="24" />
+      </div>
+    </div>
+
+    <div class="row">
+      <input type="text" id="topicInput" value="bán bánh tráng nướng" placeholder="Gõ ý chính để AI tự soạn..." />
+      <button class="orange" id="aiFillBtn">✍️ AI Tự Soạn Chữ Hook (0đ)</button>
+    </div>
+
+    <div class="row" id="dynamicFields"></div>
+
+    <div class="row">
+      <div>
+        <label>Chất lượng xuất Video</label>
+        <select id="qualitySelect">
+          <option value="720">HD 720x1280 (Nhanh & Nét - Khuyên dùng)</option>
+          <option value="1080">Full HD 1080x1920 (Siêu nét)</option>
+          <option value="540">Nhanh 540x960 (Siêu nhẹ)</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <button id="analyzeBtn" disabled>🤖 Bước 1: Phân Tích Phách & Mở Bảng Từng Phách</button>
+      </div>
+    </div>
+    <div class="status" id="statusText"></div>
+  </div>
+
+  <!-- 3. XEM TRƯỚC + BẢNG TỪNG PHÁCH -->
+  <div class="card" id="editorCard" style="display:none;">
+    <div class="stage-wrap">
+      <canvas id="previewCanvas" width="720" height="1280"></canvas>
+    </div>
+    <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ</button>
+    <audio id="audioPlayer" controls></audio>
+
+    <div class="chk-row">
+      <input type="checkbox" id="chkHookOnSingle" checked />
+      <span>Gắn chữ Hook lên video phách đầu khi xuất lẻ (nếu đã nạp video thật)</span>
+    </div>
+
+    <label>✂️ Danh Sách Từng Phách (Kéo thanh trượt để nhìn khung hình lớn bên trên):</label>
+    <div id="beatsContainer"></div>
+  </div>
+
+  <!-- 4. XUẤT HÀNG LOẠT HOẶC XUẤT 1 VIDEO HOÀN CHỈNH -->
+  <div class="card" id="exportCard" style="display:none;">
+    <div class="row">
+      <button class="purple" id="exportAllZipBtn">📦 Xuất Tất Cả Từng Phách Rời (01..N + Nhạc .ZIP)</button>
+      <button class="green" id="exportFinalBtn">🚀 Xuất Gộp Thành 1 Video Hoàn Chỉnh (.MP4)</button>
+    </div>
+    <div class="status" id="exportStatus"></div>
+
+    <div class="row" id="saveButtonsBox" style="display:none;margin-top:8px;">
+      <button class="green" id="saveIphonePhotosBtn">📱 Lưu Video Gộp Vào Ảnh iPhone</button>
+      <button id="downloadMp4Btn">⬇️ Tải Video Gộp (.MP4)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FPS = 30;
+  let decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
+  let plan = [], sharedVideoUrls = [], animId = null, lastPlayingIdx = -1, activeSingleSeg = null;
+
+  const previewCanvas = document.getElementById('previewCanvas');
+  const pCtx = previewCanvas.getContext('2d');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const statusText = document.getElementById('statusText');
+  const tkStatus = document.getElementById('tkStatus');
+  const exportStatus = document.getElementById('exportStatus');
+  const videoPoolDom = document.getElementById('videoPoolDom');
+
+  const templateSelect = document.getElementById('templateSelect');
+  const dynamicFields = document.getElementById('dynamicFields');
+
+  function initTemplates() {
+    const list = window.HOOK_TEMPLATES || [];
+    templateSelect.innerHTML = list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    renderTemplateFields();
+  }
+  function getCurrentTemplate() {
+    const id = templateSelect.value;
+    return (window.HOOK_TEMPLATES || []).find(t => t.id === id) || window.HOOK_TEMPLATES[0];
+  }
+  function renderTemplateFields() {
+    const tpl = getCurrentTemplate();
+    if (!tpl) return;
+    dynamicFields.innerHTML = tpl.fields.map(f => `
+      <div><label>${f.label}</label><input type="text" class="tpl-field" data-key="${f.key}" value="${f.default}" /></div>
+    `).join('');
+  }
+  function getHookData() {
+    const obj = {};
+    document.querySelectorAll('.tpl-field').forEach(el => obj[el.dataset.key] = el.value);
+    return obj;
+  }
+  templateSelect.addEventListener('change', renderTemplateFields);
+  initTemplates();
+
+  document.getElementById('aiFillBtn').addEventListener('click', () => {
+    const tpl = getCurrentTemplate();
+    const generated = window.AI_PRESETS.generateHookData(document.getElementById('topicInput').value, tpl.id);
+    document.querySelectorAll('.tpl-field').forEach(el => {
+      if (generated[el.dataset.key] !== undefined) el.value = generated[el.dataset.key];
+    });
+    if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+  });
+
+  function getQualitySpec() {
+    const q = parseInt(document.getElementById('qualitySelect').value, 10);
+    if (q === 1080) return { W: 1080, H: 1920, bitrate: 6_500_000 };
+    if (q === 540) return { W: 540, H: 960, bitrate: 2_200_000 };
+    return { W: 720, H: 1280, bitrate: 4_200_000 };
+  }
+
+  async function loadAudioFromBlob(blob, label) {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    decodedBuffer = await actx.decodeAudioData(await blob.arrayBuffer());
+    await actx.close();
+    statusText.textContent = `✅ Đã nạp nhạc (${label} - ${decodedBuffer.duration.toFixed(1)}s). Bấm Bước 1!`;
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+
+  document.getElementById('audioFile').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    statusText.textContent = '⏳ Đang giải mã âm thanh...';
+    await loadAudioFromBlob(f, f.name);
+  });
+
+  document.getElementById('mainVideoFiles').addEventListener('change', (e) => {
+    sharedVideoUrls = Array.from(e.target.files || []).map(f => URL.createObjectURL(f));
+    if (plan.length) applySharedVideosToPlan();
+  });
+
+  document.getElementById('fetchTkBtn').addEventListener('click', async () => {
+    const url = document.getElementById('tkUrlInput').value.trim();
+    if (!url) return;
+    tkStatus.textContent = '⏳ Đang lấy link video TikTok không logo...';
+    document.getElementById('tkFallback').style.display = 'none';
+    try {
+      const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`);
+      const json = await res.json();
+      if (json.code !== 0 || !json.data) throw new Error('Không lấy được dữ liệu.');
+      const fix = u => !u ? '' : (u.startsWith('http') ? u : 'https://www.tikwm.com' + u);
+      const vUrl = fix(json.data.hdplay || json.data.play), aUrl = fix(json.data.music);
+      document.getElementById('tkVidLink').href = vUrl;
+      document.getElementById('tkAudLink').href = aUrl || vUrl;
+      document.getElementById('tkFallback').style.display = 'block';
+
+      tkStatus.textContent = '⏳ Đang add thẳng video & nhạc vào App...';
+      const vBlob = await (await fetch(vUrl)).blob();
+      sharedVideoUrls = [URL.createObjectURL(vBlob)];
+      await loadAudioFromBlob(vBlob, 'TikTok Không Logo');
+      tkStatus.textContent = '🎉 Đã add thẳng Video Không Logo + Âm thanh vào App! Bấm Bước 1 ngay.';
+    } catch {
+      tkStatus.textContent = '⚠️ Trình duyệt chặn tải trực tiếp do CORS — hãy bấm 2 link tải bên dưới rồi chọn vào mục 1 & 2.';
+      document.getElementById('tkFallback').style.display = 'block';
+    }
+  });
+
+  document.getElementById('analyzeBtn').addEventListener('click', async () => {
+    if (!decodedBuffer) return;
+    await document.fonts.ready;
+    statusText.textContent = '🎛️ Đang phân tích phách nhạc...';
+    wavBlob = encodeWAV(decodedBuffer);
+    audioPlayer.src = URL.createObjectURL(wavBlob);
+
+    // Dọn dẹp pool video cũ
+    videoPoolDom.innerHTML = '';
+    const totalSegs = Math.max(5, parseInt(document.getElementById('beatCount').value || 10, 10));
+    const tpl = getCurrentTemplate();
+    plan = await buildBeatPlan(decodedBuffer, totalSegs, tpl);
+    applySharedVideosToPlan();
+
+    document.getElementById('editorCard').style.display = 'block';
+    document.getElementById('exportCard').style.display = 'block';
+    document.getElementById('saveButtonsBox').style.display = 'none';
+    drawMainPreview(0);
+    statusText.textContent = '✅ Đã mở danh sách từng phách! Kéo thanh trượt để chọn đúng khúc cắt.';
+  });
+
+  async function buildBeatPlan(buffer, totalSegs, tpl) {
+    const sr = buffer.sampleRate;
+    const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, buffer.length, sr);
+    const src = off.createBufferSource(); src.buffer = buffer;
+    const f = off.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 160;
+    src.connect(f); f.connect(off.destination); src.start(0);
+    const out = await off.startRendering();
+    const d = out.getChannelData(0), hop = Math.floor(sr * 0.02), e = [];
+    for (let i = 0; i < d.length; i += hop) {
+      let s = 0, end = Math.min(i + hop, d.length);
+      for (let j = i; j < end; j++) s += d[j] * d[j];
+      e.push(Math.sqrt(s / (end - i)));
+    }
+    const meanE = e.reduce((a, b) => a + b, 0) / (e.length || 1);
+    const hookEnd = Math.min(tpl.hookDuration || 2.8, buffer.duration * 0.35);
+    const hookPts = tpl.bwFirst3s ? [hookEnd * 0.33, hookEnd * 0.66, hookEnd] : [hookEnd * 0.5, hookEnd];
+
+    const bodyNeeded = Math.max(2, totalSegs - hookPts.length - 1);
+    const cands = [];
+    for (let i = Math.floor(hookEnd / 0.02) + 8; i < e.length - 12; i++) {
+      let loc = 0, s = Math.max(0, i - 18), end = Math.min(e.length, i + 18);
+      for (let k = s; k < end; k++) loc += e[k];
+      loc /= (end - s);
+      if (e[i] > e[i - 1] && e[i] > e[i + 1] && e[i] > loc * 1.22) cands.push({ time: i * 0.02, score: e[i] / (loc + 1e-6), energy: e[i] });
+    }
+    cands.sort((a, b) => b.score - a.score);
+    const bodyCuts = [];
+    for (const c of cands) {
+      if (bodyCuts.length >= bodyNeeded) break;
+      const minGap = c.energy > meanE * 1.15 ? 0.5 : 0.95;
+      if (Math.abs(c.time - hookEnd) >= 0.45 && !bodyCuts.some(t => Math.abs(t - c.time) < minGap)) bodyCuts.push(c.time);
+    }
+    bodyCuts.sort((a, b) => a - b);
+    let pts = [0, ...hookPts, ...bodyCuts, buffer.duration];
+    while (pts.length - 1 < totalSegs) {
+      let maxG = 0, idx = 0;
+      for (let i = hookPts.length; i < pts.length - 1; i++) if (pts[i + 1] - pts[i] > maxG) { maxG = pts[i + 1] - pts[i]; idx = i; }
+      pts.splice(idx + 1, 0, (pts[idx] + pts[idx + 1]) / 2);
+    }
+
+    const res = []; let cumF = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const startF = cumF, endF = Math.max(startF + 6, Math.round(pts[i + 1] * FPS)); cumF = endF;
+      const dur = (endF - startF) / FPS;
+      const numStr = String(i + 1).padStart(2, '0');
+      const isHook = i < hookPts.length;
+      res.push({
+        idx: i + 1, numStr, start: startF / FPS, end: endF / FPS, dur,
+        frames: endF - startF, startF, endF, isHook,
+        fileName: `${numStr}_PHACH_${isHook ? 'HOOK' : 'NHIP'}_${dur.toFixed(2)}s.mp4`,
+        videoEl: null, trimStart: 0, thumbCanvas: null, mp4Blob: null
+      });
+    }
+    return res;
+  }
+
+  function applySharedVideosToPlan() {
+    plan.forEach((s, i) => {
+      if (!s.customVideo && sharedVideoUrls.length > 0) {
+        attachVideoToBeat(s, sharedVideoUrls[i % sharedVideoUrls.length], sharedVideoUrls.length === 1);
+      }
+    });
+    renderBeatsUI();
+  }
+
+  // Gắn thẻ <video> thật vào DOM (#videoPoolDom) để iOS & Chrome giải mã chuẩn 100%
+  function attachVideoToBeat(seg, url, autoOffset) {
+    if (seg.videoEl && seg.videoEl.parentNode) seg.videoEl.remove();
+    const v = document.createElement('video');
+    v.src = url;
+    v.muted = true;
+    v.playsInline = true;
+    v.setAttribute('playsinline', '');
+    v.setAttribute('muted', '');
+    v.preload = 'auto';
+    v.loop = true;
+    videoPoolDom.appendChild(v);
+    seg.videoEl = v;
+
+    v.addEventListener('loadeddata', () => {
+      const maxStart = Math.max(0, v.duration - seg.dur);
+      if (autoOffset) seg.trimStart = Number(((seg.idx - 1) / plan.length * maxStart).toFixed(2));
+      else seg.trimStart = Math.min(seg.trimStart, maxStart);
+      if (seg.sliderEl) {
+        seg.sliderEl.max = maxStart.toFixed(2);
+        seg.sliderEl.value = seg.trimStart;
+        seg.rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+      }
+      seekAndDrawThumb(seg, false);
+    });
+  }
+
+  // Mở khóa video ngay trong thao tác chạm nút của người dùng (bắt buộc cho iPhone Safari)
+  function unlockVideoImmediate(v) {
+    if (!v || v._unlocked) return Promise.resolve();
+    v.muted = true; v.playsInline = true;
+    try {
+      const p = v.play();
+      if (p && p.then) return p.then(() => { v.pause(); v._unlocked = true; }).catch(() => {});
+    } catch {}
+    return Promise.resolve();
+  }
+
+  async function ensureVideoReady(video) {
+    if (!video) return;
+    if (video.readyState >= 2 && video.videoWidth > 0) return;
+    await new Promise((resolve) => {
+      let done = false;
+      const fin = () => {
+        if (!done) { done = true; video.removeEventListener('canplay', fin); video.removeEventListener('loadeddata', fin); resolve(); }
+      };
+      video.addEventListener('canplay', fin);
+      video.addEventListener('loadeddata', fin);
+      try { video.load(); } catch {}
+      setTimeout(fin, 1500);
+    });
+  }
+
+  async function seekVideo(video, targetTime) {
+    if (!video) return;
+    await ensureVideoReady(video);
+    if (!video.duration || !isFinite(video.duration)) return;
+    const clamped = Math.max(0, Math.min(targetTime, Math.max(0, video.duration - 0.04)));
+    if (Math.abs(video.currentTime - clamped) >= 0.008) {
+      await new Promise((resolve) => {
+        let done = false;
+        const fin = () => { if (!done) { done = true; video.removeEventListener('seeked', fin); resolve(); } };
+        video.addEventListener('seeked', fin);
+        video.currentTime = clamped;
+        setTimeout(fin, 700);
+      });
+    }
+    // Chờ 1 nhịp vẽ trình duyệt để chắc chắn khung hình mới đã sẵn sàng để chụp lên canvas
+    await new Promise(r => requestAnimationFrame(r));
+  }
+
+  function drawBlackPlaceholder(c, seg, fLocal, W, H) {
+    const sc = W / 720;
+    c.fillStyle = '#000000';
+    c.fillRect(0, 0, W, H);
+
+    c.strokeStyle = seg.isHook ? '#ef4444' : '#38bdf8';
+    c.lineWidth = 8 * sc;
+    c.strokeRect(24 * sc, 24 * sc, W - 48 * sc, H - 48 * sc);
+
+    c.textAlign = 'center';
+    c.fillStyle = seg.isHook ? '#fca5a5' : '#7dd3fc';
+    c.font = `800 ${Math.round(30 * sc)}px "Be Vietnam Pro", sans-serif`;
+    c.fillText(seg.isHook ? 'PHÁCH ĐẦU (HOOK)' : 'PHÁCH NHẠC (NỀN ĐEN)', W / 2, H * 0.34);
+
+    c.fillStyle = '#FDE047';
+    c.font = `900 ${Math.round(110 * sc)}px "Be Vietnam Pro", sans-serif`;
+    c.fillText(`PHÁCH ${seg.numStr}`, W / 2, H * 0.48);
+
+    c.fillStyle = '#FFFFFF';
+    c.font = `800 ${Math.round(42 * sc)}px "Be Vietnam Pro", sans-serif`;
+    c.fillText(`${seg.dur.toFixed(2)} giây (${seg.frames}f)`, W / 2, H * 0.57);
+
+    c.fillStyle = '#94A3B8';
+    c.font = `700 ${Math.round(24 * sc)}px "Be Vietnam Pro", sans-serif`;
+    c.fillText('Vào CapCut bấm "Thay thế" bằng video thật', W / 2, H * 0.65);
+
+    c.fillStyle = '#1e293b';
+    c.fillRect(80 * sc, H * 0.80, W - 160 * sc, 18 * sc);
+    c.fillStyle = seg.isHook ? '#ef4444' : '#10b981';
+    c.fillRect(80 * sc, H * 0.80, (W - 160 * sc) * ((fLocal + 1) / seg.frames), 18 * sc);
+  }
+
+  function drawCover(ctx, video, W, H) {
+    const sc = Math.max(W / video.videoWidth, H / video.videoHeight);
+    const dw = video.videoWidth * sc, dh = video.videoHeight * sc;
+    ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
+
+  async function seekAndDrawThumb(seg, updateBigPreview = true) {
+    if (!seg.thumbCanvas) return;
+    const tc = seg.thumbCanvas.getContext('2d');
+    if (seg.videoEl) {
+      await seekVideo(seg.videoEl, seg.trimStart);
+      if (seg.videoEl.videoWidth > 0) drawCover(tc, seg.videoEl, 164, 292);
+      else drawBlackPlaceholder(tc, seg, 0, 164, 292);
+    } else {
+      drawBlackPlaceholder(tc, seg, 0, 164, 292);
+    }
+    if (updateBigPreview) {
+      renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, true);
+    }
+  }
+
+  function renderBeatsUI() {
+    const box = document.getElementById('beatsContainer');
+    box.innerHTML = '';
+    plan.forEach((seg) => {
+      const row = document.createElement('div'); row.className = 'beat-card';
+      const thumb = document.createElement('canvas'); thumb.width = 164; thumb.height = 292; thumb.className = 'beat-thumb';
+      seg.thumbCanvas = thumb;
+
+      const right = document.createElement('div');
+      right.innerHTML = `
+        <div class="beat-head">
+          <span><b>Phách ${seg.numStr}</b> <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP'}</span></span>
+          <span style="color:#fde047;font-weight:800;">Dài: ${seg.dur.toFixed(2)}s (${seg.frames}f)</span>
+        </div>
+      `;
+
+      const btnGroup = document.createElement('div'); btnGroup.className = 'btn-group';
+
+      const pickInput = document.createElement('input');
+      pickInput.type = 'file'; pickInput.accept = 'video/*'; pickInput.style.display = 'none';
+      const pickBtn = document.createElement('button');
+      pickBtn.className = 'small-btn dark'; pickBtn.textContent = '📹 Add Video';
+      pickBtn.onclick = () => pickInput.click();
+      pickInput.onchange = (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        seg.customVideo = true;
+        attachVideoToBeat(seg, URL.createObjectURL(f), false);
+      };
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'small-btn dark'; clearBtn.textContent = '⬛ Nền Đen';
+      clearBtn.onclick = () => {
+        if (seg.videoEl && seg.videoEl.parentNode) seg.videoEl.remove();
+        seg.videoEl = null; seg.customVideo = true;
+        rangeLabel.textContent = 'Đang dùng: Video Nền Đen đánh số phách';
+        seekAndDrawThumb(seg, true);
+      };
+
+      const playOneBtn = document.createElement('button');
+      playOneBtn.className = 'small-btn'; playOneBtn.textContent = '👁️ Xem Phách Này';
+      playOneBtn.onclick = () => playSingleBeat(seg);
+
+      const exportOneBtn = document.createElement('button');
+      exportOneBtn.className = 'small-btn purple'; exportOneBtn.textContent = '🎬 Xuất & Lưu Phách Này';
+
+      const saveBar = document.createElement('div'); saveBar.className = 'beat-save-bar';
+      const oneStatus = document.createElement('div');
+      oneStatus.style.cssText = 'font-size:12px;color:#34d399;margin-top:4px;';
+
+      exportOneBtn.onclick = async () => {
+        exportOneBtn.disabled = true;
+        oneStatus.textContent = `⏳ Đang chuẩn bị & xuất ${seg.fileName}...`;
+        try {
+          if (seg.videoEl) await unlockVideoImmediate(seg.videoEl);
+          const blob = await encodeSingleBeatMp4(seg, (pct) => {
+            oneStatus.textContent = `⏳ Đang xuất Phách ${seg.numStr}: ${pct}%`;
+          });
+          seg.mp4Blob = blob;
+          saveBar.innerHTML = '';
+          saveBar.style.display = 'flex';
+
+          const iosBtn = document.createElement('button');
+          iosBtn.className = 'small-btn green'; iosBtn.textContent = '📱 Lưu Vào Ảnh iPhone';
+          iosBtn.onclick = () => shareToIphonePhotos(blob, seg.fileName);
+
+          const dlBtn = document.createElement('button');
+          dlBtn.className = 'small-btn'; dlBtn.textContent = `⬇️ Tải ${seg.fileName}`;
+          dlBtn.onclick = () => triggerDownload(blob, seg.fileName);
+
+          saveBar.append(iosBtn, dlBtn);
+          oneStatus.textContent = `✅ Đã xuất xong Phách ${seg.numStr} (video chuyển động HD)!`;
+        } catch (err) {
+          oneStatus.textContent = '❌ Lỗi: ' + err.message;
+        } finally { exportOneBtn.disabled = false; }
+      };
+
+      btnGroup.append(pickBtn, clearBtn, playOneBtn, exportOneBtn);
+
+      const rangeLabel = document.createElement('label');
+      rangeLabel.textContent = seg.videoEl
+        ? `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`
+        : 'Đang dùng: Video Nền Đen đánh số phách';
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.min = 0; slider.step = 0.05;
+      slider.max = seg.videoEl && seg.videoEl.duration ? Math.max(0, seg.videoEl.duration - seg.dur).toFixed(2) : 10;
+      slider.value = seg.trimStart;
+      let isSeekingThumb = false;
+      slider.oninput = async () => {
+        seg.trimStart = parseFloat(slider.value);
+        rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+        if (isSeekingThumb) return;
+        isSeekingThumb = true;
+        await seekAndDrawThumb(seg, true);
+        isSeekingThumb = false;
+      };
+
+      seg.sliderEl = slider; seg.rangeLabel = rangeLabel;
+      right.append(btnGroup, pickInput, rangeLabel, slider, oneStatus, saveBar);
+      row.append(thumb, right);
+      box.appendChild(row);
+      seekAndDrawThumb(seg, false);
+    });
+  }
+
+  function renderCompositeFrame(ctx, t, W, H, singleSegOverride = null, fLocal = 0, includeHookText = true) {
+    const tpl = getCurrentTemplate();
+    let seg = singleSegOverride || plan[0];
+    if (!singleSegOverride) {
+      for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
+    }
+
+    if (!seg.videoEl || !seg.videoEl.videoWidth) {
+      const localFrame = singleSegOverride ? fLocal : Math.max(0, Math.round((t - seg.start) * FPS));
+      drawBlackPlaceholder(ctx, seg, localFrame, W, H);
+      return;
+    }
+
+    const dt = Math.max(0, t - seg.start), pulse = dt < 0.22 ? (1 - dt / 0.22) : 0;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    if (tpl.bwFirst3s && seg.isHook) ctx.filter = `grayscale(100%) brightness(${0.7 + pulse * 0.6})`;
+    else ctx.filter = `brightness(${1 + pulse * 0.14})`;
+    const zoom = 1 + pulse * 0.06;
+    ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
+    drawCover(ctx, seg.videoEl, W, H);
+    ctx.restore();
+
+    if (includeHookText) {
+      const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
+      tpl.render(ctx, t, W, H, getHookData(), hookTotal);
+    }
+  }
+
+  function drawMainPreview(t) { renderCompositeFrame(pCtx, t, 720, 1280); }
+
+  // PHÁT XEM RIÊNG 1 PHÁCH (Khởi động video ngay trong sự kiện click)
+  function playSingleBeat(seg) {
+    activeSingleSeg = seg;
+    lastPlayingIdx = seg.idx;
+    plan.forEach(s => { if (s.videoEl && s.videoEl !== seg.videoEl) s.videoEl.pause(); });
+    if (seg.videoEl) {
+      seg.videoEl.muted = true; seg.videoEl.playsInline = true;
+      seg.videoEl.currentTime = seg.trimStart;
+      seg.videoEl.play().catch(() => {});
+      seg.videoEl._unlocked = true;
+    }
+    audioPlayer.currentTime = seg.start;
+    audioPlayer.play().catch(() => {});
+    previewCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    cancelAnimationFrame(animId);
+    previewLoop();
+  }
+
+  // PHÁT XEM TOÀN BỘ (Mở khóa toàn bộ các video phách ngay trong click)
+  document.getElementById('playAllBtn').addEventListener('click', () => {
+    activeSingleSeg = null;
+    lastPlayingIdx = -1;
+    plan.forEach((s, i) => {
+      if (!s.videoEl) return;
+      if (i === 0) {
+        s.videoEl.currentTime = s.trimStart;
+        s.videoEl.play().catch(() => {});
+        s.videoEl._unlocked = true;
+      } else {
+        unlockVideoImmediate(s.videoEl);
+      }
+    });
+    audioPlayer.currentTime = 0;
+    audioPlayer.play().catch(() => {});
+    cancelAnimationFrame(animId);
+    previewLoop();
+  });
+
+  audioPlayer.addEventListener('play', () => { cancelAnimationFrame(animId); previewLoop(); });
+
+  function previewLoop() {
+    if (!audioPlayer.paused && plan.length) {
+      const t = audioPlayer.currentTime;
+
+      if (activeSingleSeg) {
+        if (!audioPlayer.seeking && t >= activeSingleSeg.end) {
+          audioPlayer.pause();
+          if (activeSingleSeg.videoEl) activeSingleSeg.videoEl.pause();
+          activeSingleSeg = null;
+          return;
+        }
+        if (activeSingleSeg.videoEl && activeSingleSeg.videoEl.paused) {
+          activeSingleSeg.videoEl.play().catch(() => {});
+        }
+        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * FPS), true);
+      } else {
+        let seg = plan[0];
+        for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
+        if (seg.idx !== lastPlayingIdx) {
+          lastPlayingIdx = seg.idx;
+          plan.forEach(s => { if (s.idx !== seg.idx && s.videoEl && s.videoEl !== seg.videoEl) s.videoEl.pause(); });
+          if (seg.videoEl) {
+            seg.videoEl.currentTime = seg.trimStart + Math.max(0, t - seg.start);
+            seg.videoEl.play().catch(() => {});
+          }
+        } else if (seg.videoEl && seg.videoEl.paused) {
+          seg.videoEl.play().catch(() => {});
+        }
+        drawMainPreview(t);
+      }
+    }
+    animId = requestAnimationFrame(previewLoop);
+  }
+
+  async function pickAvcCodec(W, H, bitrate) {
+    for (const codec of ['avc1.420028', 'avc1.42001f', 'avc1.4d0028', 'avc1.640028']) {
+      try { if ((await VideoEncoder.isConfigSupported({ codec, width: W, height: H, bitrate, framerate: FPS })).supported) return codec; } catch {}
+    }
+    return null;
+  }
+
+  async function encodeAudioRange(aEnc, startSec, endSec) {
+    const sr = decodedBuffer.sampleRate, numCh = Math.min(2, decodedBuffer.numberOfChannels);
+    const startSample = Math.min(decodedBuffer.length, Math.round(startSec * sr));
+    const endSample = Math.min(decodedBuffer.length, Math.round(endSec * sr));
+    for (let off = startSample; off < endSample; off += 1024) {
+      const n = Math.min(1024, endSample - off);
+      const planar = new Float32Array(n * numCh);
+      for (let c = 0; c < numCh; c++) planar.set(decodedBuffer.getChannelData(c).subarray(off, off + n), c * n);
+      const ad = new AudioData({
+        format: 'f32-planar', sampleRate: sr, numberOfFrames: n, numberOfChannels: numCh,
+        timestamp: Math.round(((off - startSample) / sr) * 1e6), data: planar
+      });
+      aEnc.encode(ad); ad.close();
+    }
+  }
+
+  async function checkAudioSupport() {
+    if (!decodedBuffer || typeof AudioEncoder === 'undefined') return false;
+    try {
+      const res = await AudioEncoder.isConfigSupported({
+        codec: 'mp4a.40.2', sampleRate: decodedBuffer.sampleRate,
+        numberOfChannels: Math.min(2, decodedBuffer.numberOfChannels), bitrate: 128000
+      });
+      return !!res.supported;
+    } catch { return false; }
+  }
+
+  async function encodeSingleBeatMp4(seg, onProgress) {
+    await document.fonts.ready;
+    const { W, H, bitrate } = getQualitySpec();
+    const vCodec = await pickAvcCodec(W, H, bitrate);
+    if (!vCodec || typeof Mp4Muxer === 'undefined') throw new Error('Hãy mở bằng Chrome/Edge/Safari mới để xuất MP4.');
+
+    const hasAudio = await checkAudioSupport();
+    const sr = decodedBuffer.sampleRate, numCh = Math.min(2, decodedBuffer.numberOfChannels);
+    const muxer = new Mp4Muxer.Muxer({
+      target: new Mp4Muxer.ArrayBufferTarget(),
+      video: { codec: 'avc', width: W, height: H },
+      audio: hasAudio ? { codec: 'aac', numberOfChannels: numCh, sampleRate: sr } : undefined,
+      fastStart: 'in-memory'
+    });
+
+    const vEnc = new VideoEncoder({ output: (ch, m) => muxer.addVideoChunk(ch, m), error: console.error });
+    vEnc.configure({ codec: vCodec, width: W, height: H, bitrate, framerate: FPS });
+
+    let aEnc = null;
+    if (hasAudio) {
+      aEnc = new AudioEncoder({ output: (ch, m) => muxer.addAudioChunk(ch, m), error: console.error });
+      aEnc.configure({ codec: 'mp4a.40.2', sampleRate: sr, numberOfChannels: numCh, bitrate: 128000 });
+    }
+
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const eCtx = c.getContext('2d');
+    const includeHook = document.getElementById('chkHookOnSingle').checked;
+    if (seg.videoEl) seg.videoEl.pause();
+
+    for (let f = 0; f < seg.frames; f++) {
+      if (seg.videoEl) await seekVideo(seg.videoEl, seg.trimStart + (f / FPS));
+      const globalT = seg.start + (f / FPS);
+      renderCompositeFrame(eCtx, globalT, W, H, seg, f, includeHook);
+
+      const vf = new VideoFrame(c, { timestamp: Math.round((f * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
+      vEnc.encode(vf, { keyFrame: f % 30 === 0 });
+      vf.close();
+
+      if (onProgress && f % 4 === 0) {
+        onProgress(Math.round(((f + 1) / seg.frames) * 100));
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+    await vEnc.flush(); vEnc.close();
+    if (hasAudio && aEnc) {
+      await encodeAudioRange(aEnc, seg.start, seg.end);
+      await aEnc.flush(); aEnc.close();
+    }
+    muxer.finalize();
+    return new Blob([muxer.target.buffer], { type: 'video/mp4' });
+  }
+
+  document.getElementById('exportAllZipBtn').addEventListener('click', async () => {
+    if (!plan.length || typeof JSZip === 'undefined') return;
+    const btn = document.getElementById('exportAllZipBtn'); btn.disabled = true;
+    try {
+      await Promise.all(plan.map(s => unlockVideoImmediate(s.videoEl)));
+      const zip = new JSZip();
+      if (wavBlob) zip.file('00_NHAC_GOC_LIEN_MACH.wav', wavBlob);
+      for (const seg of plan) {
+        exportStatus.textContent = `📦 Đang xuất Phách ${seg.numStr}/${plan.length} (${seg.fileName})...`;
+        const blob = await encodeSingleBeatMp4(seg);
+        seg.mp4Blob = blob;
+        zip.file(seg.fileName, blob);
+      }
+      exportStatus.textContent = '🗜️ Đang nén thành file ZIP...';
+      const zBlob = await zip.generateAsync({ type: 'blob' });
+      triggerDownload(zBlob, 'BO_PHACH_DANH_SO_CAPCUT.zip');
+      exportStatus.textContent = '🎉 Đã tải xong file BO_PHACH_DANH_SO_CAPCUT.zip!';
+    } catch (err) { exportStatus.textContent = '❌ ' + err.message; }
+    finally { btn.disabled = false; }
+  });
+
+  document.getElementById('exportFinalBtn').addEventListener('click', async () => {
+    if (!plan.length || !decodedBuffer) return;
+    await document.fonts.ready;
+    const btn = document.getElementById('exportFinalBtn'); btn.disabled = true;
+    document.getElementById('saveButtonsBox').style.display = 'none';
+    const { W, H, bitrate } = getQualitySpec();
+    try {
+      await Promise.all(plan.map(s => unlockVideoImmediate(s.videoEl)));
+      const vCodec = await pickAvcCodec(W, H, bitrate);
+      if (!vCodec || typeof Mp4Muxer === 'undefined') throw new Error('Trình duyệt không hỗ trợ xuất MP4 H.264.');
+      const hasAudio = await checkAudioSupport();
+      const sr = decodedBuffer.sampleRate, numCh = Math.min(2, decodedBuffer.numberOfChannels);
+      const muxer = new Mp4Muxer.Muxer({
+        target: new Mp4Muxer.ArrayBufferTarget(),
+        video: { codec: 'avc', width: W, height: H },
+        audio: hasAudio ? { codec: 'aac', numberOfChannels: numCh, sampleRate: sr } : undefined,
+        fastStart: 'in-memory'
+      });
+      const vEnc = new VideoEncoder({ output: (ch, m) => muxer.addVideoChunk(ch, m), error: console.error });
+      vEnc.configure({ codec: vCodec, width: W, height: H, bitrate, framerate: FPS });
+      let aEnc = null;
+      if (hasAudio) {
+        aEnc = new AudioEncoder({ output: (ch, m) => muxer.addAudioChunk(ch, m), error: console.error });
+        aEnc.configure({ codec: 'mp4a.40.2', sampleRate: sr, numberOfChannels: numCh, bitrate: 128000 });
+      }
+
+      const expCanvas = document.createElement('canvas'); expCanvas.width = W; expCanvas.height = H;
+      const eCtx = expCanvas.getContext('2d');
+      const totalFrames = plan[plan.length - 1].endF;
+      plan.forEach(s => { if (s.videoEl) s.videoEl.pause(); });
+
+      for (let f = 0; f < totalFrames; f++) {
+        let seg = plan[0]; for (const s of plan) if (f >= s.startF && f < s.endF) { seg = s; break; }
+        if (seg.videoEl) await seekVideo(seg.videoEl, seg.trimStart + ((f - seg.startF) / FPS));
+        renderCompositeFrame(eCtx, f / FPS, W, H, seg, f - seg.startF, true);
+        const vf = new VideoFrame(expCanvas, { timestamp: Math.round((f * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
+        vEnc.encode(vf, { keyFrame: f % 30 === 0 }); vf.close();
+        if (f % 8 === 0) {
+          exportStatus.textContent = `🚀 Đang xuất Video Gộp: ${Math.round(((f + 1) / totalFrames) * 100)}%`;
+          await new Promise(r => setTimeout(r, 0));
+        }
+      }
+      await vEnc.flush(); vEnc.close();
+      if (hasAudio && aEnc) {
+        exportStatus.textContent = '🎵 Đang ghép nhạc vào MP4...';
+        await encodeAudioRange(aEnc, 0, totalFrames / FPS);
+        await aEnc.flush(); aEnc.close();
+      }
+      muxer.finalize();
+      finalMp4Blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+      document.getElementById('saveButtonsBox').style.display = 'grid';
+      exportStatus.textContent = '🎉 Đã xuất xong Video Hoàn Chỉnh! Chọn lưu vào Ảnh iPhone hoặc Tải file.';
+    } catch (err) { exportStatus.textContent = '❌ ' + err.message; }
+    finally { btn.disabled = false; }
+  });
+
+  async function shareToIphonePhotos(blob, fileName) {
+    const file = new File([blob], fileName, { type: 'video/mp4' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: fileName }); } catch {}
+    } else {
+      alert('Hãy bấm nút Tải file rồi mở Tệp -> Chia sẻ -> Lưu video để lưu vào Ảnh iPhone!');
+    }
+  }
+  function triggerDownload(blob, fileName) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
+  }
+
+  document.getElementById('saveIphonePhotosBtn').addEventListener('click', () => {
+    if (finalMp4Blob) shareToIphonePhotos(finalMp4Blob, 'video-thanh-pham-HD.mp4');
+  });
+  document.getElementById('downloadMp4Btn').addEventListener('click', () => {
+    if (finalMp4Blob) triggerDownload(finalMp4Blob, 'video-thanh-pham-HD.mp4');
+  });
+
+  function encodeWAV(buf) {
+    const numCh = Math.min(buf.numberOfChannels, 2), sr = buf.sampleRate, len = buf.length;
+    const dataBytes = len * numCh * 2, ab = new ArrayBuffer(44 + dataBytes), v = new DataView(ab);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + dataBytes, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, numCh, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * numCh * 2, true);
+    v.setUint16(32, numCh * 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, dataBytes, true);
+    const chs = Array.from({ length: numCh }, (_, c) => buf.getChannelData(c));
+    let off = 44;
+    for (let i = 0; i < len; i++) for (let c = 0; c < numCh; c++) {
+      const s = Math.max(-1, Math.min(1, chs[c][i]));
+      v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2;
+    }
+    return new Blob([ab], { type: 'audio/wav' });
+  }
+</script>
+</body>
+</html>
