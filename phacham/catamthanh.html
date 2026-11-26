@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video HD (Xuất Nhanh + Tiến Trình Chi Tiết)</title>
+  <title>App Cắt Nhạc & Dựng Video HD (Nhịp Thở Theo Bass + 8 Mẫu Chữ)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
@@ -87,7 +88,6 @@
     .ai-note-row .input-x { margin-bottom: 0; }
     .ai-note-row input { font-size: 12px; padding: 8px 30px 8px 9px; }
     .ai-reason { font-size: 12px; color: #7dd3fc; margin-top: 4px; line-height: 1.4; }
-    /* Bảng Tiến Trình Cắt + Gộp Render chi tiết */
     .progress-box {
       display: none; background: #0b1120; border: 1px solid #38bdf8;
       border-radius: 12px; padding: 14px; margin-top: 8px;
@@ -115,7 +115,7 @@
 </div>
 
 <div class="wrap">
-  <h1>🎬 Cắt Nhạc & Dựng Video HD (Xuất Siêu Nhanh + AI Theo Cốt Truyện)</h1>
+  <h1>🎬 Cắt Nhạc & Dựng Video HD (Nhịp Thở Theo Bass + 8 Mẫu Chữ)</h1>
 
   <div class="draft-bar">
     <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
@@ -142,15 +142,15 @@
       </div>
     </div>
 
-    <label>📖 Cốt truyện tổng thể (Bấm gợi ý nhanh hoặc tự gõ — Gemini dựa vào đây tránh trùng cảnh)</label>
+    <label>📖 Cốt truyện tổng thể (Bấm gợi ý nhanh hoặc tự gõ)</label>
     <div class="input-x">
-      <input type="text" id="storyContextInput" placeholder="VD: Quán trà sữa: mở đầu mặt tiền -> pha trà -> rót ly -> khách cười" value="Khởi nghiệp quán trà sữa: mở đầu quầy quán -> pha chế nguyên liệu -> rót trà vào ly -> thành phẩm hấp dẫn" />
+      <input type="text" id="storyContextInput" placeholder="VD: Giới thiệu phối đồ OOTD: mở đầu đứng tạo dáng -> LOOK 1 -> LOOK 2 -> LOOK 3" value="Phối đồ OOTD: mở đầu đứng tạo dáng với áo khoác -> LOOK 1 Thu Đông -> LOOK 2 Tết -> LOOK 3 Đi làm" />
       <button type="button" class="clear-x" onclick="clearField('storyContextInput', true)">✕</button>
     </div>
     <div class="chips-row">
+      <button type="button" class="chip-btn" onclick="setStory('Phối đồ OOTD: mở đầu tạo dáng -> LOOK 1 thanh lịch -> LOOK 2 năng động -> LOOK 3 đi làm')">👗 Phối đồ OOTD</button>
       <button type="button" class="chip-btn" onclick="setStory('Quán trà sữa: mặt tiền quán -> lấy ly -> múc topping -> rót trà -> thành phẩm đẹp')">🧋 Quán Trà Sữa</button>
       <button type="button" class="chip-btn" onclick="setStory('Bánh tráng nướng: chuẩn bị bếp than -> quét sốt -> đập trứng rắc hành -> nướng giòn -> đưa khách')">🥞 Bánh Tráng Nướng</button>
-      <button type="button" class="chip-btn" onclick="setStory('Quán ăn: bảng hiệu quán -> nấu món bốc khói -> gắp ra tô -> khách ăn ngon miệng')">🍜 Quán Ăn</button>
       <button type="button" class="chip-btn" onclick="setStory('Nhảy trend: tạo dáng 3s đầu -> vào nhịp tay chân sôi động -> chuyển góc quay cận mặt -> kết')">💃 Nhảy Trend</button>
     </div>
   </div>
@@ -176,7 +176,7 @@
     </div>
   </div>
 
-  <!-- 2. NGUỒN FILE & CHỌN 7 KIỂU CHỮ -->
+  <!-- 2. NGUỒN FILE, MẪU CHỮ & CHẾ ĐỘ NHỊP THỞ -->
   <div class="card">
     <div class="row">
       <div>
@@ -191,7 +191,7 @@
 
     <div class="row">
       <div>
-        <label>3. Kiểu Chữ & Màu Sắc Hook (7 kiểu từ hook-templates.js)</label>
+        <label>3. Kiểu Chữ & Màu Sắc Hook (8 kiểu từ hook-templates.js)</label>
         <select id="templateSelect"></select>
       </div>
       <div>
@@ -199,6 +199,14 @@
         <input type="number" id="beatCount" value="10" min="5" max="30" />
       </div>
     </div>
+
+    <label>🫁 Chế độ giật / Nhịp thở theo điệu nhạc cho Video</label>
+    <select id="motionModeSelect">
+      <option value="breath-all" selected>🫁 Nhịp thở theo Bass toàn bài (2.5s đầu sáng dần ➔ Thân bài thở theo trống - Khuyên dùng)</option>
+      <option value="breath-drop">🔥 Chỉ thở mạnh ở các phách Drop sôi động (Phách nhẹ giữ êm)</option>
+      <option value="beat-hit">⚡ Chỉ giật nhẹ ngay đầu mỗi phách cắt</option>
+      <option value="smooth">🌿 Mượt mà không giật (Zoom chậm nhẹ)</option>
+    </select>
 
     <button class="dark" id="aiSuggestBtn" disabled>✨ AI Đề Xuất Số Phách Tối Ưu Cho Bài Này</button>
     <div class="ai-suggest-box" id="aiSuggestBox">
@@ -210,20 +218,19 @@
       </div>
     </div>
 
-    <label>4. Ý chính để AI tự soạn tiêu đề (Bấm gợi ý nhanh hoặc tự gõ)</label>
+    <label>4. Ý chính để AI tự soạn chữ (Bấm gợi ý nhanh hoặc tự gõ)</label>
     <div class="row">
       <div class="input-x">
-        <input type="text" id="topicInput" value="bán trà sữa" placeholder="Gõ ý chính..." />
+        <input type="text" id="topicInput" value="em áo len phối đồ" placeholder="Gõ ý chính..." />
         <button type="button" class="clear-x" onclick="clearField('topicInput')">✕</button>
       </div>
       <button class="orange" id="aiFillBtn">✍️ AI Tự Soạn Chữ Hook (0đ)</button>
     </div>
     <div class="chips-row">
+      <button type="button" class="chip-btn" onclick="setTopic('em áo len phối đồ')">👗 áo len phối đồ</button>
       <button type="button" class="chip-btn" onclick="setTopic('bán trà sữa')">🧋 bán trà sữa</button>
       <button type="button" class="chip-btn" onclick="setTopic('bán bánh tráng nướng')">🥞 bán bánh tráng nướng</button>
-      <button type="button" class="chip-btn" onclick="setTopic('mở quán cà phê')">☕ mở quán cà phê</button>
       <button type="button" class="chip-btn" onclick="setTopic('món ngon vỉa hè')">🍢 món ngon vỉa hè</button>
-      <button type="button" class="chip-btn" onclick="setTopic('một ngày đi làm')">💼 một ngày đi làm</button>
     </div>
 
     <div class="row" id="dynamicFields"></div>
@@ -259,18 +266,18 @@
     <div class="status" id="statusText"></div>
   </div>
 
-  <!-- 3. XEM TRƯỚC + BẢNG TỪNG PHÁCH (GỌN GÀNG, BỎ XUẤT LẺ) -->
+  <!-- 3. XEM TRƯỚC + BẢNG TỪNG PHÁCH -->
   <div class="card" id="editorCard" style="display:none;">
     <div class="stage-wrap">
       <canvas id="previewCanvas" width="720" height="1280"></canvas>
     </div>
-    <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ</button>
+    <button id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ (Có Nhịp Thở Theo Nhạc)</button>
     <audio id="audioPlayer" controls></audio>
 
     <button class="gold" id="aiGeminiAllBtn">🧠 AI Gemini Tự Chọn Hết Các Phách (Đúng Mạch Truyện & Không Trùng)</button>
     <div class="status" id="aiAllStatus"></div>
 
-    <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini từng phách — Tự tránh trùng giây):</label>
+    <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini — ô Bối cảnh phách tự hiện lên nhãn của Mẫu 8 OOTD nếu có nhập):</label>
     <div id="beatsContainer"></div>
   </div>
 
@@ -278,7 +285,6 @@
   <div class="card" id="exportCard" style="display:none;">
     <button class="green" id="exportFinalBtn" style="font-size:16px;padding:14px;">🚀 Xuất Gộp Thành 1 Video Hoàn Chỉnh (.MP4 Có Nhạc)</button>
 
-    <!-- TIẾN TRÌNH CHẠY CẮT VIDEO & GỘP RENDER % -->
     <div class="progress-box" id="exportProgressBox">
       <div class="progress-top">
         <span id="exportProgressLabel">⏳ Đang khởi động...</span>
@@ -306,6 +312,7 @@
   let decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
   let blobStore = {}, blobUrlMap = {}, stripCache = {}, geminiCache = {}, videoDurationCache = {};
+  let bassBreathData = null; // { hopSec: 0.02, curve: Float32Array }
   let plan = [], sharedBlobKeys = [], animId = null, lastPlayingIdx = -1, activeSingleSeg = null;
   let currentStageBlobKey = null, currentBeatDensity = 'balanced';
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
@@ -322,8 +329,8 @@
   const draftStatus = document.getElementById('draftStatus');
   const templateSelect = document.getElementById('templateSelect');
   const dynamicFields = document.getElementById('dynamicFields');
+  const motionModeSelect = document.getElementById('motionModeSelect');
 
-  // --- TIỆN ÍCH XÓA NHANH & GỢI Ý ---
   window.clearField = function (id, saveKey = false) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -344,7 +351,6 @@
     catch { alert('Hãy chạm vào ô Link rồi bấm Dán nhé!'); }
   });
 
-  // --- GEMINI API KEY ---
   const geminiKeyInput = document.getElementById('geminiKeyInput');
   const geminiModelSelect = document.getElementById('geminiModelSelect');
   const storyContextInput = document.getElementById('storyContextInput');
@@ -379,7 +385,6 @@
     return mediabunnyPromise;
   }
 
-  // --- INDEXEDDB LƯU NHÁP ---
   function openStudioDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open('CatAmThanhStudioDB', 1);
@@ -407,6 +412,7 @@
       const payload = {
         savedAt: Date.now(), rawAudioBlob, rawAudioName, videoBlobs: savedBlobs, sharedBlobKeys,
         templateId: templateSelect.value, hookData: getHookData(),
+        motionMode: motionModeSelect.value,
         beatCount: document.getElementById('beatCount').value,
         quality: document.getElementById('qualitySelect').value,
         fps: document.getElementById('fpsSelect').value,
@@ -453,6 +459,7 @@
           if (draft.hookData[el.dataset.key] !== undefined) el.value = draft.hookData[el.dataset.key];
         });
       }
+      if (draft.motionMode) motionModeSelect.value = draft.motionMode;
       if (draft.beatCount) document.getElementById('beatCount').value = draft.beatCount;
       if (draft.quality) document.getElementById('qualitySelect').value = draft.quality;
       if (draft.fps) document.getElementById('fpsSelect').value = draft.fps;
@@ -461,6 +468,7 @@
       if (draft.storyContext) storyContextInput.value = draft.storyContext;
 
       await loadAudioFromBlob(rawAudioBlob, rawAudioName, false);
+      await analyzeAudioMetrics(decodedBuffer); // Khôi phục lại đường sóng Nhịp Thở Bass
 
       if (draft.planMeta && draft.planMeta.length) {
         wavBlob = encodeWAV(decodedBuffer);
@@ -488,7 +496,6 @@
     location.reload();
   });
 
-  // --- MẪU CHỮ HOOK ---
   function initTemplates() {
     const list = window.HOOK_TEMPLATES || [];
     templateSelect.innerHTML = list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
@@ -523,8 +530,11 @@
     if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
     scheduleAutoSave();
   });
-  ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount'].forEach(id => {
-    document.getElementById(id).addEventListener('change', scheduleAutoSave);
+  ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount', 'motionModeSelect'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if (id === 'motionModeSelect' && plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+      scheduleAutoSave();
+    });
   });
   initTemplates();
 
@@ -599,6 +609,7 @@
     }
   });
 
+  // --- PHÂN TÍCH SÓNG BASS + TẠO ĐƯỜNG NHỊP THỞ MƯỢT (ATTACK-RELEASE ENVELOPE) ---
   async function analyzeAudioMetrics(buffer) {
     const sr = buffer.sampleRate;
     const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, buffer.length, sr);
@@ -621,13 +632,41 @@
       if (corr * w > bestCorr) { bestCorr = corr * w; bestLag = lag; }
     }
     const bpm = Math.round(3000 / bestLag);
-    return { e, bpm, meanE: e.reduce((a, b) => a + b, 0) / (e.length || 1) };
+    const meanE = e.reduce((a, b) => a + b, 0) / (e.length || 1);
+
+    // Tính ngưỡng 95% để chuẩn hóa độ mạnh Bass của mọi bài nhạc về [0..1]
+    const sortedE = [...e].sort((a, b) => a - b);
+    const p95 = sortedE[Math.floor(sortedE.length * 0.95)] || meanE || 0.1;
+
+    // Tạo đường Nhịp Thở (Attack nhanh khi trống đập -> Release êm đàn hồi như hơi thở)
+    const curve = new Float32Array(e.length);
+    let env = 0;
+    for (let i = 0; i < e.length; i++) {
+      const level = Math.min(1.2, e[i] / (p95 + 1e-6));
+      const kick = Math.min(1.5, onset[i] / (p95 * 0.35 + 1e-6));
+      const target = Math.min(1.0, Math.max(0, kick * 0.72 + Math.max(0, level - 0.35) * 0.45));
+      if (target > env) env += (target - env) * 0.58; // Hít vào nhanh
+      else env = env * 0.85 + target * 0.15;          // Thở ra êm ái
+      curve[i] = Math.max(0, Math.min(1, env));
+    }
+    bassBreathData = { hopSec: 0.02, curve };
+
+    return { e, bpm, meanE };
+  }
+
+  function getBreathAt(t) {
+    if (!bassBreathData || !bassBreathData.curve.length) return 0;
+    const pos = Math.max(0, t / bassBreathData.hopSec);
+    const i0 = Math.min(bassBreathData.curve.length - 1, Math.floor(pos));
+    const i1 = Math.min(bassBreathData.curve.length - 1, i0 + 1);
+    const frac = pos - i0;
+    return bassBreathData.curve[i0] * (1 - frac) + bassBreathData.curve[i1] * frac;
   }
 
   document.getElementById('aiSuggestBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
     const m = await analyzeAudioMetrics(decodedBuffer);
-    const dur = decodedBuffer.duration, bodyDur = Math.max(2, dur - 2.8);
+    const dur = decodedBuffer.duration, bodyDur = Math.max(2, dur - 2.6);
     const recBalanced = Math.max(6, Math.min(24, 2 + Math.round(bodyDur / (m.bpm > 120 ? 1.05 : 1.35))));
     const recFast = Math.max(8, Math.min(30, 3 + Math.round(bodyDur / 0.65)));
     const recChill = Math.max(5, Math.min(16, 2 + Math.round(bodyDur / 2.1)));
@@ -646,7 +685,7 @@
   document.getElementById('analyzeBtn').addEventListener('click', async () => {
     if (!decodedBuffer) return;
     await document.fonts.ready;
-    statusText.textContent = '🎛️ Đang chia phách theo điệu nhạc...';
+    statusText.textContent = '🎛️ Đang chia phách & dựng đường nhịp thở theo Bass...';
     wavBlob = encodeWAV(decodedBuffer);
     audioPlayer.src = URL.createObjectURL(wavBlob);
 
@@ -660,13 +699,13 @@
     document.getElementById('saveButtonsBox').style.display = 'none';
     if (plan[0].blobKey) await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart);
     drawMainPreview(0);
-    statusText.textContent = '✅ Đã mở danh sách từng phách! Chạm ảnh 0đ hoặc bấm AI Gemini chọn không trùng.';
+    statusText.textContent = '✅ Đã xong! Bấm Phát Xem Trước để coi video thở theo nhịp Bass.';
     saveDraftNow();
   });
 
   async function buildBeatPlan(buffer, totalSegs, tpl, density) {
     const { e, meanE } = await analyzeAudioMetrics(buffer);
-    const hookEnd = Math.min(tpl.hookDuration || 2.8, buffer.duration * 0.35);
+    const hookEnd = Math.min(tpl.hookDuration || 2.6, buffer.duration * 0.35);
     const hookPts = tpl.bwFirst3s ? [hookEnd * 0.33, hookEnd * 0.66, hookEnd] : [hookEnd * 0.5, hookEnd];
 
     const bodyNeeded = Math.max(2, totalSegs - hookPts.length - 1);
@@ -747,7 +786,6 @@
     return true;
   }
 
-  // Trích mẫu ảnh siêu nhanh bằng Mediabunny VideoSampleSink (fallback về <video> nếu cần)
   async function extractSamplesFast(blobKey, count, W, H, jpegQuality) {
     try {
       const MB = await getMediabunny();
@@ -762,24 +800,21 @@
           for (let i = 0; i < count; i++) timestamps.push(Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2)));
           const c = document.createElement('canvas'); c.width = W; c.height = H;
           const cctx = c.getContext('2d', { willReadFrequently: true });
-          const results = [];
-          let idx = 0;
+          const results = []; let idx = 0;
           for await (const sample of sink.samplesAtTimestamps(timestamps)) {
             const t = timestamps[idx++];
             if (sample) {
-              const sw = sample.displayWidth, sh = sample.displayHeight;
-              const sc = Math.max(W / sw, H / sh);
+              const sw = sample.displayWidth, sh = sample.displayHeight, sc = Math.max(W / sw, H / sh);
               sample.draw(cctx, (W - sw * sc) / 2, (H - sh * sc) / 2, sw * sc, sh * sc);
               sample.close();
             }
-            results.push({ t, canvas: c, cctx, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
+            results.push({ t, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
           }
           if (results.length > 0) return { dur, results };
         }
       } finally { input.dispose(); }
     } catch {}
 
-    // Fallback về thẻ <video> nếu thiết bị chưa hỗ trợ VideoDecoder
     scannerVideo.src = getBlobUrl(blobKey);
     await ensureVideoReady(scannerVideo);
     const dur = scannerVideo.duration || 10;
@@ -791,7 +826,7 @@
       const t = Number(((i / Math.max(1, count - 1)) * Math.max(0.1, dur - 0.5)).toFixed(2));
       await seekVideo(scannerVideo, t, false);
       drawCover(cctx, scannerVideo, W, H);
-      results.push({ t, canvas: c, cctx, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
+      results.push({ t, dataUrl: c.toDataURL('image/jpeg', jpegQuality) });
     }
     scannerVideo.pause(); scannerVideo.removeAttribute('src'); scannerVideo.load();
     return { dur, results };
@@ -801,8 +836,7 @@
     scanQueue = scanQueue.then(async () => {
       if (!blobKey || !blobStore[blobKey]) return [];
       if (stripCache[blobKey]) return stripCache[blobKey];
-      const count = 8, W = 108, H = 192;
-      const { results } = await extractSamplesFast(blobKey, count, W, H, 0.65);
+      const { results } = await extractSamplesFast(blobKey, 8, 108, 192, 0.65);
       const items = results.map((r, i) => ({ t: r.t, dataUrl: r.dataUrl, score0d: i === 0 ? 0.6 : 0.8 }));
       stripCache[blobKey] = items;
       return items;
@@ -850,8 +884,8 @@
     const timeMapStr = candidateFrames.map((f, pos) => `Ảnh ${pos}: giây ${Math.min(maxStart, f.t).toFixed(1)}s`).join(', ');
 
     const prompt = `Bạn là đạo diễn dựng video TikTok.
-Cốt truyện tổng thể: "${story || 'Giới thiệu quán'}".
-Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu 3s đầu' : 'Diễn biến tiếp theo'}).
+Cốt truyện tổng thể: "${story || 'Giới thiệu quán/sản phẩm'}".
+Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu thu hút' : 'Diễn biến tiếp theo'}).
 ${note ? `Yêu cầu riêng: "${note}".` : ''}
 CÁC PHÁCH KHÁC ĐÃ CHỌN (TRÁNH TRÙNG):
 ${usedDesc}
@@ -932,6 +966,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
   function renderBeatsUI() {
     const box = document.getElementById('beatsContainer');
     box.innerHTML = '';
+    const hookCount = plan.filter(s => s.isHook).length;
 
     plan.forEach((seg) => {
       const card = document.createElement('div'); card.className = 'beat-card';
@@ -940,10 +975,11 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       const thumb = document.createElement('canvas'); thumb.width = 156; thumb.height = 276; thumb.className = 'beat-thumb';
       seg.thumbCanvas = thumb;
 
+      const bodyTag = !seg.isHook ? ` • LOOK ${seg.idx - hookCount}` : '';
       const right = document.createElement('div');
       right.innerHTML = `
         <div class="beat-head">
-          <span><b>Phách ${seg.numStr}</b> <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP'}</span></span>
+          <span><b>Phách ${seg.numStr}</b> <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP' + bodyTag}</span></span>
           <span style="color:#fde047;font-weight:800;">Dài: ${seg.dur.toFixed(2)}s</span>
         </div>
       `;
@@ -979,7 +1015,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
       const noteWrap = document.createElement('div'); noteWrap.className = 'input-x';
       const noteInput = document.createElement('input');
-      noteInput.type = 'text'; noteInput.placeholder = 'Bối cảnh phách này...';
+      noteInput.type = 'text'; noteInput.placeholder = seg.isHook ? 'Bối cảnh Hook...' : 'Bối cảnh / Nhãn góc trái (VD: Thu Đông)...';
       noteInput.value = seg.beatNote || '';
       noteInput.oninput = () => { seg.beatNote = noteInput.value; scheduleAutoSave(); };
       const noteClearBtn = document.createElement('button');
@@ -998,7 +1034,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
       const noteChips = document.createElement('div'); noteChips.className = 'chips-row';
       noteChips.style.marginTop = '6px';
-      const quickNotes = seg.isHook ? ['Mở đầu thu hút', 'Toàn cảnh quán'] : ['Thao tác pha chế', 'Cận cảnh món', 'Thành phẩm / Cười'];
+      const quickNotes = seg.isHook ? ['Mở đầu tạo dáng', 'Toàn cảnh quán'] : ['Thu Đông 🍂', 'Tết 🧧', 'Đi học / Đi làm', 'Cận cảnh đẹp'];
       quickNotes.forEach(qn => {
         const cb = document.createElement('button');
         cb.type = 'button'; cb.className = 'chip-btn'; cb.textContent = qn;
@@ -1038,7 +1074,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
             seg.trimStart = Number(itemT.toFixed(2)); seg.hasPicked = true;
             syncBeatUiAfterPick();
             await loadStageVideoKey(seg.blobKey, seg.trimStart);
-            renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
+            renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
             scheduleAutoSave();
           };
           stripWrap.appendChild(div);
@@ -1053,7 +1089,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         blobStore[k] = f; seg.blobKey = k; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false;
         await populateStrip();
         await loadStageVideoKey(seg.blobKey, 0);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
         scheduleAutoSave();
       };
 
@@ -1061,7 +1097,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         seg.blobKey = null; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false; seg.aiReason = '';
         reasonBox.textContent = ''; rangeLabel.textContent = 'Đang dùng: Video Nền Đen';
         stripWrap.innerHTML = ''; drawThumbFromStripOrBlack(seg);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, null);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, null);
         scheduleAutoSave();
       };
 
@@ -1079,7 +1115,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         seg.aiReason = `⚡ 0đ: Chọn giây ${seg.trimStart.toFixed(1)}s (không trùng)`;
         syncBeatUiAfterPick();
         await loadStageVideoKey(seg.blobKey, seg.trimStart);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
         scheduleAutoSave();
       };
 
@@ -1092,7 +1128,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
           seg.aiReason = `🤖 Gemini (${ans.t.toFixed(1)}s): ${ans.reason}`;
           syncBeatUiAfterPick();
           await loadStageVideoKey(seg.blobKey, seg.trimStart);
-          renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
+          renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
           scheduleAutoSave();
         } catch (err) { reasonBox.textContent = '❌ ' + err.message; }
         finally { geminiBtn.disabled = false; }
@@ -1112,7 +1148,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         await loadStageVideoKey(seg.blobKey, seg.trimStart);
         const tc = thumb.getContext('2d');
         if (sharedStageVideo.videoWidth > 0) drawCover(tc, sharedStageVideo, 156, 276);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, true, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
         isSliding = false;
       };
 
@@ -1141,32 +1177,72 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     } finally { btn.disabled = false; }
   });
 
-  // Vẽ 1 khung hình tổng hợp (dùng chung cho cả Preview & Fast Export Sample!)
+  // VẼ KHUNG HÌNH VỚI HIỆU ỨNG "NHỊP THỞ THEO BASS" (BREATHING ZOOM)
   function drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, drawFn) {
     const tpl = getCurrentTemplate();
     if (!seg.blobKey || !drawFn) {
       drawBlackPlaceholder(ctx, seg, fLocal, totalLocal, W, H);
       return;
     }
-    const dt = Math.max(0, t - seg.start), pulse = dt < 0.22 ? (1 - dt / 0.22) : 0;
+
+    const mode = motionModeSelect.value;
+    const dt = Math.max(0, t - seg.start);
+    const hitPulse = dt < 0.18 ? (1 - dt / 0.18) : 0;
+    const breath = getBreathAt(t); // Độ phập phồng [0..1] bám theo sóng Bass thật của nhạc!
+
+    let zoom = 1.0;
+    let flashAlpha = 0;
+    let introDarkness = 0;
+
+    if (mode === 'breath-all') {
+      if (seg.isHook) {
+        // 2.5s đầu: Thở rất khẽ + Sáng dần lên mượt mà như video OOTD mẫu!
+        const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0) || 2.5;
+        const hookProg = Math.min(1, t / hookTotal);
+        introDarkness = Math.max(0, (1 - hookProg) * 0.28);
+        zoom = 1.0 + breath * 0.018;
+      } else {
+        // Tất cả phách thân bài: Thở theo sóng Bass thật + nhấn đàn hồi đầu phách chuyển cảnh!
+        zoom = 1.0 + breath * 0.068 + hitPulse * 0.025;
+        flashAlpha = breath * 0.06 + hitPulse * 0.05;
+      }
+    } else if (mode === 'breath-drop') {
+      if (!seg.isHook && seg.energy >= 1.02) {
+        zoom = 1.0 + breath * 0.075 + hitPulse * 0.025;
+        flashAlpha = breath * 0.07;
+      } else {
+        zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.03;
+      }
+    } else if (mode === 'beat-hit') {
+      zoom = 1.0 + hitPulse * 0.065;
+      flashAlpha = hitPulse * 0.12;
+    } else {
+      zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.04;
+    }
+
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     ctx.save();
-    if (tpl.bwFirst3s && seg.isHook) ctx.filter = `grayscale(100%) brightness(${0.7 + pulse * 0.6})`;
-    const zoom = 1 + pulse * 0.055;
+    if (tpl.bwFirst3s && seg.isHook) ctx.filter = `grayscale(100%) brightness(${0.7 + hitPulse * 0.5})`;
     ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
     drawFn(ctx, W, H);
     ctx.restore();
 
-    if (pulse > 0.05 && !(tpl.bwFirst3s && seg.isHook)) {
-      ctx.fillStyle = `rgba(255,255,255,${(pulse * 0.14).toFixed(2)})`;
+    if (introDarkness > 0.01) {
+      ctx.fillStyle = `rgba(0,0,0,${introDarkness.toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (flashAlpha > 0.01 && !(tpl.bwFirst3s && seg.isHook)) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(0.22, flashAlpha).toFixed(2)})`;
       ctx.fillRect(0, 0, W, H);
     }
 
+    const hookCount = plan.filter(s => s.isHook).length;
     const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
-    tpl.render(ctx, t, W, H, getHookData(), hookTotal);
+    const segInfo = { seg, dt, bodyBeatIdx: Math.max(0, seg.idx - 1 - hookCount) };
+    tpl.render(ctx, t, W, H, getHookData(), hookTotal, segInfo);
   }
 
-  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, includeHookText, videoSourceEl) {
+  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, videoSourceEl) {
     let seg = singleSegOverride || plan[0];
     if (!singleSegOverride) for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
     const hasVid = seg.blobKey && videoSourceEl && videoSourceEl.videoWidth > 0;
@@ -1174,7 +1250,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
   }
 
   function drawMainPreview(t) {
-    renderCompositeFrame(pCtx, t, 720, 1280, null, 0, 30, true, currentStageBlobKey ? sharedStageVideo : null);
+    renderCompositeFrame(pCtx, t, 720, 1280, null, 0, 30, currentStageBlobKey ? sharedStageVideo : null);
   }
 
   async function playSingleBeat(seg) {
@@ -1203,7 +1279,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
           audioPlayer.pause(); sharedStageVideo.pause(); activeSingleSeg = null; return;
         }
         if (activeSingleSeg.blobKey && sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
-        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * 30), Math.round(activeSingleSeg.dur * 30), true, activeSingleSeg.blobKey ? sharedStageVideo : null);
+        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * 30), Math.round(activeSingleSeg.dur * 30), activeSingleSeg.blobKey ? sharedStageVideo : null);
       } else {
         let seg = plan[0]; for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
         if (seg.idx !== lastPlayingIdx && !switchingStage) {
@@ -1245,9 +1321,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     document.getElementById('exportProgressFill').style.width = `${pct}%`;
     if (sub) document.getElementById('exportProgressSub').textContent = sub;
 
-    const cEl = document.getElementById('stepCutEl');
-    const rEl = document.getElementById('stepRenderEl');
-    const aEl = document.getElementById('stepAudioEl');
+    const cEl = document.getElementById('stepCutEl'), rEl = document.getElementById('stepRenderEl'), aEl = document.getElementById('stepAudioEl');
     if (cutText) cEl.textContent = cutText;
     if (cutState !== undefined) cEl.className = `step-item ${cutState}`;
     if (renderText) rEl.textContent = renderText;
@@ -1256,16 +1330,14 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     if (audioState !== undefined) aEl.className = `step-item ${audioState}`;
   }
 
-  // --- XUẤT GỘP SIÊU NHANH BẰNG HARDWARE DECODER (VideoSampleSink.samplesAtTimestamps) ---
+  // --- XUẤT GỘP NHANH BẰNG VideoSampleSink ---
   document.getElementById('exportFinalBtn').addEventListener('click', async () => {
     if (!plan.length || !decodedBuffer) return;
     const btn = document.getElementById('exportFinalBtn'); btn.disabled = true;
     document.getElementById('saveButtonsBox').style.display = 'none';
     exportStatus.textContent = '';
 
-    const inputCache = {}; // Cache Input theo blobKey trong suốt quá trình xuất rồi dispose sạch
-    const sinkCache = {};
-    const durCache = {};
+    const inputCache = {}, sinkCache = {}, durCache = {};
     let activeFallbackBlobKey = null;
 
     try {
@@ -1290,7 +1362,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       });
       document.getElementById('exportProgressBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Chuẩn bị bộ giải mã phần cứng VideoSampleSink cho từng video khác nhau
       const uniqueKeys = [...new Set(plan.map(s => s.blobKey).filter(Boolean))];
       for (const k of uniqueKeys) {
         try {
@@ -1341,7 +1412,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       const tStart = performance.now();
       let renderedFrames = 0;
 
-      // Xử lý tuần tự TỪNG PHÁCH -> VideoSampleSink giải mã thẳng mạch siêu nhanh!
       for (let bIdx = 0; bIdx < beatRanges.length; bIdx++) {
         const br = beatRanges[bIdx], seg = br.seg;
         updateExportProgressUI({
@@ -1353,22 +1423,18 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
         if (seg.blobKey && sinkCache[seg.blobKey]) {
           const maxVidT = Math.max(0.05, (durCache[seg.blobKey] || 10) - 0.04);
-          const timestamps = [];
-          let lastT = 0;
+          const timestamps = []; let lastT = 0;
           for (let f = 0; f < br.count; f++) {
             const tVal = Math.max(lastT, Math.min(maxVidT, seg.trimStart + (f / fps)));
-            lastT = tVal;
-            timestamps.push(tVal);
+            lastT = tVal; timestamps.push(tVal);
           }
 
-          let fLocal = 0;
-          let hasValidFallback = false;
+          let fLocal = 0, hasValidFallback = false;
           for await (const sample of sinkCache[seg.blobKey].samplesAtTimestamps(timestamps)) {
             const globalF = br.startF + fLocal;
             if (sample) {
               try {
-                const sw = sample.displayWidth, sh = sample.displayHeight;
-                const sc = Math.max(W / sw, H / sh);
+                const sw = sample.displayWidth, sh = sample.displayHeight, sc = Math.max(W / sw, H / sh);
                 sample.draw(fbCtx, (W - sw * sc) / 2, (H - sh * sc) / 2, sw * sc, sh * sc);
                 hasValidFallback = true;
               } finally { sample.close(); }
@@ -1385,17 +1451,14 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
               const speedFps = renderedFrames / Math.max(0.2, elapsedSec);
               const etaSec = Math.max(0, Math.round((totalFrames - renderedFrames) / Math.max(1, speedFps)));
               updateExportProgressUI({
-                pct,
-                label: `🎬 Đang gộp & render Video: ${pct}%`,
+                pct, label: `🎬 Đang gộp & render Video: ${pct}%`,
                 renderText: `🎬 Bước 2 (Gộp & Render): ${pct}% (${renderedFrames}/${totalFrames} khung • ~${Math.round(speedFps)} fps)`,
-                renderState: 'active',
-                sub: `Ước tính còn khoảng ${etaSec} giây — Xin giữ sáng màn hình...`
+                renderState: 'active', sub: `Ước tính còn khoảng ${etaSec} giây — Xin giữ sáng màn hình...`
               });
               await new Promise(r => setTimeout(r, 0));
             }
           }
         } else {
-          // Phách nền đen hoặc fallback <video>
           for (let fLocal = 0; fLocal < br.count; fLocal++) {
             const globalF = br.startF + fLocal;
             if (seg.blobKey && blobStore[seg.blobKey]) {
@@ -1406,7 +1469,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
               }
               await seekVideo(exportVideo, seg.trimStart + (fLocal / fps), true);
             }
-            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, true, seg.blobKey ? exportVideo : null);
+            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, seg.blobKey ? exportVideo : null);
             await videoSource.add(globalF / fps, 1 / fps);
             renderedFrames++;
 
