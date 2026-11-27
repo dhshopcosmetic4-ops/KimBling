@@ -1,15 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video Siêu Nét 1080p Chuẩn iPhone</title>
+  <title>App Cắt Nhạc & Dựng Video Pro (Chỉnh Giây + Trộn Âm + Lia Máy)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <script src="./hook-templates.js?v=10"></script>
-  <script src="./ai-presets.js?v=10"></script>
-  <script src="./visualizer.js?v=10"></script>
+  <script src="./hook-templates.js?v=12"></script>
+  <script src="./ai-presets.js?v=12"></script>
+  <script src="./visualizer.js?v=12"></script>
+  <script src="./motion-effects.js?v=12"></script>
   <style>
     * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
     body { margin: 0; background: #070b14; color: #f8fafc; padding: 14px; }
@@ -17,7 +19,7 @@
     h1 { font-size: 18px; text-align: center; color: #fde047; margin: 4px 0 10px; }
     .warn-bar {
       display: none; background: #7f1d1d; border: 1px solid #ef4444; color: #fecaca;
-      border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px; line-height: 1.5;
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px;
     }
     .draft-bar {
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -53,6 +55,7 @@
     button.green { background: linear-gradient(135deg, #059669, #10b981); }
     button.gold { background: linear-gradient(135deg, #d97706, #eab308); color: #000; }
     button.dark { background: #1e293b; border: 1px solid #475569; }
+    button.red { background: #991b1b; border: 1px solid #ef4444; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     .status { font-size: 13px; color: #34d399; text-align: center; min-height: 18px; margin-bottom: 6px; }
     .ai-suggest-box {
@@ -61,20 +64,38 @@
     }
     .ai-suggest-box .title { font-size: 13px; color: #7dd3fc; font-weight: 800; margin-bottom: 8px; }
     .ai-suggest-box button { font-size: 12px; padding: 9px 6px; margin-bottom: 0; }
-    .stage-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+    .stage-wrap { display: flex; justify-content: center; margin-bottom: 10px; }
     canvas#previewCanvas {
       width: 250px; height: 444px; background: #000; border-radius: 16px;
       border: 2px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
-    audio { width: 100%; margin-bottom: 10px; }
+    .player-bar {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+      background: #0b1120; border: 1px solid #334155; padding: 8px 12px; border-radius: 12px; margin-bottom: 12px;
+    }
+    .player-bar button { width: auto; margin: 0; padding: 8px 14px; font-size: 13px; }
+    .player-bar input[type="range"] { margin: 0; }
+    .player-time { font-size: 12px; color: #fde047; font-weight: 700; min-width: 82px; text-align: right; }
     .beat-card { background: #0b1120; border: 1px solid #263552; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
     .beat-top { display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: start; }
     .beat-thumb { width: 78px; height: 138px; background: #000; border-radius: 8px; border: 1px solid #334155; }
-    .beat-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
+    .beat-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; flex-wrap: wrap; gap: 4px; }
     .badge { background: #1d4ed8; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; }
     .badge.hook { background: #dc2626; }
+    .badge.locked { background: #d97706; color: #000; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-    .small-btn { padding: 7px 10px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
+    .small-btn { padding: 6px 9px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
+    /* Thanh chỉnh giây + Âm lượng + Hook thông minh */
+    .beat-ctrl-box {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 9px; padding: 8px; margin-top: 6px;
+    }
+    .dur-edit-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; font-size: 12px; }
+    .dur-edit-row input[type="number"] { width: 72px; margin: 0; padding: 5px 7px; font-size: 13px; text-align: center; }
+    .hook-opts { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: #cbd5e1; margin-bottom: 6px; }
+    .hook-opts label { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: #fde047; cursor: pointer; }
+    .hook-opts input { width: auto; margin: 0; }
+    .vol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .vol-item label { font-size: 11px; margin-bottom: 0; color: #94a3b8; }
     input[type="range"] { padding: 0; margin: 4px 0; accent-color: #38bdf8; }
     .strip-wrap { display: flex; gap: 6px; overflow-x: auto; padding: 6px 0 4px; margin-top: 4px; }
     .strip-item {
@@ -115,16 +136,17 @@
   <video id="sharedStageVideo" muted playsinline preload="auto"></video>
   <video id="scannerVideo" muted playsinline preload="auto"></video>
   <video id="exportVideo" muted playsinline preload="auto"></video>
+  <audio id="musicAudioEl" preload="auto"></audio>
 </div>
 
 <div class="wrap">
-  <h1>🎬 Cắt Nhạc & Dựng Video Siêu Nét 1080p Chuẩn iPhone</h1>
+  <h1>🎬 Dựng Video Pro (Chỉnh Giây Từng Phách + Trộn Âm + Lia Máy)</h1>
 
   <div class="warn-bar" id="warnBar"></div>
 
   <div class="draft-bar">
     <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
-    <button id="clearDraftBtn">🗑️ Xóa Nháp / Bài Mới</button>
+    <button type="button" id="clearDraftBtn">🗑️ Xóa Nháp / Bài Mới</button>
   </div>
 
   <!-- CÀI ĐẶT GEMINI & CỐT TRUYỆN -->
@@ -147,9 +169,9 @@
       </div>
     </div>
 
-    <label>📖 Cốt truyện tổng thể (Bấm gợi ý nhanh hoặc tự gõ)</label>
+    <label>📖 Cốt truyện tổng thể</label>
     <div class="input-x">
-      <input type="text" id="storyContextInput" placeholder="VD: Giới thiệu phối đồ OOTD..." value="Phối đồ OOTD: mở đầu đứng tạo dáng với áo khoác -> LOOK 1 Thu Đông -> LOOK 2 Tết -> LOOK 3 Đi làm" />
+      <input type="text" id="storyContextInput" value="Phối đồ OOTD: mở đầu đứng tạo dáng -> LOOK 1 Thu Đông -> LOOK 2 Tết -> LOOK 3 Đi làm" />
       <button type="button" class="clear-x" onclick="clearField('storyContextInput', true)">✕</button>
     </div>
     <div class="chips-row">
@@ -175,13 +197,13 @@
     </div>
     <div class="status" id="tkStatus"></div>
     <div class="tk-fallback" id="tkFallback">
-      Tải nhanh nếu trình duyệt chặn CORS:
+      Tải nhanh (nếu Safari mở ra để xem: bấm nút <b>Chia sẻ ⬆️ ➔ Lưu vào Tệp</b>):
       <a id="tkVidLink" target="_blank" download="tiktok.mp4">⬇️ Video Không Logo</a>
       <a id="tkAudLink" target="_blank" download="tiktok.mp3">🎵 Nhạc MP3</a>
     </div>
   </div>
 
-  <!-- 2. NGUỒN FILE, MẪU CHỮ, NHỊP THỞ & SÓNG NHẠC -->
+  <!-- 2. NGUỒN FILE, MẪU CHỮ, CHẾ ĐỘ LƯỚT MÁY & SÓNG NHẠC -->
   <div class="card">
     <div class="row">
       <div>
@@ -200,16 +222,18 @@
         <select id="templateSelect"></select>
       </div>
       <div>
-        <label>Số phách muốn cắt</label>
-        <input type="number" id="beatCount" value="10" min="5" max="30" />
+        <label>Số phách muốn cắt (Chấp nhận từ 1, 2, 3... trở lên)</label>
+        <input type="number" id="beatCount" value="6" min="1" max="30" />
       </div>
     </div>
 
-    <label>🫁 Chế độ giật / Nhịp thở theo điệu nhạc cho Video</label>
+    <label>🎥 Chế độ chuyển động / Tự động Lướt Máy (từ motion-effects.js)</label>
     <select id="motionModeSelect">
-      <option value="breath-all" selected>🫁 Nhịp thở theo Bass toàn bài (2.5s đầu sáng dần ➔ Thân bài thở theo trống)</option>
-      <option value="breath-drop">🔥 Chỉ thở mạnh ở các phách Drop sôi động</option>
-      <option value="beat-hit">⚡ Chỉ giật nhẹ ngay đầu mỗi phách cắt</option>
+      <option value="breath-all" selected>🫁 Nhịp thở theo Bass toàn bài (Giống OOTD)</option>
+      <option value="pan-breath">🔥 Tự động Lướt Máy + Nhịp Thở Bass (Đỡ phải lia tay!)</option>
+      <option value="auto-pan">🎥 Chỉ Tự động Lướt Máy êm ái (Trái ➔ Phải ➔ Cận)</option>
+      <option value="breath-drop">⚡ Chỉ thở mạnh ở các phách Drop sôi động</option>
+      <option value="beat-hit">💥 Chỉ giật nhẹ ngay đầu mỗi phách cắt</option>
       <option value="smooth">🌿 Mượt mà không giật</option>
     </select>
 
@@ -246,7 +270,7 @@
       </div>
     </div>
 
-    <label>4. Ý chính để AI tự soạn chữ (Bấm gợi ý nhanh hoặc tự gõ)</label>
+    <label>4. Ý chính để AI tự soạn chữ</label>
     <div class="row">
       <div class="input-x">
         <input type="text" id="topicInput" value="em áo len phối đồ" placeholder="Gõ ý chính..." />
@@ -265,11 +289,11 @@
 
     <div class="row3">
       <div>
-        <label>Độ nét & Bitrate (Khuyên dùng 1080p Siêu Nét)</label>
+        <label>Độ nét & Bitrate</label>
         <select id="qualitySelect">
-          <option value="1080_ultra" selected>🔥 Full HD 1080×1920 (Siêu Nét 18–24 Mbps)</option>
-          <option value="1080">Full HD 1080×1920 (Chuẩn 12 Mbps)</option>
-          <option value="720">HD 720×1280 (Nhanh - 8.5 Mbps)</option>
+          <option value="1080_ultra" selected>🔥 Full HD 1080×1920 (Siêu Nét 18–24M)</option>
+          <option value="1080">Full HD 1080×1920 (12M)</option>
+          <option value="720">HD 720×1280 (Nhanh - 8.5M)</option>
         </select>
       </div>
       <div>
@@ -299,19 +323,26 @@
     <div class="stage-wrap">
       <canvas id="previewCanvas" width="720" height="1280"></canvas>
     </div>
-    <button type="button" id="playAllBtn">▶️ Phát Xem Trước Toàn Bộ (Nhịp Thở + Sóng Nhạc)</button>
-    <audio id="audioPlayer" controls></audio>
 
-    <button type="button" class="gold" id="aiGeminiAllBtn">🧠 AI Gemini Tự Chọn Hết Các Phách (Đúng Mạch Truyện & Không Trùng)</button>
+    <div class="player-bar">
+      <button type="button" id="playAllBtn">▶️ Phát</button>
+      <input type="range" id="previewSeekBar" min="0" max="10" step="0.05" value="0" />
+      <span class="player-time" id="previewTimeLabel">00:00 / 00:00</span>
+    </div>
+
+    <div class="row">
+      <button type="button" class="gold" id="aiGeminiAllBtn">🧠 AI Gemini Chọn Hết Các Phách</button>
+      <button type="button" class="dark" id="addBeatBtn">➕ Thêm 1 Phách Mới</button>
+    </div>
     <div class="status" id="aiAllStatus"></div>
 
-    <label>✂️ Từng Phách (Chạm ảnh 0đ hoặc bấm AI Gemini):</label>
+    <label>✂️ Danh Sách Từng Phách (Khóa giây tùy ý • Chỉnh âm gốc & âm nhạc • Đánh dấu Hook • Xóa phách tự khớp nhạc):</label>
     <div id="beatsContainer"></div>
   </div>
 
-  <!-- 4. XUẤT GỘP 1 FILE DUY NHẤT -->
+  <!-- 4. XUẤT GỘP 1 FILE -->
   <div class="card" id="exportCard" style="display:none;">
-    <button type="button" class="green" id="exportFinalBtn" style="font-size:16px;padding:14px;">🚀 Xuất Gộp Thành 1 Video Siêu Nét (.MP4 Có Nhạc)</button>
+    <button type="button" class="green" id="exportFinalBtn" style="font-size:16px;padding:14px;">🚀 Xuất Gộp Thành 1 Video Siêu Nét (.MP4 Đủ Âm Thanh)</button>
 
     <div class="progress-box" id="exportProgressBox">
       <div class="progress-top">
@@ -322,7 +353,7 @@
       <div class="step-list">
         <div class="step-item" id="stepCutEl">✂️ Bước 1 (Cắt từng phách): Chờ xử lý...</div>
         <div class="step-item" id="stepRenderEl">🎬 Bước 2 (Gộp & Render khung hình): 0%</div>
-        <div class="step-item" id="stepAudioEl">🎵 Bước 3 (Ghép âm thanh AAC & đóng gói MP4): Chờ...</div>
+        <div class="step-item" id="stepAudioEl">🎵 Bước 3 (Trộn âm thanh gốc + nhạc bài hát): Chờ...</div>
       </div>
       <div class="progress-sub" id="exportProgressSub">Xin giữ màn hình sáng trong lúc xuất video...</div>
     </div>
@@ -338,14 +369,11 @@
 
 <script>
   const warnBar = document.getElementById('warnBar');
-  function showWarn(msg) {
-    warnBar.style.display = 'block';
-    warnBar.innerHTML += `<div>⚠️ ${msg}</div>`;
-  }
+  function showWarn(msg) { warnBar.style.display = 'block'; warnBar.innerHTML += `<div>⚠️ ${msg}</div>`; }
   window.addEventListener('error', (e) => showWarn('Lỗi hệ thống: ' + (e.message || 'Không xác định')));
 
   if (!window.HOOK_TEMPLATES || !window.HOOK_TEMPLATES.length) {
-    showWarn('Chưa tải được file <b>hook-templates.js</b> cùng cấp (đang dùng tạm mẫu cơ bản).');
+    showWarn('Chưa tải được file <b>hook-templates.js</b> cùng cấp.');
     window.HOOK_TEMPLATES = [{
       id: 'fallback', name: 'Mẫu Cơ Bản', hookDuration: 2.8,
       fields: [{ key: 'main', label: 'Tiêu đề', default: 'VIDEO CỦA BẠN' }],
@@ -357,26 +385,32 @@
       }
     }];
   }
-  if (!window.AI_PRESETS) {
-    showWarn('Chưa tải được file <b>ai-presets.js</b> cùng cấp.');
-    window.AI_PRESETS = { generateHookData: (topic) => ({ main: (topic || 'VIDEO').toUpperCase() }) };
-  }
+  if (!window.AI_PRESETS) window.AI_PRESETS = { generateHookData: (t) => ({ main: (t || 'VIDEO').toUpperCase() }) };
   if (!window.AUDIO_VIZ) showWarn('Chưa tải được file <b>visualizer.js</b> cùng cấp.');
+  if (!window.MOTION_FX) {
+    showWarn('Chưa tải được file <b>motion-effects.js</b> cùng cấp.');
+    window.MOTION_FX = { compute: () => ({ zoom: 1, tx: 0, ty: 0, rotRad: 0, flashAlpha: 0, introDarkness: 0 }) };
+  }
 
   let decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
   let blobStore = {}, blobUrlMap = {}, stripCache = {}, geminiCache = {}, videoDurationCache = {};
-  let bassBreathData = null;
-  let plan = [], sharedBlobKeys = [], animId = null, lastPlayingIdx = -1, activeSingleSeg = null;
-  let currentStageBlobKey = null, currentBeatDensity = 'balanced';
+  let audioMetricsCache = null, bassBreathData = null;
+  let plan = [], sharedBlobKeys = [], currentBeatDensity = 'balanced';
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
+
+  // Master clock cho Preview (hỗ trợ cả trường hợp Hook tắt nhạc!)
+  let isPlayingPreview = false, previewTime = 0, lastWallTs = 0, animId = null, lastPlayingIdx = -1, currentStageBlobKey = null, switchingStage = false;
 
   const sharedStageVideo = document.getElementById('sharedStageVideo');
   const scannerVideo = document.getElementById('scannerVideo');
   const exportVideo = document.getElementById('exportVideo');
+  const musicAudioEl = document.getElementById('musicAudioEl');
   const previewCanvas = document.getElementById('previewCanvas');
   const pCtx = previewCanvas.getContext('2d');
-  const audioPlayer = document.getElementById('audioPlayer');
+  const previewSeekBar = document.getElementById('previewSeekBar');
+  const previewTimeLabel = document.getElementById('previewTimeLabel');
+  const playAllBtn = document.getElementById('playAllBtn');
   const statusText = document.getElementById('statusText');
   const tkStatus = document.getElementById('tkStatus');
   const exportStatus = document.getElementById('exportStatus');
@@ -411,6 +445,10 @@
     return blobUrlMap[key];
   }
   function getExportFps() { return parseInt(document.getElementById('fpsSelect').value || '30', 10); }
+  function fmtSec(s) {
+    const m = Math.floor(s / 60), r = (s % 60).toFixed(1).padStart(4, '0');
+    return `${String(m).padStart(2, '0')}:${r}`;
+  }
 
   function getMediabunny() {
     if (!mediabunnyPromise) {
@@ -461,8 +499,10 @@
         beatDensity: currentBeatDensity,
         planMeta: plan.map(s => ({
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
-          energy: s.energy || 0.5, isHook: s.isHook, trimStart: s.trimStart,
-          hasPicked: !!s.hasPicked, customVideo: !!s.customVideo,
+          musicStart: s.musicStart, energy: s.energy || 0.5,
+          isHook: s.isHook, playMusic: s.playMusic, lockedDur: !!s.lockedDur,
+          origVol: s.origVol, musicVol: s.musicVol,
+          trimStart: s.trimStart, hasPicked: !!s.hasPicked, customVideo: !!s.customVideo,
           blobKey: s.blobKey || null, beatNote: s.beatNote || '', aiReason: s.aiReason || ''
         }))
       };
@@ -518,8 +558,17 @@
 
       if (draft.planMeta && draft.planMeta.length) {
         wavBlob = encodeWAV(decodedBuffer);
-        audioPlayer.src = URL.createObjectURL(wavBlob);
-        plan = draft.planMeta.map(m => ({ ...m, thumbCanvas: null }));
+        musicAudioEl.src = URL.createObjectURL(wavBlob);
+        plan = draft.planMeta.map(m => ({
+          ...m,
+          playMusic: m.playMusic !== undefined ? m.playMusic : true,
+          lockedDur: !!m.lockedDur,
+          origVol: m.origVol !== undefined ? m.origVol : 0,
+          musicVol: m.musicVol !== undefined ? m.musicVol : 100,
+          musicStart: m.musicStart !== undefined ? m.musicStart : m.start,
+          thumbCanvas: null
+        }));
+        syncPreviewBarRange();
         renderBeatsUI();
         document.getElementById('editorCard').style.display = 'block';
         document.getElementById('exportCard').style.display = 'block';
@@ -556,7 +605,7 @@
       </div>
     `).join('');
     document.querySelectorAll('.tpl-field').forEach(el => el.addEventListener('input', () => {
-      if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+      if (plan.length) drawMainPreview(previewTime || 0);
       scheduleAutoSave();
     }));
   }
@@ -566,11 +615,9 @@
     return obj;
   }
 
-  // BITRATE CAO CHUẨN IPHONE + 1080p SIÊU NÉT
   function getQualitySpec() {
     const q = document.getElementById('qualitySelect').value;
-    const fps = getExportFps();
-    const fpsMult = fps === 60 ? 1.35 : 1.0;
+    const fps = getExportFps(), fpsMult = fps === 60 ? 1.35 : 1.0;
     if (q === '1080_ultra') return { W: 1080, H: 1920, bitrate: Math.round(18_000_000 * fpsMult), fps };
     if (q === '1080') return { W: 1080, H: 1920, bitrate: Math.round(12_000_000 * fpsMult), fps };
     return { W: 720, H: 1280, bitrate: Math.round(8_500_000 * fpsMult), fps };
@@ -624,7 +671,8 @@
       curve[i] = Math.max(0, Math.min(1, env));
     }
     bassBreathData = { hopSec: 0.02, curve };
-    return { e, bpm, meanE };
+    audioMetricsCache = { e, bpm, meanE };
+    return audioMetricsCache;
   }
 
   function getBreathAt(t) {
@@ -635,47 +683,150 @@
     return bassBreathData.curve[i0] * (1 - (pos - i0)) + bassBreathData.curve[i1] * (pos - i0);
   }
 
-  async function buildBeatPlan(buffer, totalSegs, tpl, density) {
-    const { e, meanE } = await analyzeAudioMetrics(buffer);
-    const hookEnd = Math.min((tpl && tpl.hookDuration) || 2.6, buffer.duration * 0.35);
-    const hookPts = (tpl && tpl.bwFirst3s) ? [hookEnd * 0.33, hookEnd * 0.66, hookEnd] : [hookEnd * 0.5, hookEnd];
-
-    const bodyNeeded = Math.max(2, totalSegs - hookPts.length - 1);
+  // CHIA NHỊP THÔNG MINH HỖ TRỢ TỪ 1 PHÁCH TRỞ LÊN + KHÓA GIÂY + TRỪ NHẠC + HOOK TẮT/BẬT NHẠC!
+  function snapWindowToBeats(musicStart, musicEnd, count, e, meanE) {
+    if (count <= 1) return [musicEnd - musicStart];
+    const span = musicEnd - musicStart;
+    const minGap = Math.min(0.65, (span / count) * 0.55);
     const cands = [];
-    for (let i = Math.floor(hookEnd / 0.02) + 8; i < e.length - 12; i++) {
-      let loc = 0, s = Math.max(0, i - 18), end = Math.min(e.length, i + 18);
+    const iStart = Math.max(2, Math.floor((musicStart + minGap) / 0.02));
+    const iEnd = Math.min(e.length - 3, Math.floor((musicEnd - minGap) / 0.02));
+    for (let i = iStart; i <= iEnd; i++) {
+      let loc = 0, s = Math.max(0, i - 16), end = Math.min(e.length, i + 16);
       for (let k = s; k < end; k++) loc += e[k];
       loc /= (end - s);
-      if (e[i] > e[i - 1] && e[i] > e[i + 1] && e[i] > loc * 1.2) cands.push({ time: i * 0.02, score: e[i] / (loc + 1e-6), energy: e[i] });
+      if (e[i] > e[i - 1] && e[i] > e[i + 1] && e[i] > loc * 1.15) {
+        cands.push({ time: i * 0.02, score: e[i] / (loc + 1e-6) });
+      }
     }
     cands.sort((a, b) => b.score - a.score);
-    const bodyCuts = [];
+    const chosen = [];
     for (const c of cands) {
-      if (bodyCuts.length >= bodyNeeded) break;
-      const baseGap = density === 'fast' ? 0.42 : (density === 'chill' ? 1.5 : 0.8);
-      const minGap = c.energy > meanE * 1.15 ? Math.max(0.4, baseGap * 0.65) : baseGap;
-      if (Math.abs(c.time - hookEnd) >= 0.42 && !bodyCuts.some(t => Math.abs(t - c.time) < minGap)) bodyCuts.push(c.time);
+      if (chosen.length >= count - 1) break;
+      if (!chosen.some(t => Math.abs(t - c.time) < minGap)) chosen.push(c.time);
     }
-    bodyCuts.sort((a, b) => a - b);
-    let pts = [0, ...hookPts, ...bodyCuts, buffer.duration];
-    while (pts.length - 1 < totalSegs) {
+    chosen.sort((a, b) => a - b);
+    const pts = [musicStart, ...chosen, musicEnd];
+    while (pts.length - 1 < count) {
       let maxG = 0, idx = 0;
-      for (let i = hookPts.length; i < pts.length - 1; i++) if (pts[i + 1] - pts[i] > maxG) { maxG = pts[i + 1] - pts[i]; idx = i; }
+      for (let i = 0; i < pts.length - 1; i++) if (pts[i + 1] - pts[i] > maxG) { maxG = pts[i + 1] - pts[i]; idx = i; }
       pts.splice(idx + 1, 0, (pts[idx] + pts[idx + 1]) / 2);
     }
+    const durs = [];
+    for (let i = 0; i < pts.length - 1; i++) durs.push(Number(Math.max(0.2, pts[i + 1] - pts[i]).toFixed(2)));
+    return durs;
+  }
 
+  function rebalancePlanDurations() {
+    if (!decodedBuffer || !plan.length) return;
+    const totalMusicDur = decodedBuffer.duration;
+    const e = audioMetricsCache ? audioMetricsCache.e : [];
+    const meanE = audioMetricsCache ? audioMetricsCache.meanE : 0.1;
+
+    // 1. Tính tổng thời gian các phách CÓ nhạc đã được khóa giây (lockedDur = true)
+    const musicBeats = plan.filter(s => s.playMusic);
+    if (musicBeats.length > 0) {
+      let unlocked = musicBeats.filter(s => !s.lockedDur);
+      // Nếu tất cả phách có nhạc đều bị khóa (VD: sau khi xóa phách cuối), mở khóa phách nhạc cuối cùng để khớp nhạc!
+      if (unlocked.length === 0) {
+        musicBeats[musicBeats.length - 1].lockedDur = false;
+        unlocked = [musicBeats[musicBeats.length - 1]];
+      }
+      const lockedSum = musicBeats.filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
+      const minAllow = 0.25 * unlocked.length;
+      if (lockedSum > totalMusicDur - minAllow) {
+        // Giữ tối thiểu 0.25s cho mỗi phách mở khóa
+        const scale = Math.max(0.1, (totalMusicDur - minAllow) / Math.max(0.1, lockedSum));
+        musicBeats.filter(s => s.lockedDur).forEach(s => { s.dur = Number(Math.max(0.25, s.dur * scale).toFixed(2)); });
+      }
+      const finalLockedSum = musicBeats.filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
+      const remMusic = Math.max(0.25 * unlocked.length, totalMusicDur - finalLockedSum);
+
+      // Phân bổ phần nhạc còn lại cho từng cụm phách mở khóa theo đúng vị trí trên bản nhạc
+      let mCursor = 0;
+      let i = 0;
+      while (i < musicBeats.length) {
+        if (musicBeats[i].lockedDur) {
+          mCursor += musicBeats[i].dur;
+          i++;
+        } else {
+          let j = i;
+          while (j < musicBeats.length && !musicBeats[j].lockedDur) j++;
+          const groupCount = j - i;
+          // Tìm tổng khóa nằm phía sau nhóm này để biết điểm kết thúc của nhóm trên trục nhạc
+          const afterLocked = musicBeats.slice(j).filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
+          const totalAfterUnlocked = musicBeats.slice(j).filter(s => !s.lockedDur).length;
+          const groupShare = (groupCount / unlocked.length) * remMusic;
+          const groupEnd = Math.min(totalMusicDur - afterLocked - 0.25 * totalAfterUnlocked, mCursor + groupShare);
+          const snappedDurs = e.length
+            ? snapWindowToBeats(mCursor, Math.max(mCursor + 0.25 * groupCount, groupEnd), groupCount, e, meanE)
+            : Array(groupCount).fill(Number((groupShare / groupCount).toFixed(2)));
+          for (let k = 0; k < groupCount; k++) {
+            musicBeats[i + k].dur = snappedDurs[k];
+          }
+          mCursor += snappedDurs.reduce((a, b) => a + b, 0);
+          i = j;
+        }
+      }
+    }
+
+    // 2. Cập nhật lại số thứ tự, start/end video và musicStart khớp tuyệt đối!
+    let vCursor = 0, mCursor = 0;
+    plan.forEach((s, idx) => {
+      s.idx = idx + 1;
+      s.numStr = String(s.idx).padStart(2, '0');
+      s.start = Number(vCursor.toFixed(3));
+      s.end = Number((vCursor + s.dur).toFixed(3));
+      vCursor = s.end;
+
+      if (s.playMusic) {
+        s.musicStart = Number(mCursor.toFixed(3));
+        mCursor += s.dur;
+        if (e.length) {
+          const i0 = Math.floor(s.musicStart / 0.02), i1 = Math.max(i0 + 1, Math.floor((s.musicStart + s.dur) / 0.02));
+          let sum = 0; for (let k = i0; k < Math.min(i1, e.length); k++) sum += e[k];
+          s.energy = (sum / Math.max(1, i1 - i0)) / (meanE || 1);
+        }
+      } else {
+        s.musicStart = null;
+        s.energy = 0.4;
+      }
+    });
+
+    document.getElementById('beatCount').value = plan.length;
+    syncPreviewBarRange();
+  }
+
+  function syncPreviewBarRange() {
+    const tot = plan.length ? plan[plan.length - 1].end : 0;
+    previewSeekBar.max = tot.toFixed(2);
+    if (previewTime > tot) previewTime = 0;
+    previewSeekBar.value = previewTime.toFixed(2);
+    previewTimeLabel.textContent = `${fmtSec(previewTime)} / ${fmtSec(tot)}`;
+  }
+
+  async function buildInitialPlan(buffer, totalSegs, tpl, density) {
+    await analyzeAudioMetrics(buffer);
     const res = [];
-    for (let i = 0; i < pts.length - 1; i++) {
-      const start = Number(pts[i].toFixed(3)), end = Number(pts[i + 1].toFixed(3));
-      const dur = Math.max(0.2, end - start), numStr = String(i + 1).padStart(2, '0'), isHook = i < hookPts.length;
-      const i0 = Math.floor(start / 0.02), i1 = Math.max(i0 + 1, Math.floor(end / 0.02));
-      let segSum = 0; for (let k = i0; k < Math.min(i1, e.length); k++) segSum += e[k];
+    for (let i = 0; i < totalSegs; i++) {
+      const isHook = i === 0 && totalSegs >= 2;
       res.push({
-        idx: i + 1, numStr, start, end, dur, energy: (segSum / Math.max(1, i1 - i0)) / (meanE || 1), isHook,
+        idx: i + 1, numStr: String(i + 1).padStart(2, '0'),
+        start: 0, end: 0, dur: isHook ? Math.min(2.6, buffer.duration * 0.4) : 1.0,
+        musicStart: 0, energy: 0.7, isHook, playMusic: true, lockedDur: false,
+        origVol: 0, musicVol: 100,
         blobKey: null, trimStart: 0, hasPicked: false, customVideo: false, beatNote: '', aiReason: '', thumbCanvas: null
       });
     }
-    return res;
+    plan = res;
+    // Nếu có >= 2 phách và là mẫu OOTD/Khởi nghiệp thì phách 1 ưu tiên 2.6s hoặc chia theo nhạc
+    if (totalSegs >= 3 && density !== 'fast') {
+      const hookDur = Number(Math.min((tpl && tpl.hookDuration) || 2.6, buffer.duration * 0.35).toFixed(2));
+      plan[0].dur = hookDur;
+      plan[0].lockedDur = true;
+    }
+    rebalancePlanDurations();
+    return plan;
   }
 
   async function ensureVideoReady(video) {
@@ -818,7 +969,7 @@
 
     const prompt = `Bạn là đạo diễn dựng video TikTok.
 Cốt truyện tổng thể: "${story || 'Giới thiệu quán/sản phẩm'}".
-Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu thu hút' : 'Diễn biến tiếp theo'}).
+Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu Hook' : 'Diễn biến tiếp theo'}).
 ${note ? `Yêu cầu riêng: "${note}".` : ''}
 CÁC PHÁCH KHÁC ĐÃ CHỌN (TRÁNH TRÙNG):
 ${usedDesc}
@@ -850,7 +1001,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     renderBeatsUI();
   }
 
-  function drawBlackPlaceholder(c, seg, fLocal, totalFrames, W, H) {
+  function drawBlackPlaceholder(c, seg, W, H) {
     const sc = W / 720;
     c.fillStyle = '#000000'; c.fillRect(0, 0, W, H);
     c.strokeStyle = seg.isHook ? '#ef4444' : '#38bdf8';
@@ -868,8 +1019,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
   }
 
   function drawCover(ctx, video, W, H) {
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     const sc = Math.max(W / video.videoWidth, H / video.videoHeight);
     ctx.drawImage(video, (W - video.videoWidth * sc) / 2, (H - video.videoHeight * sc) / 2, video.videoWidth * sc, video.videoHeight * sc);
   }
@@ -882,7 +1032,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       let nearest = strip[0];
       strip.forEach(it => { if (Math.abs(it.t - seg.trimStart) < Math.abs(nearest.t - seg.trimStart)) nearest = it; });
       const im = new Image(); im.onload = () => tc.drawImage(im, 0, 0, 156, 276); im.src = nearest.dataUrl;
-    } else drawBlackPlaceholder(tc, seg, 0, 30, 156, 276);
+    } else drawBlackPlaceholder(tc, seg, 156, 276);
   }
 
   function highlightStripNearest(stripWrap, trimStart, maxStart) {
@@ -890,8 +1040,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     if (!items.length) return;
     let bestEl = items[0], bestDiff = 9999;
     items.forEach(el => {
-      const tVal = parseFloat(el.dataset.time || '0');
-      const diff = Math.abs(Math.min(maxStart, tVal) - trimStart);
+      const diff = Math.abs(Math.min(maxStart, parseFloat(el.dataset.time || '0')) - trimStart);
       if (diff < bestDiff) { bestDiff = diff; bestEl = el; }
       el.classList.remove('active');
     });
@@ -903,19 +1052,23 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     box.innerHTML = '';
     const hookCount = plan.filter(s => s.isHook).length;
 
-    plan.forEach((seg) => {
+    plan.forEach((seg, arrIdx) => {
       const card = document.createElement('div'); card.className = 'beat-card';
       const top = document.createElement('div'); top.className = 'beat-top';
 
       const thumb = document.createElement('canvas'); thumb.width = 156; thumb.height = 276; thumb.className = 'beat-thumb';
       seg.thumbCanvas = thumb;
 
-      const bodyTag = !seg.isHook ? ` • LOOK ${seg.idx - hookCount}` : '';
+      const bodyTag = !seg.isHook ? ` • LOOK ${Math.max(1, seg.idx - hookCount)}` : '';
       const right = document.createElement('div');
       right.innerHTML = `
         <div class="beat-head">
-          <span><b>Phách ${seg.numStr}</b> <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP' + bodyTag}</span></span>
-          <span style="color:#fde047;font-weight:800;">Dài: ${seg.dur.toFixed(2)}s</span>
+          <span>
+            <b>Phách ${seg.numStr}</b>
+            <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP' + bodyTag}</span>
+            ${seg.lockedDur ? '<span class="badge locked">🔒 Đã khóa giây</span>' : ''}
+          </span>
+          <span style="color:#fde047;font-weight:800;">${seg.start.toFixed(1)}s ➔ ${seg.end.toFixed(1)}s (${seg.dur.toFixed(2)}s)</span>
         </div>
       `;
 
@@ -933,16 +1086,105 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       playOneBtn.type = 'button'; playOneBtn.className = 'small-btn'; playOneBtn.textContent = '👁️ Xem Phách';
       playOneBtn.onclick = () => playSingleBeat(seg);
 
-      btnGroup.append(pickBtn, clearBtn, playOneBtn);
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button'; delBtn.className = 'small-btn red'; delBtn.textContent = '🗑️ Xóa';
+      delBtn.disabled = plan.length <= 1;
+      delBtn.onclick = () => {
+        if (plan.length <= 1) return;
+        plan.splice(arrIdx, 1);
+        rebalancePlanDurations();
+        renderBeatsUI();
+        drawMainPreview(0);
+        scheduleAutoSave();
+      };
+
+      btnGroup.append(pickBtn, clearBtn, playOneBtn, delBtn);
+
+      // BỘ CHỈNH GIÂY KHÓA + HOOK CHẠY NHẠC + ÂM LƯỢNG GỐC/NHẠC
+      const ctrlBox = document.createElement('div'); ctrlBox.className = 'beat-ctrl-box';
+
+      const durRow = document.createElement('div'); durRow.className = 'dur-edit-row';
+      durRow.innerHTML = `<span>⏱️ Chỉnh giây:</span>`;
+      const durInput = document.createElement('input');
+      durInput.type = 'number'; durInput.step = '0.1'; durInput.min = '0.3';
+      durInput.value = seg.dur.toFixed(2);
+      const applyDurBtn = document.createElement('button');
+      applyDurBtn.type = 'button'; applyDurBtn.className = 'small-btn green';
+      applyDurBtn.textContent = '✓ Khóa giây & Chia lại';
+      applyDurBtn.onclick = () => {
+        const val = parseFloat(durInput.value);
+        if (isNaN(val) || val < 0.3) return alert('Nhập số giây tối thiểu 0.3s!');
+        seg.dur = Number(val.toFixed(2));
+        seg.lockedDur = true;
+        rebalancePlanDurations();
+        renderBeatsUI();
+        drawMainPreview(seg.start);
+        scheduleAutoSave();
+      };
+      const unlockDurBtn = document.createElement('button');
+      unlockDurBtn.type = 'button'; unlockDurBtn.className = 'small-btn dark';
+      unlockDurBtn.textContent = seg.lockedDur ? '🔓 Mở tự chia' : '🎵 Đang tự chia';
+      unlockDurBtn.onclick = () => {
+        seg.lockedDur = false;
+        rebalancePlanDurations();
+        renderBeatsUI();
+        scheduleAutoSave();
+      };
+      durRow.append(durInput, applyDurBtn, unlockDurBtn);
+
+      const hookOpts = document.createElement('div'); hookOpts.className = 'hook-opts';
+      const lblHook = document.createElement('label');
+      const chkHook = document.createElement('input'); chkHook.type = 'checkbox'; chkHook.checked = !!seg.isHook;
+      chkHook.onchange = () => {
+        seg.isHook = chkHook.checked;
+        if (!seg.isHook) seg.playMusic = true;
+        rebalancePlanDurations();
+        renderBeatsUI();
+        drawMainPreview(seg.start);
+        scheduleAutoSave();
+      };
+      lblHook.append(chkHook, document.createTextNode('Đánh dấu là Hook'));
+
+      const lblMusic = document.createElement('label');
+      const chkMusic = document.createElement('input'); chkMusic.type = 'checkbox'; chkMusic.checked = !!seg.playMusic;
+      chkMusic.onchange = () => {
+        seg.playMusic = chkMusic.checked;
+        if (!seg.playMusic) seg.lockedDur = true; // Phách không chạy nhạc giữ nguyên độ dài giây của nó!
+        rebalancePlanDurations();
+        renderBeatsUI();
+        drawMainPreview(seg.start);
+        scheduleAutoSave();
+      };
+      lblMusic.append(chkMusic, document.createTextNode(seg.playMusic ? 'Chạy nhạc bài hát ở phách này' : '🔇 Tắt nhạc (Nhạc tính từ phách sau!)'));
+      hookOpts.append(lblHook, lblMusic);
+
+      const volGrid = document.createElement('div'); volGrid.className = 'vol-grid';
+      volGrid.innerHTML = `
+        <div class="vol-item">
+          <label>🎤 Tiếng video gốc: <b class="ov-lbl">${seg.origVol}%</b></label>
+          <input type="range" min="0" max="100" step="5" value="${seg.origVol}" class="ov-sl" />
+        </div>
+        <div class="vol-item">
+          <label>🎵 Tiếng bài nhạc: <b class="mv-lbl">${seg.musicVol}%</b></label>
+          <input type="range" min="0" max="100" step="5" value="${seg.musicVol}" class="mv-sl" ${!seg.playMusic ? 'disabled' : ''} />
+        </div>
+      `;
+      const ovSl = volGrid.querySelector('.ov-sl'), ovLbl = volGrid.querySelector('.ov-lbl');
+      const mvSl = volGrid.querySelector('.mv-sl'), mvLbl = volGrid.querySelector('.mv-lbl');
+      ovSl.oninput = () => { seg.origVol = parseInt(ovSl.value, 10); ovLbl.textContent = `${seg.origVol}%`; scheduleAutoSave(); };
+      mvSl.oninput = () => { seg.musicVol = parseInt(mvSl.value, 10); mvLbl.textContent = `${seg.musicVol}%`; scheduleAutoSave(); };
+
+      ctrlBox.append(durRow, hookOpts, volGrid);
 
       const rangeLabel = document.createElement('label');
+      rangeLabel.style.marginTop = '6px';
       const slider = document.createElement('input');
       slider.type = 'range'; slider.min = 0; slider.step = 0.05;
       const durKnown = seg.blobKey && videoDurationCache[seg.blobKey] ? videoDurationCache[seg.blobKey] : 10;
       slider.max = Math.max(0, durKnown - seg.dur).toFixed(2);
       slider.value = seg.trimStart;
       rangeLabel.textContent = seg.blobKey
-        ? `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`
+        ? `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`
         : 'Đang dùng: Video Nền Đen';
 
       const stripWrap = document.createElement('div'); stripWrap.className = 'strip-wrap';
@@ -967,23 +1209,13 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       aiBtnGroup.append(zeroAiBtn, geminiBtn);
       aiRow.append(noteWrap, aiBtnGroup);
 
-      const noteChips = document.createElement('div'); noteChips.className = 'chips-row';
-      noteChips.style.marginTop = '6px';
-      const quickNotes = seg.isHook ? ['Mở đầu tạo dáng', 'Toàn cảnh quán'] : ['Thu Đông 🍂', 'Tết 🧧', 'Đi học / Đi làm', 'Cận cảnh đẹp'];
-      quickNotes.forEach(qn => {
-        const cb = document.createElement('button');
-        cb.type = 'button'; cb.className = 'chip-btn'; cb.textContent = qn;
-        cb.onclick = () => { seg.beatNote = qn; noteInput.value = qn; scheduleAutoSave(); };
-        noteChips.appendChild(cb);
-      });
-
       const reasonBox = document.createElement('div'); reasonBox.className = 'ai-reason';
       reasonBox.textContent = seg.aiReason || '';
 
       function syncBeatUiAfterPick() {
         const maxStart = Math.max(0, (videoDurationCache[seg.blobKey] || 10) - seg.dur);
         slider.max = maxStart.toFixed(2); slider.value = seg.trimStart;
-        rangeLabel.textContent = `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+        rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
         reasonBox.textContent = seg.aiReason || '';
         highlightStripNearest(stripWrap, seg.trimStart, maxStart);
         drawThumbFromStripOrBlack(seg);
@@ -997,7 +1229,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         slider.max = maxStart.toFixed(2);
         if (seg.trimStart > maxStart) seg.trimStart = 0;
         slider.value = seg.trimStart;
-        rangeLabel.textContent = `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+        rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
 
         stripWrap.innerHTML = '';
         items.forEach(it => {
@@ -1009,7 +1241,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
             seg.trimStart = Number(itemT.toFixed(2)); seg.hasPicked = true;
             syncBeatUiAfterPick();
             await loadStageVideoKey(seg.blobKey, seg.trimStart);
-            renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
+            renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
             scheduleAutoSave();
           };
           stripWrap.appendChild(div);
@@ -1024,7 +1256,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         blobStore[k] = f; seg.blobKey = k; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false;
         await populateStrip();
         await loadStageVideoKey(seg.blobKey, 0);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
         scheduleAutoSave();
       };
 
@@ -1032,7 +1264,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         seg.blobKey = null; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false; seg.aiReason = '';
         reasonBox.textContent = ''; rangeLabel.textContent = 'Đang dùng: Video Nền Đen';
         stripWrap.innerHTML = ''; drawThumbFromStripOrBlack(seg);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, null);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, null);
         scheduleAutoSave();
       };
 
@@ -1050,7 +1282,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         seg.aiReason = `⚡ 0đ: Chọn giây ${seg.trimStart.toFixed(1)}s (không trùng)`;
         syncBeatUiAfterPick();
         await loadStageVideoKey(seg.blobKey, seg.trimStart);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
         scheduleAutoSave();
       };
 
@@ -1063,7 +1295,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
           seg.aiReason = `🤖 Gemini (${ans.t.toFixed(1)}s): ${ans.reason}`;
           syncBeatUiAfterPick();
           await loadStageVideoKey(seg.blobKey, seg.trimStart);
-          renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
+          renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
           scheduleAutoSave();
         } catch (err) { reasonBox.textContent = '❌ ' + err.message; }
         finally { geminiBtn.disabled = false; }
@@ -1075,7 +1307,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       slider.oninput = async () => {
         seg.trimStart = parseFloat(slider.value); seg.hasPicked = true;
         const maxStart = Math.max(0, (videoDurationCache[seg.blobKey] || 10) - seg.dur);
-        rangeLabel.textContent = `Cắt từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
+        rangeLabel.textContent = `Cắt video từ ${seg.trimStart.toFixed(2)}s ➔ ${(seg.trimStart + seg.dur).toFixed(2)}s`;
         highlightStripNearest(stripWrap, seg.trimStart, maxStart);
         scheduleAutoSave();
         if (!seg.blobKey || isSliding) return;
@@ -1083,139 +1315,264 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         await loadStageVideoKey(seg.blobKey, seg.trimStart);
         const tc = thumb.getContext('2d');
         if (sharedStageVideo.videoWidth > 0) drawCover(tc, sharedStageVideo, 156, 276);
-        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, 0, 30, sharedStageVideo);
+        renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
         isSliding = false;
       };
 
-      right.append(btnGroup, pickInput, rangeLabel, slider);
+      right.append(btnGroup, pickInput, ctrlBox, rangeLabel, slider);
       top.append(thumb, right);
-      card.append(top, stripWrap, aiRow, noteChips, reasonBox);
+      card.append(top, stripWrap, aiRow, reasonBox);
       box.appendChild(card);
 
       populateStrip();
     });
   }
 
-  function drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, drawFn) {
+  // VẼ KHUNG HÌNH + HIỆU ỨNG TỪ motion-effects.js + SÓNG NHẠC
+  function drawSourceToFrame(ctx, seg, t, W, H, drawFn) {
     const tpl = getCurrentTemplate();
     if (!seg.blobKey || !drawFn) {
-      drawBlackPlaceholder(ctx, seg, fLocal, totalLocal, W, H);
+      drawBlackPlaceholder(ctx, seg, W, H);
       return;
     }
 
     const mode = motionModeSelect.value;
     const dt = Math.max(0, t - seg.start);
-    const hitPulse = dt < 0.18 ? (1 - dt / 0.18) : 0;
-    const breath = getBreathAt(t);
+    const musicT = seg.playMusic && seg.musicStart !== null ? (seg.musicStart + dt) : 0;
+    const breath = seg.playMusic ? getBreathAt(musicT) : 0;
+    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
 
-    let zoom = 1.0, flashAlpha = 0, introDarkness = 0;
-    if (mode === 'breath-all') {
-      if (seg.isHook) {
-        const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0) || 2.5;
-        introDarkness = Math.max(0, (1 - Math.min(1, t / hookTotal)) * 0.28);
-        zoom = 1.0 + breath * 0.015;
-      } else {
-        zoom = 1.0 + breath * 0.055 + hitPulse * 0.02;
-        flashAlpha = breath * 0.05 + hitPulse * 0.04;
-      }
-    } else if (mode === 'breath-drop') {
-      if (!seg.isHook && seg.energy >= 1.02) {
-        zoom = 1.0 + breath * 0.065 + hitPulse * 0.02;
-        flashAlpha = breath * 0.06;
-      } else zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.025;
-    } else if (mode === 'beat-hit') {
-      zoom = 1.0 + hitPulse * 0.055;
-      flashAlpha = hitPulse * 0.10;
-    } else {
-      zoom = 1.0 + Math.min(1, dt / Math.max(0.2, seg.dur)) * 0.03;
-    }
+    const fx = window.MOTION_FX
+      ? window.MOTION_FX.compute(mode, seg, t, W, H, breath, hookTotal)
+      : { zoom: 1, tx: 0, ty: 0, rotRad: 0, flashAlpha: 0, introDarkness: 0 };
 
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     ctx.save();
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    if (tpl && tpl.bwFirst3s && seg.isHook) ctx.filter = `grayscale(100%) brightness(${0.7 + hitPulse * 0.5})`;
-    ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    if (tpl && tpl.bwFirst3s && seg.isHook) ctx.filter = 'grayscale(100%)';
+    ctx.translate(W / 2 + fx.tx, H / 2 + fx.ty);
+    if (fx.rotRad) ctx.rotate(fx.rotRad);
+    ctx.scale(fx.zoom, fx.zoom);
+    ctx.translate(-W / 2, -H / 2);
     drawFn(ctx, W, H);
     ctx.restore();
 
-    if (introDarkness > 0.01) {
-      ctx.fillStyle = `rgba(0,0,0,${introDarkness.toFixed(2)})`;
+    if (fx.introDarkness > 0.01) {
+      ctx.fillStyle = `rgba(0,0,0,${fx.introDarkness.toFixed(2)})`;
       ctx.fillRect(0, 0, W, H);
     }
-    if (flashAlpha > 0.01 && !(tpl && tpl.bwFirst3s && seg.isHook)) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.min(0.2, flashAlpha).toFixed(2)})`;
+    if (fx.flashAlpha > 0.01 && !(tpl && tpl.bwFirst3s && seg.isHook)) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(0.2, fx.flashAlpha).toFixed(2)})`;
       ctx.fillRect(0, 0, W, H);
     }
 
     const hookCount = plan.filter(s => s.isHook).length;
-    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
     const segInfo = { seg, dt, bodyBeatIdx: Math.max(0, seg.idx - 1 - hookCount) };
     if (tpl && tpl.render) tpl.render(ctx, t, W, H, getHookData(), hookTotal, segInfo);
-    if (window.AUDIO_VIZ && window.AUDIO_VIZ.draw) window.AUDIO_VIZ.draw(ctx, t, W, H, vizStyleSelect.value, vizColorSelect.value);
+    if (seg.playMusic && window.AUDIO_VIZ && window.AUDIO_VIZ.draw) {
+      window.AUDIO_VIZ.draw(ctx, musicT, W, H, vizStyleSelect.value, vizColorSelect.value);
+    }
   }
 
-  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, fLocal, totalLocal, videoSourceEl) {
+  function renderCompositeFrame(ctx, t, W, H, singleSegOverride, videoSourceEl) {
     let seg = singleSegOverride || plan[0];
     if (!singleSegOverride) for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
     const hasVid = seg && seg.blobKey && videoSourceEl && videoSourceEl.videoWidth > 0;
-    if (seg) drawSourceToFrame(ctx, seg, t, W, H, fLocal, totalLocal, hasVid ? (c, w, h) => drawCover(c, videoSourceEl, w, h) : null);
+    if (seg) drawSourceToFrame(ctx, seg, t, W, H, hasVid ? (c, w, h) => drawCover(c, videoSourceEl, w, h) : null);
   }
 
   function drawMainPreview(t) {
-    renderCompositeFrame(pCtx, t, 720, 1280, null, 0, 30, currentStageBlobKey ? sharedStageVideo : null);
+    renderCompositeFrame(pCtx, t, 720, 1280, null, currentStageBlobKey ? sharedStageVideo : null);
+  }
+
+  // --- MASTER CLOCK PREVIEW (ĐỒNG BỘ CẢ NHẠC & TIẾNG VIDEO GỐC + HOOK KHÔNG NHẠC) ---
+  function stopPreviewPlayback() {
+    isPlayingPreview = false;
+    activeSingleSeg = null;
+    playAllBtn.textContent = '▶️ Phát';
+    musicAudioEl.pause();
+    sharedStageVideo.pause();
+    cancelAnimationFrame(animId);
+  }
+
+  async function startPreviewFrom(startT, singleSeg = null) {
+    activeSingleSeg = singleSeg;
+    previewTime = startT;
+    lastPlayingIdx = -1;
+    isPlayingPreview = true;
+    playAllBtn.textContent = '⏸️ Tạm Dừng';
+    lastWallTs = performance.now();
+
+    let seg = singleSeg || plan[0];
+    if (!singleSeg) for (const s of plan) if (startT >= s.start && startT < s.end) { seg = s; break; }
+
+    // Mở khóa video & audio ngay trong sự kiện click!
+    if (seg && seg.blobKey) {
+      sharedStageVideo.muted = seg.origVol <= 0;
+      sharedStageVideo.volume = Math.max(0, Math.min(1, seg.origVol / 100));
+      await loadStageVideoKey(seg.blobKey, seg.trimStart + Math.max(0, startT - seg.start));
+      sharedStageVideo.play().catch(() => {});
+    }
+    if (seg && seg.playMusic && seg.musicStart !== null) {
+      musicAudioEl.volume = Math.max(0, Math.min(1, seg.musicVol / 100));
+      musicAudioEl.currentTime = seg.musicStart + Math.max(0, startT - seg.start);
+      musicAudioEl.play().catch(() => {});
+    } else {
+      // Mở khóa nhẹ musicAudioEl cho các phách sau
+      try { const p = musicAudioEl.play(); if (p && p.then) p.then(() => { if (!seg?.playMusic) musicAudioEl.pause(); }).catch(() => {}); } catch {}
+    }
+
+    lastWallTs = performance.now();
+    cancelAnimationFrame(animId);
+    previewLoop();
   }
 
   async function playSingleBeat(seg) {
-    activeSingleSeg = seg; lastPlayingIdx = seg.idx;
-    if (seg.blobKey) { await loadStageVideoKey(seg.blobKey, seg.trimStart); sharedStageVideo.play().catch(() => {}); }
-    else sharedStageVideo.pause();
-    audioPlayer.currentTime = seg.start; audioPlayer.play().catch(() => {});
     previewCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    cancelAnimationFrame(animId); previewLoop();
+    await startPreviewFrom(seg.start, seg);
   }
 
-  let switchingStage = false;
   function previewLoop() {
-    if (!audioPlayer.paused && plan.length) {
-      const t = audioPlayer.currentTime;
-      if (activeSingleSeg) {
-        if (!audioPlayer.seeking && t >= activeSingleSeg.end) {
-          audioPlayer.pause(); sharedStageVideo.pause(); activeSingleSeg = null; return;
-        }
-        if (activeSingleSeg.blobKey && sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
-        renderCompositeFrame(pCtx, Math.max(activeSingleSeg.start, t), 720, 1280, activeSingleSeg, Math.round((t - activeSingleSeg.start) * 30), Math.round(activeSingleSeg.dur * 30), activeSingleSeg.blobKey ? sharedStageVideo : null);
-      } else {
-        let seg = plan[0]; for (const s of plan) if (t >= s.start && t < s.end) { seg = s; break; }
-        if (seg.idx !== lastPlayingIdx && !switchingStage) {
-          lastPlayingIdx = seg.idx;
-          if (seg.blobKey) {
-            if (currentStageBlobKey === seg.blobKey) {
-              sharedStageVideo.currentTime = seg.trimStart + Math.max(0, t - seg.start);
-              if (sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
-            } else {
-              switchingStage = true;
-              loadStageVideoKey(seg.blobKey, seg.trimStart + Math.max(0, t - seg.start)).then(() => { sharedStageVideo.play().catch(() => {}); switchingStage = false; });
-            }
-          } else sharedStageVideo.pause();
-        }
-        drawMainPreview(t);
-      }
+    if (!isPlayingPreview || !plan.length) return;
+    const now = performance.now();
+    const dtWall = Math.min(0.1, (now - lastWallTs) / 1000);
+    lastWallTs = now;
+    previewTime += dtWall;
+
+    const totalDur = plan[plan.length - 1].end;
+    const stopLimit = activeSingleSeg ? activeSingleSeg.end : totalDur;
+    if (previewTime >= stopLimit) {
+      previewTime = activeSingleSeg ? activeSingleSeg.start : 0;
+      stopPreviewPlayback();
+      syncPreviewBarRange();
+      drawMainPreview(previewTime);
+      return;
     }
+
+    previewSeekBar.value = previewTime.toFixed(2);
+    previewTimeLabel.textContent = `${fmtSec(previewTime)} / ${fmtSec(totalDur)}`;
+
+    let seg = activeSingleSeg || plan[0];
+    if (!activeSingleSeg) for (const s of plan) if (previewTime >= s.start && previewTime < s.end) { seg = s; break; }
+
+    if (seg.idx !== lastPlayingIdx && !switchingStage) {
+      lastPlayingIdx = seg.idx;
+      // Cập nhật âm lượng gốc & nhạc cho phách mới
+      sharedStageVideo.muted = seg.origVol <= 0;
+      sharedStageVideo.volume = Math.max(0, Math.min(1, seg.origVol / 100));
+
+      if (seg.playMusic && seg.musicStart !== null) {
+        musicAudioEl.volume = Math.max(0, Math.min(1, seg.musicVol / 100));
+        const targetM = seg.musicStart + Math.max(0, previewTime - seg.start);
+        if (Math.abs(musicAudioEl.currentTime - targetM) > 0.2 || musicAudioEl.paused) {
+          musicAudioEl.currentTime = targetM;
+          musicAudioEl.play().catch(() => {});
+        }
+      } else {
+        musicAudioEl.pause();
+      }
+
+      if (seg.blobKey) {
+        const targetV = seg.trimStart + Math.max(0, previewTime - seg.start);
+        if (currentStageBlobKey === seg.blobKey) {
+          sharedStageVideo.currentTime = targetV;
+          if (sharedStageVideo.paused) sharedStageVideo.play().catch(() => {});
+        } else {
+          switchingStage = true;
+          loadStageVideoKey(seg.blobKey, targetV).then(() => { sharedStageVideo.play().catch(() => {}); switchingStage = false; });
+        }
+      } else sharedStageVideo.pause();
+    }
+
+    if (activeSingleSeg) renderCompositeFrame(pCtx, previewTime, 720, 1280, activeSingleSeg, activeSingleSeg.blobKey ? sharedStageVideo : null);
+    else drawMainPreview(previewTime);
+
     animId = requestAnimationFrame(previewLoop);
   }
 
-  async function make48kStereoSlice(buffer, startSec, endSec) {
-    const sr = buffer.sampleRate;
-    const s0 = Math.max(0, Math.floor(startSec * sr)), s1 = Math.min(buffer.length, Math.ceil(endSec * sr));
-    const len = Math.max(1, s1 - s0), ch = Math.min(2, buffer.numberOfChannels);
-    const slice = new AudioBuffer({ length: len, numberOfChannels: ch, sampleRate: sr });
-    for (let c = 0; c < ch; c++) slice.copyToChannel(buffer.getChannelData(c).subarray(s0, s0 + len), c);
-    if (sr === 48000 && ch === 2) return slice;
-    const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, Math.max(1, Math.ceil(slice.duration * 48000)), 48000);
-    const src = off.createBufferSource(); src.buffer = slice;
+  // --- TRỘN ÂM THANH GỐC TỪNG PHÁCH + BÀI NHẠC KHI XUẤT MP4 ---
+  async function to48kStereoBuffer(audioBuf) {
+    if (audioBuf.sampleRate === 48000 && audioBuf.numberOfChannels === 2) return audioBuf;
+    const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, Math.max(1, Math.ceil(audioBuf.duration * 48000)), 48000);
+    const src = off.createBufferSource(); src.buffer = audioBuf;
     src.connect(off.destination); src.start(0);
     return await off.startRendering();
+  }
+
+  async function buildMixedExportAudio(totalDur) {
+    const sr = 48000;
+    const totalSamples = Math.max(1, Math.round(totalDur * sr));
+    const outL = new Float32Array(totalSamples);
+    const outR = new Float32Array(totalSamples);
+
+    const music48k = await to48kStereoBuffer(decodedBuffer);
+    const mL = music48k.getChannelData(0), mR = music48k.getChannelData(1);
+
+    // Giải mã tạm âm thanh gốc cho những video có bật origVol > 0 (giải phóng ngay sau khi trộn)
+    const clipAudioCache = {};
+    const keysNeedingAudio = [...new Set(plan.filter(s => s.blobKey && s.origVol > 0).map(s => s.blobKey))];
+    for (const k of keysNeedingAudio) {
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const decodedClip = await actx.decodeAudioData(await blobStore[k].arrayBuffer());
+        await actx.close();
+        clipAudioCache[k] = await to48kStereoBuffer(decodedClip);
+      } catch (e) { console.warn('Clip audio decode skip:', e); }
+    }
+
+    const fadeSamples = Math.round(0.008 * sr); // 8ms làm mượt chuyển âm tránh tiếng tạch
+
+    for (const seg of plan) {
+      const sStart = Math.round(seg.start * sr);
+      const sEnd = Math.min(totalSamples, Math.round(seg.end * sr));
+      const count = sEnd - sStart;
+      if (count <= 0) continue;
+
+      // 1. Trộn bài nhạc (nếu phách có bật chạy nhạc)
+      if (seg.playMusic && seg.musicStart !== null && seg.musicVol > 0) {
+        const gain = seg.musicVol / 100;
+        const mStart = Math.round(seg.musicStart * sr);
+        for (let i = 0; i < count; i++) {
+          const mi = mStart + i;
+          if (mi >= 0 && mi < mL.length) {
+            let env = 1;
+            if (i < fadeSamples) env = i / fadeSamples;
+            else if (i > count - fadeSamples) env = (count - i) / fadeSamples;
+            outL[sStart + i] += mL[mi] * gain * env;
+            outR[sStart + i] += mR[mi] * gain * env;
+          }
+        }
+      }
+
+      // 2. Trộn âm thanh gốc của video quay (nếu origVol > 0)
+      if (seg.blobKey && seg.origVol > 0 && clipAudioCache[seg.blobKey]) {
+        const cBuf = clipAudioCache[seg.blobKey];
+        const cL = cBuf.getChannelData(0), cR = cBuf.getChannelData(1);
+        const gain = seg.origVol / 100;
+        const cStart = Math.round(seg.trimStart * sr);
+        for (let i = 0; i < count; i++) {
+          const ci = cStart + i;
+          if (ci >= 0 && ci < cL.length) {
+            let env = 1;
+            if (i < fadeSamples) env = i / fadeSamples;
+            else if (i > count - fadeSamples) env = (count - i) / fadeSamples;
+            outL[sStart + i] += cL[ci] * gain * env;
+            outR[sStart + i] += cR[ci] * gain * env;
+          }
+        }
+      }
+    }
+
+    // Giới hạn đỉnh tránh rè tiếng
+    for (let i = 0; i < totalSamples; i++) {
+      outL[i] = Math.max(-0.98, Math.min(0.98, outL[i]));
+      outR[i] = Math.max(-0.98, Math.min(0.98, outR[i]));
+    }
+
+    const outBuf = new AudioBuffer({ length: totalSamples, numberOfChannels: 2, sampleRate: sr });
+    outBuf.copyToChannel(outL, 0);
+    outBuf.copyToChannel(outR, 1);
+    return outBuf;
   }
 
   function updateExportProgressUI({ pct, label, cutText, cutState, renderText, renderState, audioText, audioState, sub }) {
@@ -1292,12 +1649,12 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
   templateSelect.addEventListener('change', () => {
     renderTemplateFields();
-    if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+    if (plan.length) drawMainPreview(previewTime || 0);
     scheduleAutoSave();
   });
   ['qualitySelect', 'fpsSelect', 'deviceMetaSelect', 'beatCount', 'motionModeSelect', 'vizStyleSelect', 'vizColorSelect'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
-      if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+      if (plan.length) drawMainPreview(previewTime || 0);
       scheduleAutoSave();
     });
   });
@@ -1308,7 +1665,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     document.querySelectorAll('.tpl-field').forEach(el => {
       if (generated[el.dataset.key] !== undefined) el.value = generated[el.dataset.key];
     });
-    if (plan.length) drawMainPreview(audioPlayer.currentTime || 0);
+    if (plan.length) drawMainPreview(previewTime || 0);
     scheduleAutoSave();
   });
 
@@ -1350,7 +1707,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       await loadAudioFromBlob(vBlob, 'TikTok Không Logo', true);
       tkStatus.textContent = '🎉 Đã add thẳng Video + Nhạc vào App! Bấm AI Đề Xuất hoặc Bước 1.';
     } catch {
-      tkStatus.textContent = '⚠️ Trình duyệt chặn tải trực tiếp — bấm link tải bên dưới rồi chọn vào mục 1 & 2.';
+      tkStatus.textContent = '⚠️ Trình duyệt chặn tải trực tiếp — xem link bên dưới (nếu Safari mở xem, bấm Chia sẻ ➔ Lưu vào Tệp).';
       document.getElementById('tkFallback').style.display = 'block';
     }
   });
@@ -1359,9 +1716,9 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     if (!decodedBuffer) return;
     const m = await analyzeAudioMetrics(decodedBuffer);
     const dur = decodedBuffer.duration, bodyDur = Math.max(2, dur - 2.6);
-    const recBalanced = Math.max(6, Math.min(24, 2 + Math.round(bodyDur / (m.bpm > 120 ? 1.05 : 1.35))));
-    const recFast = Math.max(8, Math.min(30, 3 + Math.round(bodyDur / 0.65)));
-    const recChill = Math.max(5, Math.min(16, 2 + Math.round(bodyDur / 2.1)));
+    const recBalanced = Math.max(2, Math.min(24, 1 + Math.round(bodyDur / (m.bpm > 120 ? 1.15 : 1.5))));
+    const recFast = Math.max(3, Math.min(30, 1 + Math.round(bodyDur / 0.7)));
+    const recChill = Math.max(1, Math.min(12, 1 + Math.round(bodyDur / 2.5)));
 
     document.getElementById('aiSuggestSummary').textContent = `🤖 Nhạc dài ${dur.toFixed(1)}s • Nhịp ~${m.bpm} BPM. Chọn kiểu chia phách:`;
     document.getElementById('sugBalancedBtn').textContent = `⚖️ Chuẩn Điệu (${recBalanced} phách)`;
@@ -1379,22 +1736,38 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     await document.fonts.ready;
     statusText.textContent = '🎛️ Đang phân tích phách, nhịp thở Bass & phổ sóng nhạc...';
     wavBlob = encodeWAV(decodedBuffer);
-    audioPlayer.src = URL.createObjectURL(wavBlob);
+    musicAudioEl.src = URL.createObjectURL(wavBlob);
 
     if (window.AUDIO_VIZ && window.AUDIO_VIZ.analyze) window.AUDIO_VIZ.analyze(decodedBuffer);
 
-    const totalSegs = Math.max(5, parseInt(document.getElementById('beatCount').value || 10, 10));
+    const totalSegs = Math.max(1, parseInt(document.getElementById('beatCount').value || 6, 10));
     const tpl = getCurrentTemplate();
-    plan = await buildBeatPlan(decodedBuffer, totalSegs, tpl, currentBeatDensity);
+    await buildInitialPlan(decodedBuffer, totalSegs, tpl, currentBeatDensity);
     applySharedVideosToPlan();
 
     document.getElementById('editorCard').style.display = 'block';
     document.getElementById('exportCard').style.display = 'block';
     document.getElementById('saveButtonsBox').style.display = 'none';
+    previewTime = 0;
     if (plan[0].blobKey) await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart);
     drawMainPreview(0);
-    statusText.textContent = '✅ Đã xong! Bấm Phát Xem Trước để coi nhịp thở & sóng nhạc.';
+    statusText.textContent = `✅ Đã chia ${plan.length} phách! Bạn có thể chỉnh giây, trộn âm lượng, hoặc xóa bớt phách thoải mái.`;
     saveDraftNow();
+  });
+
+  document.getElementById('addBeatBtn').addEventListener('click', () => {
+    if (!decodedBuffer) return;
+    const newIdx = plan.length + 1;
+    plan.push({
+      idx: newIdx, numStr: String(newIdx).padStart(2, '0'),
+      start: 0, end: 0, dur: 1.5, musicStart: 0, energy: 0.7,
+      isHook: false, playMusic: true, lockedDur: false, origVol: 0, musicVol: 100,
+      blobKey: sharedBlobKeys.length ? sharedBlobKeys[(newIdx - 1) % sharedBlobKeys.length] : null,
+      trimStart: 0, hasPicked: false, customVideo: false, beatNote: '', aiReason: '', thumbCanvas: null
+    });
+    rebalancePlanDurations();
+    renderBeatsUI();
+    scheduleAutoSave();
   });
 
   document.getElementById('aiGeminiAllBtn').addEventListener('click', async () => {
@@ -1409,28 +1782,35 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         st.textContent = `🧠 Gemini đang xếp Phách ${seg.numStr}/${plan.length} theo mạch truyện...`;
         await seg._runGemini();
       }
-      st.textContent = '✅ Gemini đã xếp xong toàn bộ các phách liên kết mạch truyện!';
+      st.textContent = '✅ Gemini đã xếp xong toàn bộ các phách!';
     } finally { btn.disabled = false; }
   });
 
-  document.getElementById('playAllBtn').addEventListener('click', async () => {
-    activeSingleSeg = null; lastPlayingIdx = -1;
-    if (plan[0]?.blobKey) { await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart); sharedStageVideo.play().catch(() => {}); }
-    audioPlayer.currentTime = 0; audioPlayer.play().catch(() => {});
-    cancelAnimationFrame(animId); previewLoop();
+  playAllBtn.addEventListener('click', async () => {
+    if (isPlayingPreview) stopPreviewPlayback();
+    else await startPreviewFrom(previewTime >= (plan[plan.length - 1]?.end || 0) - 0.1 ? 0 : previewTime, null);
   });
-  audioPlayer.addEventListener('play', () => { cancelAnimationFrame(animId); previewLoop(); });
 
-  // XUẤT VIDEO SIÊU NÉT (VẼ TRỰC TIẾP 1 LẦN KHÔNG QUA CANVAS ĐỆM + KEYFRAME 1s + BITRATE CAO)
+  previewSeekBar.addEventListener('input', async () => {
+    stopPreviewPlayback();
+    previewTime = parseFloat(previewSeekBar.value) || 0;
+    const tot = plan.length ? plan[plan.length - 1].end : 0;
+    previewTimeLabel.textContent = `${fmtSec(previewTime)} / ${fmtSec(tot)}`;
+    let seg = plan[0]; for (const s of plan) if (previewTime >= s.start && previewTime < s.end) { seg = s; break; }
+    if (seg && seg.blobKey) await loadStageVideoKey(seg.blobKey, seg.trimStart + Math.max(0, previewTime - seg.start));
+    drawMainPreview(previewTime);
+  });
+
+  // XUẤT VIDEO SIÊU NÉT + TRỘN ÂM THANH GỐC & NHẠC TỪNG PHÁCH
   document.getElementById('exportFinalBtn').addEventListener('click', async () => {
     if (!plan.length || !decodedBuffer) return;
+    stopPreviewPlayback();
     const btn = document.getElementById('exportFinalBtn'); btn.disabled = true;
     document.getElementById('saveButtonsBox').style.display = 'none';
     exportStatus.textContent = '';
 
     const inputCache = {}, sinkCache = {}, durCache = {};
-    let activeFallbackBlobKey = null;
-    let lastValidSample = null;
+    let activeFallbackBlobKey = null, lastValidSample = null;
 
     try {
       await document.fonts.ready;
@@ -1444,13 +1824,14 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         cumF += count;
       });
       const totalFrames = cumF;
+      const totalExportDur = totalFrames / fps;
 
       updateExportProgressUI({
-        pct: 2, label: `🚀 Đang khởi tạo (${W}×${H} • ${fps} FPS • ${(bitrate / 1e6).toFixed(0)} Mbps)`,
+        pct: 2, label: `🚀 Đang khởi tạo (${W}×${H} • ${fps} FPS)`,
         cutText: `✂️ Bước 1 (Cắt từng phách): Đang mở ${plan.length} phách video...`, cutState: 'active',
         renderText: `🎬 Bước 2 (Gộp & Render siêu nét): 0% (0/${totalFrames})`, renderState: '',
-        audioText: `🎵 Bước 3 (Ghép âm thanh AAC): Đang chuẩn bị...`, audioState: '',
-        sub: 'Đang dùng chế độ vẽ trực tiếp độ nét cao...'
+        audioText: `🎵 Bước 3 (Trộn âm gốc + nhạc bài hát): Đang chuẩn bị...`, audioState: '',
+        sub: 'Đang giải mã phần cứng độ nét cao...'
       });
       document.getElementById('exportProgressBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
@@ -1489,19 +1870,13 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         } catch {}
       }
 
-      const videoSource = new MB.CanvasSource(expCanvas, {
-        codec: 'avc',
-        bitrate: bitrate,
-        keyFrameInterval: 1 // Khóa nét Keyframe mỗi 1 giây
-      });
+      const videoSource = new MB.CanvasSource(expCanvas, { codec: 'avc', bitrate, keyFrameInterval: 1 });
       output.addVideoTrack(videoSource, { frameRate: fps });
 
-      const audioSlice = await make48kStereoSlice(decodedBuffer, 0, totalFrames / fps);
       const audioSource = new MB.AudioBufferSource({ codec: 'aac', bitrate: 192_000 });
       output.addAudioTrack(audioSource);
 
       await output.start();
-      sharedStageVideo.pause();
 
       const tStart = performance.now();
       let renderedFrames = 0;
@@ -1509,9 +1884,9 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       for (let bIdx = 0; bIdx < beatRanges.length; bIdx++) {
         const br = beatRanges[bIdx], seg = br.seg;
         updateExportProgressUI({
-          pct: Math.max(5, Math.round((renderedFrames / totalFrames) * 92)),
+          pct: Math.max(5, Math.round((renderedFrames / totalFrames) * 90)),
           label: `⚡ Đang cắt & gộp Phách ${seg.numStr}/${plan.length}`,
-          cutText: `✂️ Bước 1 (Cắt từng phách): Đang cắt Phách ${seg.numStr}/${plan.length} (${seg.dur.toFixed(2)}s)`,
+          cutText: `✂️ Bước 1 (Cắt từng phách): Đang xử lý Phách ${seg.numStr}/${plan.length} (${seg.dur.toFixed(2)}s)`,
           cutState: 'active'
         });
 
@@ -1533,11 +1908,9 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
               lastValidSample = sample;
             }
 
-            // VẼ THẲNG KHUNG HÌNH GỐC VÀO eCtx (KHÔNG QUA CANVAS TRUNG GIAN -> SIÊU NÉT!)
-            drawSourceToFrame(eCtx, seg, globalF / fps, W, H, fLocal, br.count,
+            drawSourceToFrame(eCtx, seg, globalF / fps, W, H,
               lastValidSample ? (c, w, h) => {
-                c.imageSmoothingEnabled = true;
-                c.imageSmoothingQuality = 'high';
+                c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
                 const sw = lastValidSample.displayWidth, sh = lastValidSample.displayHeight;
                 const sc = Math.max(w / sw, h / sh);
                 lastValidSample.draw(c, (w - sw * sc) / 2, (h - sh * sc) / 2, sw * sc, sh * sc);
@@ -1547,7 +1920,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
             fLocal++; renderedFrames++;
             if (renderedFrames % 10 === 0 || renderedFrames === totalFrames) {
-              const pct = Math.min(94, Math.round((renderedFrames / totalFrames) * 94));
+              const pct = Math.min(92, Math.round((renderedFrames / totalFrames) * 92));
               const elapsedSec = (performance.now() - tStart) / 1000;
               const speedFps = renderedFrames / Math.max(0.2, elapsedSec);
               const etaSec = Math.max(0, Math.round((totalFrames - renderedFrames) / Math.max(1, speedFps)));
@@ -1571,12 +1944,12 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
               }
               await seekVideo(exportVideo, seg.trimStart + (fLocal / fps), true);
             }
-            renderCompositeFrame(eCtx, globalF / fps, W, H, null, fLocal, br.count, seg.blobKey ? exportVideo : null);
+            renderCompositeFrame(eCtx, globalF / fps, W, H, null, seg.blobKey ? exportVideo : null);
             await videoSource.add(globalF / fps, 1 / fps);
             renderedFrames++;
 
             if (renderedFrames % 10 === 0 || renderedFrames === totalFrames) {
-              const pct = Math.min(94, Math.round((renderedFrames / totalFrames) * 94));
+              const pct = Math.min(92, Math.round((renderedFrames / totalFrames) * 92));
               updateExportProgressUI({
                 pct, label: `🎬 Đang render: ${pct}%`,
                 renderText: `🎬 Bước 2 (Gộp & Render): ${pct}% (${renderedFrames}/${totalFrames} khung)`,
@@ -1589,14 +1962,15 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       }
 
       updateExportProgressUI({
-        pct: 96, label: '🎵 Đang ghép âm thanh AAC 192kbps...',
+        pct: 94, label: '🎵 Đang trộn âm thanh gốc & bài nhạc...',
         cutText: `✂️ Bước 1 (Cắt từng phách): Đã cắt xong ${plan.length}/${plan.length} phách ✓`, cutState: 'done',
         renderText: `🎬 Bước 2 (Gộp & Render): Đã gộp xong ${totalFrames}/${totalFrames} khung hình ✓`, renderState: 'done',
-        audioText: '🎵 Bước 3 (Ghép âm thanh AAC & đóng gói MP4): Đang xử lý...', audioState: 'active',
-        sub: 'Sắp xong rồi...'
+        audioText: '🎵 Bước 3 (Trộn âm thanh gốc + nhạc bài hát & đóng gói MP4): Đang xử lý...', audioState: 'active',
+        sub: 'Đang ghép âm thanh chuẩn 48kHz Stereo...'
       });
 
-      await audioSource.add(audioSlice);
+      const mixedAudio = await buildMixedExportAudio(totalExportDur);
+      await audioSource.add(mixedAudio);
       await output.finalize();
 
       finalMp4Blob = new Blob([output.target.buffer], { type: 'video/mp4' });
@@ -1604,7 +1978,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       const mbSize = (finalMp4Blob.size / (1024 * 1024)).toFixed(1);
       updateExportProgressUI({
         pct: 100, label: '🎉 Hoàn tất 100%!',
-        audioText: `🎵 Bước 3 (Ghép âm thanh & thẻ iPhone): Xong trong ${totalSec}s (${mbSize} MB) ✓`, audioState: 'done',
+        audioText: `🎵 Bước 3 (Trộn âm & thẻ iPhone): Hoàn tất trong ${totalSec}s (${mbSize} MB) ✓`, audioState: 'done',
         sub: `Đã xuất video ${W}×${H} siêu nét (${mbSize} MB)! Bấm lưu vào Ảnh iPhone.`
       });
 
