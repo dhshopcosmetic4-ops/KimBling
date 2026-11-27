@@ -1,5 +1,5 @@
 
-// FILE RIÊNG QUẢN LÝ 8 KIỂU CHỮ & MẪU DỰNG HOOK
+// FILE RIÊNG QUẢN LÝ 8 KIỂU CHỮ & MẪU DỰNG HOOK (HỖ TRỢ TICK CHỌN TRÊN TỪNG PHÁCH)
 function drawRoundBox(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
@@ -34,37 +34,34 @@ function wrapCenterText(ctx, text, x, y, maxW, lineH) {
 }
 
 window.HOOK_TEMPLATES = [
-  // MẪU 8 (ĐƯA LÊN ĐẦU HOẶC CHỌN DỄ): OOTD LOOKBOOK GÓC TRÁI
+  // MẪU 8: OOTD LOOKBOOK GÓC TRÁI
   {
     id: 'ootd-lookbook-trai',
-    name: '👗 Mẫu 8: OOTD / Lookbook Góc Trái (LOOK 1, 2, 3... giống mẫu)',
+    name: '👗 Mẫu 8: OOTD / Lookbook Góc Trái (LOOK 1, 2, 3...)',
     hookDuration: 2.5,
-    fadeIntro: true, // Làm tối nhẹ rồi sáng dần 2.5s đầu như video OOTD
+    renderOnNonHook: true, // Phách không tick Hook sẽ tự hiện LOOK 1, 2, 3...
+    fadeIntro: true,
     fields: [
-      { key: 'hookText', label: 'Chữ dẫn 2.5s đầu (phía trên)', default: '🎙️ Dừng lại đây nếu nàng còn phân vân về độ ứng dụng của em áo này...' },
+      { key: 'hookText', label: 'Chữ dẫn ở các phách tick Hook', default: '🎙️ Dừng lại đây nếu nàng còn phân vân về độ ứng dụng của em áo này...' },
       { key: 'prefix', label: 'Tiêu đề góc trái (VD: OOTD)', default: 'OOTD' },
       { key: 'label', label: 'Nhãn đếm số (VD: LOOK)', default: 'LOOK' },
-      { key: 'tags', label: 'Các nhãn nhỏ đổi theo phách (cách bằng dấu phẩy)', default: 'Thu Đông 🍂, Tết 🧧, Đi học / Đi làm 👩🏻‍💼, Cuối tuần ☕' }
+      { key: 'tags', label: 'Nhãn nhỏ đổi theo phách (cách bằng dấu phẩy)', default: 'Thu Đông 🍂, Tết 🧧, Đi học / Đi làm 👩🏻‍💼, Cuối tuần ☕' }
     ],
     render: function (ctx, t, W, H, data, hookTotal, segInfo) {
       const sc = W / 720;
-      const showHookUntil = Math.max(hookTotal, this.hookDuration);
+      const isHookBeat = segInfo ? !!segInfo.seg.isHook : (t <= hookTotal);
 
-      // 1. 2.5 giây đầu: Dòng chữ dẫn tinh tế phía trên đầu
-      if (t <= showHookUntil) {
+      if (isHookBeat) {
         const txt = (data.hookText || '').trim();
         if (!txt) return;
-        const alpha = t < 0.25 ? t / 0.25 : (t > showHookUntil - 0.25 ? Math.max(0, (showHookUntil - t) / 0.25) : 1);
+        const dur = Math.max(0.2, hookTotal);
+        const alpha = t < 0.2 ? t / 0.2 : (t > dur - 0.2 ? Math.max(0, (dur - t) / 0.2) : 1);
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.font = `700 ${Math.round(28 * sc)}px "Be Vietnam Pro", sans-serif`;
-        ctx.shadowColor = 'rgba(0,0,0,0.85)';
-        ctx.shadowBlur = 10 * sc;
-        ctx.lineWidth = 4 * sc;
-        ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-        // Vẽ cả viền mờ nhẹ cho dễ đọc trên mọi nền
+        ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 10 * sc;
+        ctx.lineWidth = 4 * sc; ctx.strokeStyle = 'rgba(0,0,0,0.55)';
         const words = txt.split(/\s+/), lines = []; let cur = '';
         for (const w of words) {
           const test = cur ? cur + ' ' + w : w;
@@ -81,7 +78,7 @@ window.HOOK_TEMPLATES = [
         return;
       }
 
-      // 2. Các phách thân bài: Hiện chữ nhỏ bên trái (Thu Đông / OOTD LOOK 1, 2, 3...)
+      // Phách không tick Hook -> Hiện OOTD / LOOK 1, 2, 3...
       const bodyIdx = segInfo ? Math.max(0, segInfo.bodyBeatIdx) : 0;
       const dt = segInfo ? segInfo.dt : 0.5;
       const popAlpha = Math.min(1, dt / 0.16);
@@ -96,12 +93,9 @@ window.HOOK_TEMPLATES = [
       ctx.save();
       ctx.globalAlpha = popAlpha;
       ctx.translate(slideX, 0);
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.75)';
-      ctx.shadowBlur = 10 * sc;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 10 * sc;
 
-      // Nhãn nhỏ phía trên (VD: Thu Đông 🍂)
       if (topTag) {
         ctx.font = `700 ${Math.round(28 * sc)}px "Be Vietnam Pro", sans-serif`;
         ctx.lineWidth = 4 * sc; ctx.strokeStyle = 'rgba(0,0,0,0.45)';
@@ -109,8 +103,6 @@ window.HOOK_TEMPLATES = [
         ctx.fillStyle = '#FFFFFF';
         ctx.fillText(topTag, W * 0.08, H * 0.25);
       }
-
-      // Cụm "OOTD" + "LOOK 1" bên mép trái
       if (prefix) {
         ctx.font = `900 ${Math.round(44 * sc)}px "Be Vietnam Pro", sans-serif`;
         ctx.lineWidth = 5 * sc; ctx.strokeStyle = 'rgba(0,0,0,0.5)';
@@ -118,14 +110,12 @@ window.HOOK_TEMPLATES = [
         ctx.fillStyle = '#FFFFFF';
         ctx.fillText(prefix, W * 0.08, H * 0.45);
       }
-
       const lookText = `${label} ${bodyIdx + 1}`.trim();
       ctx.font = `700 ${Math.round(28 * sc)}px "Be Vietnam Pro", sans-serif`;
       ctx.lineWidth = 4 * sc; ctx.strokeStyle = 'rgba(0,0,0,0.45)';
       ctx.strokeText(lookText, W * 0.11, H * 0.495);
       ctx.fillStyle = '#F1F5F9';
       ctx.fillText(lookText, W * 0.11, H * 0.495);
-
       ctx.restore();
     }
   },
@@ -143,16 +133,18 @@ window.HOOK_TEMPLATES = [
       { key: 'end', label: 'Câu hỏi chốt (Bóng đỏ)', default: 'Sẽ như thế nào ?' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const fadeOut = t > showUntil - 0.25 ? Math.max(0, (showUntil - t) / 0.25) : 1;
+      const fadeOut = t > showUntil - 0.22 ? Math.max(0, (showUntil - t) / 0.22) : 1;
+      // Tự co giãn tốc độ hoạt ảnh nếu phách Hook ngắn (VD: 1.2s vẫn kịp hiện đủ cả 4 tầng chữ!)
+      const p = Math.min(1, t / showUntil);
       const num = (data.num || '').trim(), s1 = (data.s1 || '').trim(), lead = (data.lead || '').trim();
       const main = (data.main || '').trim(), end = (data.end || '').trim();
       const sc = W / 720;
 
       ctx.save(); ctx.globalAlpha = fadeOut;
-      const showNum = t >= 0.45;
-      const numPop = showNum && t < 0.7 ? 1 + (1 - (t - 0.45) / 0.25) * 0.3 : 1;
+      const showNum = p >= 0.16;
+      const numPop = showNum && p < 0.28 ? 1 + (1 - (p - 0.16) / 0.12) * 0.3 : 1;
       ctx.textBaseline = 'middle';
       const fontS1 = `700 ${Math.round(168 * sc)}px "Dancing Script", cursive`;
       const fontNum = `900 ${Math.round(138 * sc)}px "Playfair Display", Georgia, serif`;
@@ -182,15 +174,15 @@ window.HOOK_TEMPLATES = [
       if (main) {
         ctx.save(); ctx.textAlign = 'center';
         fitFont(ctx, main + '|', '900 {S}px "Playfair Display", Georgia, serif', W - 50 * sc, Math.round(48 * sc));
-        const chars = Math.max(1, Math.floor(main.length * Math.min(1, t / 1.1)));
-        const cursor = (t < 1.3 && Math.floor(t * 6) % 2 === 0) ? '|' : '';
+        const chars = Math.max(1, Math.floor(main.length * Math.min(1, p / 0.45)));
+        const cursor = (p < 0.52 && Math.floor(t * 6) % 2 === 0) ? '|' : '';
         const txt = main.slice(0, chars) + cursor;
         ctx.lineJoin = 'round'; ctx.shadowColor = 'rgba(80,10,10,0.85)'; ctx.shadowBlur = 14 * sc;
         ctx.lineWidth = 8 * sc; ctx.strokeStyle = 'rgba(20,10,10,0.9)'; ctx.strokeText(txt, W / 2, H * 0.595);
         ctx.shadowBlur = 0; ctx.fillStyle = '#FDE68A'; ctx.fillText(txt, W / 2, H * 0.595); ctx.restore();
       }
-      if (end && t >= 0.85) {
-        const popEnd = t < 1.08 ? 1 + (1 - (t - 0.85) / 0.23) * 0.22 : 1;
+      if (end && p >= 0.32) {
+        const popEnd = p < 0.44 ? 1 + (1 - (p - 0.32) / 0.12) * 0.22 : 1;
         ctx.save(); ctx.translate(W / 2, H * 0.67); ctx.scale(popEnd, popEnd); ctx.textAlign = 'center';
         fitFont(ctx, end, '700 {S}px "Dancing Script", cursive', W - 60 * sc, Math.round(86 * sc));
         ctx.lineJoin = 'round'; ctx.shadowColor = 'rgba(135,18,18,0.95)'; ctx.shadowBlur = 22 * sc;
@@ -212,9 +204,9 @@ window.HOOK_TEMPLATES = [
       { key: 'sub', label: 'Dòng dễ thương bên dưới', default: 'Uống một ngụm là mê ngay 💕' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const sc = W / 720, fade = t > showUntil - 0.25 ? Math.max(0, (showUntil - t) / 0.25) : 1;
+      const sc = W / 720, fade = t > showUntil - 0.22 ? Math.max(0, (showUntil - t) / 0.22) : 1;
       const bounce = 1 + Math.abs(Math.sin(t * 5.5)) * 0.06;
       ctx.save(); ctx.globalAlpha = fade; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
@@ -238,7 +230,7 @@ window.HOOK_TEMPLATES = [
         ctx.restore();
       }
       const sub = (data.sub || '').trim();
-      if (sub && t >= 0.45) {
+      if (sub && (t / showUntil) >= 0.15) {
         ctx.font = `800 ${Math.round(32 * sc)}px "Baloo 2", cursive`;
         const sw = Math.min(W - 60 * sc, ctx.measureText(sub).width + 52 * sc), sh = 56 * sc;
         ctx.fillStyle = 'rgba(255,241,242,0.95)'; ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 12 * sc;
@@ -260,9 +252,9 @@ window.HOOK_TEMPLATES = [
       { key: 'sub', label: 'Dòng mô tả (Trắng kem)', default: 'Mát lạnh tan chảy ngày nắng ☀️' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const sc = W / 720, fade = t > showUntil - 0.25 ? Math.max(0, (showUntil - t) / 0.25) : 1;
+      const sc = W / 720, fade = t > showUntil - 0.22 ? Math.max(0, (showUntil - t) / 0.22) : 1;
       ctx.save(); ctx.globalAlpha = fade; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const badge = (data.badge || '').trim();
       if (badge) {
@@ -292,7 +284,7 @@ window.HOOK_TEMPLATES = [
   // MẪU 4: REMIX NEON ĐỔI MÀU
   {
     id: 'remix-den-trang-chop',
-    name: '⚡ Mẫu 4: Remix Đèn Neon Đổi Màu (3s Đen Trắng Chớp)',
+    name: '⚡ Mẫu 4: Remix Đèn Neon Đổi Màu (Đen Trắng Chớp)',
     hookDuration: 3.0,
     bwFirst3s: true,
     fields: [
@@ -301,7 +293,8 @@ window.HOOK_TEMPLATES = [
       { key: 'end', label: 'Dòng phụ bên dưới', default: 'Nghe nhạc là nhún theo liền 🎧' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      if (t > hookTotal) return;
+      const showUntil = Math.max(0.2, hookTotal);
+      if (t > showUntil) return;
       const sc = W / 720, neonList = ['#22D3EE', '#F472B6', '#A855F7', '#FDE047'];
       const color = neonList[Math.floor(t * 3) % neonList.length];
       const pulse = (t % 0.45) < 0.14 ? 1.15 : 1.0;
@@ -329,9 +322,9 @@ window.HOOK_TEMPLATES = [
       { key: 'sub', label: 'Chốt tò mò bên dưới', default: 'Giá rẻ bất ngờ chỉ từ 15K 😋' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const sc = W / 720, fade = t > showUntil - 0.25 ? Math.max(0, (showUntil - t) / 0.25) : 1;
+      const sc = W / 720, fade = t > showUntil - 0.22 ? Math.max(0, (showUntil - t) / 0.22) : 1;
       ctx.save(); ctx.globalAlpha = fade; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.save(); ctx.translate(W / 2, H * 0.39); ctx.rotate(-0.04);
       ctx.font = `900 ${Math.round(30 * sc)}px "Be Vietnam Pro", sans-serif`;
@@ -360,9 +353,9 @@ window.HOOK_TEMPLATES = [
       { key: 'sub', label: 'Dòng phụ bên dưới', default: 'Xem hết 10 giây cuối mới ngỡ ngàng!' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const sc = W / 720, shakeX = t < 0.5 ? Math.sin(t * 50) * 6 * sc : 0;
+      const sc = W / 720, shakeX = t < 0.45 ? Math.sin(t * 50) * 6 * sc : 0;
       ctx.save(); ctx.translate(shakeX, 0); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = '#DC2626'; ctx.fillRect(0, H * 0.36 - 30 * sc, W, 60 * sc);
       ctx.font = `900 ${Math.round(30 * sc)}px "Be Vietnam Pro", sans-serif`; ctx.fillStyle = '#FFFFFF'; ctx.fillText(data.alert || '', W / 2, H * 0.36);
@@ -386,9 +379,9 @@ window.HOOK_TEMPLATES = [
       { key: 'sub', label: 'Chữ ký bên dưới', default: 'Lưu giữ thanh xuân cùng nhau ✨' }
     ],
     render: function (ctx, t, W, H, data, hookTotal) {
-      const showUntil = Math.max(hookTotal, this.hookDuration);
+      const showUntil = Math.max(0.2, hookTotal);
       if (t > showUntil) return;
-      const sc = W / 720, fade = t > showUntil - 0.3 ? Math.max(0, (showUntil - t) / 0.3) : Math.min(1, t / 0.35);
+      const sc = W / 720, fade = t > showUntil - 0.25 ? Math.max(0, (showUntil - t) / 0.25) : Math.min(1, t / 0.3);
       ctx.save(); ctx.globalAlpha = fade; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = `700 ${Math.round(24 * sc)}px "Be Vietnam Pro", sans-serif`; ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 10 * sc;
       ctx.fillStyle = '#FDE68A'; ctx.fillText(data.top || '', W / 2, H * 0.41);

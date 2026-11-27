@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Cắt Nhạc & Dựng Video Pro (Chỉnh Giây + Trộn Âm + Lia Máy)</title>
+  <title>App Cắt Nhạc & Dựng Video Pro (Tick Chọn Hook Từng Phách)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <script src="./hook-templates.js?v=12"></script>
-  <script src="./ai-presets.js?v=12"></script>
-  <script src="./visualizer.js?v=12"></script>
-  <script src="./motion-effects.js?v=12"></script>
+  <script src="./hook-templates.js?v=14"></script>
+  <script src="./ai-presets.js?v=14"></script>
+  <script src="./visualizer.js?v=14"></script>
+  <script src="./motion-effects.js?v=14"></script>
   <style>
     * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
     body { margin: 0; background: #070b14; color: #f8fafc; padding: 14px; }
@@ -85,15 +85,12 @@
     .badge.locked { background: #d97706; color: #000; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
     .small-btn { padding: 6px 9px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
-    /* Thanh chỉnh giây + Âm lượng + Hook thông minh */
-    .beat-ctrl-box {
-      background: #0f172a; border: 1px solid #1e293b; border-radius: 9px; padding: 8px; margin-top: 6px;
-    }
+    .beat-ctrl-box { background: #0f172a; border: 1px solid #1e293b; border-radius: 9px; padding: 8px; margin-top: 6px; }
     .dur-edit-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; font-size: 12px; }
     .dur-edit-row input[type="number"] { width: 72px; margin: 0; padding: 5px 7px; font-size: 13px; text-align: center; }
-    .hook-opts { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: #cbd5e1; margin-bottom: 6px; }
-    .hook-opts label { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: #fde047; cursor: pointer; }
-    .hook-opts input { width: auto; margin: 0; }
+    .hook-opts { display: flex; flex-direction: column; gap: 6px; font-size: 12px; margin-bottom: 8px; padding: 6px 8px; background: rgba(253,224,71,0.06); border-radius: 8px; border: 1px solid #334155; }
+    .hook-opts label { display: inline-flex; align-items: center; gap: 7px; margin: 0; color: #fde047; cursor: pointer; font-size: 12px; }
+    .hook-opts input { width: 16px; height: 16px; margin: 0; accent-color: #ef4444; }
     .vol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .vol-item label { font-size: 11px; margin-bottom: 0; color: #94a3b8; }
     input[type="range"] { padding: 0; margin: 4px 0; accent-color: #38bdf8; }
@@ -140,7 +137,7 @@
 </div>
 
 <div class="wrap">
-  <h1>🎬 Dựng Video Pro (Chỉnh Giây Từng Phách + Trộn Âm + Lia Máy)</h1>
+  <h1>🎬 Dựng Video Pro (Tick Chọn Hook Từng Phách + Chỉnh Giây + Lia Máy)</h1>
 
   <div class="warn-bar" id="warnBar"></div>
 
@@ -223,7 +220,7 @@
       </div>
       <div>
         <label>Số phách muốn cắt (Chấp nhận từ 1, 2, 3... trở lên)</label>
-        <input type="number" id="beatCount" value="6" min="1" max="30" />
+        <input type="number" id="beatCount" value="5" min="1" max="30" />
       </div>
     </div>
 
@@ -270,7 +267,7 @@
       </div>
     </div>
 
-    <label>4. Ý chính để AI tự soạn chữ</label>
+    <label>4. Ý chính để AI tự soạn chữ Hook</label>
     <div class="row">
       <div class="input-x">
         <input type="text" id="topicInput" value="em áo len phối đồ" placeholder="Gõ ý chính..." />
@@ -336,7 +333,7 @@
     </div>
     <div class="status" id="aiAllStatus"></div>
 
-    <label>✂️ Danh Sách Từng Phách (Khóa giây tùy ý • Chỉnh âm gốc & âm nhạc • Đánh dấu Hook • Xóa phách tự khớp nhạc):</label>
+    <label>✂️ Danh Sách Từng Phách (Tick chọn "☑️ Hiện câu Hook" ở bất kỳ phách nào bạn muốn hiện chữ!):</label>
     <div id="beatsContainer"></div>
   </div>
 
@@ -399,7 +396,6 @@
   let plan = [], sharedBlobKeys = [], currentBeatDensity = 'balanced';
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
 
-  // Master clock cho Preview (hỗ trợ cả trường hợp Hook tắt nhạc!)
   let isPlayingPreview = false, previewTime = 0, lastWallTs = 0, animId = null, lastPlayingIdx = -1, currentStageBlobKey = null, switchingStage = false;
 
   const sharedStageVideo = document.getElementById('sharedStageVideo');
@@ -500,7 +496,7 @@
         planMeta: plan.map(s => ({
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
           musicStart: s.musicStart, energy: s.energy || 0.5,
-          isHook: s.isHook, playMusic: s.playMusic, lockedDur: !!s.lockedDur,
+          isHook: !!s.isHook, playMusic: s.playMusic !== false, lockedDur: !!s.lockedDur,
           origVol: s.origVol, musicVol: s.musicVol,
           trimStart: s.trimStart, hasPicked: !!s.hasPicked, customVideo: !!s.customVideo,
           blobKey: s.blobKey || null, beatNote: s.beatNote || '', aiReason: s.aiReason || ''
@@ -561,6 +557,7 @@
         musicAudioEl.src = URL.createObjectURL(wavBlob);
         plan = draft.planMeta.map(m => ({
           ...m,
+          isHook: !!m.isHook,
           playMusic: m.playMusic !== undefined ? m.playMusic : true,
           lockedDur: !!m.lockedDur,
           origVol: m.origVol !== undefined ? m.origVol : 0,
@@ -683,9 +680,8 @@
     return bassBreathData.curve[i0] * (1 - (pos - i0)) + bassBreathData.curve[i1] * (pos - i0);
   }
 
-  // CHIA NHỊP THÔNG MINH HỖ TRỢ TỪ 1 PHÁCH TRỞ LÊN + KHÓA GIÂY + TRỪ NHẠC + HOOK TẮT/BẬT NHẠC!
-  function snapWindowToBeats(musicStart, musicEnd, count, e, meanE) {
-    if (count <= 1) return [musicEnd - musicStart];
+  function snapWindowToBeats(musicStart, musicEnd, count, e) {
+    if (count <= 1) return [Number(Math.max(0.2, musicEnd - musicStart).toFixed(2))];
     const span = musicEnd - musicStart;
     const minGap = Math.min(0.65, (span / count) * 0.55);
     const cands = [];
@@ -723,11 +719,9 @@
     const e = audioMetricsCache ? audioMetricsCache.e : [];
     const meanE = audioMetricsCache ? audioMetricsCache.meanE : 0.1;
 
-    // 1. Tính tổng thời gian các phách CÓ nhạc đã được khóa giây (lockedDur = true)
     const musicBeats = plan.filter(s => s.playMusic);
     if (musicBeats.length > 0) {
       let unlocked = musicBeats.filter(s => !s.lockedDur);
-      // Nếu tất cả phách có nhạc đều bị khóa (VD: sau khi xóa phách cuối), mở khóa phách nhạc cuối cùng để khớp nhạc!
       if (unlocked.length === 0) {
         musicBeats[musicBeats.length - 1].lockedDur = false;
         unlocked = [musicBeats[musicBeats.length - 1]];
@@ -735,16 +729,13 @@
       const lockedSum = musicBeats.filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
       const minAllow = 0.25 * unlocked.length;
       if (lockedSum > totalMusicDur - minAllow) {
-        // Giữ tối thiểu 0.25s cho mỗi phách mở khóa
         const scale = Math.max(0.1, (totalMusicDur - minAllow) / Math.max(0.1, lockedSum));
         musicBeats.filter(s => s.lockedDur).forEach(s => { s.dur = Number(Math.max(0.25, s.dur * scale).toFixed(2)); });
       }
       const finalLockedSum = musicBeats.filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
       const remMusic = Math.max(0.25 * unlocked.length, totalMusicDur - finalLockedSum);
 
-      // Phân bổ phần nhạc còn lại cho từng cụm phách mở khóa theo đúng vị trí trên bản nhạc
-      let mCursor = 0;
-      let i = 0;
+      let mCursor = 0, i = 0;
       while (i < musicBeats.length) {
         if (musicBeats[i].lockedDur) {
           mCursor += musicBeats[i].dur;
@@ -753,24 +744,20 @@
           let j = i;
           while (j < musicBeats.length && !musicBeats[j].lockedDur) j++;
           const groupCount = j - i;
-          // Tìm tổng khóa nằm phía sau nhóm này để biết điểm kết thúc của nhóm trên trục nhạc
           const afterLocked = musicBeats.slice(j).filter(s => s.lockedDur).reduce((a, b) => a + b.dur, 0);
           const totalAfterUnlocked = musicBeats.slice(j).filter(s => !s.lockedDur).length;
           const groupShare = (groupCount / unlocked.length) * remMusic;
           const groupEnd = Math.min(totalMusicDur - afterLocked - 0.25 * totalAfterUnlocked, mCursor + groupShare);
           const snappedDurs = e.length
-            ? snapWindowToBeats(mCursor, Math.max(mCursor + 0.25 * groupCount, groupEnd), groupCount, e, meanE)
+            ? snapWindowToBeats(mCursor, Math.max(mCursor + 0.25 * groupCount, groupEnd), groupCount, e)
             : Array(groupCount).fill(Number((groupShare / groupCount).toFixed(2)));
-          for (let k = 0; k < groupCount; k++) {
-            musicBeats[i + k].dur = snappedDurs[k];
-          }
+          for (let k = 0; k < groupCount; k++) musicBeats[i + k].dur = snappedDurs[k];
           mCursor += snappedDurs.reduce((a, b) => a + b, 0);
           i = j;
         }
       }
     }
 
-    // 2. Cập nhật lại số thứ tự, start/end video và musicStart khớp tuyệt đối!
     let vCursor = 0, mCursor = 0;
     plan.forEach((s, idx) => {
       s.idx = idx + 1;
@@ -808,25 +795,54 @@
   async function buildInitialPlan(buffer, totalSegs, tpl, density) {
     await analyzeAudioMetrics(buffer);
     const res = [];
+    // Mặc định tick Hook cho phách 1 (hoặc 2 phách đầu nếu >= 5 phách) - bạn có thể tick/bỏ tick lại tự do!
+    const defaultHookCount = totalSegs >= 5 ? 2 : 1;
     for (let i = 0; i < totalSegs; i++) {
-      const isHook = i === 0 && totalSegs >= 2;
+      const isHook = i < defaultHookCount;
       res.push({
         idx: i + 1, numStr: String(i + 1).padStart(2, '0'),
-        start: 0, end: 0, dur: isHook ? Math.min(2.6, buffer.duration * 0.4) : 1.0,
+        start: 0, end: 0, dur: 1.5,
         musicStart: 0, energy: 0.7, isHook, playMusic: true, lockedDur: false,
         origVol: 0, musicVol: 100,
         blobKey: null, trimStart: 0, hasPicked: false, customVideo: false, beatNote: '', aiReason: '', thumbCanvas: null
       });
     }
     plan = res;
-    // Nếu có >= 2 phách và là mẫu OOTD/Khởi nghiệp thì phách 1 ưu tiên 2.6s hoặc chia theo nhạc
     if (totalSegs >= 3 && density !== 'fast') {
       const hookDur = Number(Math.min((tpl && tpl.hookDuration) || 2.6, buffer.duration * 0.35).toFixed(2));
-      plan[0].dur = hookDur;
-      plan[0].lockedDur = true;
+      if (defaultHookCount === 2) {
+        plan[0].dur = Number((hookDur * 0.5).toFixed(2)); plan[0].lockedDur = true;
+        plan[1].dur = Number((hookDur * 0.5).toFixed(2)); plan[1].lockedDur = true;
+      } else {
+        plan[0].dur = hookDur; plan[0].lockedDur = true;
+      }
     }
     rebalancePlanDurations();
     return plan;
+  }
+
+  // TÍNH THỜI GIAN HOOK LIỀN MẠCH CHO NHỮNG PHÁCH ĐƯỢC TICK HOOK
+  function getHookGroupTiming(seg, t) {
+    if (!seg || !seg.isHook) return null;
+    const myIdx = seg.idx - 1;
+    let gStart = myIdx, gEnd = myIdx;
+    while (gStart > 0 && plan[gStart - 1].isHook) gStart--;
+    while (gEnd < plan.length - 1 && plan[gEnd + 1].isHook) gEnd++;
+    const startT = plan[gStart].start;
+    const endT = plan[gEnd].end;
+    return {
+      localT: Math.max(0, t - startT),
+      groupDur: Math.max(0.2, endT - startT)
+    };
+  }
+
+  function getNonHookIndex(seg) {
+    let cnt = 0;
+    for (const s of plan) {
+      if (s.idx === seg.idx) return cnt;
+      if (!s.isHook) cnt++;
+    }
+    return cnt;
   }
 
   async function ensureVideoReady(video) {
@@ -969,7 +985,7 @@
 
     const prompt = `Bạn là đạo diễn dựng video TikTok.
 Cốt truyện tổng thể: "${story || 'Giới thiệu quán/sản phẩm'}".
-Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Mở đầu Hook' : 'Diễn biến tiếp theo'}).
+Đang chọn cảnh cho PHÁCH ${seg.numStr}/${plan.length} (tiến trình ${progressPct}%, dài ${seg.dur.toFixed(2)}s, vai trò: ${seg.isHook ? 'Hook giữ chân người xem' : 'Diễn biến tiếp theo'}).
 ${note ? `Yêu cầu riêng: "${note}".` : ''}
 CÁC PHÁCH KHÁC ĐÃ CHỌN (TRÁNH TRÙNG):
 ${usedDesc}
@@ -1009,7 +1025,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     c.textAlign = 'center';
     c.fillStyle = seg.isHook ? '#fca5a5' : '#7dd3fc';
     c.font = `800 ${Math.round(30 * sc)}px "Be Vietnam Pro", sans-serif`;
-    c.fillText(seg.isHook ? 'PHÁCH ĐẦU (HOOK)' : 'PHÁCH NHẠC (NỀN ĐEN)', W / 2, H * 0.34);
+    c.fillText(seg.isHook ? 'PHÁCH HIỆN HOOK' : 'PHÁCH NHẠC (NỀN ĐEN)', W / 2, H * 0.34);
     c.fillStyle = '#FDE047';
     c.font = `900 ${Math.round(110 * sc)}px "Be Vietnam Pro", sans-serif`;
     c.fillText(`PHÁCH ${seg.numStr}`, W / 2, H * 0.48);
@@ -1050,7 +1066,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
   function renderBeatsUI() {
     const box = document.getElementById('beatsContainer');
     box.innerHTML = '';
-    const hookCount = plan.filter(s => s.isHook).length;
 
     plan.forEach((seg, arrIdx) => {
       const card = document.createElement('div'); card.className = 'beat-card';
@@ -1059,13 +1074,13 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       const thumb = document.createElement('canvas'); thumb.width = 156; thumb.height = 276; thumb.className = 'beat-thumb';
       seg.thumbCanvas = thumb;
 
-      const bodyTag = !seg.isHook ? ` • LOOK ${Math.max(1, seg.idx - hookCount)}` : '';
+      const lookNum = !seg.isHook ? (getNonHookIndex(seg) + 1) : 0;
       const right = document.createElement('div');
       right.innerHTML = `
         <div class="beat-head">
           <span>
             <b>Phách ${seg.numStr}</b>
-            <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? 'HOOK' : 'NHỊP' + bodyTag}</span>
+            <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? '💬 CÓ HOOK' : 'NHỊP • LOOK ' + lookNum}</span>
             ${seg.lockedDur ? '<span class="badge locked">🔒 Đã khóa giây</span>' : ''}
           </span>
           <span style="color:#fde047;font-weight:800;">${seg.start.toFixed(1)}s ➔ ${seg.end.toFixed(1)}s (${seg.dur.toFixed(2)}s)</span>
@@ -1100,17 +1115,17 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
       btnGroup.append(pickBtn, clearBtn, playOneBtn, delBtn);
 
-      // BỘ CHỈNH GIÂY KHÓA + HOOK CHẠY NHẠC + ÂM LƯỢNG GỐC/NHẠC
+      // BỘ CHỈNH GIÂY KHÓA + TICK HIỂN THỊ HOOK + CHẠY NHẠC + ÂM LƯỢNG
       const ctrlBox = document.createElement('div'); ctrlBox.className = 'beat-ctrl-box';
 
       const durRow = document.createElement('div'); durRow.className = 'dur-edit-row';
-      durRow.innerHTML = `<span>⏱️ Chỉnh giây:</span>`;
+      durRow.innerHTML = `<span>⏱️ Giây:</span>`;
       const durInput = document.createElement('input');
       durInput.type = 'number'; durInput.step = '0.1'; durInput.min = '0.3';
       durInput.value = seg.dur.toFixed(2);
       const applyDurBtn = document.createElement('button');
       applyDurBtn.type = 'button'; applyDurBtn.className = 'small-btn green';
-      applyDurBtn.textContent = '✓ Khóa giây & Chia lại';
+      applyDurBtn.textContent = '✓ Khóa giây';
       applyDurBtn.onclick = () => {
         const val = parseFloat(durInput.value);
         if (isNaN(val) || val < 0.3) return alert('Nhập số giây tối thiểu 0.3s!');
@@ -1123,7 +1138,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       };
       const unlockDurBtn = document.createElement('button');
       unlockDurBtn.type = 'button'; unlockDurBtn.className = 'small-btn dark';
-      unlockDurBtn.textContent = seg.lockedDur ? '🔓 Mở tự chia' : '🎵 Đang tự chia';
+      unlockDurBtn.textContent = seg.lockedDur ? '🔓 Mở tự chia' : '🎵 Tự chia';
       unlockDurBtn.onclick = () => {
         seg.lockedDur = false;
         rebalancePlanDurations();
@@ -1132,30 +1147,32 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       };
       durRow.append(durInput, applyDurBtn, unlockDurBtn);
 
+      // HAI Ô TICK ĐỘC LẬP: 1) HIỆN CÂU HOOK & 2) CHẠY NHẠC
       const hookOpts = document.createElement('div'); hookOpts.className = 'hook-opts';
+
       const lblHook = document.createElement('label');
       const chkHook = document.createElement('input'); chkHook.type = 'checkbox'; chkHook.checked = !!seg.isHook;
       chkHook.onchange = () => {
         seg.isHook = chkHook.checked;
-        if (!seg.isHook) seg.playMusic = true;
-        rebalancePlanDurations();
         renderBeatsUI();
         drawMainPreview(seg.start);
         scheduleAutoSave();
       };
-      lblHook.append(chkHook, document.createTextNode('Đánh dấu là Hook'));
+      lblHook.append(chkHook, document.createTextNode('Hiện câu Hook ở phách này (tick chọn tự do các phách muốn hiện)'));
 
       const lblMusic = document.createElement('label');
+      lblMusic.style.color = '#7dd3fc';
       const chkMusic = document.createElement('input'); chkMusic.type = 'checkbox'; chkMusic.checked = !!seg.playMusic;
+      chkMusic.style.accentColor = '#38bdf8';
       chkMusic.onchange = () => {
         seg.playMusic = chkMusic.checked;
-        if (!seg.playMusic) seg.lockedDur = true; // Phách không chạy nhạc giữ nguyên độ dài giây của nó!
+        if (!seg.playMusic) seg.lockedDur = true;
         rebalancePlanDurations();
         renderBeatsUI();
         drawMainPreview(seg.start);
         scheduleAutoSave();
       };
-      lblMusic.append(chkMusic, document.createTextNode(seg.playMusic ? 'Chạy nhạc bài hát ở phách này' : '🔇 Tắt nhạc (Nhạc tính từ phách sau!)'));
+      lblMusic.append(chkMusic, document.createTextNode(seg.playMusic ? 'Chạy nhạc bài hát ở phách này' : '🔇 Tắt nhạc phách này (nhạc chạy từ phách sau!)'));
       hookOpts.append(lblHook, lblMusic);
 
       const volGrid = document.createElement('div'); volGrid.className = 'vol-grid';
@@ -1328,7 +1345,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     });
   }
 
-  // VẼ KHUNG HÌNH + HIỆU ỨNG TỪ motion-effects.js + SÓNG NHẠC
+  // VẼ KHUNG HÌNH + HIỆU ỨNG LƯỚT MÁY + CHỈ VẼ HOOK TRÊN PHÁCH ĐƯỢC TICK!
   function drawSourceToFrame(ctx, seg, t, W, H, drawFn) {
     const tpl = getCurrentTemplate();
     if (!seg.blobKey || !drawFn) {
@@ -1340,8 +1357,9 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     const dt = Math.max(0, t - seg.start);
     const musicT = seg.playMusic && seg.musicStart !== null ? (seg.musicStart + dt) : 0;
     const breath = seg.playMusic ? getBreathAt(musicT) : 0;
-    const hookTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0);
 
+    const hookInfo = getHookGroupTiming(seg, t);
+    const hookTotal = hookInfo ? hookInfo.groupDur : 2.5;
     const fx = window.MOTION_FX
       ? window.MOTION_FX.compute(mode, seg, t, W, H, breath, hookTotal)
       : { zoom: 1, tx: 0, ty: 0, rotRad: 0, flashAlpha: 0, introDarkness: 0 };
@@ -1366,9 +1384,16 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       ctx.fillRect(0, 0, W, H);
     }
 
-    const hookCount = plan.filter(s => s.isHook).length;
-    const segInfo = { seg, dt, bodyBeatIdx: Math.max(0, seg.idx - 1 - hookCount) };
-    if (tpl && tpl.render) tpl.render(ctx, t, W, H, getHookData(), hookTotal, segInfo);
+    // CHỈ VẼ CHỮ HOOK KHI PHÁCH NÀY ĐƯỢC TICK (HOẶC MẪU 8 OOTD VẼ LOOK KHI KHÔNG TICK HOOK)
+    const segInfo = { seg, dt, bodyBeatIdx: getNonHookIndex(seg) };
+    if (tpl && tpl.render) {
+      if (seg.isHook && hookInfo) {
+        tpl.render(ctx, hookInfo.localT, W, H, getHookData(), hookInfo.groupDur, segInfo);
+      } else if (!seg.isHook && tpl.renderOnNonHook) {
+        tpl.render(ctx, t, W, H, getHookData(), 0, segInfo);
+      }
+    }
+
     if (seg.playMusic && window.AUDIO_VIZ && window.AUDIO_VIZ.draw) {
       window.AUDIO_VIZ.draw(ctx, musicT, W, H, vizStyleSelect.value, vizColorSelect.value);
     }
@@ -1385,28 +1410,21 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     renderCompositeFrame(pCtx, t, 720, 1280, null, currentStageBlobKey ? sharedStageVideo : null);
   }
 
-  // --- MASTER CLOCK PREVIEW (ĐỒNG BỘ CẢ NHẠC & TIẾNG VIDEO GỐC + HOOK KHÔNG NHẠC) ---
   function stopPreviewPlayback() {
-    isPlayingPreview = false;
-    activeSingleSeg = null;
+    isPlayingPreview = false; activeSingleSeg = null;
     playAllBtn.textContent = '▶️ Phát';
-    musicAudioEl.pause();
-    sharedStageVideo.pause();
+    musicAudioEl.pause(); sharedStageVideo.pause();
     cancelAnimationFrame(animId);
   }
 
   async function startPreviewFrom(startT, singleSeg = null) {
     activeSingleSeg = singleSeg;
-    previewTime = startT;
-    lastPlayingIdx = -1;
-    isPlayingPreview = true;
-    playAllBtn.textContent = '⏸️ Tạm Dừng';
-    lastWallTs = performance.now();
+    previewTime = startT; lastPlayingIdx = -1;
+    isPlayingPreview = true; playAllBtn.textContent = '⏸️ Tạm Dừng';
 
     let seg = singleSeg || plan[0];
     if (!singleSeg) for (const s of plan) if (startT >= s.start && startT < s.end) { seg = s; break; }
 
-    // Mở khóa video & audio ngay trong sự kiện click!
     if (seg && seg.blobKey) {
       sharedStageVideo.muted = seg.origVol <= 0;
       sharedStageVideo.volume = Math.max(0, Math.min(1, seg.origVol / 100));
@@ -1418,13 +1436,11 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       musicAudioEl.currentTime = seg.musicStart + Math.max(0, startT - seg.start);
       musicAudioEl.play().catch(() => {});
     } else {
-      // Mở khóa nhẹ musicAudioEl cho các phách sau
       try { const p = musicAudioEl.play(); if (p && p.then) p.then(() => { if (!seg?.playMusic) musicAudioEl.pause(); }).catch(() => {}); } catch {}
     }
 
     lastWallTs = performance.now();
-    cancelAnimationFrame(animId);
-    previewLoop();
+    cancelAnimationFrame(animId); previewLoop();
   }
 
   async function playSingleBeat(seg) {
@@ -1443,9 +1459,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     const stopLimit = activeSingleSeg ? activeSingleSeg.end : totalDur;
     if (previewTime >= stopLimit) {
       previewTime = activeSingleSeg ? activeSingleSeg.start : 0;
-      stopPreviewPlayback();
-      syncPreviewBarRange();
-      drawMainPreview(previewTime);
+      stopPreviewPlayback(); syncPreviewBarRange(); drawMainPreview(previewTime);
       return;
     }
 
@@ -1457,7 +1471,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
     if (seg.idx !== lastPlayingIdx && !switchingStage) {
       lastPlayingIdx = seg.idx;
-      // Cập nhật âm lượng gốc & nhạc cho phách mới
       sharedStageVideo.muted = seg.origVol <= 0;
       sharedStageVideo.volume = Math.max(0, Math.min(1, seg.origVol / 100));
 
@@ -1490,7 +1503,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     animId = requestAnimationFrame(previewLoop);
   }
 
-  // --- TRỘN ÂM THANH GỐC TỪNG PHÁCH + BÀI NHẠC KHI XUẤT MP4 ---
   async function to48kStereoBuffer(audioBuf) {
     if (audioBuf.sampleRate === 48000 && audioBuf.numberOfChannels === 2) return audioBuf;
     const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, Math.max(1, Math.ceil(audioBuf.duration * 48000)), 48000);
@@ -1500,15 +1512,11 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
   }
 
   async function buildMixedExportAudio(totalDur) {
-    const sr = 48000;
-    const totalSamples = Math.max(1, Math.round(totalDur * sr));
-    const outL = new Float32Array(totalSamples);
-    const outR = new Float32Array(totalSamples);
-
+    const sr = 48000, totalSamples = Math.max(1, Math.round(totalDur * sr));
+    const outL = new Float32Array(totalSamples), outR = new Float32Array(totalSamples);
     const music48k = await to48kStereoBuffer(decodedBuffer);
     const mL = music48k.getChannelData(0), mR = music48k.getChannelData(1);
 
-    // Giải mã tạm âm thanh gốc cho những video có bật origVol > 0 (giải phóng ngay sau khi trộn)
     const clipAudioCache = {};
     const keysNeedingAudio = [...new Set(plan.filter(s => s.blobKey && s.origVol > 0).map(s => s.blobKey))];
     for (const k of keysNeedingAudio) {
@@ -1517,21 +1525,17 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         const decodedClip = await actx.decodeAudioData(await blobStore[k].arrayBuffer());
         await actx.close();
         clipAudioCache[k] = await to48kStereoBuffer(decodedClip);
-      } catch (e) { console.warn('Clip audio decode skip:', e); }
+      } catch {}
     }
 
-    const fadeSamples = Math.round(0.008 * sr); // 8ms làm mượt chuyển âm tránh tiếng tạch
-
+    const fadeSamples = Math.round(0.008 * sr);
     for (const seg of plan) {
-      const sStart = Math.round(seg.start * sr);
-      const sEnd = Math.min(totalSamples, Math.round(seg.end * sr));
+      const sStart = Math.round(seg.start * sr), sEnd = Math.min(totalSamples, Math.round(seg.end * sr));
       const count = sEnd - sStart;
       if (count <= 0) continue;
 
-      // 1. Trộn bài nhạc (nếu phách có bật chạy nhạc)
       if (seg.playMusic && seg.musicStart !== null && seg.musicVol > 0) {
-        const gain = seg.musicVol / 100;
-        const mStart = Math.round(seg.musicStart * sr);
+        const gain = seg.musicVol / 100, mStart = Math.round(seg.musicStart * sr);
         for (let i = 0; i < count; i++) {
           const mi = mStart + i;
           if (mi >= 0 && mi < mL.length) {
@@ -1544,12 +1548,9 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
         }
       }
 
-      // 2. Trộn âm thanh gốc của video quay (nếu origVol > 0)
       if (seg.blobKey && seg.origVol > 0 && clipAudioCache[seg.blobKey]) {
-        const cBuf = clipAudioCache[seg.blobKey];
-        const cL = cBuf.getChannelData(0), cR = cBuf.getChannelData(1);
-        const gain = seg.origVol / 100;
-        const cStart = Math.round(seg.trimStart * sr);
+        const cBuf = clipAudioCache[seg.blobKey], cL = cBuf.getChannelData(0), cR = cBuf.getChannelData(1);
+        const gain = seg.origVol / 100, cStart = Math.round(seg.trimStart * sr);
         for (let i = 0; i < count; i++) {
           const ci = cStart + i;
           if (ci >= 0 && ci < cL.length) {
@@ -1563,15 +1564,12 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
       }
     }
 
-    // Giới hạn đỉnh tránh rè tiếng
     for (let i = 0; i < totalSamples; i++) {
       outL[i] = Math.max(-0.98, Math.min(0.98, outL[i]));
       outR[i] = Math.max(-0.98, Math.min(0.98, outR[i]));
     }
-
     const outBuf = new AudioBuffer({ length: totalSamples, numberOfChannels: 2, sampleRate: sr });
-    outBuf.copyToChannel(outL, 0);
-    outBuf.copyToChannel(outR, 1);
+    outBuf.copyToChannel(outL, 0); outBuf.copyToChannel(outR, 1);
     return outBuf;
   }
 
@@ -1740,7 +1738,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
 
     if (window.AUDIO_VIZ && window.AUDIO_VIZ.analyze) window.AUDIO_VIZ.analyze(decodedBuffer);
 
-    const totalSegs = Math.max(1, parseInt(document.getElementById('beatCount').value || 6, 10));
+    const totalSegs = Math.max(1, parseInt(document.getElementById('beatCount').value || 5, 10));
     const tpl = getCurrentTemplate();
     await buildInitialPlan(decodedBuffer, totalSegs, tpl, currentBeatDensity);
     applySharedVideosToPlan();
@@ -1751,7 +1749,7 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     previewTime = 0;
     if (plan[0].blobKey) await loadStageVideoKey(plan[0].blobKey, plan[0].trimStart);
     drawMainPreview(0);
-    statusText.textContent = `✅ Đã chia ${plan.length} phách! Bạn có thể chỉnh giây, trộn âm lượng, hoặc xóa bớt phách thoải mái.`;
+    statusText.textContent = `✅ Đã chia ${plan.length} phách! Tick "Hiện câu Hook" ở bất kỳ phách nào bạn muốn hiện chữ.`;
     saveDraftNow();
   });
 
@@ -1801,7 +1799,6 @@ Trả về JSON: {"choicePos": 0, "reason": "Giải thích dưới 14 chữ ti�
     drawMainPreview(previewTime);
   });
 
-  // XUẤT VIDEO SIÊU NÉT + TRỘN ÂM THANH GỐC & NHẠC TỪNG PHÁCH
   document.getElementById('exportFinalBtn').addEventListener('click', async () => {
     if (!plan.length || !decodedBuffer) return;
     stopPreviewPlayback();
