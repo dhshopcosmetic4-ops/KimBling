@@ -1,18 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Studio Pro — ASMR Rõ Nét & Khớp Cảnh 100%</title>
+  <title>AI Studio Pro — Remix Visualizer, ASMR & AI Tự Học</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <script src="./hook-templates.js?v=25"></script>
-  <script src="./ai-presets.js?v=25"></script>
-  <script src="./visualizer.js?v=25"></script>
-  <script src="./motion-effects.js?v=25"></script>
-  <script src="./filters-webgl.js?v=25"></script>
+  <script src="./hook-templates.js?v=26"></script>
+  <script src="./ai-presets.js?v=26"></script>
+  <script src="./visualizer.js?v=26"></script>
+  <script src="./motion-effects.js?v=26"></script>
+  <script src="./filters-webgl.js?v=26"></script>
   <style>
     * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
     body { margin: 0; background: #070b14; color: #f8fafc; padding: 12px; }
@@ -67,6 +66,7 @@
     button.red { background: #991b1b; border: 1px solid #ef4444; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     .status { font-size: 13px; color: #34d399; text-align: center; min-height: 18px; margin-bottom: 6px; }
+    .status a { color: #38bdf8; font-weight: 800; }
     .trim-audio-box {
       display: none; background: #0b1120; border: 1px solid #38bdf8;
       border-radius: 12px; padding: 12px; margin-top: 8px;
@@ -98,8 +98,16 @@
     .sheet-guide { display: none; background: #020617; border: 1px solid #334155; border-radius: 10px; padding: 10px; font-size: 11px; color: #cbd5e1; margin-bottom: 10px; line-height: 1.5; }
     .ai-report {
       background: rgba(56,189,248,0.1); border: 1px solid #0284c7; border-radius: 12px;
-      padding: 10px 12px; font-size: 12px; color: #bae6fd; line-height: 1.5; margin-bottom: 12px;
+      padding: 10px 12px; font-size: 12px; color: #bae6fd; line-height: 1.5; margin-bottom: 10px;
     }
+    .ai-critique-box {
+      display: none; background: linear-gradient(180deg, rgba(234,179,8,0.10), rgba(15,23,42,0.85));
+      border: 1px solid #eab308; border-radius: 12px; padding: 11px 12px;
+      font-size: 12px; color: #fef08a; line-height: 1.5; margin-bottom: 12px;
+    }
+    .ai-critique-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .ai-critique-box ul { margin: 4px 0 6px 18px; padding: 0; color: #e2e8f0; }
+    .ai-critique-box li { margin-bottom: 3px; }
     .stage-wrap { display: flex; justify-content: center; margin-bottom: 10px; }
     canvas#previewCanvas {
       width: 250px; height: 444px; background: #000; border-radius: 16px;
@@ -182,7 +190,7 @@
 </div>
 
 <div class="wrap">
-  <h1>🤵 Ông Chủ Giao Việc ➔ 🤖 Thợ AI Pro (20 Frame Chuẩn Cảnh & Học Mẫu)</h1>
+  <h1>🤵 Ông Chủ Giao Việc ➔ 🤖 Thợ AI Pro (Remix Visualizer & Tự Tiến Hóa)</h1>
 
   <div class="warn-bar" id="warnBar"></div>
 
@@ -218,26 +226,34 @@
       </div>
     </div>
 
-    <label>📊 Link Google Sheet Web App (Kết nối file Lamvideo / tab KhoCongThuc):</label>
+    <label>📊 Link Web App Google Apps Script (<code>.../exec</code>):</label>
     <div class="row">
       <div class="input-x">
         <input type="text" id="sheetUrlInput" placeholder="Dán link https://script.google.com/macros/s/.../exec" />
         <button type="button" class="clear-x" onclick="clearField('sheetUrlInput', true)">✕</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:6px;">
-        <button type="button" class="green" id="syncSheetBtn" style="padding:10px;">🔄 Đọc Kho Sheet</button>
+        <button type="button" class="green" id="syncSheetBtn" style="padding:10px;">🔄 Đồng Bộ 2 Chiều</button>
         <button type="button" class="dark" id="toggleSheetGuideBtn" style="padding:10px;">❓ Cách tạo</button>
       </div>
     </div>
+
+    <label>📄 Link hoặc ID file Google Sheet "Lamvideo" (Dán vào để khóa 100% đúng file bạn đang mở):</label>
+    <div class="input-x">
+      <input type="text" id="sheetFileIdInput" placeholder="Dán link https://docs.google.com/spreadsheets/d/... hoặc bỏ trống để tự tìm file Lamvideo" />
+      <button type="button" class="clear-x" onclick="clearField('sheetFileIdInput', true)">✕</button>
+    </div>
+
     <div class="status" id="sheetSyncStatus" style="text-align:left;font-size:12px;"></div>
 
     <div class="sheet-guide" id="sheetGuideBox">
-      <b>Cách nối vào file Google Sheet tên <code>Lamvideo</code> (không lỗi null):</b><br>
-      1. Vào <code>script.google.com</code> ➔ tạo dự án mới và dán Code Apps Script (bấm nút bên dưới để copy).<br>
-      2. Bấm <b>Lưu</b> ➔ chọn hàm <code>testKetNoi</code> rồi bấm <b>Chạy (Run)</b> 1 lần để cấp quyền đọc/ghi Drive & Sheet.<br>
-      3. Bấm <b>Triển khai ➔ Ứng dụng web ➔ Ai có quyền truy cập: "Bất kỳ ai" (Anyone)</b> ➔ Copy link <code>.../exec</code> dán vào ô phía trên!
+      <b>Hướng dẫn nối chuẩn vào file Google Sheet <code>Lamvideo</code>:</b><br>
+      1. Vào <code>script.google.com</code> ➔ dán Code Apps Script (bấm nút bên dưới để copy).<br>
+      2. Bấm <b>Lưu</b> ➔ chọn hàm <code>testKetNoi</code> rồi bấm <b>Chạy</b> 1 lần để cấp quyền.<br>
+      3. Bấm <b>Triển khai ➔ Quản lý các bản triển khai ➔ Chỉnh sửa ➔ Phiên bản mới ➔ Ai có quyền truy cập: "Bất kỳ ai" (Anyone)</b>.<br>
+      4. Mở file <code>Lamvideo</code> trên Google Sheet, copy link của nó dán vào ô <b>Link/ID file Lamvideo</b> phía trên rồi bấm <b>🔄 Đồng Bộ 2 Chiều</b>!
       <div style="margin-top:6px;">
-        <button type="button" class="chip-btn" id="copyGasCodeBtn">📋 Copy Code Apps Script (Chuẩn file Lamvideo)</button>
+        <button type="button" class="chip-btn" id="copyGasCodeBtn">📋 Copy Code Apps Script (Chuẩn 2 chiều)</button>
       </div>
     </div>
 
@@ -279,7 +295,7 @@
     <div class="chips-row">
       <button type="button" class="chip-btn" onclick="setBossIdea('Quán trà sữa/đồ ăn: AI tự tìm cảnh tò mò hoặc thành phẩm đẹp nhất mở Hook với câu giật gân cụ thể về món đó, sau đó chia đúng từng bước pha chế, bật tiếng ASMR bỏ đá/rót nước rõ nét hòa nhạc, giữ chân tới giây cuối.')">🧋 Bán hàng / ASMR</button>
       <button type="button" class="chip-btn" onclick="setBossIdea('Thời trang OOTD: AI chọn khoảnh khắc biến hình hoặc góc đẹp nhất làm Hook thu hút, thân bài giữ mỗi bộ đồ đủ lâu cho khách ngắm, nhịp thở Bass sang trọng.')">👗 Thời trang OOTD</button>
-      <button type="button" class="chip-btn" onclick="setBossIdea('Video giải trí/đời sống: Chọn biểu cảm hoặc tình huống bất ngờ nhất mở đầu gây tò mò, giữ mạch truyện tự nhiên tới cái kết ở giây cuối.')">🎯 Kể chuyện tò mò</button>
+      <button type="button" class="chip-btn" onclick="setBossIdea('Video Remix / Chill: Cắt cảnh đúng nhịp drop bass, hiệu ứng sóng nhạc Vòng Tròn Remix + Sao Băng Rơi cuốn hút từ đầu tới cuối.')">🎧 Nhạc Remix / Chill</button>
     </div>
 
     <label>2. Nhạc nền (Dán link TikTok hoặc Chọn file):</label>
@@ -376,7 +392,7 @@
     </div>
 
     <div class="row" style="margin-top:8px;">
-      <button type="button" class="purple" id="aiProDirectorBtn" disabled style="padding:14px;font-size:14px;">🤖 Giao Thợ AI Pro Dựng (20 Frame/Vid • Khớp Cảnh)</button>
+      <button type="button" class="purple" id="aiProDirectorBtn" disabled style="padding:14px;font-size:14px;">🤖 Giao Thợ AI Pro Dựng (20 Frame/Vid • Đề Xuất Nâng Cấp)</button>
       <button type="button" class="gold" id="aiZeroDirectorBtn" disabled style="padding:14px;font-size:14px;">⚡ Thợ AI Tự Dựng Nhanh (0đ Offline)</button>
     </div>
     <div class="status" id="aiAzStatus"></div>
@@ -388,6 +404,15 @@
     <div class="step-title">👁️ Ông Chủ Kiểm Tra & Tinh Chỉnh Thành Phẩm</div>
 
     <div class="ai-report" id="aiReportBox"></div>
+
+    <!-- HỘP TỰ SOI THẨM MỸ & ĐỀ XUẤT NÂNG CẤP APP CỦA AI -->
+    <div class="ai-critique-box" id="aiCritiqueBox">
+      <div class="ai-critique-head">
+        <b id="aiCritiqueScore">🎯 Tự Soi Thẩm Mỹ & Đề Xuất Nâng Cấp App Từ Thợ AI</b>
+        <button type="button" class="chip-btn" id="copyCritiqueBtn" style="background:#854d0e;color:#fef08a;border-color:#eab308;">📋 Copy Đề Xuất Gửi Cho Dev</button>
+      </div>
+      <div id="aiCritiqueBody"></div>
+    </div>
 
     <div class="stage-wrap">
       <canvas id="previewCanvas" width="720" height="1280"></canvas>
@@ -406,9 +431,11 @@
           <select id="templateSelect"></select>
         </div>
         <div>
-          <label>🌊 Sóng Nhạc</label>
+          <label>🌊 Sóng Nhạc (Đã thêm kiểu TikTok Remix!)</label>
           <select id="vizStyleSelect">
-            <option value="mini-top-left" selected>🎵 Mini Góc Trên Trái</option>
+            <option value="tiktok-remix-ring" selected>🔥 Vòng Tròn Remix + Sao Băng Rơi</option>
+            <option value="tiktok-remix-clean">💫 Vòng Tròn Remix Gọn (Không Sao)</option>
+            <option value="mini-top-left">🎵 Mini Góc Trên Trái</option>
             <option value="top-slim">🌊 Dải Mảnh Trên Đỉnh</option>
             <option value="bottom-mirror">✨ Dải Mảnh Gần Đáy</option>
             <option value="left-edge">⚡ Cột Mảnh Sát Mép Trái</option>
@@ -416,9 +443,17 @@
           </select>
         </div>
       </div>
+
       <div class="row">
         <div>
-          <label>Màu Sóng Nhạc</label>
+          <label>🏷️ Chữ trong Vòng Tròn Remix (ngăn 2 dòng bằng dấu |)</label>
+          <div class="input-x">
+            <input type="text" id="remixCenterTextInput" value="Nhạc TikTok | Remix Pro" placeholder="VD: Nhạc TikTok | Remix 027" />
+            <button type="button" class="clear-x" onclick="clearField('remixCenterTextInput')">✕</button>
+          </div>
+        </div>
+        <div>
+          <label>Màu Sóng Nhạc (cho các kiểu dải)</label>
           <select id="vizColorSelect">
             <option value="#FFFFFF" selected>⚪ Trắng Tinh Tế</option>
             <option value="#FDE047">🟡 Vàng Kem</option>
@@ -427,6 +462,9 @@
             <option value="#34D399">🟢 Xanh Matcha</option>
           </select>
         </div>
+      </div>
+
+      <div class="row">
         <div>
           <label>🏷️ Vị trí Tiêu đề phụ từng cảnh</label>
           <select id="subPosSelect">
@@ -435,9 +473,12 @@
             <option value="bottom-center">⬇️ Dưới đáy giữa</option>
           </select>
         </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="button" class="purple" id="saveCurrentRecipeBtn" style="padding:10px;">☁️ Lưu Công Thức Bài Này Vào Sheet</button>
+        </div>
       </div>
 
-      <div class="row" style="margin-top:6px;">
+      <div class="row" style="margin-top:4px;">
         <div class="input-x">
           <input type="text" id="topicInput" value="trà sen vàng macchiato" placeholder="Nhập chủ đề (VD: Lipton latte siêu khổng lồ)..." />
           <button type="button" class="clear-x" onclick="clearField('topicInput')">✕</button>
@@ -513,9 +554,6 @@
   if (!window.MOTION_FX) window.MOTION_FX = { compute: () => ({ zoom: 1, tx: 0, ty: 0, rotRad: 0, flashAlpha: 0, introDarkness: 0 }), drawTransition: (c, m, dt, d, w, h, p, cur) => c.drawImage(cur, 0, 0, w, h) };
   if (!window.FILTERS_WEBGL) window.FILTERS_WEBGL = { applyToCanvas: (src, tgt, w, h) => tgt.drawImage(src, 0, 0, w, h) };
 
-  // =========================================================================
-  // ĐỒNG BỘ MẪU 11 (dynamic-ai-dna) VỚI FILE hook-templates.js CỦA BẠN
-  // =========================================================================
   function fillRoundedRectCompat(ctx, x, y, w, h, r) {
     const rad = Math.max(0, Math.min(r, w / 2, h / 2));
     ctx.beginPath();
@@ -526,7 +564,342 @@
     ctx.quadraticCurveTo(x, y, x + rad, y); ctx.closePath();
   }
 
-  // Chuẩn hóa mọi dạng DNA (cả dạng rows/spans của hook-templates.js lẫn lines/segments) về chuẩn rows/spans
+  // =========================================================================
+  // HIỆU ỨNG SÓNG NHẠC TIKTOK REMIX (VÒNG TRÒN TỎA SÓNG + SAO BĂNG RƠI)
+  // =========================================================================
+  let remixSpecData = null;
+
+  function analyzeRemixSpectrum(buffer) {
+    try {
+      const sr = buffer.sampleRate;
+      const ch0 = buffer.getChannelData(0);
+      const ch1 = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : ch0;
+
+      const targetSr = 11025;
+      const ratio = Math.max(1, Math.floor(sr / targetSr));
+      const actualSr = sr / ratio;
+      const monoLen = Math.floor(ch0.length / ratio);
+      const mono = new Float32Array(monoLen);
+      for (let i = 0; i < monoLen; i++) {
+        const idx = i * ratio;
+        mono[i] = 0.5 * (ch0[idx] + ch1[idx]);
+      }
+
+      const N = 512;
+      const hopSec = 0.025;
+      const hopSamples = Math.max(64, Math.round(hopSec * actualSr));
+      const binsCount = 32;
+
+      const hann = new Float32Array(N);
+      for (let i = 0; i < N; i++) hann[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (N - 1)));
+
+      // Bảng bit-reverse + cos/sin cho FFT 512 điểm cực nhanh
+      const bits = 9;
+      const rev = new Uint16Array(N);
+      for (let i = 0; i < N; i++) {
+        let r = 0, x = i;
+        for (let b = 0; b < bits; b++) { r = (r << 1) | (x & 1); x >>= 1; }
+        rev[i] = r;
+      }
+
+      const logBinStarts = [];
+      for (let b = 0; b < binsCount; b++) {
+        const k0 = Math.floor(1 + Math.pow(b / binsCount, 1.55) * 180);
+        const k1 = Math.max(k0 + 1, Math.floor(1 + Math.pow((b + 1) / binsCount, 1.55) * 180));
+        logBinStarts.push([k0, Math.min(240, k1)]);
+      }
+
+      const re = new Float32Array(N), im = new Float32Array(N);
+      const frames = [];
+      let peakAll = 0.001;
+
+      for (let pos = 0; pos < monoLen; pos += hopSamples) {
+        for (let i = 0; i < N; i++) {
+          const s = (pos + i < monoLen) ? mono[pos + i] : 0;
+          re[rev[i]] = s * hann[i];
+          im[rev[i]] = 0;
+        }
+        for (let size = 2; size <= N; size <<= 1) {
+          const half = size >> 1;
+          const stepAng = (-2 * Math.PI) / size;
+          for (let i = 0; i < N; i += size) {
+            for (let j = 0; j < half; j++) {
+              const ang = j * stepAng;
+              const wr = Math.cos(ang), wi = Math.sin(ang);
+              const kr = i + j + half;
+              const tr = wr * re[kr] - wi * im[kr];
+              const ti = wr * im[kr] + wi * re[kr];
+              re[kr] = re[i + j] - tr; im[kr] = im[i + j] - ti;
+              re[i + j] += tr; im[i + j] += ti;
+            }
+          }
+        }
+
+        const out = new Float32Array(binsCount);
+        for (let b = 0; b < binsCount; b++) {
+          const [k0, k1] = logBinStarts[b];
+          let sum = 0;
+          for (let k = k0; k < k1; k++) sum += Math.hypot(re[k], im[k]);
+          const val = Math.pow(sum / (k1 - k0), 0.72);
+          out[b] = val;
+          if (val > peakAll) peakAll = val;
+        }
+        frames.push(out);
+      }
+
+      // Chuẩn hóa + làm mượt theo thời gian để không bị giật cứng
+      for (let f = 0; f < frames.length; f++) {
+        for (let b = 0; b < binsCount; b++) {
+          let v = Math.min(1.0, (frames[f][b] / peakAll) * 1.45);
+          if (f > 0) v = frames[f - 1][b] * 0.42 + v * 0.58;
+          frames[f][b] = v;
+        }
+      }
+      remixSpecData = { hopSec, binsCount, frames };
+    } catch (e) {
+      console.warn('Remix FFT skip:', e);
+      remixSpecData = null;
+    }
+  }
+
+  function getRemixBinsAt(t) {
+    const N = 32;
+    const out = new Float32Array(N);
+    if (!remixSpecData || !remixSpecData.frames.length) {
+      for (let i = 0; i < N; i++) out[i] = 0.25 + 0.2 * Math.sin(t * 6 + i * 0.4);
+      return out;
+    }
+    const pos = Math.max(0, t / remixSpecData.hopSec);
+    const i0 = Math.min(remixSpecData.frames.length - 1, Math.floor(pos));
+    const i1 = Math.min(remixSpecData.frames.length - 1, i0 + 1);
+    const frac = pos - i0;
+    const f0 = remixSpecData.frames[i0], f1 = remixSpecData.frames[i1];
+    for (let i = 0; i < N; i++) out[i] = f0[i] * (1 - frac) + f1[i] * frac;
+    return out;
+  }
+
+  const SPARK_COLORS = ['#38BDF8', '#FB7185', '#FDE047', '#FB923C', '#22D3EE', '#E879F9'];
+  function drawFallingNeonSparks(ctx, t, W, H, bass) {
+    const sc = W / 720;
+    const count = 24;
+    ctx.save();
+    for (let i = 0; i < count; i++) {
+      // Vị trí giả ngẫu nhiên cố định theo index để hàm thuần túy theo t (không giật khi export)
+      const seedX = ((i * 197 + 43) % 100) / 100;
+      const seedY = ((i * 313 + 79) % 100) / 100;
+      const speed = (0.18 + ((i * 37) % 10) * 0.025) * H;
+      const tailLen = (48 + ((i * 23) % 45)) * sc;
+      const x = (0.04 + seedX * 0.92) * W;
+      const y = ((seedY * (H + 220 * sc) + t * speed) % (H + 220 * sc)) - 80 * sc;
+      const col = SPARK_COLORS[i % SPARK_COLORS.length];
+
+      const grad = ctx.createLinearGradient(x, y - tailLen, x, y);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.75, col);
+      grad.addColorStop(1, '#FFFFFF');
+
+      ctx.globalAlpha = 0.52 + 0.38 * bass;
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = (2.2 + (i % 2) * 1.1) * sc;
+      ctx.beginPath();
+      ctx.moveTo(x, y - tailLen);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      // Ngôi sao 4 cánh lóe sáng ở đầu vệt rơi
+      const rStar = (4.5 + (i % 3) * 1.8 + bass * 3.0) * sc;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 10 * sc;
+      ctx.beginPath();
+      ctx.moveTo(x, y - rStar);
+      ctx.lineTo(x + rStar * 0.28, y - rStar * 0.28);
+      ctx.lineTo(x + rStar, y);
+      ctx.lineTo(x + rStar * 0.28, y + rStar * 0.28);
+      ctx.lineTo(x, y + rStar);
+      ctx.lineTo(x - rStar * 0.28, y + rStar * 0.28);
+      ctx.lineTo(x - rStar, y);
+      ctx.lineTo(x - rStar * 0.28, y - rStar * 0.28);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawTikTokRemixVisualizer(ctx, t, W, H, withSparks) {
+    const sc = W / 720;
+    const bins = getRemixBinsAt(t);
+    const breath = getBreathAt(t);
+    let bass = 0;
+    for (let i = 0; i < 6; i++) bass += bins[i];
+    bass = Math.min(1.0, (bass / 6) * 0.75 + breath * 0.55);
+
+    if (withSparks) {
+      drawFallingNeonSparks(ctx, t, W, H, bass);
+    }
+
+    const cx = W * 0.5;
+    const cy = H * 0.60;
+    const baseR = (104 + bass * 10) * sc;
+
+    ctx.save();
+
+    // 1. Vầng sóng đa giác phát sáng (kiểu cánh lửa & neon TikTok Remix)
+    const totalPts = 64; // 32 đối xứng trái - phải
+    const pts = [];
+    for (let i = 0; i < totalPts; i++) {
+      // Góc bắt đầu từ đỉnh trên (-PI/2)
+      const angle = -Math.PI / 2 + (i / totalPts) * Math.PI * 2;
+      const mirrorIdx = i <= 32 ? i : (64 - i);
+      // Pha trộn bass ở vùng đỉnh (tai thỏ/ngọn lửa 2 bên trên) và mid/treble quanh vòng tròn
+      const bVal = bins[Math.min(31, mirrorIdx)];
+      const lobeBoost = (mirrorIdx >= 2 && mirrorIdx <= 10) ? (bass * 0.65 + bVal * 0.85) : bVal;
+      const spike = Math.pow(Math.max(0, lobeBoost), 1.25) * (128 * sc) + bass * 14 * sc;
+      const r = baseR + 6 * sc + spike;
+      pts.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, r, angle });
+    }
+
+    const auraGrad = ctx.createLinearGradient(cx, cy - baseR - 140 * sc, cx, cy + baseR + 120 * sc);
+    auraGrad.addColorStop(0, '#FB923C');
+    auraGrad.addColorStop(0.32, '#FACC15');
+    auraGrad.addColorStop(0.58, '#22D3EE');
+    auraGrad.addColorStop(0.82, '#EC4899');
+    auraGrad.addColorStop(1, '#3B82F6');
+
+    ctx.save();
+    ctx.shadowColor = bass > 0.55 ? '#F97316' : '#22D3EE';
+    ctx.shadowBlur = (24 + bass * 18) * sc;
+    ctx.globalAlpha = 0.42 + bass * 0.34;
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    for (let i = 0; i < totalPts; i++) {
+      const p0 = pts[i];
+      const p1 = pts[(i + 1) % totalPts];
+      const mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+      if (i === 0) ctx.moveTo(mx, my);
+      else ctx.quadraticCurveTo(p0.x, p0.y, mx, my);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Viền sáng ngoài sắc nét của dải sóng
+    ctx.globalAlpha = 0.92;
+    ctx.lineWidth = (3.5 + bass * 2) * sc;
+    ctx.strokeStyle = auraGrad;
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Các vạch tia equalizer mảnh bao quanh đĩa
+    const barCount = 72;
+    for (let i = 0; i < barCount; i++) {
+      const angle = -Math.PI / 2 + (i / barCount) * Math.PI * 2;
+      const sym = i <= barCount / 2 ? i : barCount - i;
+      const bIdx = Math.min(31, Math.floor((sym / (barCount / 2)) * 31));
+      const v = bins[bIdx];
+      const len = (10 + Math.pow(v, 1.15) * 95 + bass * 12) * sc;
+      const r0 = baseR + 4 * sc;
+      const r1 = r0 + len;
+
+      const hue = (180 + (sym / (barCount / 2)) * 190 + t * 25) % 360;
+      ctx.strokeStyle = `hsla(${hue}, 95%, 64%, 0.92)`;
+      ctx.lineWidth = 3.2 * sc;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r0, cy + Math.sin(angle) * r0);
+      ctx.lineTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.stroke();
+    }
+
+    // 3. Đĩa tròn tối sang trọng ở trung tâm
+    const discGrad = ctx.createRadialGradient(cx, cy - 20 * sc, 10 * sc, cx, cy, baseR);
+    discGrad.addColorStop(0, '#1e1b4b');
+    discGrad.addColorStop(0.65, '#090d1a');
+    discGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = discGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vòng neon quay quanh mép đĩa
+    const ringGrad = ctx.createLinearGradient(cx - baseR, cy - baseR, cx + baseR, cy + baseR);
+    ringGrad.addColorStop(0, '#22D3EE');
+    ringGrad.addColorStop(0.5, '#F472B6');
+    ringGrad.addColorStop(1, '#FACC15');
+    ctx.lineWidth = 5 * sc;
+    ctx.strokeStyle = ringGrad;
+    ctx.shadowColor = '#22D3EE';
+    ctx.shadowBlur = 14 * sc;
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseR - 2 * sc, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Vòng cung sáng xoay nhẹ bên trong đĩa
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(t * 1.4);
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+    ctx.lineWidth = 2.5 * sc;
+    ctx.beginPath(); ctx.arc(0, 0, baseR - 12 * sc, -0.6, 0.9); ctx.stroke();
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.55)';
+    ctx.beginPath(); ctx.arc(0, 0, baseR - 12 * sc, Math.PI - 0.6, Math.PI + 0.9); ctx.stroke();
+    ctx.restore();
+
+    // Mini cột sóng nhạc nhịp nhàng phía trên chữ bên trong đĩa
+    const miniBars = 9;
+    const mbW = 4.5 * sc, mbGap = 4 * sc;
+    const mbTotal = miniBars * mbW + (miniBars - 1) * mbGap;
+    for (let m = 0; m < miniBars; m++) {
+      const mv = bins[Math.min(31, m * 3)];
+      const mh = (6 + mv * 22 + bass * 8) * sc;
+      const mx = cx - mbTotal / 2 + m * (mbW + mbGap);
+      const my = cy - 46 * sc - mh / 2;
+      ctx.fillStyle = m % 2 === 0 ? '#38BDF8' : '#FB7185';
+      fillRoundedRectCompat(ctx, mx, my, mbW, mh, 2.5 * sc);
+      ctx.fill();
+    }
+
+    // Chữ hiển thị ở giữa đĩa (tùy chỉnh từ ô #remixCenterTextInput)
+    const rawCenter = (document.getElementById('remixCenterTextInput')?.value || 'Nhạc TikTok | Remix Pro').trim();
+    const parts = rawCenter.split('|').map(s => s.trim()).filter(Boolean);
+    const l1 = parts[0] || 'Nhạc TikTok';
+    const l2 = parts[1] || '';
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const maxTxtW = baseR * 1.68;
+
+    let sz1 = Math.round((l2 ? 24 : 28) * sc);
+    ctx.font = `900 ${sz1}px "Be Vietnam Pro", sans-serif`;
+    while (ctx.measureText(l1).width > maxTxtW && sz1 > 12 * sc) {
+      sz1 -= 1; ctx.font = `900 ${sz1}px "Be Vietnam Pro", sans-serif`;
+    }
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4 * sc;
+    ctx.strokeStyle = '#000000';
+    const y1 = l2 ? (cy + 2 * sc) : (cy + 14 * sc);
+    ctx.strokeText(l1, cx, y1);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(l1, cx, y1);
+
+    if (l2) {
+      let sz2 = Math.round(25 * sc);
+      ctx.font = `900 ${sz2}px "Be Vietnam Pro", sans-serif`;
+      while (ctx.measureText(l2).width > maxTxtW && sz2 > 12 * sc) {
+        sz2 -= 1; ctx.font = `900 ${sz2}px "Be Vietnam Pro", sans-serif`;
+      }
+      const y2 = cy + 32 * sc;
+      ctx.strokeText(l2, cx, y2);
+      ctx.fillStyle = '#22D3EE';
+      ctx.fillText(l2, cx, y2);
+    }
+
+    ctx.restore();
+  }
+
+  // =========================================================================
+  // ĐỒNG BỘ MẪU 11 (dynamic-ai-dna) VỚI FILE hook-templates.js
+  // =========================================================================
   function normalizeDnaSchema(dna) {
     if (!dna) return null;
     if (Array.isArray(dna.rows) && dna.rows.length) return dna;
@@ -557,7 +930,7 @@
     if (highlight) spans1.push({ text: highlight, size: 46, font: 'condensed', color: '#09090B', bg: '#FDE047' });
     if (spans1.length) rows.push({ gapPx: 12, spans: spans1 });
     if (line2) rows.push({ gapPx: 8, spans: [{ text: line2, size: 32, font: 'bold', color: '#FFFFFF', bg: 'rgba(15,23,42,0.82)' }] });
-    return { yPercent: 0.42, rows };
+    return { yPercent: 0.34, rows };
   }
 
   function upgradeTemplatesCompatibility() {
@@ -570,12 +943,8 @@
       ];
       dynTpl.render = function (ctx, t, W, H, data, hookTotal) {
         let dna = normalizeDnaSchema(window.ACTIVE_HOOK_DNA);
-        if (!dna) {
-          dna = buildDefaultActiveDna(data.line1 || '', data.highlight || '', data.line2 || '');
-        }
-        if (window.renderDynamicHookDNA) {
-          window.renderDynamicHookDNA(ctx, t, W, H, dna, hookTotal);
-        }
+        if (!dna) dna = buildDefaultActiveDna(data.line1 || '', data.highlight || '', data.line2 || '');
+        if (window.renderDynamicHookDNA) window.renderDynamicHookDNA(ctx, t, W, H, dna, hookTotal);
       };
     }
   }
@@ -586,7 +955,6 @@
     if (!dna || !Array.isArray(dna.rows) || !dna.rows.length) return;
     window.ACTIVE_HOOK_DNA = dna;
 
-    // Trích 3 cụm chữ chính lên 3 ô input để ông chủ chỉnh tay dễ dàng
     const row0Spans = dna.rows[0]?.spans || [];
     const bgSpan = dna.rows.flatMap(r => r.spans || []).find(s => s.bg && s.bg !== 'none');
     const plain0 = row0Spans.find(s => s !== bgSpan);
@@ -629,9 +997,6 @@
     document.getElementById('hookDnaJsonInput').value = JSON.stringify(window.ACTIVE_HOOK_DNA, null, 2);
   }
 
-  // =========================================================================
-  // TẠO HOOK THEO CHỦ ĐỀ (0Đ OFFLINE) CHO TẤT CẢ 11 MẪU (KỂ CẢ MẪU 9, 10, 11)
-  // =========================================================================
   let hookFillCounter = 0;
   function generateSmartHookByTopic(topicRaw, tplId) {
     const topic = (topicRaw || 'món ngon nhà làm').trim();
@@ -705,65 +1070,63 @@
       };
     }
 
-    if (tplId === 'cute-pink-milk') {
-      return { badge: '🔥 CẢNH BÁO GÂY NGHIỆN', main: topicUp, sub: `Thử 1 lần ${topic} là mê cả tuần 💕` };
-    }
-    if (tplId === 'mint-matcha-fresh') {
-      return { badge: '🌿 MÁT LẠNH ĐẬM VỊ', main: topicUp, sub: `Tan chảy cùng ${topic} chuẩn gu ☀️` };
-    }
-    if (tplId === 'remix-den-trang-chop') {
-      return { num: 'KHOAN LƯỚT! 🔥', main: topicUp, end: `Xem hết mới thấy độ cuốn của ${topic} 🎧` };
-    }
-    if (tplId === 'cam-nang-nang-dong') {
-      return { tag: '🔥 MÓN BEST SELLER TẠI QUÁN', main: topicUp, sub: `Bí quyết khiến khách quay lại vì ${topic} 😋` };
-    }
-    if (tplId === 'tieu-de-do-tin-nong') {
-      return { alert: '🚨 KHOAN ĐÃ! ĐỪNG LƯỚT QUA', main: `BÍ MẬT ĐẰNG SAU ${topicUp}`, sub: 'Xem hết tới cuối mới thấy độ hấp dẫn!' };
-    }
-    if (tplId === 'sang-chanh-gold') {
-      return { top: 'TINH HOA PHA CHẾ', main: topic, sub: 'Hương vị khó quên từ ngụm đầu tiên ✨' };
-    }
+    if (tplId === 'cute-pink-milk') return { badge: '🔥 CẢNH BÁO GÂY NGHIỆN', main: topicUp, sub: `Thử 1 lần ${topic} là mê cả tuần 💕` };
+    if (tplId === 'mint-matcha-fresh') return { badge: '🌿 MÁT LẠNH ĐẬM VỊ', main: topicUp, sub: `Tan chảy cùng ${topic} chuẩn gu ☀️` };
+    if (tplId === 'remix-den-trang-chop') return { num: 'KHOAN LƯỚT! 🔥', main: topicUp, end: `Xem hết mới thấy độ cuốn của ${topic} 🎧` };
+    if (tplId === 'cam-nang-nang-dong') return { tag: '🔥 MÓN BEST SELLER TẠI QUÁN', main: topicUp, sub: `Bí quyết khiến khách quay lại vì ${topic} 😋` };
+    if (tplId === 'tieu-de-do-tin-nong') return { alert: '🚨 KHOAN ĐÃ! ĐỪNG LƯỚT QUA', main: `BÍ MẬT ĐẰNG SAU ${topicUp}`, sub: 'Xem hết tới cuối mới thấy độ hấp dẫn!' };
+    if (tplId === 'sang-chanh-gold') return { top: 'TINH HOA PHA CHẾ', main: topic, sub: 'Hương vị khó quên từ ngụm đầu tiên ✨' };
 
     const fromPreset = window.AI_PRESETS?.generateHookData ? window.AI_PRESETS.generateHookData(topic, tplId) : {};
     return { ...fromPreset, main: fromPreset.main || topicUp };
   }
 
   // =========================================================================
-  // GOOGLE SHEET AUTO & KHO CÔNG THỨC (FILE Lamvideo)
+  // GOOGLE SHEET ĐỒNG BỘ 2 CHIỀU VỚI FILE Lamvideo (KIỂM TRA KẾT QUẢ THẬT!)
   // =========================================================================
   const GAS_TEMPLATE_CODE = `var TARGET_FILE_NAME = "Lamvideo";
 var TARGET_TAB_NAME = "KhoCongThuc";
 
-function getSpreadsheet() {
+function getSpreadsheet(overrideId) {
+  if (overrideId && String(overrideId).trim() !== "") {
+    return SpreadsheetApp.openById(String(overrideId).trim());
+  }
   var active = SpreadsheetApp.getActiveSpreadsheet();
   if (active) return active;
   var props = PropertiesService.getScriptProperties();
   var savedId = props.getProperty("LAMVIDEO_SHEET_ID");
-  if (savedId) { try { return SpreadsheetApp.openById(savedId); } catch (e) {} }
+  if (savedId) {
+    try {
+      var fSaved = DriveApp.getFileById(savedId);
+      if (!fSaved.isTrashed()) return SpreadsheetApp.openById(savedId);
+    } catch (e) {}
+  }
   var files = DriveApp.getFilesByName(TARGET_FILE_NAME);
-  if (files.hasNext()) {
+  while (files.hasNext()) {
     var file = files.next();
-    props.setProperty("LAMVIDEO_SHEET_ID", file.getId());
-    return SpreadsheetApp.openById(file.getId());
+    if (!file.isTrashed()) {
+      props.setProperty("LAMVIDEO_SHEET_ID", file.getId());
+      return SpreadsheetApp.openById(file.getId());
+    }
   }
   var created = SpreadsheetApp.create(TARGET_FILE_NAME);
   props.setProperty("LAMVIDEO_SHEET_ID", created.getId());
   return created;
 }
 
-function getTargetSheet() {
-  var ss = getSpreadsheet();
+function getTargetSheet(overrideId) {
+  var ss = getSpreadsheet(overrideId);
   var sheet = ss.getSheetByName(TARGET_TAB_NAME);
   if (!sheet) sheet = ss.insertSheet(TARGET_TAB_NAME);
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(["id", "createdAt", "type", "name", "category", "hookDnaJson", "scenePatternJson", "notes"]);
   }
-  return sheet;
+  return { ss: ss, sheet: sheet };
 }
 
 function testKetNoi() {
-  var sheet = getTargetSheet();
-  Logger.log("File: " + sheet.getParent().getName() + " | Tab: " + sheet.getName());
+  var res = getTargetSheet("");
+  Logger.log("File: " + res.ss.getName() + " | URL: " + res.ss.getUrl());
 }
 
 function safeParseJson(str) {
@@ -773,8 +1136,9 @@ function safeParseJson(str) {
 
 function doGet(e) {
   try {
-    var sheet = getTargetSheet();
-    var rows = sheet.getDataRange().getValues();
+    var overrideId = (e && e.parameter && e.parameter.sheetId) ? e.parameter.sheetId : "";
+    var ctx = getTargetSheet(overrideId);
+    var rows = ctx.sheet.getDataRange().getValues();
     var items = [];
     for (var i = 1; i < rows.length; i++) {
       var r = rows[i];
@@ -787,8 +1151,9 @@ function doGet(e) {
         notes: r[7] ? String(r[7]) : ""
       });
     }
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, items: items }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: true, fileName: ctx.ss.getName(), tabName: ctx.sheet.getName(), sheetUrl: ctx.ss.getUrl(), items: items
+    })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: err.message, items: [] }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -797,23 +1162,45 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var sheet = getTargetSheet();
     var raw = (e && e.postData && e.postData.contents) ? e.postData.contents : "{}";
     var body = JSON.parse(raw);
-    var item = body.item || {};
-    sheet.appendRow([
-      item.id || ("f_" + Date.now()), item.createdAt || new Date().toISOString(),
-      item.type || "both", item.name || "Công thức AI", item.category || "Chung",
-      item.hookDna ? JSON.stringify(item.hookDna) : "",
-      item.scenePattern ? JSON.stringify(item.scenePattern) : "", item.notes || ""
-    ]);
-    return ContentService.createTextOutput(JSON.stringify({ ok: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    var ctx = getTargetSheet(body.sheetId || "");
+    var sheet = ctx.sheet;
+    var existingRows = sheet.getDataRange().getValues();
+    var existingIds = {};
+    for (var i = 1; i < existingRows.length; i++) {
+      if (existingRows[i][0]) existingIds[String(existingRows[i][0])] = true;
+    }
+    var list = (body.action === "syncBatch" && Array.isArray(body.items)) ? body.items : (body.item ? [body.item] : []);
+    var added = 0;
+    for (var j = 0; j < list.length; j++) {
+      var item = list[j] || {};
+      var idStr = String(item.id || ("f_" + Date.now() + "_" + j));
+      if (existingIds[idStr]) continue;
+      existingIds[idStr] = true;
+      sheet.appendRow([
+        idStr, item.createdAt || new Date().toISOString(), item.type || "both",
+        item.name || "Công thức AI", item.category || "Chung",
+        item.hookDna ? JSON.stringify(item.hookDna) : "",
+        item.scenePattern ? JSON.stringify(item.scenePattern) : "", item.notes || ""
+      ]);
+      added++;
+    }
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: true, added: added, fileName: ctx.ss.getName(), tabName: ctx.sheet.getName(), sheetUrl: ctx.ss.getUrl()
+    })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }`;
+
+  function extractSheetId(val) {
+    const s = (val || '').trim();
+    if (!s) return '';
+    const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return m ? m[1] : s;
+  }
 
   let formulaBank = [];
   try {
@@ -834,32 +1221,66 @@ function doPost(e) {
     updateKhoUi();
   }
 
+  async function parseGasJsonResponse(res) {
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error('Apps Script trả về HTML thay vì JSON (Kiểm tra lại quyền Deploy = "Anyone" và nhớ chọn "Phiên bản mới").');
+    }
+  }
+
   async function syncFormulasFromSheet(silent = false) {
     const url = document.getElementById('sheetUrlInput').value.trim();
+    const sheetId = extractSheetId(document.getElementById('sheetFileIdInput').value);
     const stEl = document.getElementById('sheetSyncStatus');
     if (!url) {
-      if (!silent) stEl.textContent = '⚠️ Chưa dán link Web App Google Sheet.';
+      if (!silent) stEl.textContent = '⚠️ Chưa dán link Web App Google Apps Script (.../exec).';
       return formulaBank;
     }
     try {
-      if (!silent) stEl.textContent = '⏳ Đang tải kho công thức từ Google Sheet Lamvideo...';
-      const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}action=list&_t=${Date.now()}`);
-      const json = await res.json();
-      if (!json.ok || !Array.isArray(json.items)) throw new Error(json.error || 'Sheet trả về không đúng định dạng.');
+      if (!silent) stEl.textContent = '⏳ Đang đồng bộ 2 chiều với Google Sheet...';
+      const sep = url.includes('?') ? '&' : '?';
+      const res = await fetch(`${url}${sep}action=list&sheetId=${encodeURIComponent(sheetId)}&_t=${Date.now()}`);
+      const json = await parseGasJsonResponse(res);
+      if (!json.ok || !Array.isArray(json.items)) throw new Error(json.error || 'Sheet trả về lỗi.');
+
+      const remoteIds = new Set(json.items.map(it => String(it.id || it.name)));
+      const localOnly = formulaBank.filter(it => !remoteIds.has(String(it.id || it.name)));
+
+      // Đẩy ngược các công thức đang nằm ở máy lên Sheet (đồng bộ 2 chiều)
+      let pushedCount = 0;
+      if (localOnly.length > 0) {
+        const postRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'syncBatch', sheetId, items: localOnly })
+        });
+        const postJson = await parseGasJsonResponse(postRes);
+        if (!postJson.ok) throw new Error(postJson.error || 'Không ghi được lên Sheet.');
+        pushedCount = postJson.added || localOnly.length;
+      }
+
       const map = new Map();
-      formulaBank.forEach(it => map.set(it.id || it.name, it));
-      json.items.forEach(it => map.set(it.id || it.name, it));
+      formulaBank.forEach(it => map.set(String(it.id || it.name), it));
+      json.items.forEach(it => map.set(String(it.id || it.name), it));
       formulaBank = Array.from(map.values());
       persistFormulaBankLocal();
-      if (!silent) stEl.textContent = `✅ Đã đồng bộ ${json.items.length} mẫu từ Lamvideo/KhoCongThuc (Tổng Kho: ${formulaBank.length} mẫu).`;
+
+      const linkHtml = json.sheetUrl
+        ? ` — <a href="${json.sheetUrl}" target="_blank">🔗 Mở file "${json.fileName || 'Lamvideo'}" (${json.tabName || 'KhoCongThuc'})</a>`
+        : '';
+      if (!silent || pushedCount > 0) {
+        stEl.innerHTML = `✅ Đồng bộ xong! Sheet có ${json.items.length} dòng${pushedCount ? `, vừa đẩy thêm ${pushedCount} mẫu lên` : ''} (Tổng: ${formulaBank.length})${linkHtml}`;
+      }
     } catch (err) {
-      if (!silent) stEl.textContent = `⚠️ Không đọc được Sheet (${err.message}). Đang dùng ${formulaBank.length} mẫu cục bộ.`;
+      if (!silent) stEl.textContent = `❌ Lỗi đồng bộ Sheet: ${err.message}`;
     }
     return formulaBank;
   }
 
   async function saveFormulaToSheet(item) {
-    if (!item) return;
+    if (!item) return false;
     const entry = {
       id: item.id || `f_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
       createdAt: new Date().toISOString(),
@@ -875,17 +1296,23 @@ function doPost(e) {
     persistFormulaBankLocal();
 
     const url = document.getElementById('sheetUrlInput').value.trim();
+    const sheetId = extractSheetId(document.getElementById('sheetFileIdInput').value);
+    const stEl = document.getElementById('sheetSyncStatus');
     if (!url) return false;
+
     try {
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'save', item: entry })
+        body: JSON.stringify({ action: 'save', sheetId, item: entry })
       });
-      document.getElementById('sheetSyncStatus').textContent = `☁️ Đã lưu "${entry.name}" vào Lamvideo/KhoCongThuc!`;
+      const json = await parseGasJsonResponse(res);
+      if (!json.ok) throw new Error(json.error || 'Apps Script từ chối ghi dữ liệu.');
+      const linkHtml = json.sheetUrl ? ` <a href="${json.sheetUrl}" target="_blank">🔗 Mở "${json.fileName}"</a>` : '';
+      stEl.innerHTML = `☁️ Đã ghi thật lên "${json.fileName || 'Lamvideo'} / ${json.tabName || 'KhoCongThuc'}"!${linkHtml}`;
       return true;
     } catch (e) {
-      console.warn('Sheet save skip:', e);
+      stEl.textContent = `❌ Lưu Sheet thất bại: ${e.message}`;
       return false;
     }
   }
@@ -893,7 +1320,7 @@ function doPost(e) {
   // =========================================================================
   // BIẾN TRẠNG THÁI CHÍNH
   // =========================================================================
-  const FRAMES_PER_VIDEO = 20; // Tăng lên 20 khung hình / video theo yêu cầu để cực kỳ chính xác!
+  const FRAMES_PER_VIDEO = 20;
 
   let rawFullBuffer = null, decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
@@ -903,7 +1330,7 @@ function doPost(e) {
   let videoQueueMeta = [];
   let blobStore = {}, blobUrlMap = {}, stripCache = {}, geminiCache = {}, videoDurationCache = {};
   let audioMetricsCache = null, bassBreathData = null;
-  let plan = [];
+  let plan = [], lastCritiqueText = '';
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
 
   let sampleHookImgB64 = null, sampleHookImgDataUrl = null, sampleHookImgName = '';
@@ -936,9 +1363,11 @@ function doPost(e) {
   const vizStyleSelect = document.getElementById('vizStyleSelect');
   const vizColorSelect = document.getElementById('vizColorSelect');
   const subPosSelect = document.getElementById('subPosSelect');
+  const remixCenterTextInput = document.getElementById('remixCenterTextInput');
   const geminiKeyInput = document.getElementById('geminiKeyInput');
   const geminiModelSelect = document.getElementById('geminiModelSelect');
   const sheetUrlInput = document.getElementById('sheetUrlInput');
+  const sheetFileIdInput = document.getElementById('sheetFileIdInput');
   const bossIdeaInput = document.getElementById('bossIdeaInput');
   const trimStartSlider = document.getElementById('trimStartSlider');
   const trimEndSlider = document.getElementById('trimEndSlider');
@@ -949,9 +1378,43 @@ function doPost(e) {
     el.value = ''; el.focus();
     if (saveKey && id === 'geminiKeyInput') localStorage.removeItem('catamthanh_gemini_key');
     if (saveKey && id === 'sheetUrlInput') localStorage.removeItem('catamthanh_sheet_url');
+    if (saveKey && id === 'sheetFileIdInput') localStorage.removeItem('catamthanh_sheet_file_id');
+    if (id === 'remixCenterTextInput' && plan.length) drawMainPreview(previewTime || 0);
     scheduleAutoSave();
   };
   window.setBossIdea = function (txt) { bossIdeaInput.value = txt; scheduleAutoSave(); };
+
+  function renderCritiqueBox(review) {
+    const box = document.getElementById('aiCritiqueBox');
+    const scoreEl = document.getElementById('aiCritiqueScore');
+    const bodyEl = document.getElementById('aiCritiqueBody');
+    if (!review || (!review.score && !(review.appUpgradeSuggestions || []).length)) {
+      box.style.display = 'none';
+      lastCritiqueText = '';
+      return;
+    }
+    const score = review.score || '8.5/10';
+    const strengths = Array.isArray(review.strengths) ? review.strengths : [];
+    const weaknesses = Array.isArray(review.weaknesses) ? review.weaknesses : [];
+    const suggestions = Array.isArray(review.appUpgradeSuggestions) ? review.appUpgradeSuggestions : [];
+
+    scoreEl.textContent = `🎯 Tự Soi Thẩm Mỹ (${score}) & Đề Xuất Nâng Cấp App`;
+    let html = '';
+    if (strengths.length) html += `<div><b>✅ Điểm đạt:</b> ${strengths.join(' • ')}</div>`;
+    if (weaknesses.length) html += `<div style="color:#fca5a5;"><b>⚠️ Điểm còn hạn chế:</b> ${weaknesses.join(' • ')}</div>`;
+    if (suggestions.length) {
+      html += `<div style="margin-top:4px;"><b>🚀 Đề xuất nâng cấp App ở bản sau:</b></div><ul>${suggestions.map(s => `<li>${s}</li>`).join('')}</ul>`;
+    }
+    bodyEl.innerHTML = html;
+    box.style.display = 'block';
+
+    lastCritiqueText = [
+      `ĐÁNH GIÁ THẨM MỸ (${score}):`,
+      strengths.length ? `- Điểm đạt: ${strengths.join('; ')}` : '',
+      weaknesses.length ? `- Điểm hạn chế: ${weaknesses.join('; ')}` : '',
+      suggestions.length ? `ĐỀ XUẤT NÂNG CẤP APP:\n${suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n')}` : ''
+    ].filter(Boolean).join('\n');
+  }
 
   function getBlobUrl(key) {
     if (!key || !blobStore[key]) return null;
@@ -1007,11 +1470,13 @@ function doPost(e) {
         trimMusicStart, trimMusicEnd, userManuallyTrimmed, bossIdea: bossIdeaInput.value,
         templateId: templateSelect.value, hookData: getHookData(),
         vizStyle: vizStyleSelect.value, vizColor: vizColorSelect.value, subPos: subPosSelect.value,
+        remixCenterText: remixCenterTextInput.value,
         quality: document.getElementById('qualitySelect').value,
         fps: document.getElementById('fpsSelect').value,
         deviceMeta: document.getElementById('deviceMetaSelect').value,
         topic: document.getElementById('topicInput').value,
         reportHtml: aiReportBox.innerHTML,
+        lastCritiqueObj: window.LAST_CRITIQUE_OBJ || null,
         planMeta: plan.map(s => ({
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
           musicStart: s.musicStart, energy: s.energy || 0.5,
@@ -1080,9 +1545,10 @@ function doPost(e) {
           if (draft.hookData[el.dataset.key] !== undefined) el.value = draft.hookData[el.dataset.key];
         });
       }
-      if (draft.vizStyle) vizStyleSelect.value = draft.vizStyle;
+      if (draft.vizStyle && Array.from(vizStyleSelect.options).some(o => o.value === draft.vizStyle)) vizStyleSelect.value = draft.vizStyle;
       if (draft.vizColor) vizColorSelect.value = draft.vizColor;
       if (draft.subPos) subPosSelect.value = draft.subPos;
+      if (draft.remixCenterText !== undefined) remixCenterTextInput.value = draft.remixCenterText;
       if (draft.quality && Array.from(document.getElementById('qualitySelect').options).some(o => o.value === draft.quality)) {
         document.getElementById('qualitySelect').value = draft.quality;
       }
@@ -1090,6 +1556,10 @@ function doPost(e) {
       if (draft.deviceMeta) document.getElementById('deviceMetaSelect').value = draft.deviceMeta;
       if (draft.topic) document.getElementById('topicInput').value = draft.topic;
       if (draft.reportHtml) aiReportBox.innerHTML = draft.reportHtml;
+      if (draft.lastCritiqueObj) {
+        window.LAST_CRITIQUE_OBJ = draft.lastCritiqueObj;
+        renderCritiqueBox(draft.lastCritiqueObj);
+      }
 
       await loadAudioFromBlob(rawAudioBlob, rawAudioName, false, draft.trimMusicStart, draft.trimMusicEnd);
 
@@ -1296,6 +1766,7 @@ function doPost(e) {
     wavBlob = encodeWAV(decodedBuffer);
     musicAudioEl.src = URL.createObjectURL(wavBlob);
     await analyzeAudioMetrics(decodedBuffer);
+    analyzeRemixSpectrum(decodedBuffer);
     if (window.AUDIO_VIZ && window.AUDIO_VIZ.analyze) window.AUDIO_VIZ.analyze(decodedBuffer);
     if (autoRebalance && plan.length) { rebalancePlanDurations(); renderBeatsUI(); drawMainPreview(0); }
     statusText.textContent = `✅ Đã sẵn sàng đoạn nhạc ${decodedBuffer.duration.toFixed(1)}s (${trimMusicStart.toFixed(1)}s ➔ ${trimMusicEnd.toFixed(1)}s).`;
@@ -1413,7 +1884,6 @@ function doPost(e) {
       s.idx = idx + 1; s.numStr = String(s.idx).padStart(2, '0');
       s.start = Number(vCursor.toFixed(3)); s.end = Number((vCursor + s.dur).toFixed(3)); vCursor = s.end;
 
-      // Bảo đảm trimStart không vượt quá (vDur - s.dur) sau khi rebalance
       if (s.blobKey && videoDurationCache[s.blobKey]) {
         const maxS = Math.max(0, videoDurationCache[s.blobKey] - s.dur);
         if (s.trimStart > maxS) s.trimStart = Number(maxS.toFixed(2));
@@ -1555,7 +2025,6 @@ function doPost(e) {
     }));
   }
 
-  // --- HỌC NHANH ẢNH MẪU HOOK ---
   async function learnHookDnaFromSampleImage(apiKey, ideaText) {
     const parts = [
       { inline_data: { mime_type: 'image/jpeg', data: sampleHookImgB64 } },
@@ -1567,7 +2036,7 @@ Trả về JSON đúng chuẩn:
   "formulaName": "Tên ngắn gọn kiểu chữ này",
   "category": "Ngành hàng/Chủ đề",
   "hookDna": {
-    "yPercent": 0.42,
+    "yPercent": 0.35,
     "rows": [
       {
         "gapPx": 12,
@@ -1618,15 +2087,13 @@ Trả về JSON đúng chuẩn:
         drawMainPreview(hookSeg ? hookSeg.start + 0.35 : 0);
       }
       scheduleAutoSave();
-      aiAzStatus.textContent = `✅ Đã học & áp dụng Mẫu 11 ("${learned.formulaName || 'Hook DNA'}") và lưu vào Sheet Lamvideo!`;
+      aiAzStatus.textContent = `✅ Đã học & áp dụng Mẫu 11 ("${learned.formulaName || 'Hook DNA'}")!`;
     } catch (e) {
       aiAzStatus.textContent = '❌ ' + e.message;
-    } finally {
-      btn.disabled = false;
-    }
+    } finally { btn.disabled = false; }
   });
 
-  // --- 1. ĐẠO DIỄN AI PRO (20 KHUNG HÌNH / VIDEO + GẮN NHÃN TỪNG ẢNH ĐỂ KHỚP 100% TIÊU ĐỀ) ---
+  // --- 1. ĐẠO DIỄN AI PRO (20 KHUNG HÌNH + ĐỀ XUẤT NÂNG CẤP APP + LƯU ĐỒNG BỘ) ---
   document.getElementById('aiProDirectorBtn').addEventListener('click', async () => {
     const apiKey = geminiKeyInput.value.trim();
     if (!apiKey) {
@@ -1639,7 +2106,7 @@ Trả về JSON đúng chuẩn:
     const btn = document.getElementById('aiProDirectorBtn'); btn.disabled = true;
     try {
       await document.fonts.ready;
-      aiAzStatus.textContent = '📊 (1/5) Đang đồng bộ Kho Công Thức từ Lamvideo...';
+      aiAzStatus.textContent = '📊 (1/5) Đang đồng bộ 2 chiều với Google Sheet Lamvideo...';
       await syncFormulasFromSheet(true);
 
       aiAzStatus.textContent = '🎵 (2/5) Thợ AI đang kiểm tra đoạn nhạc...';
@@ -1659,7 +2126,7 @@ Trả về JSON đúng chuẩn:
         await applyTrimmedMusicToApp(false);
       }
 
-      aiAzStatus.textContent = `📸 (3/5) Đang cắt ${FRAMES_PER_VIDEO} khung hình/video để AI soi chuẩn từng hành động...`;
+      aiAzStatus.textContent = `📸 (3/5) Đang cắt ${FRAMES_PER_VIDEO} khung hình/video để AI soi chuẩn...`;
       const framesPerVid = videoQueueMeta.length <= 5 ? FRAMES_PER_VIDEO : Math.max(12, Math.floor(100 / videoQueueMeta.length));
       const gallery = [], parts = [];
       for (let vIdx = 0; vIdx < videoQueueMeta.length; vIdx++) {
@@ -1668,7 +2135,6 @@ Trả về JSON đúng chuẩn:
         frames.forEach(fr => {
           const gIdx = gallery.length;
           gallery.push({ gIdx, vidIdx: vIdx, blobKey: vKey, t: fr.t, b64: fr.b64 });
-          // Gắn nhãn NGAY TRƯỚC mỗi tấm ảnh để Gemini KHÔNG BAO GIỜ đếm nhầm imageIdx!
           parts.push({ text: `[Ảnh ${gIdx} | File ${vIdx + 1} | giây ${fr.t.toFixed(2)}s]` });
           parts.push({ inline_data: { mime_type: 'image/jpeg', data: fr.b64 } });
         });
@@ -1679,9 +2145,8 @@ Trả về JSON đúng chuẩn:
         parts.push({ text: `[ẢNH MẪU KIỂU CHỮ HOOK CẦN HỌC]` });
         parts.push({ inline_data: { mime_type: 'image/jpeg', data: sampleHookImgB64 } });
         sampleHookGuide = `\n⚠️ ÔNG CHỦ ĐÃ NẠP "ẢNH MẪU KIỂU CHỮ HOOK":
-- BẮT BUỘC học kỹ bố cục, yPercent, các hàng rows & spans (color, bg, size, font: bold|condensed|script|serif|cute|tech, stroke, strokeW) trong ảnh mẫu này!
-- Chọn "templateId": "dynamic-ai-dna" và trả về đầy đủ object "hookDna" đúng chuẩn { "yPercent": 0.45, "rows": [ { "gapPx": 12, "spans": [...] } ] } mô phỏng ảnh mẫu nhưng thay nội dung khớp video của Ông Chủ.
-- Điền "learnedHookName" & "learnedCategory" để lưu lên Google Sheet.`;
+- BẮT BUỘC học kỹ bố cục, yPercent, các hàng rows & spans trong ảnh mẫu này!
+- Chọn "templateId": "dynamic-ai-dna" và trả về đầy đủ object "hookDna" đúng chuẩn { "yPercent": 0.35, "rows": [ { "gapPx": 12, "spans": [...] } ] }.`;
       }
 
       let sampleRefGuide = '';
@@ -1693,10 +2158,10 @@ Trả về JSON đúng chuẩn:
           parts.push({ text: `[VIDEO MẪU #${i} | giây ${rf.t.toFixed(2)}s]` });
           parts.push({ inline_data: { mime_type: 'image/jpeg', data: rf.b64 } });
         });
-        sampleRefGuide = `\n⚠️ ÔNG CHỦ ĐÃ NẠP "VIDEO MẪU HỌC CÁCH DỰNG" (20 khung hình ở trên, dài ${(sampleRefVideoMeta.dur || 10).toFixed(1)}s):
-- Học nhịp cắt nhanh/chậm, thời lượng Hook đầu, góc quay và chuyển cảnh từ video mẫu để áp dụng vào "scenes"!
+        sampleRefGuide = `\n⚠️ ÔNG CHỦ ĐÃ NẠP "VIDEO MẪU HỌC CÁCH DỰNG" (20 khung hình, dài ${(sampleRefVideoMeta.dur || 10).toFixed(1)}s):
+- Học nhịp cắt, thời lượng Hook, góc quay và chuyển cảnh từ video mẫu!
 - Trả về "learnedRecipe": { "name": "...", "category": "...", "hookDuration": 2.8, "avgCutSec": 2.0, "motionFlow": [...], "transFlow": [...], "notes": "..." }.${borrowHook ? `
-- ĐẶC BIỆT: Ông Chủ tick "Mượn luôn đoạn Hook đầu của video mẫu" ➔ Cảnh 1 sẽ tự động lấy đoạn đầu video mẫu (điền "refHookDuration": 2.0..3.8, "unifyingFilter": chọn 1 bộ lọc đồng bộ cho toàn bài). Cảnh 2 trở đi dùng các "Ảnh X" từ video thô của Ông Chủ.` : ''}`;
+- ĐẶC BIỆT: Tick "Mượn Hook đầu video mẫu" ➔ Cảnh 1 lấy đoạn đầu video mẫu (điền "refHookDuration", "unifyingFilter"). Cảnh 2 trở đi dùng "Ảnh X" từ video thô.` : ''}`;
       }
 
       let khoPromptBlock = '';
@@ -1705,7 +2170,7 @@ Trả về JSON đúng chuẩn:
           idx: i, type: f.type, name: f.name, category: f.category,
           hookDna: f.hookDna || undefined, scenePattern: f.scenePattern || undefined, notes: f.notes
         }));
-        khoPromptBlock = `\n📚 KHO CÔNG THỨC ĐÃ TÍCH LŨY (Từ Google Sheet Lamvideo — Hãy tham khảo/phối hợp công thức phù hợp nếu thấy hay):
+        khoPromptBlock = `\n📚 KHO CÔNG THỨC ĐÃ TÍCH LŨY (Từ Lamvideo):
 ${JSON.stringify(recentFormulas)}`;
       }
 
@@ -1713,12 +2178,11 @@ ${JSON.stringify(recentFormulas)}`;
       const idea = bossIdeaInput.value.trim() || 'Chọn Hook đắt giá/tò mò nhất để giữ chân khách xem hết toàn bộ video.';
       const tplListDesc = (window.HOOK_TEMPLATES || []).map(t => `- "${t.id}": ${t.name} (các ô chữ: ${t.fields.map(f => f.key).join(', ')})`).join('\n');
 
-      const prompt = `Bạn là ĐẠO DIỄN VIDEO TRIỆU VIEW (Chuyên gia tối ưu Watch Time trên TikTok & Reels).
+      const prompt = `Bạn là ĐẠO DIỄN VIDEO TRIỆU VIEW & GIÁM ĐỐC THẨM MỸ VIDEO (TikTok / Reels).
 YÊU CẦU CỦA ÔNG CHỦ: "${idea}"
 BÀI NHẠC: Dài ${musicDur.toFixed(2)}s, nhịp ~${m.bpm} BPM. Mốc chuyển nhịp gợi ý: [${(m.anchors || []).slice(0, 24).join(', ')}]s.
 
-TẤT CẢ ẢNH VIDEO THÔ ĐÃ ĐƯỢC GẮN NHÃN "[Ảnh X | File Y | giây Z.ZZs]" Ở NGAY TRƯỚC TỪNG ẢNH.
-Mỗi File có 20 ảnh rải đều từ đầu tới cuối.
+TẤT CẢ ẢNH VIDEO THÔ ĐÃ GẮN NHÃN "[Ảnh X | File Y | giây Z.ZZs]" Ở NGAY TRƯỚC TỪNG ẢNH.
 
 CÁC MẪU CHỮ HOOK SẴN CÓ:
 ${tplListDesc}
@@ -1726,15 +2190,14 @@ ${sampleHookGuide}
 ${sampleRefGuide}
 ${khoPromptBlock}
 
-QUY TẮC TUYỆT ĐỐI ĐỂ KHÔNG BAO GIỜ LỆCH CẢNH & TIÊU ĐỀ:
-1. KHỚP 100% CẢNH VÀ TIÊU ĐỀ:
-   - Trước khi chọn "imageIdx" cho một cảnh, hãy NHÌN KỸ đúng tấm "[Ảnh X]" đó xem thực sự đang quay cái gì (VD: cầm ly, bỏ đá, rót trà, khuấy, hay thành phẩm), ghi mô tả thật ngắn vào "whatIsInImage", rồi mới viết "subTitle" (3–5 chữ) mô tả ĐÚNG hành động đang thấy trong "[Ảnh X]" đó!
-   - TUYỆT ĐỐI KHÔNG chọn bừa imageIdx rồi ghép tiêu đề của cảnh khác! Nếu cảnh đó là chuyển động nhanh khó đặt tên thì để "subTitle": "".
-   - Để tránh cảnh bị nhảy ngược lộn xộn: với các cảnh thân bài (isHook: false) dùng chung 1 File, hãy chọn "imageIdx" TĂNG DẦN theo thứ tự thời gian (trừ Cảnh 1 Hook có thể lấy khoảnh khắc đẹp nhất ở bất kỳ đâu).
-2. CHIA CẢNH THEO NHỊP NHẠC: Tự do chia số cảnh sao cho mỗi cảnh trọn vẹn hành động, tổng durationSec các cảnh có nhạc bằng đúng ${musicDur.toFixed(2)}s.
-3. HOOK MỞ ĐẦU: Ở các cảnh "isHook": true, đặt "subTitle": "" (không đè chữ phụ lên chữ Hook). Chọn mẫu chữ hợp gu nhất (VD: "ngai-gia-hai-mau", "dau-tu-5-ty", "khoi-nghiep-y-hinh", "tieu-de-do-tin-nong", hoặc "dynamic-ai-dna") và viết câu Hook CỤ THỂ đúng món/người trong ảnh, cấm viết sáo rỗng!
+QUY TẮC TUYỆT ĐỐI:
+1. KHỚP 100% CẢNH VÀ TIÊU ĐỀ: Nhìn kỹ "[Ảnh X]", ghi mô tả thật ngắn vào "whatIsInImage", rồi viết "subTitle" (3–5 chữ) mô tả ĐÚNG hành động đang thấy trong "[Ảnh X]" đó! Cảnh thân bài dùng chung 1 File phải có "imageIdx" TĂNG DẦN theo thời gian.
+2. CHIA CẢNH THEO NHỊP NHẠC: Tổng durationSec các cảnh có nhạc bằng đúng ${musicDur.toFixed(2)}s.
+3. HOOK MỞ ĐẦU: Ở các cảnh "isHook": true, đặt "subTitle": "". Viết câu Hook CỤ THỂ, tò mò, cấm sáo rỗng! Nếu chọn Vòng Tròn Remix, đặt chữ Hook ở phần trên (y ~ 0.16..0.35) để không đè lên đĩa tròn ở giữa dưới.
 4. ÂM THANH ASMR: Bật ("origVol": 85..95, "musicVol": 45..55) ở cảnh bỏ đá, rót nước, khuấy ly, xèo xèo, người nói.
-5. CHUYỂN CẢNH & BỘ LỌC: Phối motionMode ("dolly-in", "dolly-out", "gimbal-sway", "breath-all", "auto-pan", "smooth"), transIn ("cut", "fade", "slide", "flash"), filterId ("4k-sharp", "fresh-clear", "rosy-skin", "film-cinematic", "warm-coffee", "bw-moody").
+5. CHỌN SÓNG NHẠC GỢI Ý ("suggestedViz"): Chọn "tiktok-remix-ring" nếu hợp phong cách sôi động/remix/bắt mắt, hoặc "mini-top-left" nếu cần tối giản.
+6. TỰ SOI THẨM MỸ & ĐỀ XUẤT NÂNG CẤP APP ("aestheticReview"):
+   - Sau khi dựng xong, hãy đứng ở góc độ Giám đốc Thẩm mỹ khắt khe để chấm điểm thành phẩm ("score", VD "8.2/10"), chỉ ra điểm được/chưa được ("strengths", "weaknesses"), và viết 3–5 "appUpgradeSuggestions" CỤ THỂ, THỰC TẾ nhất để lập trình viên nâng cấp app ở bản sau (VD: cần thêm speed-ramp, LUT màu riêng, auto ducking SFX chuyển cảnh, theo dõi chủ thể, căn safe-zone TikTok, v.v.).
 
 Trả về JSON đúng mẫu:
 {
@@ -1747,6 +2210,13 @@ Trả về JSON đúng mẫu:
   "learnedRecipe": null,
   "refHookDuration": 2.8,
   "unifyingFilter": "fresh-clear",
+  "suggestedViz": "tiktok-remix-ring",
+  "aestheticReview": {
+    "score": "8.4/10",
+    "strengths": ["..."],
+    "weaknesses": ["..."],
+    "appUpgradeSuggestions": ["Đề xuất 1...", "Đề xuất 2...", "Đề xuất 3..."]
+  },
   "scenes": [
     {
       "durationSec": 2.6, "imageIdx": 15, "whatIsInImage": "Ly trà hoàn chỉnh trên bàn",
@@ -1758,7 +2228,7 @@ Trả về JSON đúng mẫu:
 }`;
 
       parts.push({ text: prompt });
-      aiAzStatus.textContent = '🤖 (4/5) Đạo diễn AI đang đọc từng khung hình & khớp tiêu đề 100%...';
+      aiAzStatus.textContent = '🤖 (4/5) Đạo diễn AI đang dựng cảnh, soi thẩm mỹ & viết đề xuất nâng cấp...';
 
       const model = geminiModelSelect.value;
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
@@ -1831,7 +2301,6 @@ Trả về JSON đúng mẫu:
         const dur = Math.max(0.5, Number(sc.durationSec) || 2.2);
         const maxStart = Math.max(0, vDur - dur);
 
-        // GIỮ ĐÚNG THỜI ĐIỂM gItem.t CỦA ẢNH ĐÃ CHỌN (chỉ lùi nhẹ 0.25s nếu đủ chỗ để bắt trọn hành động, KHÔNG ép nhảy sang đoạn khác!)
         const exactTrim = Math.max(0, Math.min(maxStart, gItem.t - 0.15));
         const subTitle = sc.isHook ? '' : (sc.subTitle || '');
         const origVol = Math.max(0, Math.min(100, parseInt(sc.origVol ?? 0, 10)));
@@ -1857,6 +2326,9 @@ Trả về JSON đúng mẫu:
       rebalancePlanDurations();
       renderBeatsUI();
 
+      window.LAST_CRITIQUE_OBJ = aiPlan.aestheticReview || null;
+      renderCritiqueBox(window.LAST_CRITIQUE_OBJ);
+
       const hookDurTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0).toFixed(1);
       aiReportBox.innerHTML = `<b>📋 Chiến lược giữ chân của Thợ AI (20 khung/video):</b> ${aiPlan.summaryForBoss || 'Đã tự chia cảnh khớp từng hành động và bật ASMR.'}<br>
         • Tổng <b>${plan.length} cảnh</b> (Hook: <b>${hookDurTotal}s</b>${borrowHook ? ' • <b>Mượn Hook Mẫu + Lật gương né Reup</b>' : ''} • ASMR rõ nét: <b>${plan.filter(s => s.origVol > 0).length} cảnh</b>) • Mẫu chữ: <b>${getCurrentTemplate()?.name}</b>`;
@@ -1869,7 +2341,7 @@ Trả về JSON đúng mẫu:
       drawMainPreview(0);
       saveDraftNow();
 
-      aiAzStatus.textContent = '🎉 (5/5) Thợ AI dựng xong rồi! Bấm Phát Duyệt để kiểm tra ngay.';
+      aiAzStatus.textContent = '🎉 (5/5) Thợ AI dựng xong rồi! Xem đánh giá thẩm mỹ & bấm Phát Duyệt ngay.';
       document.getElementById('reviewCard').scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
       aiAzStatus.textContent = '❌ ' + err.message;
@@ -1947,13 +2419,12 @@ Trả về JSON đúng mẫu:
     document.getElementById('topicInput').value = ideaShort;
 
     const savedDna = [...formulaBank].reverse().find(f => f.hookDna);
-    if (savedDna) {
-      applyHookDnaToUi(savedDna.hookDna);
-    } else {
-      document.getElementById('aiFillBtn').click();
-    }
+    if (savedDna) applyHookDnaToUi(savedDna.hookDna);
+    else document.getElementById('aiFillBtn').click();
 
     rebalancePlanDurations(); renderBeatsUI();
+    window.LAST_CRITIQUE_OBJ = null;
+    renderCritiqueBox(null);
 
     aiReportBox.innerHTML = `<b>📋 Báo cáo của Thợ AI (0đ Offline):</b> Đã chia <b>${plan.length} cảnh</b> mềm mại${borrowHook ? ' (Mượn Hook Mẫu + Lật gương né Reup)' : ''} + 4K Sắc Nét + bật ASMR ở Cảnh 2, 3.${savedDna ? ` Đã áp dụng Hook DNA từ Kho: <b>${savedDna.name}</b>.` : ''}`;
     document.getElementById('reviewCard').style.display = 'block';
@@ -2353,6 +2824,16 @@ Trả về JSON đúng mẫu:
 
     window.MOTION_FX.drawTransition(ctx, transMode, dt, 0.22, W, H, hasValidPrevFrame ? prevBeatFrameCanvas : null, workCanvas);
 
+    // Sóng nhạc TikTok Remix vẽ phía dưới chữ Hook để không che mất tiêu đề
+    const vz = vizStyleSelect.value;
+    if (seg.playMusic) {
+      if (vz === 'tiktok-remix-ring' || vz === 'tiktok-remix-clean') {
+        drawTikTokRemixVisualizer(ctx, musicT, W, H, vz === 'tiktok-remix-ring');
+      } else if (window.AUDIO_VIZ && window.AUDIO_VIZ.draw) {
+        window.AUDIO_VIZ.draw(ctx, musicT, W, H, vz, vizColorSelect.value);
+      }
+    }
+
     const segForTpl = { ...seg, beatNote: seg.subTitle || '' };
     const segInfo = { seg: segForTpl, dt, bodyBeatIdx: getNonHookIndex(seg) };
     if (tpl && tpl.render) {
@@ -2362,7 +2843,6 @@ Trả về JSON đúng mẫu:
     if (!seg.isHook && seg.subTitle && (!tpl || !tpl.renderOnNonHook)) {
       drawPerBeatSubtitle(ctx, seg, dt, W, H);
     }
-    if (seg.playMusic && window.AUDIO_VIZ && window.AUDIO_VIZ.draw) window.AUDIO_VIZ.draw(ctx, musicT, W, H, vizStyleSelect.value, vizColorSelect.value);
   }
 
   function renderCompositeFrame(ctx, t, W, H, singleSegOverride, videoSourceEl) {
@@ -2617,12 +3097,19 @@ Trả về JSON đúng mẫu:
   geminiKeyInput.value = localStorage.getItem('catamthanh_gemini_key') || '';
   if (localStorage.getItem('catamthanh_gemini_model')) geminiModelSelect.value = localStorage.getItem('catamthanh_gemini_model');
   sheetUrlInput.value = localStorage.getItem('catamthanh_sheet_url') || '';
+  sheetFileIdInput.value = localStorage.getItem('catamthanh_sheet_file_id') || '';
 
   geminiKeyInput.addEventListener('input', () => localStorage.setItem('catamthanh_gemini_key', geminiKeyInput.value.trim()));
   geminiModelSelect.addEventListener('change', () => localStorage.setItem('catamthanh_gemini_model', geminiModelSelect.value));
   sheetUrlInput.addEventListener('input', () => localStorage.setItem('catamthanh_sheet_url', sheetUrlInput.value.trim()));
+  sheetFileIdInput.addEventListener('input', () => localStorage.setItem('catamthanh_sheet_file_id', sheetFileIdInput.value.trim()));
   bossIdeaInput.addEventListener('input', scheduleAutoSave);
   borrowRefHookChk.addEventListener('change', scheduleAutoSave);
+
+  remixCenterTextInput.addEventListener('input', () => {
+    if (plan.length) drawMainPreview(previewTime || 0);
+    scheduleAutoSave();
+  });
 
   document.getElementById('toggleKeyBtn').addEventListener('click', () => {
     geminiKeyInput.type = geminiKeyInput.type === 'password' ? 'text' : 'password';
@@ -2636,6 +3123,45 @@ Trả về JSON đúng mẫu:
       await navigator.clipboard.writeText(GAS_TEMPLATE_CODE);
       document.getElementById('sheetSyncStatus').textContent = '📋 Đã copy Code Apps Script vào bộ nhớ tạm!';
     } catch { alert(GAS_TEMPLATE_CODE); }
+  });
+
+  document.getElementById('copyCritiqueBtn').addEventListener('click', async () => {
+    if (!lastCritiqueText) return;
+    try {
+      await navigator.clipboard.writeText(lastCritiqueText);
+      const b = document.getElementById('copyCritiqueBtn');
+      b.textContent = '✅ Đã Copy!';
+      setTimeout(() => { b.textContent = '📋 Copy Đề Xuất Gửi Cho Dev'; }, 1800);
+    } catch { alert(lastCritiqueText); }
+  });
+
+  document.getElementById('saveCurrentRecipeBtn').addEventListener('click', async () => {
+    if (!sheetUrlInput.value.trim()) {
+      document.getElementById('settingsCard').style.display = 'block';
+      document.getElementById('settingsCard').scrollIntoView({ behavior: 'smooth' });
+      return alert('Hãy dán link Web App Google Sheet vào phần Cài đặt trước nhé!');
+    }
+    const tpl = getCurrentTemplate();
+    const topic = (document.getElementById('topicInput').value || 'Video TikTok').trim();
+    const ok = await saveFormulaToSheet({
+      type: 'both',
+      name: `${topic} (${tpl ? tpl.name.slice(0, 24) : 'Mẫu'})`,
+      category: topic,
+      hookDna: (tpl && tpl.id === 'dynamic-ai-dna') ? normalizeDnaSchema(window.ACTIVE_HOOK_DNA) : null,
+      scenePattern: {
+        templateId: tpl ? tpl.id : '',
+        hookFields: getHookData(),
+        vizStyle: vizStyleSelect.value,
+        scenesCount: plan.length,
+        durs: plan.map(s => s.dur),
+        motions: plan.map(s => s.motionMode),
+        trans: plan.map(s => s.transIn),
+        filters: plan.map(s => s.filterId)
+      },
+      notes: bossIdeaInput.value.slice(0, 120)
+    });
+    if (ok) alert('✅ Đã lưu công thức bài này lên file Google Sheet Lamvideo!');
+    else alert('❌ Chưa lưu được lên Sheet — mở phần ⚙️ API Key & Kho Google Sheet để xem thông báo lỗi chi tiết.');
   });
 
   document.getElementById('applyDnaJsonBtn').addEventListener('click', () => {
@@ -2768,7 +3294,6 @@ Trả về JSON đúng mẫu:
     });
   });
 
-  // ĐÃ SỬA: TẠO LẠI HOOK GIẬT GÂN (0Đ) HOẠT ĐỘNG CHO MỌI MẪU (KỂ CẢ MẪU 9, 10, 11)
   document.getElementById('aiFillBtn').addEventListener('click', async () => {
     const tpl = getCurrentTemplate();
     const tplId = tpl ? tpl.id : 'fallback';
