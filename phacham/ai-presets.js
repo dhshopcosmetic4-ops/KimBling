@@ -1,4 +1,5 @@
-// FILE RIÊNG CHỨA KHO MẪU AI TỰ SOẠN TIÊU ĐỀ CHO CẢ 8 KIỂU CHỮ (0 ĐỒNG)
+javascript
+// KHO CÂU HOOK GIẬT GÂN & TÒ MÒ THU HÚT KHÁCH (0 ĐỒNG)
 window.AI_PRESETS = {
   _lastIndex: {},
 
@@ -13,96 +14,82 @@ window.AI_PRESETS = {
   },
 
   generateHookData: function (topic, templateId) {
-    const clean = (topic || 'sản phẩm này').trim();
+    const clean = (topic || 'món này').trim();
     const UP = clean.toUpperCase();
     const Cap = clean.charAt(0).toUpperCase() + clean.slice(1);
-    const age = [24, 27, 29, 32, 35, 43][Math.floor(Math.random() * 6)];
+    const age = [25, 28, 30, 32, 36, 43][Math.floor(Math.random() * 6)];
 
-    // MẪU 8: OOTD / LOOKBOOK GÓC TRÁI
     if (templateId === 'ootd-lookbook-trai') {
       return this._pickNoRepeat(templateId, [
         {
-          hookText: `🎙️ Dừng lại đây nếu nàng còn phân vân về độ ứng dụng của ${clean}...`,
-          prefix: 'OOTD',
-          label: 'LOOK',
-          tags: 'Thu Đông 🍂, Tết 🧧, Đi học / Đi làm 👩🏻‍💼, Cuối tuần ☕'
+          hookText: `🚨 Dừng lại 3 giây nếu nàng chưa tin ${clean} có thể biến hóa cực đỉnh cỡ này...`,
+          prefix: 'OOTD', label: 'LOOK',
+          tags: 'Thu Đông 🍂, Tết 🧧, Đi học / Đi làm 👩🏻‍💼, Hẹn hò ✨'
         },
         {
-          hookText: `✨ Gợi ý 4 cách biến hóa cực xinh với ${clean} mặc hoài không chán`,
-          prefix: 'STYLE',
-          label: 'SET',
-          tags: 'Năng động ⚡, Thanh lịch 🤍, Dạo phố 🌿, Hẹn hò 💕'
+          hookText: `🔥 Tưởng không hợp mà đẹp không tưởng! Xem ngay 3 cách phối ${clean} gây nghiện`,
+          prefix: 'STYLE', label: 'SET',
+          tags: 'Che khuyết điểm ✓, Tôn dáng 💃, Dạo phố ☕, Tiệc tối 🥂'
         },
         {
-          hookText: `👗 Tủ đồ chưa biết mặc gì? Xem ngay 3 kiểu phối cùng ${clean} này nhé!`,
-          prefix: 'MIX',
-          label: 'OUTFIT',
-          tags: 'Đi làm 💼, Cà phê sáng ☕, Đi tiệc nhẹ ✨, Du lịch ✈️'
+          hookText: `⚠️ Cảnh báo cháy hàng! Chỉ với ${clean} mà cân hết mọi kèo đi chơi`,
+          prefix: 'MIX', label: 'OUTFIT',
+          tags: 'Năng động ⚡, Sang chảnh ✨, Thanh lịch 🤍, Cuối tuần 🌿'
         }
       ]);
     }
 
-    // MẪU 2: CUTE HỒNG KẸO NGỌT
     if (templateId === 'cute-pink-milk') {
       return this._pickNoRepeat(templateId, [
-        { badge: '🌸 GÓC NHỎ SIÊU CUTE 🌸', main: UP, sub: `Dễ thương xỉu với ${clean} 💕` },
-        { badge: '🍓 NGỌT NGÀO HẾT NẤC', main: UP, sub: `Thử một lần là ghiền ngay ✨` },
-        { badge: '🎀 MUST TRY HÔM NAY', main: UP, sub: `Xinh yêu chuẩn gu của bạn 💖` },
-        { badge: '🧋 HƯƠNG VỊ GÂY THƯƠNG NHỚ', main: UP, sub: `Cứ ghé là phải gọi ngay món này 😋` }
+        { badge: '🚨 CẢNH BÁO GÂY NGHIỆN!', main: UP, sub: `Thử 1 lần là quay lại cả tuần 💕` },
+        { badge: '🔥 99% KHÁCH ĐỀU MÊ!', main: UP, sub: `Ngọt ngào tan chảy không nỡ rời ✨` },
+        { badge: '💖 BÍ MẬT ĐẰNG SAU', main: UP, sub: `Xinh xỉu từ cái nhìn đầu tiên 🌸` }
       ]);
     }
 
-    // MẪU 3: XANH MATCHA TƯƠI MÁT
     if (templateId === 'mint-matcha-fresh') {
       return this._pickNoRepeat(templateId, [
-        { badge: '🌿 TƯƠI MÁT MỖI NGÀY', main: UP, sub: `Sảng khoái tức thì cùng ${clean} ✨` },
-        { badge: '🍃 CHILL CÙNG THIÊN NHIÊN', main: UP, sub: `Mát lạnh tan chảy ngày nắng ☀️` },
-        { badge: '💚 XANH MÁT CHUẨN VỊ', main: UP, sub: `Nhẹ nhàng mà cuốn không tưởng 🌱` }
+        { badge: '⚠️ CHỈ SỢ BẠN GHIỀN!', main: UP, sub: `Tỉnh táo sảng khoái ngay lập tức ⚡` },
+        { badge: '🌿 BÍ QUYẾT HÚT KHÁCH', main: UP, sub: `Đậm vị mát lạnh chuẩn gu ☀️` },
+        { badge: '💚 ĐỪNG BỎ LỠ HÔM NAY', main: UP, sub: `Thử là ghiền, càng uống càng mê 🌱` }
       ]);
     }
 
-    // MẪU 4: REMIX NEON ĐỔI MÀU + 3S ĐEN TRẮNG
     if (templateId === 'remix-den-trang-chop') {
       return this._pickNoRepeat(templateId, [
-        { num: 'KHOAN LƯỚT! 🔥', main: `ĐÚNG GIÂY THỨ 3 VỚI ${UP}`, end: 'Nhạc nổ lên là cuốn không rời mắt 🎧' },
-        { num: 'LET\'S GO! ⚡', main: `BÙNG NỔ CÙNG ${UP}`, end: 'Xem tới cuối mới thấy độ cháy 🚀' },
-        { num: '3... 2... 1... 💥', main: `BIẾN HÌNH CỰC GẮT: ${UP}`, end: 'Nghe nhịp bass là nhún theo liền!' }
+        { num: '🚨 KHOAN LƯỚT!', main: `ĐÚNG GIÂY THỨ 3 ${UP} LẬT KÈO!`, end: 'Không xem tới cuối là tiếc hùi hụi 🔥' },
+        { num: '3... 2... 1... 💥', main: `BIẾN HÌNH CỰC SỐC: ${UP}`, end: '90% người xem phải tua lại lần 2!' }
       ]);
     }
 
-    // MẪU 5: CAM RỰC REVIEW QUÁN
     if (templateId === 'cam-nang-nang-dong') {
       return this._pickNoRepeat(templateId, [
-        { tag: '📍 REVIEW CHÂN THẬT', main: UP, sub: `Trải nghiệm ${clean} cực đã 😋` },
-        { tag: '🔥 TỌA ĐỘ HOT HÔM NAY', main: UP, sub: `Giá bình dân mà chất lượng bất ngờ!` },
-        { tag: '⭐ QUÁN RUỘT PHẢI THỬ', main: UP, sub: `Ăn một lần là nhớ mãi không quên 👌` }
+        { tag: '🚨 QUÁN ĐÔNG NGHỊT KHÁCH', main: UP, sub: `Lý do khiến ai ăn xong cũng khen nức nở! 😋` },
+        { tag: '🔥 BÓC PHỐT SỰ THẬT', main: UP, sub: `Rẻ giật mình mà chất lượng quá đỉnh 👌` },
+        { tag: '📍 TỌA ĐỘ GÂY SỐT', main: UP, sub: `Chậm chân là hết phần ngay hôm nay!` }
       ]);
     }
 
-    // MẪU 6: BĂNG ĐỎ TIN NÓNG GÂY SỐC
     if (templateId === 'tieu-de-do-tin-nong') {
       return this._pickNoRepeat(templateId, [
-        { alert: '🚨 KHOAN ĐÃ! ĐỪNG LƯỚT QUA', main: `90% NGƯỜI XEM BẤT NGỜ VỚI ${UP}`, sub: 'Xem hết tới cuối mới thấy cái kết!' },
-        { alert: '⚠️ CẢNH BÁO GÂY NGHIỆN', main: `SỰ THẬT ÍT AI BIẾT VỀ ${UP}`, sub: 'Thử xong coi chừng quay lại mỗi ngày!' },
-        { alert: '📢 TIN HOT MỚI NHẤT', main: `ĐÂY LÀ LÝ DO ${UP} ĐÔNG NGHỊT KHÁCH`, sub: 'Nhìn thành phẩm ở giây cuối là hiểu liền!' }
+        { alert: '🚨 CẢNH BÁO: ĐỪNG LƯỚT QUA!', main: `99% KHÁCH KHÔNG NGỜ VỀ ${UP}`, sub: 'Xem hết 5 giây cuối mới thấy cái kết sốc!' },
+        { alert: '⚠️ SỰ THẬT CHẤN ĐỘNG', main: `TẠI SAO ${UP} LẠI HOT ĐẾN VẬY?`, sub: 'Thử xong coi chừng ghiền không dứt được!' }
       ]);
     }
 
-    // MẪU 7: SANG CHẢNH VÀNG CHAMPAGNE
     if (templateId === 'sang-chanh-gold') {
       return this._pickNoRepeat(templateId, [
-        { top: 'KHOẢNH KHẮC TUYỆT ĐẸP', main: Cap, sub: 'Lưu giữ kỷ niệm đáng nhớ ✨' },
-        { top: 'GÓC NHỎ BÌNH YÊN', main: Cap, sub: 'Chậm lại một nhịp để tận hưởng 🥂' },
-        { top: 'PHONG CÁCH TINH TẾ', main: Cap, sub: 'Đơn giản nhưng đầy cuốn hút ✨' }
+        { top: 'BÍ MẬT CỦA SỰ CUỐN HÚT', main: Cap, sub: 'Đẹp đến mức khiến ai cũng phải ngoái nhìn ✨' },
+        { top: 'TUYỆT TÁC KHÔNG THỂ BỎ LỠ', main: Cap, sub: 'Trải nghiệm đẳng cấp ngay từ giây đầu tiên 🥂' }
       ]);
     }
 
-    // MẪU 1 (MẶC ĐỊNH): 32 TUỔI KHỞI NGHIỆP
+    // MẪU 1: KHỞI NGHIỆP GIẬT GÂN
     return this._pickNoRepeat('khoi-nghiep-y-hinh', [
-      { num: String(age), s1: 'Tuổi', lead: 'Khởi nghiệp', main: UP, end: 'Sẽ như thế nào ?' },
-      { num: String(age), s1: 'Tuổi', lead: 'Quyết định bỏ phố', main: UP, end: 'Liệu có thành công ?' },
-      { num: '100%', s1: 'Thật sự', lead: 'Một ngày tất bật', main: UP, end: 'Có cực như lời đồn ?' },
-      { num: '0đ', s1: 'Từ đầu', lead: 'Hành trình xây dựng', main: UP, end: 'Và cái kết bất ngờ !' }
+      { num: String(age), s1: 'Tuổi', lead: 'Đánh cược tất cả để', main: UP, end: 'Và cái kết không ngờ !' },
+      { num: String(age), s1: 'Tuổi', lead: 'Bỏ việc lương cao đi', main: UP, end: 'Lỗ sấp mặt hay thắng lớn ?' },
+      { num: '100%', s1: 'Sự thật', lead: 'Đằng sau 1 ngày', main: UP, end: 'Ít ai dám kể cho bạn !' },
+      { num: '0đ', s1: 'Từ tay trắng', lead: 'Liều mình khởi nghiệp', main: UP, end: 'Sẽ ra sao sau 1 tháng ?' }
     ]);
   }
 };
