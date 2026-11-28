@@ -32,7 +32,7 @@
       background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 8px 10px;
       margin-bottom: 12px; font-size: 12px; color: #34d399;
     }
-    .top-bar-btns { display: flex; gap: 6px; }
+    .top-bar-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .top-bar button { width: auto; margin: 0; padding: 6px 10px; font-size: 11px; }
     .card { background: #11192b; border-radius: 14px; padding: 14px; margin-bottom: 14px; border: 1px solid #243352; }
     label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; font-weight: 700; }
@@ -83,6 +83,20 @@
     .vqueue-info span { color: #94a3b8; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .vqueue-actions { display: flex; gap: 4px; }
     .vqueue-actions button { width: auto; margin: 0; padding: 6px 8px; font-size: 12px; border-radius: 7px; }
+    .learn-box {
+      background: linear-gradient(180deg, rgba(124,58,237,0.12), rgba(15,23,42,0.75));
+      border: 1px solid #6366f1; border-radius: 12px; padding: 12px; margin: 10px 0 12px;
+    }
+    .learn-title { font-size: 13px; font-weight: 900; color: #e9d5ff; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .learn-sub { font-size: 11px; color: #cbd5e1; margin-bottom: 10px; line-height: 1.45; }
+    .learn-card { background: #0b1120; border: 1px solid #334155; border-radius: 10px; padding: 10px; }
+    .sample-preview-row { display: none; grid-template-columns: 54px 1fr auto; gap: 8px; align-items: center; margin-top: 6px; background: #070b14; border: 1px solid #334155; border-radius: 8px; padding: 6px; }
+    .sample-preview-row img { width: 54px; height: 78px; object-fit: cover; border-radius: 6px; border: 1px solid #475569; }
+    .sample-preview-row span { font-size: 11px; color: #bae6fd; line-height: 1.35; }
+    .chk-line { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #fde047; margin-top: 8px; cursor: pointer; line-height: 1.35; }
+    .chk-line input { width: 16px; height: 16px; margin: 2px 0 0; flex-shrink: 0; accent-color: #a855f7; }
+    .sheet-guide { display: none; background: #020617; border: 1px solid #334155; border-radius: 10px; padding: 10px; font-size: 11px; color: #cbd5e1; margin-bottom: 10px; line-height: 1.5; }
+    .sheet-guide pre { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px; overflow-x: auto; font-size: 10.5px; color: #a5f3fc; margin: 6px 0; }
     .ai-report {
       background: rgba(56,189,248,0.1); border: 1px solid #0284c7; border-radius: 12px;
       padding: 10px 12px; font-size: 12px; color: #bae6fd; line-height: 1.5; margin-bottom: 12px;
@@ -107,6 +121,7 @@
     .badge.hook { background: #dc2626; }
     .badge.asmr { background: #059669; }
     .badge.locked { background: #d97706; color: #000; }
+    .badge.mirror { background: #7c3aed; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
     .small-btn { padding: 6px 9px; font-size: 12px; width: auto; margin-bottom: 0; border-radius: 8px; }
     .scene-ctrl-box { background: #0f172a; border: 1px solid #1e293b; border-radius: 9px; padding: 8px; margin-top: 6px; }
@@ -134,6 +149,8 @@
     }
     .ai-reason { font-size: 12px; color: #7dd3fc; margin-top: 4px; line-height: 1.4; }
     .sub-card { background: #0b1120; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; margin-top: 10px; }
+    .dna-editor-box { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #334155; }
+    .dna-editor-box textarea { font-family: monospace; font-size: 11px; min-height: 92px; color: #a5f3fc; margin-bottom: 6px; }
     .progress-box {
       display: none; background: #0b1120; border: 1px solid #38bdf8;
       border-radius: 12px; padding: 14px; margin-top: 8px;
@@ -151,6 +168,9 @@
       position: fixed; left: 0; top: 0; width: 4px; height: 4px;
       opacity: 0.001; pointer-events: none; overflow: hidden; z-index: -1;
     }
+    @media (max-width: 600px) {
+      .row, .row3 { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -163,21 +183,24 @@
 </div>
 
 <div class="wrap">
-  <h1>🤵 Ông Chủ Giao Việc ➔ 🤖 Thợ AI Pro (ASMR Rõ Nét & Khớp Cảnh)</h1>
+  <h1>🤵 Ông Chủ Giao Việc ➔ 🤖 Thợ AI Pro (ASMR Rõ Nét & Học Mẫu DNA)</h1>
 
   <div class="warn-bar" id="warnBar"></div>
 
   <div class="top-bar">
-    <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
+    <div>
+      <span id="draftStatus">💾 Tự động lưu nháp: Sẵn sàng</span>
+      <span id="khoStatus" style="color:#c4b5fd;margin-left:8px;">📚 Kho công thức: 0 mẫu</span>
+    </div>
     <div class="top-bar-btns">
-      <button type="button" class="dark" id="toggleSettingsBtn">⚙️ API Key & Máy</button>
+      <button type="button" class="dark" id="toggleSettingsBtn">⚙️ API Key & Kho Google Sheet</button>
       <button type="button" class="red" id="clearDraftBtn">🗑️ Bài Mới</button>
     </div>
   </div>
 
-  <!-- CÀI ĐẶT NÂNG CAO -->
+  <!-- CÀI ĐẶT NÂNG CAO & KHO GOOGLE SHEET -->
   <div class="card" id="settingsCard" style="display:none;">
-    <div class="step-title">⚙️ Cài đặt Thợ AI & Thông số xuất file</div>
+    <div class="step-title">⚙️ Cài đặt Thợ AI, Kho Google Sheet & Thông số xuất file</div>
     <label>🔑 Gemini API Key (Dùng gói Free tại aistudio.google.com)</label>
     <div class="row">
       <div class="key-row">
@@ -193,6 +216,29 @@
           <option value="gemini-3.8-flash">Gemini 3.8 Flash (Thợ xịn nhất)</option>
           <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
         </select>
+      </div>
+    </div>
+
+    <label>📊 Link Google Sheet Web App (Tự đọc/lưu Kho Công Thức & Hook DNA mọi thiết bị):</label>
+    <div class="row">
+      <div class="input-x">
+        <input type="text" id="sheetUrlInput" placeholder="Dán link https://script.google.com/macros/s/.../exec" />
+        <button type="button" class="clear-x" onclick="clearField('sheetUrlInput', true)">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:6px;">
+        <button type="button" class="green" id="syncSheetBtn" style="padding:10px;">🔄 Đọc Kho Sheet</button>
+        <button type="button" class="dark" id="toggleSheetGuideBtn" style="padding:10px;">❓ Cách tạo</button>
+      </div>
+    </div>
+    <div class="status" id="sheetSyncStatus" style="text-align:left;font-size:12px;"></div>
+
+    <div class="sheet-guide" id="sheetGuideBox">
+      <b>Hướng dẫn 30 giây tạo Google Sheet Kho Công Thức (Miễn phí 100%):</b><br>
+      1. Mở Google Sheet mới ➔ Chọn <b>Tiện ích mở rộng (Extensions) ➔ Apps Script</b>.<br>
+      2. Xóa code cũ, dán đoạn code Apps Script được cung cấp bên dưới vào rồi bấm Lưu.<br>
+      3. Bấm <b>Triển khai (Deploy) ➔ Triển khai mới (New deployment) ➔ Ứng dụng web (Web app)</b> ➔ Ai có quyền truy cập: chọn <b>Bất kỳ ai (Anyone)</b> ➔ Copy link <code>.../exec</code> dán vào ô phía trên!
+      <div style="margin-top:6px;">
+        <button type="button" class="chip-btn" id="copyGasCodeBtn">📋 Copy Code Apps Script</button>
       </div>
     </div>
 
@@ -290,6 +336,46 @@
     </div>
     <div class="vqueue-list" id="vQueueList"></div>
 
+    <!-- MỤC MỚI: HỌC HỎI TỪ MẪU (TÙY CHỌN) -->
+    <div class="learn-box">
+      <div class="learn-title">
+        <span>🎓 Học Hỏi Từ Mẫu (Tùy chọn)</span>
+        <span style="font-size:11px;color:#c4b5fd;font-weight:700;" id="learnKhoHint">Bỏ trống = AI tự lục Kho Công Thức</span>
+      </div>
+      <div class="learn-sub">Up ảnh/video mẫu vào để AI học kiểu chữ & nhịp dựng mới (tự lưu lên Google Sheet). Nếu bỏ trống cả 2 ô, App chạy bình thường và AI tự phối hợp từ Kho đã tích lũy!</div>
+
+      <div class="row">
+        <div class="learn-card">
+          <label style="color:#f0abfc;">🖼️ Ảnh mẫu kiểu chữ Hook:</label>
+          <input type="file" id="sampleHookImgInput" accept="image/*" style="display:none;" />
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px;">
+            <button type="button" class="dark small-btn" id="pickSampleHookImgBtn" style="padding:8px 10px;width:100%;">🖼️ Up Ảnh Mẫu Chữ</button>
+            <button type="button" class="purple small-btn" id="learnOnlyHookImgBtn" style="padding:8px 10px;display:none;" title="Học & Lưu mẫu chữ ngay">🧬 Học Ngay</button>
+          </div>
+          <div class="sample-preview-row" id="sampleHookImgPreview">
+            <img id="sampleHookImgThumb" src="" alt="Mẫu chữ" />
+            <span id="sampleHookImgName">Đã nạp ảnh mẫu</span>
+            <button type="button" class="red small-btn" id="clearSampleHookImgBtn">✕</button>
+          </div>
+        </div>
+
+        <div class="learn-card">
+          <label style="color:#7dd3fc;">🎬 Video mẫu học cách dựng:</label>
+          <input type="file" id="sampleRefVideoInput" accept="video/*" style="display:none;" />
+          <button type="button" class="dark small-btn" id="pickSampleRefVideoBtn" style="padding:8px 10px;width:100%;">🎬 Up Video Mẫu Dựng</button>
+          <div class="sample-preview-row" id="sampleRefVideoPreview">
+            <img id="sampleRefVideoThumb" src="" alt="Video mẫu" />
+            <span id="sampleRefVideoInfo">Đã nạp video mẫu</span>
+            <button type="button" class="red small-btn" id="clearSampleRefVideoBtn">✕</button>
+          </div>
+          <label class="chk-line">
+            <input type="checkbox" id="borrowRefHookChk" />
+            <span>Mượn luôn đoạn Hook đầu của video mẫu (tự lật gương + phủ màu đồng bộ né Reup)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div class="row" style="margin-top:8px;">
       <button type="button" class="purple" id="aiProDirectorBtn" disabled style="padding:14px;font-size:14px;">🤖 Giao Thợ AI Pro Dựng (Không Giới Hạn Cảnh)</button>
       <button type="button" class="gold" id="aiZeroDirectorBtn" disabled style="padding:14px;font-size:14px;">⚡ Thợ AI Tự Dựng Nhanh (0đ Offline)</button>
@@ -360,6 +446,14 @@
         <button type="button" class="orange" id="aiFillBtn">✍️ Tạo Lại Hook Giật Gân (0đ)</button>
       </div>
       <div class="row" id="dynamicFields"></div>
+
+      <div class="dna-editor-box" id="dnaEditorBox">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="margin:0;color:#e9d5ff;">🧬 JSON Bộ Vẽ Đa Năng (Universal Hook DNA):</label>
+          <button type="button" class="chip-btn" id="applyDnaJsonBtn">✓ Áp dụng JSON</button>
+        </div>
+        <textarea id="hookDnaJsonInput" placeholder='{"position":"top","align":"center","lines":[...]}'></textarea>
+      </div>
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px;">
@@ -420,6 +514,416 @@
   if (!window.MOTION_FX) window.MOTION_FX = { compute: () => ({ zoom: 1, tx: 0, ty: 0, rotRad: 0, flashAlpha: 0, introDarkness: 0 }), drawTransition: (c, m, dt, d, w, h, p, cur) => c.drawImage(cur, 0, 0, w, h) };
   if (!window.FILTERS_WEBGL) window.FILTERS_WEBGL = { applyToCanvas: (src, tgt, w, h) => tgt.drawImage(src, 0, 0, w, h) };
 
+  // =========================================================================
+  // MẪU 9, MẪU 10 & MẪU 11: UNIVERSAL HOOK DNA (Tự vẽ đa màu, đa cỡ, hộp nền)
+  // =========================================================================
+  function fillRoundedRectCompat(ctx, x, y, w, h, r) {
+    const rad = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
+    ctx.closePath();
+  }
+
+  function renderUniversalHookDna(ctx, t, W, H, dna, hookTotal) {
+    if (!dna || !Array.isArray(dna.lines) || !dna.lines.length) return;
+    if (hookTotal && t > hookTotal + 0.05) return;
+
+    const sc = W / 720;
+    const pop = Math.min(1, t / 0.16);
+    const easeScale = 0.92 + 0.08 * (1 - Math.pow(1 - pop, 3));
+    const maxLineW = W - 52 * sc;
+    const align = dna.align || 'center';
+
+    // Đo kích thước từng dòng + tự co giãn nếu chữ quá dài
+    const measuredLines = dna.lines.map((line) => {
+      const segs = (line.segments || []).filter(s => s && String(s.text || '').length > 0);
+      if (!segs.length) return null;
+
+      let rawTotalW = 0;
+      const items = segs.map((s, idx) => {
+        const fontFam = s.font || 'Be Vietnam Pro';
+        const baseSize = (Number(s.size) || 46) * sc;
+        const weight = s.bold === false ? '700' : '900';
+        const italic = s.italic ? 'italic ' : '';
+        const text = s.uppercase ? String(s.text).toUpperCase() : String(s.text);
+        ctx.font = `${italic}${weight} ${Math.round(baseSize)}px "${fontFam}", sans-serif`;
+        const tw = ctx.measureText(text).width;
+        const hasBg = !!(s.bg && s.bg !== 'none');
+        const padX = hasBg ? (s.padX ?? 16) * sc : 0;
+        const padY = hasBg ? (s.padY ?? 8) * sc : 0;
+        const boxW = tw + padX * 2;
+        const boxH = baseSize * 1.15 + padY * 2;
+        const gap = idx > 0 ? (hasBg || segs[idx - 1].bg ? 10 * sc : 4 * sc) : 0;
+        rawTotalW += boxW + gap;
+        return { ...s, fontFam, baseSize, weight, italic, text, tw, hasBg, padX, padY, boxW, boxH, gap };
+      });
+
+      const fit = rawTotalW > maxLineW ? (maxLineW / rawTotalW) : 1;
+      let finalW = 0, maxH = 0;
+      items.forEach(it => {
+        it.baseSize *= fit;
+        it.tw *= fit;
+        it.padX *= fit;
+        it.padY *= fit;
+        it.boxW *= fit;
+        it.boxH *= fit;
+        it.gap *= fit;
+        finalW += it.boxW + it.gap;
+        if (it.boxH > maxH) maxH = it.boxH;
+      });
+      return { items, finalW, maxH };
+    }).filter(Boolean);
+
+    if (!measuredLines.length) return;
+
+    const lineGap = (dna.lineGap ?? 14) * sc;
+    const totalBlockH = measuredLines.reduce((acc, l) => acc + l.maxH, 0) + lineGap * Math.max(0, measuredLines.length - 1);
+
+    let blockTopY = H * 0.16;
+    if (typeof dna.offsetY === 'number' && dna.offsetY > 0.02 && dna.offsetY < 0.88) {
+      blockTopY = H * dna.offsetY;
+    } else if (dna.position === 'center') {
+      blockTopY = (H - totalBlockH) / 2;
+    } else if (dna.position === 'bottom') {
+      blockTopY = H * 0.72 - totalBlockH / 2;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = pop;
+
+    if (dna.backdrop === 'dark-gradient') {
+      const gradY0 = Math.max(0, blockTopY - 60 * sc);
+      const gradY1 = Math.min(H, blockTopY + totalBlockH + 70 * sc);
+      const grad = ctx.createLinearGradient(0, gradY0, 0, gradY1);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(0.25, 'rgba(0,0,0,0.58)');
+      grad.addColorStop(0.75, 'rgba(0,0,0,0.58)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, gradY0, W, gradY1 - gradY0);
+    } else if (dna.backdrop === 'blur-box') {
+      const padB = 18 * sc;
+      const boxW = Math.min(W - 36 * sc, Math.max(...measuredLines.map(l => l.finalW)) + padB * 2);
+      const boxX = align === 'left' ? 24 * sc : (align === 'right' ? W - 24 * sc - boxW : (W - boxW) / 2);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      fillRoundedRectCompat(ctx, boxX, blockTopY - padB, boxW, totalBlockH + padB * 2, 20 * sc);
+      ctx.fill();
+    }
+
+    ctx.translate(W / 2, blockTopY + totalBlockH / 2);
+    ctx.scale(easeScale, easeScale);
+    ctx.translate(-W / 2, -(blockTopY + totalBlockH / 2));
+
+    let curY = blockTopY;
+    for (const line of measuredLines) {
+      let curX = (W - line.finalW) / 2;
+      if (align === 'left') curX = 32 * sc;
+      else if (align === 'right') curX = W - 32 * sc - line.finalW;
+
+      const lineCenterY = curY + line.maxH / 2;
+
+      for (const seg of line.items) {
+        curX += seg.gap;
+        ctx.font = `${seg.italic}${seg.weight} ${Math.round(seg.baseSize)}px "${seg.fontFam}", sans-serif`;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+
+        if (seg.hasBg) {
+          const by = lineCenterY - seg.boxH / 2;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.35)';
+          ctx.shadowBlur = 12 * sc;
+          ctx.shadowOffsetY = 4 * sc;
+          ctx.fillStyle = seg.bg;
+          fillRoundedRectCompat(ctx, curX, by, seg.boxW, seg.boxH, (seg.bgRadius ?? 14) * sc);
+          ctx.fill();
+          ctx.restore();
+
+          if (seg.borderColor) {
+            ctx.lineWidth = (seg.borderWidth ?? 2) * sc;
+            ctx.strokeStyle = seg.borderColor;
+            fillRoundedRectCompat(ctx, curX, by, seg.boxW, seg.boxH, (seg.bgRadius ?? 14) * sc);
+            ctx.stroke();
+          }
+          ctx.fillStyle = seg.color || '#FFFFFF';
+          ctx.fillText(seg.text, curX + seg.padX, lineCenterY + 1 * sc);
+        } else {
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.72)';
+          ctx.shadowBlur = 10 * sc;
+          ctx.shadowOffsetY = 3 * sc;
+          const sw = (seg.strokeWidth ?? 7) * sc;
+          if (sw > 0) {
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = sw;
+            ctx.strokeStyle = seg.strokeColor || '#000000';
+            ctx.strokeText(seg.text, curX, lineCenterY);
+          }
+          ctx.fillStyle = seg.color || '#FFFFFF';
+          ctx.fillText(seg.text, curX, lineCenterY);
+          ctx.restore();
+        }
+        curX += seg.boxW;
+      }
+      curY += line.maxH + lineGap;
+    }
+    ctx.restore();
+  }
+
+  window.CURRENT_HOOK_DNA = null;
+  window.CURRENT_HOOK_DNA_SOURCE = null;
+
+  function buildDefaultDnaFromFields(data) {
+    const l1 = (data.line1 || 'MẪU CHỮ ĐA NĂNG').trim();
+    const hl = (data.highlight || 'SIÊU NÉT').trim();
+    const l2 = (data.line2 || '').trim();
+    const lines = [];
+    if (l1 || hl) {
+      const segs = [];
+      if (l1) segs.push({ text: l1, color: '#FFFFFF', size: 46, bold: true, strokeColor: '#000000', strokeWidth: 8 });
+      if (hl) segs.push({ text: hl, color: '#FFFFFF', size: 46, bold: true, bg: '#EF4444', bgRadius: 14, padX: 16, padY: 8 });
+      lines.push({ segments: segs });
+    }
+    if (l2) {
+      lines.push({
+        segments: [{ text: l2, color: '#FDE047', size: 32, bold: true, bg: 'rgba(15,23,42,0.75)', bgRadius: 12, padX: 16, padY: 8 }]
+      });
+    }
+    return { position: 'top', offsetY: 0.16, align: 'center', backdrop: 'dark-gradient', lineGap: 14, lines };
+  }
+
+  function registerExtraTemplates() {
+    const extras = [
+      {
+        id: 'mau-9-ngai-gia',
+        name: '🔥 Mẫu 9: THÍCH NHƯNG [NGẠI GIÁ ??]',
+        hookDuration: 3.0,
+        fields: [
+          { key: 'topText', label: 'Chữ chính (Trắng đậm)', default: 'THÍCH NHƯNG' },
+          { key: 'boxText', label: 'Chữ khung đỏ nổi bật', default: 'NGẠI GIÁ ??' },
+          { key: 'subText', label: 'Dòng phụ bên dưới', default: 'Xem hết để biết bí quyết cực hời hôm nay' }
+        ],
+        render: (ctx, t, W, H, data, hookTotal) => {
+          const top = (data.topText || '').trim();
+          const box = (data.boxText || '').trim();
+          const sub = (data.subText || '').trim();
+          const combineOneLine = (top.length + box.length) <= 24;
+          const lines = [];
+          if (combineOneLine) {
+            const segs = [];
+            if (top) segs.push({ text: top, color: '#FFFFFF', size: 52, bold: true, uppercase: true, strokeColor: '#000000', strokeWidth: 9 });
+            if (box) segs.push({ text: box, color: '#FFFFFF', size: 50, bold: true, uppercase: true, bg: '#EF4444', bgRadius: 14, padX: 18, padY: 9 });
+            lines.push({ segments: segs });
+          } else {
+            if (top) lines.push({ segments: [{ text: top, color: '#FFFFFF', size: 50, bold: true, uppercase: true, strokeColor: '#000000', strokeWidth: 9 }] });
+            if (box) lines.push({ segments: [{ text: box, color: '#FFFFFF', size: 52, bold: true, uppercase: true, bg: '#EF4444', bgRadius: 14, padX: 20, padY: 9 }] });
+          }
+          if (sub) {
+            lines.push({ segments: [{ text: sub, color: '#FDE047', size: 28, bold: true, bg: 'rgba(15,23,42,0.76)', bgRadius: 12, padX: 16, padY: 7 }] });
+          }
+          renderUniversalHookDna(ctx, t, W, H, { position: 'top', offsetY: 0.16, align: 'center', backdrop: 'dark-gradient', lineGap: 14, lines }, hookTotal);
+        }
+      },
+      {
+        id: 'mau-10-dau-tu-5-ty',
+        name: '💎 Mẫu 10: Đầu tư 5 TỶ / làm Spa...',
+        hookDuration: 3.2,
+        fields: [
+          { key: 'kicker', label: 'Cụm mở đầu', default: 'Đầu tư' },
+          { key: 'bigNum', label: 'Con số / Từ khóa (Vàng to)', default: '5 TỶ' },
+          { key: 'line2', label: 'Dòng 2 (Nội dung tò mò)', default: 'làm Spa và cái kết không ngờ...' }
+        ],
+        render: (ctx, t, W, H, data, hookTotal) => {
+          const kicker = (data.kicker || '').trim();
+          const bigNum = (data.bigNum || '').trim();
+          const line2 = (data.line2 || '').trim();
+          const lines = [];
+          const row1 = [];
+          if (kicker) row1.push({ text: kicker, color: '#FFFFFF', size: 46, bold: true, strokeColor: '#000000', strokeWidth: 8 });
+          if (bigNum) row1.push({ text: bigNum, color: '#FDE047', size: 74, bold: true, uppercase: true, strokeColor: '#000000', strokeWidth: 11 });
+          if (row1.length) lines.push({ segments: row1 });
+          if (line2) {
+            lines.push({
+              segments: [{ text: line2, color: '#FFFFFF', size: 38, bold: true, strokeColor: '#000000', strokeWidth: 8 }]
+            });
+          }
+          renderUniversalHookDna(ctx, t, W, H, { position: 'top', offsetY: 0.17, align: 'center', backdrop: 'dark-gradient', lineGap: 10, lines }, hookTotal);
+        }
+      },
+      {
+        id: 'universal-hook-dna',
+        name: '🧬 Mẫu 11: Bộ Vẽ Đa Năng (Universal Hook DNA)',
+        hookDuration: 3.0,
+        fields: [
+          { key: 'line1', label: 'Dòng 1 (Chữ chính)', default: 'BÍ QUYẾT LÀM MÓN' },
+          { key: 'highlight', label: 'Từ khóa khung nổi bật', default: 'CỰC MÊ' },
+          { key: 'line2', label: 'Dòng 2 (Phụ đề tò mò)', default: '99% khách ghé đều gọi lại lần 2' }
+        ],
+        render: (ctx, t, W, H, data, hookTotal) => {
+          let dna = window.CURRENT_HOOK_DNA;
+          if (!dna || !Array.isArray(dna.lines) || !dna.lines.length) {
+            dna = buildDefaultDnaFromFields(data);
+          } else if (window.CURRENT_HOOK_DNA_SOURCE) {
+            // Nếu ông chủ chỉnh tay ở 3 ô chữ thì tự cập nhật nội dung vào DNA đang giữ nguyên màu & cỡ chữ!
+            const src = window.CURRENT_HOOK_DNA_SOURCE;
+            const changed = (data.line1 !== src.line1) || (data.highlight !== src.highlight) || (data.line2 !== src.line2);
+            if (changed) {
+              dna = JSON.parse(JSON.stringify(dna));
+              if (dna.lines[0] && dna.lines[0].segments[0] && data.line1 !== src.line1) {
+                dna.lines[0].segments[0].text = data.line1;
+              }
+              const bgSeg = dna.lines.flatMap(l => l.segments || []).find(s => s.bg && s.bg !== 'none');
+              if (bgSeg && data.highlight !== src.highlight) bgSeg.text = data.highlight;
+              if (dna.lines[1] && dna.lines[1].segments[0] && data.line2 !== src.line2) {
+                dna.lines[1].segments[0].text = data.line2;
+              }
+            }
+          }
+          renderUniversalHookDna(ctx, t, W, H, dna, hookTotal);
+        }
+      }
+    ];
+
+    extras.forEach(ex => {
+      if (!window.HOOK_TEMPLATES.some(t => t.id === ex.id)) {
+        window.HOOK_TEMPLATES.push(ex);
+      }
+    });
+  }
+  registerExtraTemplates();
+
+  // =========================================================================
+  // GOOGLE SHEET AUTO & KHO CÔNG THỨC
+  // =========================================================================
+  const GAS_TEMPLATE_CODE = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var rows = sheet.getDataRange().getValues();
+  var items = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0]) continue;
+    items.push({
+      id: r[0],
+      createdAt: r[1],
+      type: r[2],
+      name: r[3],
+      category: r[4],
+      hookDna: r[5] ? JSON.parse(r[5]) : null,
+      scenePattern: r[6] ? JSON.parse(r[6]) : null,
+      notes: r[7] || ""
+    });
+  }
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, items: items }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["id", "createdAt", "type", "name", "category", "hookDnaJson", "scenePatternJson", "notes"]);
+  }
+  var body = JSON.parse(e.postData.contents);
+  var item = body.item || {};
+  sheet.appendRow([
+    item.id || ("f_" + Date.now()),
+    item.createdAt || new Date().toISOString(),
+    item.type || "both",
+    item.name || "Công thức AI",
+    item.category || "Chung",
+    item.hookDna ? JSON.stringify(item.hookDna) : "",
+    item.scenePattern ? JSON.stringify(item.scenePattern) : "",
+    item.notes || ""
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+  let formulaBank = [];
+  try {
+    formulaBank = JSON.parse(localStorage.getItem('catamthanh_formula_bank') || '[]');
+    if (!Array.isArray(formulaBank)) formulaBank = [];
+  } catch { formulaBank = []; }
+
+  function updateKhoUi() {
+    const cnt = formulaBank.length;
+    document.getElementById('khoStatus').textContent = `📚 Kho công thức: ${cnt} mẫu`;
+    document.getElementById('learnKhoHint').textContent = cnt > 0
+      ? `Bỏ trống = AI tự lục Kho (${cnt} công thức đã lưu)`
+      : 'Bỏ trống = AI tự phối hợp thông minh';
+  }
+
+  function persistFormulaBankLocal() {
+    try { localStorage.setItem('catamthanh_formula_bank', JSON.stringify(formulaBank.slice(-60))); } catch {}
+    updateKhoUi();
+  }
+
+  async function syncFormulasFromSheet(silent = false) {
+    const url = document.getElementById('sheetUrlInput').value.trim();
+    const stEl = document.getElementById('sheetSyncStatus');
+    if (!url) {
+      if (!silent) stEl.textContent = '⚠️ Chưa dán link Web App Google Sheet.';
+      return formulaBank;
+    }
+    try {
+      if (!silent) stEl.textContent = '⏳ Đang tải kho công thức từ Google Sheet...';
+      const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}action=list&_t=${Date.now()}`);
+      const json = await res.json();
+      if (!json.ok || !Array.isArray(json.items)) throw new Error('Sheet trả về không đúng định dạng.');
+      const map = new Map();
+      formulaBank.forEach(it => map.set(it.id || it.name, it));
+      json.items.forEach(it => map.set(it.id || it.name, it));
+      formulaBank = Array.from(map.values());
+      persistFormulaBankLocal();
+      if (!silent) stEl.textContent = `✅ Đã đồng bộ ${json.items.length} mẫu từ Google Sheet (Tổng Kho: ${formulaBank.length} mẫu).`;
+    } catch (err) {
+      if (!silent) stEl.textContent = `⚠️ Không đọc được Sheet (${err.message}). Đang dùng ${formulaBank.length} mẫu cục bộ.`;
+    }
+    return formulaBank;
+  }
+
+  async function saveFormulaToSheet(item) {
+    if (!item) return;
+    const entry = {
+      id: item.id || `f_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      createdAt: new Date().toISOString(),
+      type: item.type || 'both',
+      name: item.name || 'Mẫu AI mới học',
+      category: item.category || 'TikTok',
+      hookDna: item.hookDna || null,
+      scenePattern: item.scenePattern || null,
+      notes: item.notes || ''
+    };
+    const idx = formulaBank.findIndex(x => x.name === entry.name && x.type === entry.type);
+    if (idx >= 0) formulaBank[idx] = entry; else formulaBank.push(entry);
+    persistFormulaBankLocal();
+
+    const url = document.getElementById('sheetUrlInput').value.trim();
+    if (!url) return false;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'save', item: entry })
+      });
+      document.getElementById('sheetSyncStatus').textContent = `☁️ Đã lưu tự động "${entry.name}" lên Google Sheet!`;
+      return true;
+    } catch (e) {
+      console.warn('Sheet save skip:', e);
+      return false;
+    }
+  }
+
+  // =========================================================================
+  // BIẾN TRẠNG THÁI CHÍNH
+  // =========================================================================
   let rawFullBuffer = null, decodedBuffer = null, wavBlob = null, finalMp4Blob = null;
   let rawAudioBlob = null, rawAudioName = '';
   let trimMusicStart = 0, trimMusicEnd = 0, wavePeaks = [], userManuallyTrimmed = false;
@@ -431,7 +935,12 @@
   let plan = [];
   let mediabunnyPromise = null, scanQueue = Promise.resolve();
 
+  // Mẫu học từ người dùng
+  let sampleHookImgB64 = null, sampleHookImgDataUrl = null, sampleHookImgName = '';
+  let sampleRefVideoMeta = null; // { key, name, dur, thumbUrl }
+
   let isPlayingPreview = false, previewTime = 0, lastWallTs = 0, animId = null, lastPlayingIdx = -1, currentStageBlobKey = null, switchingStage = false;
+  let activeSingleSeg = null;
   let prevBeatIdxRender = -1, hasValidPrevFrame = false, prevBeatFrameCanvas = null, workCanvas = null;
 
   const sharedStageVideo = document.getElementById('sharedStageVideo');
@@ -459,14 +968,17 @@
   const subPosSelect = document.getElementById('subPosSelect');
   const geminiKeyInput = document.getElementById('geminiKeyInput');
   const geminiModelSelect = document.getElementById('geminiModelSelect');
+  const sheetUrlInput = document.getElementById('sheetUrlInput');
   const bossIdeaInput = document.getElementById('bossIdeaInput');
   const trimStartSlider = document.getElementById('trimStartSlider');
   const trimEndSlider = document.getElementById('trimEndSlider');
+  const borrowRefHookChk = document.getElementById('borrowRefHookChk');
 
   window.clearField = function (id, saveKey = false) {
     const el = document.getElementById(id); if (!el) return;
     el.value = ''; el.focus();
     if (saveKey && id === 'geminiKeyInput') localStorage.removeItem('catamthanh_gemini_key');
+    if (saveKey && id === 'sheetUrlInput') localStorage.removeItem('catamthanh_sheet_url');
     scheduleAutoSave();
   };
   window.setBossIdea = function (txt) { bossIdeaInput.value = txt; scheduleAutoSave(); };
@@ -511,6 +1023,7 @@
     try {
       const db = await openStudioDB();
       const usedKeys = new Set(videoQueueMeta.map(v => v.key));
+      if (sampleRefVideoMeta?.key) usedKeys.add(sampleRefVideoMeta.key);
       plan.forEach(s => { if (s.blobKey) usedKeys.add(s.blobKey); });
       const savedBlobs = {};
       usedKeys.forEach(k => { if (blobStore[k]) savedBlobs[k] = blobStore[k]; });
@@ -518,6 +1031,10 @@
       const payload = {
         savedAt: Date.now(), rawAudioBlob, rawAudioName, videoBlobs: savedBlobs,
         videoQueueMeta: videoQueueMeta.map(v => ({ key: v.key, name: v.name, dur: v.dur, thumbUrl: v.thumbUrl })),
+        sampleHookImgB64, sampleHookImgDataUrl, sampleHookImgName,
+        sampleRefVideoMeta, borrowRefHook: borrowRefHookChk.checked,
+        currentHookDna: window.CURRENT_HOOK_DNA,
+        currentHookDnaSource: window.CURRENT_HOOK_DNA_SOURCE,
         trimMusicStart, trimMusicEnd, userManuallyTrimmed, bossIdea: bossIdeaInput.value,
         templateId: templateSelect.value, hookData: getHookData(),
         vizStyle: vizStyleSelect.value, vizColor: vizColorSelect.value, subPos: subPosSelect.value,
@@ -530,6 +1047,7 @@
           idx: s.idx, numStr: s.numStr, start: s.start, end: s.end, dur: s.dur,
           musicStart: s.musicStart, energy: s.energy || 0.5,
           isHook: !!s.isHook, playMusic: s.playMusic !== false, lockedDur: !!s.lockedDur,
+          flipX: !!s.flipX, borrowedHook: !!s.borrowedHook,
           origVol: s.origVol, musicVol: s.musicVol, subTitle: s.subTitle || '',
           motionMode: s.motionMode || 'gimbal-sway', transIn: s.transIn || 'cut',
           filterId: s.filterId || '4k-sharp', filterAmt: s.filterAmt ?? 65,
@@ -565,6 +1083,25 @@
       videoQueueMeta.forEach(v => { if (v.dur) videoDurationCache[v.key] = v.dur; });
       renderVideoQueueUI();
 
+      if (draft.sampleHookImgB64) {
+        sampleHookImgB64 = draft.sampleHookImgB64;
+        sampleHookImgDataUrl = draft.sampleHookImgDataUrl;
+        sampleHookImgName = draft.sampleHookImgName || 'Ảnh mẫu Hook';
+        updateSampleHookImgUI();
+      }
+      if (draft.sampleRefVideoMeta && blobStore[draft.sampleRefVideoMeta.key]) {
+        sampleRefVideoMeta = draft.sampleRefVideoMeta;
+        if (sampleRefVideoMeta.dur) videoDurationCache[sampleRefVideoMeta.key] = sampleRefVideoMeta.dur;
+        updateSampleRefVideoUI();
+      }
+      borrowRefHookChk.checked = !!draft.borrowRefHook;
+
+      if (draft.currentHookDna) {
+        window.CURRENT_HOOK_DNA = draft.currentHookDna;
+        window.CURRENT_HOOK_DNA_SOURCE = draft.currentHookDnaSource || null;
+        document.getElementById('hookDnaJsonInput').value = JSON.stringify(draft.currentHookDna, null, 2);
+      }
+
       if (draft.bossIdea) bossIdeaInput.value = draft.bossIdea;
       if (draft.templateId && Array.from(templateSelect.options).some(o => o.value === draft.templateId)) {
         templateSelect.value = draft.templateId;
@@ -593,7 +1130,8 @@
         musicAudioEl.src = URL.createObjectURL(wavBlob);
         plan = draft.planMeta.map(m => ({
           ...m, isHook: !!m.isHook, playMusic: m.playMusic !== undefined ? m.playMusic : true,
-          lockedDur: !!m.lockedDur, origVol: m.origVol ?? 0, musicVol: m.musicVol ?? 100,
+          lockedDur: !!m.lockedDur, flipX: !!m.flipX, borrowedHook: !!m.borrowedHook,
+          origVol: m.origVol ?? 0, musicVol: m.musicVol ?? 100,
           subTitle: m.subTitle || '', motionMode: m.motionMode || 'gimbal-sway',
           transIn: m.transIn || 'cut', filterId: m.filterId || '4k-sharp', filterAmt: m.filterAmt ?? 65,
           musicStart: m.musicStart ?? m.start, thumbCanvas: null
@@ -623,6 +1161,7 @@
   }
   function renderTemplateFields() {
     const tpl = getCurrentTemplate();
+    document.getElementById('dnaEditorBox').style.display = (tpl && tpl.id === 'universal-hook-dna') ? 'block' : 'none';
     if (!tpl || !tpl.fields) { dynamicFields.innerHTML = ''; return; }
     dynamicFields.innerHTML = tpl.fields.map(f => `
       <div>
@@ -640,6 +1179,28 @@
   }
   function getHookData() {
     const obj = {}; document.querySelectorAll('.tpl-field').forEach(el => obj[el.dataset.key] = el.value); return obj;
+  }
+
+  function applyHookDnaToUi(dna) {
+    if (!dna || !Array.isArray(dna.lines)) return;
+    window.CURRENT_HOOK_DNA = dna;
+    const allSegs = dna.lines.flatMap(l => l.segments || []);
+    const bgSeg = allSegs.find(s => s.bg && s.bg !== 'none');
+    const l1Seg = (dna.lines[0]?.segments || []).find(s => s !== bgSeg);
+    const l2Seg = (dna.lines[1]?.segments || []).find(s => s !== bgSeg);
+
+    const src = {
+      line1: l1Seg ? l1Seg.text : '',
+      highlight: bgSeg ? bgSeg.text : '',
+      line2: l2Seg ? l2Seg.text : ''
+    };
+    window.CURRENT_HOOK_DNA_SOURCE = src;
+    templateSelect.value = 'universal-hook-dna';
+    renderTemplateFields();
+    document.querySelectorAll('.tpl-field').forEach(el => {
+      if (src[el.dataset.key] !== undefined) el.value = src[el.dataset.key];
+    });
+    document.getElementById('hookDnaJsonInput').value = JSON.stringify(dna, null, 2);
   }
 
   function getQualitySpec() {
@@ -695,6 +1256,53 @@
     const hasAudio = !!decodedBuffer, hasVid = videoQueueMeta.length > 0;
     document.getElementById('aiProDirectorBtn').disabled = !(hasAudio && hasVid);
     document.getElementById('aiZeroDirectorBtn').disabled = !(hasAudio && hasVid);
+  }
+
+  // --- XỬ LÝ ẢNH & VIDEO MẪU HỌC TẬP ---
+  function updateSampleHookImgUI() {
+    const prev = document.getElementById('sampleHookImgPreview');
+    const learnBtn = document.getElementById('learnOnlyHookImgBtn');
+    if (sampleHookImgB64) {
+      document.getElementById('sampleHookImgThumb').src = sampleHookImgDataUrl || '';
+      document.getElementById('sampleHookImgName').textContent = `✅ ${sampleHookImgName} (AI sẽ học DNA chữ)`;
+      prev.style.display = 'grid';
+      learnBtn.style.display = 'block';
+    } else {
+      prev.style.display = 'none';
+      learnBtn.style.display = 'none';
+    }
+  }
+
+  function updateSampleRefVideoUI() {
+    const prev = document.getElementById('sampleRefVideoPreview');
+    if (sampleRefVideoMeta) {
+      document.getElementById('sampleRefVideoThumb').src = sampleRefVideoMeta.thumbUrl || '';
+      document.getElementById('sampleRefVideoInfo').textContent = `✅ ${sampleRefVideoMeta.name} (${(sampleRefVideoMeta.dur || 0).toFixed(1)}s)`;
+      prev.style.display = 'grid';
+    } else {
+      prev.style.display = 'none';
+    }
+  }
+
+  async function compressSampleImageToB64(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = rej;
+        im.src = url;
+      });
+      const maxW = 720, scale = Math.min(1, maxW / img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/jpeg', 0.85);
+      return { dataUrl, b64: dataUrl.split(',')[1] };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 
   function sliceAudioBuffer(buffer, startSec, endSec) {
@@ -996,7 +1604,78 @@
     }));
   }
 
-  // --- 1. ĐẠO DIỄN AI PRO (KHÔNG GIỚI HẠN SỐ CẢNH + HOOK ĐẸP KHÔNG SÁO RỖNG + TIÊU ĐỀ KHỚP 100% ẢNH) ---
+  // --- HỌC NHANH ẢNH MẪU HOOK (CHỈ HỌC CHỮ & LƯU VÀO KHO) ---
+  async function learnHookDnaFromSampleImage(apiKey, ideaText) {
+    const parts = [
+      { inline_data: { mime_type: 'image/jpeg', data: sampleHookImgB64 } },
+      {
+        text: `Hãy phân tích kỹ ẢNH MẪU KIỂU CHỮ HOOK này (vị trí trên/giữa/dưới, căn lề, các màu chữ, cỡ chữ to nhỏ, các khung nền bo góc bg/bgRadius trên cùng 1 dòng hay nhiều dòng).
+Sau đó chuyển thể sang nội dung ý tưởng mới của Ông Chủ: "${ideaText}".
+Trả về JSON đúng mẫu:
+{
+  "formulaName": "Tên ngắn gọn kiểu chữ này (VD: Viral 2 Màu + Pill Đỏ)",
+  "category": "Ngành hàng/Chủ đề",
+  "hookDna": {
+    "position": "top",
+    "offsetY": 0.16,
+    "align": "center",
+    "backdrop": "dark-gradient",
+    "lineGap": 14,
+    "lines": [
+      {
+        "segments": [
+          { "text": "...", "color": "#FFFFFF", "size": 50, "bold": true, "uppercase": true, "strokeColor": "#000000", "strokeWidth": 8 },
+          { "text": "...", "color": "#FFFFFF", "size": 50, "bold": true, "uppercase": true, "bg": "#EF4444", "bgRadius": 14, "padX": 18, "padY": 8 }
+        ]
+      }
+    ]
+  }
+}`
+      }
+    ];
+    const model = geminiModelSelect.value;
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.3, responseMimeType: 'application/json' } })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Lỗi kết nối Gemini API.');
+    return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+  }
+
+  document.getElementById('learnOnlyHookImgBtn').addEventListener('click', async () => {
+    const apiKey = geminiKeyInput.value.trim();
+    if (!apiKey) {
+      document.getElementById('settingsCard').style.display = 'block';
+      document.getElementById('settingsCard').scrollIntoView({ behavior: 'smooth' });
+      return alert('Hãy dán Gemini API Key để AI học ảnh mẫu!');
+    }
+    if (!sampleHookImgB64) return alert('Chưa có ảnh mẫu!');
+    const btn = document.getElementById('learnOnlyHookImgBtn');
+    btn.disabled = true;
+    try {
+      aiAzStatus.textContent = '🧬 AI đang phân tích DNA kiểu chữ từ ảnh mẫu...';
+      const learned = await learnHookDnaFromSampleImage(apiKey, bossIdeaInput.value.trim() || document.getElementById('topicInput').value);
+      if (!learned.hookDna) throw new Error('AI chưa trích xuất được hookDna.');
+      applyHookDnaToUi(learned.hookDna);
+      await saveFormulaToSheet({
+        type: 'hook_dna',
+        name: learned.formulaName || sampleHookImgName || 'Hook DNA từ ảnh mẫu',
+        category: learned.category || 'Hook DNA',
+        hookDna: learned.hookDna,
+        notes: 'Học trực tiếp từ ảnh mẫu chữ'
+      });
+      if (plan.length) drawMainPreview(previewTime || 0);
+      scheduleAutoSave();
+      aiAzStatus.textContent = `✅ Đã học & áp dụng Mẫu 11 ("${learned.formulaName || 'Hook DNA'}") và lưu vào Kho!`;
+    } catch (e) {
+      aiAzStatus.textContent = '❌ ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // --- 1. ĐẠO DIỄN AI PRO (TỰ HỌC MẪU + KHO GOOGLE SHEET + MƯỢN HOOK NÉ REUP + KHÔNG GIỚI HẠN CẢNH) ---
   document.getElementById('aiProDirectorBtn').addEventListener('click', async () => {
     const apiKey = geminiKeyInput.value.trim();
     if (!apiKey) {
@@ -1009,7 +1688,10 @@
     const btn = document.getElementById('aiProDirectorBtn'); btn.disabled = true;
     try {
       await document.fonts.ready;
-      aiAzStatus.textContent = '🎵 (1/4) Thợ AI đang kiểm tra đoạn nhạc...';
+      aiAzStatus.textContent = '📊 (1/5) Đang đồng bộ Kho Công Thức từ Google Sheet...';
+      await syncFormulasFromSheet(true);
+
+      aiAzStatus.textContent = '🎵 (2/5) Thợ AI đang kiểm tra đoạn nhạc...';
       const fullDur = rawFullBuffer.duration;
       if (!userManuallyTrimmed && fullDur > 36) {
         const mFull = await analyzeAudioMetrics(rawFullBuffer);
@@ -1026,8 +1708,8 @@
         await applyTrimmedMusicToApp(false);
       }
 
-      aiAzStatus.textContent = '📸 (2/4) Thợ AI đang xem toàn bộ video thô...';
-      const framesPerVid = Math.max(3, Math.min(16, Math.floor(24 / videoQueueMeta.length)));
+      aiAzStatus.textContent = '📸 (3/5) Thợ AI đang xem video thô & tài liệu mẫu...';
+      const framesPerVid = Math.max(3, Math.min(16, Math.floor(22 / videoQueueMeta.length)));
       const gallery = [], parts = [];
       for (let vIdx = 0; vIdx < videoQueueMeta.length; vIdx++) {
         const vKey = videoQueueMeta[vIdx].key;
@@ -1039,6 +1721,41 @@
         });
       }
 
+      let sampleHookGuide = '';
+      if (sampleHookImgB64) {
+        parts.push({ inline_data: { mime_type: 'image/jpeg', data: sampleHookImgB64 } });
+        sampleHookGuide = `\n⚠️ ÔNG CHỦ ĐÃ NẠP "ẢNH MẪU KIỂU CHỮ HOOK" (Là tấm ảnh đính kèm gần cuối):
+- BẮT BUỘC học kỹ bố cục, màu sắc, cỡ chữ to nhỏ, các khung nền bo góc trên cùng 1 dòng trong ảnh mẫu này!
+- Chọn "templateId": "universal-hook-dna" và trả về đầy đủ object "hookDna" mô phỏng chuẩn phong cách ảnh mẫu (viết lại chữ đúng theo nội dung/món hàng trong video của Ông Chủ).
+- Đồng thời điền "learnedHookName" & "learnedCategory" để lưu công thức lên Google Sheet.`;
+      }
+
+      let sampleRefGuide = '';
+      const hasRefVideo = !!(sampleRefVideoMeta && blobStore[sampleRefVideoMeta.key]);
+      const borrowHook = hasRefVideo && borrowRefHookChk.checked;
+      if (hasRefVideo) {
+        const refFrames = await getFramesForGemini(sampleRefVideoMeta.key, 8);
+        refFrames.forEach(rf => {
+          parts.push({ inline_data: { mime_type: 'image/jpeg', data: rf.b64 } });
+        });
+        const refListStr = refFrames.map(rf => `Ref tại ${rf.t.toFixed(1)}s`).join(', ');
+        sampleRefGuide = `\n⚠️ ÔNG CHỦ ĐÃ NẠP "VIDEO MẪU HỌC CÁCH DỰNG" (Các ảnh cuối: ${refListStr}, tổng dài ${(sampleRefVideoMeta.dur || 10).toFixed(1)}s):
+- Hãy học nhịp cắt nhanh/chậm, thời lượng đoạn Hook đầu, góc quay (motionMode) và hiệu ứng chuyển cảnh (transIn) từ video mẫu này để áp dụng vào danh sách "scenes"!
+- Trả về "learnedRecipe": { "name": "...", "category": "...", "hookDuration": 2.8, "avgCutSec": 2.0, "motionFlow": [...], "transFlow": [...], "notes": "..." } để lưu lên Google Sheet.${borrowHook ? `
+- ĐẶC BIỆT: Ông Chủ tick "Mượn luôn đoạn Hook đầu của video mẫu" ➔ Hãy để Cảnh 1 là Hook mượn từ video mẫu (điền "refHookDuration": 2.0..3.8 tùy nhịp hay nhất đầu video mẫu, "unifyingFilter": chọn 1 bộ lọc đồng bộ cho toàn bài để khớp màu với các cảnh sau). Cảnh 2 trở đi dùng ảnh từ gallery video thô của Ông Chủ.` : ''}`;
+      }
+
+      let khoPromptBlock = '';
+      if (!sampleHookImgB64 && !hasRefVideo && formulaBank.length > 0) {
+        const recentFormulas = formulaBank.slice(-15).map((f, i) => ({
+          idx: i, type: f.type, name: f.name, category: f.category,
+          hookDna: f.hookDna || undefined, scenePattern: f.scenePattern || undefined, notes: f.notes
+        }));
+        khoPromptBlock = `\n📚 KHO CÔNG THỨC ĐÃ TÍCH LŨY (Từ Google Sheet — Ông Chủ bỏ trống ô mẫu nên hãy chọn/phối hợp công thức phù hợp nhất nếu thấy hay):
+${JSON.stringify(recentFormulas)}
+Nếu chọn Hook DNA từ Kho, đặt "templateId": "universal-hook-dna" và tùy biến chữ trong "hookDna" cho khớp video hiện tại!`;
+      }
+
       const m = audioMetricsCache, musicDur = decodedBuffer.duration;
       const idea = bossIdeaInput.value.trim() || 'Chọn Hook đắt giá/tò mò nhất để giữ chân khách xem hết toàn bộ video.';
       const galleryDesc = gallery.map(g => `Ảnh ${g.gIdx}: File ${g.vidIdx + 1} (dài ${(videoDurationCache[g.blobKey] || 10).toFixed(1)}s) tại giây ${g.t.toFixed(1)}s`).join('\n');
@@ -1048,44 +1765,49 @@
 YÊU CẦU CỦA ÔNG CHỦ: "${idea}"
 BÀI NHẠC: Dài ${musicDur.toFixed(2)}s, nhịp ~${m.bpm} BPM. Mốc chuyển nhịp gợi ý: [${(m.anchors || []).slice(0, 24).join(', ')}]s.
 
-TOÀN BỘ ẢNH TRÍCH TỪ CÁC VIDEO THÔ (File 1, File 2...):
+TOÀN BỘ ẢNH TRÍCH TỪ CÁC VIDEO THÔ CỦA ÔNG CHỦ (File 1, File 2...):
 ${galleryDesc}
 
-CÁC MẪU CHỮ HOOK:
+CÁC MẪU CHỮ HOOK SẴN CÓ:
 ${tplListDesc}
+${sampleHookGuide}
+${sampleRefGuide}
+${khoPromptBlock}
 
 QUY TẮC VÀNG ĐỂ DỰNG CHUẨN XÁC:
 1. KHÔNG GIỚI HẠN SỐ CẢNH: Tự do chia bao nhiêu cảnh tùy thích (5, 8, 12, 16, 20 cảnh...) sao cho chia chuẩn đúng từng đoạn hành động trong video thô và ăn khớp nhạc! Tổng durationSec các cảnh có nhạc bằng đúng ${musicDur.toFixed(2)}s.
 2. HOOK MỞ ĐẦU (Cảnh 1, hoặc Cảnh 1+2):
-   - Chọn KHOẢNH KHẮC ĐẮT GIÁ / TÒ MÒ / THÀNH PHẨM ĐẸP NHẤT trong kho ảnh (tự do thời lượng 1.8s–5.0s).
-   - CHỌN MẪU CHỮ THẬT SANG & HỢP GU: Với quán ăn/trà sữa nên ưu tiên "khoi-nghiep-y-hinh", "tieu-de-do-tin-nong", hoặc "cute-pink-milk". Với OOTD nên dùng "ootd-lookbook-trai".
-   - CẤM VIẾT SÁO RỖNG: Tuyệt đối KHÔNG viết các câu chung chung như "Giá rẻ bất ngờ chỉ từ...", "Review quán ngon". Hãy viết câu Hook CỤ THỂ, GIẬT GÂN, TÒ MÒ đúng món/người nhìn thấy trong ảnh! (VD: "BÍ QUYẾT LY TRÀ SEN VÀNG 3 LỚP CỰC MÊ", "99% KHÁCH GHÉ ĐỀU GỌI MÓN NÀY").
-   - Ở các cảnh có "isHook": true, đặt "subTitle": "" (KHÔNG thêm subTitle đè lên cảnh Hook!).
-3. TIÊU ĐỀ PHỤ ("subTitle") PHẢI KHỚP 100% ĐÚNG ẢNH "imageIdx" CỦA CẢNH ĐÓ:
-   - Chỉ nhìn ĐÚNG tấm Ảnh "imageIdx" bạn chọn cho cảnh đó rồi mới mô tả ngắn (3-5 chữ), tuyệt đối KHÔNG bịa hành động của ảnh khác! Nếu thấy đang múc đá thì ghi "Đá viên mát lạnh", thấy đang rót kem thì ghi "Phủ kem béo ngậy", nếu không chắc chắn thì để "".
-   - Với các cảnh thân bài (isHook: false) dùng chung 1 File, chỉ số giây của cảnh sau PHẢI LỚN HƠN cảnh trước (đi xuôi chiều, không nhảy ngược!).
-4. ÂM THANH ASMR TỰ ĐỘNG ("origVol" & "musicVol"):
-   - Bật ASMR ("origVol": 85..95, "musicVol": 45..55) ở những cảnh có thao tác bỏ đá vào ly, rót trà/nước, khuấy ly, xèo xèo nướng bánh, hoặc người nói. Cảnh quay xa ngoài đường ồn xe cộ thì đặt "origVol": 0, "musicVol": 100.
-5. CHUYỂN CẢNH, QUAY RA/VÔ & BỘ LỌC RIÊNG TỪNG CẢNH:
-   - Tự phối motionMode ("dolly-in", "dolly-out", "gimbal-sway", "breath-all", "auto-pan", "smooth"), transIn ("cut", "fade", "slide", "flash"), filterId ("4k-sharp", "fresh-clear", "rosy-skin", "film-cinematic", "warm-coffee", "bw-moody").
+   - Chọn KHOẢNH KHẮC ĐẮT GIÁ / TÒ MÒ / THÀNH PHẨM ĐẸP NHẤT (tự do 1.8s–5.0s).
+   - Nếu không học từ ảnh mẫu thì ưu tiên chọn mẫu chữ phù hợp ("mau-9-ngai-gia", "mau-10-dau-tu-5-ty", "khoi-nghiep-y-hinh", "tieu-de-do-tin-nong", hoặc "universal-hook-dna").
+   - CẤM VIẾT SÁO RỖNG! Viết câu Hook CỤ THỂ, GIẬT GÂN, TÒ MÒ đúng món/người nhìn thấy trong ảnh!
+   - Ở các cảnh "isHook": true, đặt "subTitle": "".
+3. TIÊU ĐỀ PHỤ ("subTitle") PHẢI KHỚP 100% ĐÚNG ẢNH "imageIdx" CỦA CẢNH ĐÓ (3-5 chữ, không bịa hành động khác; nếu không chắc thì để ""). Với các cảnh thân bài dùng chung 1 File, chỉ số giây của cảnh sau PHẢI LỚN HƠN cảnh trước.
+4. ÂM THANH ASMR TỰ ĐỘNG ("origVol" & "musicVol"): Bật ASMR ("origVol": 85..95, "musicVol": 45..55) ở cảnh bỏ đá, rót nước, khuấy ly, xèo xèo, người nói.
+5. CHUYỂN CẢNH, QUAY RA/VÔ & BỘ LỌC RIÊNG TỪNG CẢNH: Phối motionMode ("dolly-in", "dolly-out", "gimbal-sway", "breath-all", "auto-pan", "smooth"), transIn ("cut", "fade", "slide", "flash"), filterId ("4k-sharp", "fresh-clear", "rosy-skin", "film-cinematic", "warm-coffee", "bw-moody").
 
 Trả về JSON đúng mẫu:
 {
-  "summaryForBoss": "Giải thích chiến lược Hook, số cảnh đã chia & điểm nhấn ASMR",
-  "templateId": "khoi-nghiep-y-hinh",
-  "hookFields": { "num": "...", "s1": "...", "lead": "...", "main": "...", "end": "..." },
+  "summaryForBoss": "Giải thích chiến lược Hook, công thức đã học/phối hợp & điểm nhấn ASMR",
+  "templateId": "mau-9-ngai-gia",
+  "hookFields": { "topText": "...", "boxText": "...", "subText": "..." },
+  "learnedHookName": "Tên ngắn nếu học từ ảnh mẫu",
+  "learnedCategory": "Chủ đề",
+  "hookDna": null,
+  "learnedRecipe": null,
+  "refHookDuration": 2.8,
+  "unifyingFilter": "fresh-clear",
   "scenes": [
     {
-      "durationSec": 2.8, "imageIdx": 7, "isHook": true, "playMusic": true,
+      "durationSec": 2.8, "imageIdx": 0, "isHook": true, "playMusic": true,
       "origVol": 0, "musicVol": 100, "subTitle": "",
       "motionMode": "dolly-in", "transIn": "cut", "filterId": "fresh-clear",
-      "reason": "Show ly thành phẩm đẹp nhất mở Hook"
+      "reason": "Mở Hook thu hút"
     }
   ]
 }`;
 
       parts.push({ text: prompt });
-      aiAzStatus.textContent = '🤖 (3/4) Đạo diễn AI đang tự chia cảnh chuẩn từng đoạn & phối ASMR...';
+      aiAzStatus.textContent = '🤖 (4/5) Đạo diễn AI đang phân tích mẫu & dựng kịch bản...';
 
       const model = geminiModelSelect.value;
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
@@ -1099,18 +1821,64 @@ Trả về JSON đúng mẫu:
       const aiScenes = Array.isArray(aiPlan.scenes) && aiPlan.scenes.length ? aiPlan.scenes : [];
       if (!aiScenes.length) throw new Error('Thợ AI chưa trả về danh sách cảnh hợp lệ.');
 
-      if (aiPlan.templateId && Array.from(templateSelect.options).some(o => o.value === aiPlan.templateId)) {
-        templateSelect.value = aiPlan.templateId;
-        renderTemplateFields();
+      // Áp dụng Mẫu chữ / Universal Hook DNA
+      if (aiPlan.hookDna && Array.isArray(aiPlan.hookDna.lines) && aiPlan.hookDna.lines.length) {
+        applyHookDnaToUi(aiPlan.hookDna);
+      } else {
+        if (aiPlan.templateId && Array.from(templateSelect.options).some(o => o.value === aiPlan.templateId)) {
+          templateSelect.value = aiPlan.templateId;
+          renderTemplateFields();
+        }
+        if (aiPlan.hookFields) {
+          document.querySelectorAll('.tpl-field').forEach(el => {
+            if (aiPlan.hookFields[el.dataset.key] !== undefined) el.value = aiPlan.hookFields[el.dataset.key];
+          });
+        }
       }
-      if (aiPlan.hookFields) {
-        document.querySelectorAll('.tpl-field').forEach(el => {
-          if (aiPlan.hookFields[el.dataset.key] !== undefined) el.value = aiPlan.hookFields[el.dataset.key];
+
+      // Tự động lưu công thức mới học lên Google Sheet
+      if (sampleHookImgB64 && aiPlan.hookDna) {
+        await saveFormulaToSheet({
+          type: 'hook_dna',
+          name: aiPlan.learnedHookName || sampleHookImgName || 'Hook DNA từ ảnh mẫu',
+          category: aiPlan.learnedCategory || 'Hook Viral',
+          hookDna: aiPlan.hookDna,
+          notes: `Học tự động khi dựng: ${idea.slice(0, 60)}`
+        });
+      }
+      if (hasRefVideo && aiPlan.learnedRecipe) {
+        await saveFormulaToSheet({
+          type: 'edit_recipe',
+          name: aiPlan.learnedRecipe.name || sampleRefVideoMeta.name || 'Công thức dựng từ Video mẫu',
+          category: aiPlan.learnedRecipe.category || aiPlan.learnedCategory || 'Edit Pattern',
+          scenePattern: aiPlan.learnedRecipe,
+          notes: aiPlan.learnedRecipe.notes || 'Học nhịp cắt & chuyển cảnh từ video mẫu'
         });
       }
 
       const lastEndByBlob = {};
+      const unifyFilter = aiPlan.unifyingFilter || 'fresh-clear';
+
       plan = aiScenes.map((sc, idx) => {
+        // Nếu mượn đoạn Hook đầu của video mẫu cho Cảnh 1
+        if (idx === 0 && borrowHook) {
+          const maxRefDur = Math.max(1.2, (sampleRefVideoMeta.dur || 5) - 0.1);
+          const hookDur = Math.min(maxRefDur, Math.max(1.2, Number(aiPlan.refHookDuration || sc.durationSec) || 2.8));
+          return {
+            idx: 1, numStr: '01',
+            start: 0, end: 0, dur: Number(hookDur.toFixed(2)), musicStart: 0, energy: 0.85,
+            isHook: true, playMusic: true, lockedDur: false,
+            flipX: true, borrowedHook: true,
+            origVol: 0, musicVol: 100, subTitle: '',
+            motionMode: sc.motionMode || 'dolly-in',
+            transIn: 'cut',
+            filterId: unifyFilter, filterAmt: 75,
+            blobKey: sampleRefVideoMeta.key, trimStart: 0, hasPicked: true, customVideo: false,
+            aiReason: `🎬 Mượn Hook đầu Video Mẫu (🪞 Lật gương + 🎨 Phủ màu ${unifyFilter} né Reup)`,
+            thumbCanvas: null
+          };
+        }
+
         const gItem = gallery[Math.max(0, Math.min(gallery.length - 1, parseInt(sc.imageIdx, 10) || 0))];
         const vDur = videoDurationCache[gItem.blobKey] || 10;
         const dur = Math.max(0.5, Number(sc.durationSec) || 2.2);
@@ -1126,7 +1894,6 @@ Trả về JSON đúng mẫu:
           let tPick = gItem.t;
           if (tPick < minAllowed) {
             tPick = minAllowed;
-            // Nếu bị ép dời quá xa ảnh gốc (>1.8s) thì bỏ subTitle cũ để tránh lệch hành động!
             if (Math.abs(tPick - gItem.t) > 1.8) subTitle = '';
           }
           trimStart = Number(Math.min(maxStart, tPick).toFixed(2));
@@ -1140,10 +1907,12 @@ Trả về JSON đúng mẫu:
           idx: idx + 1, numStr: String(idx + 1).padStart(2, '0'),
           start: 0, end: 0, dur, musicStart: 0, energy: 0.7,
           isHook: !!sc.isHook, playMusic: sc.playMusic !== false, lockedDur: false,
+          flipX: false, borrowedHook: false,
           origVol, musicVol, subTitle,
           motionMode: sc.motionMode || 'gimbal-sway',
           transIn: idx === 0 ? 'cut' : (sc.transIn || 'fade'),
-          filterId: sc.filterId || '4k-sharp', filterAmt: 65,
+          filterId: borrowHook ? unifyFilter : (sc.filterId || '4k-sharp'),
+          filterAmt: borrowHook ? 70 : 65,
           blobKey: gItem.blobKey, trimStart, hasPicked: true, customVideo: false,
           aiReason: `🤖 Thợ AI: ${sc.reason || 'Khớp cảnh'} ${origVol > 0 ? `(🎧 ASMR ${origVol}%)` : ''}`,
           thumbCanvas: null
@@ -1155,7 +1924,7 @@ Trả về JSON đúng mẫu:
 
       const hookDurTotal = plan.filter(s => s.isHook).reduce((a, b) => a + b.dur, 0).toFixed(1);
       aiReportBox.innerHTML = `<b>📋 Chiến lược giữ chân của Thợ AI:</b> ${aiPlan.summaryForBoss || 'Đã tự chia cảnh khớp từng hành động và bật ASMR.'}<br>
-        • Tổng <b>${plan.length} cảnh</b> (Hook: <b>${hookDurTotal}s</b> • ASMR rõ nét: <b>${plan.filter(s => s.origVol > 0).length} cảnh</b>) • Mẫu chữ: <b>${getCurrentTemplate()?.name}</b>`;
+        • Tổng <b>${plan.length} cảnh</b> (Hook: <b>${hookDurTotal}s</b>${borrowHook ? ' • <b>Mượn Hook Mẫu + Lật gương né Reup</b>' : ''} • ASMR rõ nét: <b>${plan.filter(s => s.origVol > 0).length} cảnh</b>) • Mẫu chữ: <b>${getCurrentTemplate()?.name}</b>`;
 
       document.getElementById('reviewCard').style.display = 'block';
       document.getElementById('exportCard').style.display = 'block';
@@ -1165,7 +1934,7 @@ Trả về JSON đúng mẫu:
       drawMainPreview(0);
       saveDraftNow();
 
-      aiAzStatus.textContent = '🎉 (4/4) Thợ AI dựng xong rồi! Bấm Phát Duyệt để kiểm tra ngay.';
+      aiAzStatus.textContent = '🎉 (5/5) Thợ AI dựng xong rồi! Bấm Phát Duyệt để kiểm tra ngay.';
       document.getElementById('reviewCard').scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
       aiAzStatus.textContent = '❌ ' + err.message;
@@ -1176,9 +1945,11 @@ Trả về JSON đúng mẫu:
   document.getElementById('aiZeroDirectorBtn').addEventListener('click', async () => {
     if (!decodedBuffer || !videoQueueMeta.length) return alert('Hãy nạp Nhạc và Video Thô trước!');
     await document.fonts.ready;
-    aiAzStatus.textContent = '⚡ Thợ AI 0đ đang chia cảnh mềm mại...';
+    aiAzStatus.textContent = '⚡ Thợ AI 0đ đang kiểm tra Kho & chia cảnh mềm mại...';
 
     const dur = decodedBuffer.duration;
+    const hasRefVideo = !!(sampleRefVideoMeta && blobStore[sampleRefVideoMeta.key]);
+    const borrowHook = hasRefVideo && borrowRefHookChk.checked;
     const sceneCount = Math.max(2, Math.round(dur / 2.8));
     const motions = ['dolly-in', 'gimbal-sway', 'dolly-out', 'pan-breath'];
     const transList = ['cut', 'fade', 'slide', 'fade'];
@@ -1201,7 +1972,20 @@ Trả về JSON đúng mẫu:
     plan = [];
     for (let i = 0; i < cuts.length - 1; i++) {
       const sDur = Number(Math.max(0.6, cuts[i + 1] - cuts[i]).toFixed(2));
-      const vIdx = videoQueueMeta.length >= sceneCount ? i : Math.min(videoQueueMeta.length - 1, Math.floor((i * videoQueueMeta.length) / sceneCount));
+      if (i === 0 && borrowHook) {
+        const refDur = Math.min(sDur, Math.max(1.2, (sampleRefVideoMeta.dur || 5) - 0.1));
+        plan.push({
+          idx: 1, numStr: '01', start: 0, end: 0, dur: Number(refDur.toFixed(2)),
+          musicStart: 0, energy: 0.85, isHook: true, playMusic: true, lockedDur: false,
+          flipX: true, borrowedHook: true, origVol: 0, musicVol: 100, subTitle: '',
+          motionMode: 'dolly-in', transIn: 'cut', filterId: 'fresh-clear', filterAmt: 75,
+          blobKey: sampleRefVideoMeta.key, trimStart: 0, hasPicked: true, customVideo: false,
+          aiReason: '⚡ Thợ 0đ: Mượn Hook đầu Video Mẫu (Lật gương + Phủ màu né Reup)', thumbCanvas: null
+        });
+        continue;
+      }
+
+      const vIdx = videoQueueMeta.length >= sceneCount ? i % videoQueueMeta.length : Math.min(videoQueueMeta.length - 1, Math.floor((i * videoQueueMeta.length) / sceneCount));
       const vMeta = videoQueueMeta[vIdx];
       const vDur = videoDurationCache[vMeta.key] || vMeta.dur || 10;
       const maxStart = Math.max(0, vDur - sDur);
@@ -1214,10 +1998,11 @@ Trả về JSON đúng mẫu:
         idx: i + 1, numStr: String(i + 1).padStart(2, '0'),
         start: 0, end: 0, dur: sDur, musicStart: 0, energy: 0.7,
         isHook: i === 0, playMusic: true, lockedDur: false,
+        flipX: false, borrowedHook: false,
         origVol: autoAsmr, musicVol: autoAsmr > 0 ? 55 : 100, subTitle: '',
         motionMode: motions[i % motions.length],
         transIn: i === 0 ? 'cut' : transList[i % transList.length],
-        filterId: '4k-sharp', filterAmt: 65,
+        filterId: borrowHook ? 'fresh-clear' : '4k-sharp', filterAmt: borrowHook ? 70 : 65,
         blobKey: vMeta.key, trimStart, hasPicked: true, customVideo: false,
         aiReason: `⚡ Thợ 0đ: Giữ ${sDur.toFixed(1)}s mượt ${autoAsmr > 0 ? '+ ASMR 85%' : ''}`, thumbCanvas: null
       });
@@ -1225,11 +2010,18 @@ Trả về JSON đúng mẫu:
 
     const ideaShort = (bossIdeaInput.value || 'trà sữa nhà làm').split(/[,.:]/)[0].slice(0, 26);
     document.getElementById('topicInput').value = ideaShort;
-    document.getElementById('aiFillBtn').click();
+
+    // Nếu trong Kho có sẵn công thức Hook DNA thì áp dụng luôn
+    const savedDna = [...formulaBank].reverse().find(f => f.hookDna && Array.isArray(f.hookDna.lines));
+    if (savedDna) {
+      applyHookDnaToUi(savedDna.hookDna);
+    } else {
+      document.getElementById('aiFillBtn').click();
+    }
 
     rebalancePlanDurations(); renderBeatsUI();
 
-    aiReportBox.innerHTML = `<b>📋 Báo cáo của Thợ AI (0đ Offline):</b> Đã chia <b>${plan.length} cảnh</b> mềm mại (chuyển cảnh Hòa tan/Trượt + Gimbal + 4K Sắc Nét + bật ASMR ở Cảnh 2, 3).`;
+    aiReportBox.innerHTML = `<b>📋 Báo cáo của Thợ AI (0đ Offline):</b> Đã chia <b>${plan.length} cảnh</b> mềm mại${borrowHook ? ' (Mượn Hook Mẫu + Lật gương né Reup)' : ''} + 4K Sắc Nét + bật ASMR ở Cảnh 2, 3.${savedDna ? ` Đã áp dụng Hook DNA từ Kho: <b>${savedDna.name}</b>.` : ''}`;
     document.getElementById('reviewCard').style.display = 'block';
     document.getElementById('exportCard').style.display = 'block';
     document.getElementById('saveButtonsBox').style.display = 'none';
@@ -1296,7 +2088,7 @@ Trả về JSON đúng mẫu:
 
       const lookNum = !seg.isHook ? (getNonHookIndex(seg) + 1) : 0;
       const vFileNum = seg.blobKey ? (videoQueueMeta.findIndex(v => v.key === seg.blobKey) + 1) : 0;
-      const fileTag = vFileNum > 0 ? ` • File ${vFileNum}` : '';
+      const fileTag = seg.borrowedHook ? ' • Video Mẫu' : (vFileNum > 0 ? ` • File ${vFileNum}` : '');
 
       const right = document.createElement('div');
       right.innerHTML = `
@@ -1304,6 +2096,7 @@ Trả về JSON đúng mẫu:
           <span>
             <b>Cảnh ${seg.numStr}</b>
             <span class="badge ${seg.isHook ? 'hook' : ''}">${seg.isHook ? '💬 HOOK' : 'LOOK ' + lookNum}${fileTag}</span>
+            ${seg.flipX ? '<span class="badge mirror">🪞 Lật gương</span>' : ''}
             ${seg.origVol > 0 ? `<span class="badge asmr">🎧 ASMR ${seg.origVol}%</span>` : ''}
             ${seg.lockedDur ? '<span class="badge locked">🔒 Khóa</span>' : ''}
           </span>
@@ -1322,6 +2115,11 @@ Trả về JSON đúng mẫu:
       asmrBtn.type = 'button'; asmrBtn.className = 'small-btn ' + (seg.origVol > 0 ? 'green' : 'dark');
       asmrBtn.textContent = seg.origVol > 0 ? '🎧 Tắt ASMR' : '🎧 Bật ASMR';
 
+      const mirrorBtn = document.createElement('button');
+      mirrorBtn.type = 'button'; mirrorBtn.className = 'small-btn ' + (seg.flipX ? 'purple' : 'dark');
+      mirrorBtn.textContent = seg.flipX ? '🪞 Đang Lật' : '🪞 Lật gương';
+      mirrorBtn.onclick = () => { seg.flipX = !seg.flipX; renderBeatsUI(); drawMainPreview(seg.start); scheduleAutoSave(); };
+
       const playOneBtn = document.createElement('button');
       playOneBtn.type = 'button'; playOneBtn.className = 'small-btn'; playOneBtn.textContent = '👁️ Xem';
       playOneBtn.onclick = () => playSingleBeat(seg);
@@ -1333,7 +2131,7 @@ Trả về JSON đúng mẫu:
         if (plan.length <= 1) return;
         plan.splice(arrIdx, 1); rebalancePlanDurations(); renderBeatsUI(); drawMainPreview(0); scheduleAutoSave();
       };
-      btnGroup.append(pickBtn, asmrBtn, playOneBtn, delBtn);
+      btnGroup.append(pickBtn, asmrBtn, mirrorBtn, playOneBtn, delBtn);
 
       const ctrlBox = document.createElement('div'); ctrlBox.className = 'scene-ctrl-box';
 
@@ -1506,7 +2304,7 @@ Trả về JSON đúng mẫu:
       pickInput.onchange = async (e) => {
         const f = e.target.files[0]; if (!f) return;
         const k = `custom_${seg.idx}_${Date.now()}`;
-        blobStore[k] = f; seg.blobKey = k; seg.customVideo = true; seg.trimStart = 0; seg.hasPicked = false;
+        blobStore[k] = f; seg.blobKey = k; seg.customVideo = true; seg.borrowedHook = false; seg.trimStart = 0; seg.hasPicked = false;
         await populateStrip();
         await loadStageVideoKey(seg.blobKey, 0);
         renderCompositeFrame(pCtx, seg.start, 720, 1280, seg, sharedStageVideo);
@@ -1550,11 +2348,7 @@ Trả về JSON đúng mẫu:
     else if (pos === 'bottom-center') { bx = (W - tw) / 2; by = H * 0.80; align = 'center'; }
 
     ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
-    ctx.beginPath(); const r = 14 * sc;
-    ctx.moveTo(bx + r, by); ctx.lineTo(bx + tw - r, by); ctx.quadraticCurveTo(bx + tw, by, bx + tw, by + r);
-    ctx.lineTo(bx + tw, by + th - r); ctx.quadraticCurveTo(bx + tw, by + th, bx + tw - r, by + th);
-    ctx.lineTo(bx + r, by + th); ctx.quadraticCurveTo(bx, by + th, bx, by + th - r);
-    ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by); ctx.closePath();
+    fillRoundedRectCompat(ctx, bx, by, tw, th, 14 * sc);
     ctx.fill(); ctx.lineWidth = 1.5 * sc; ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.stroke();
 
     ctx.fillStyle = '#FFFFFF'; ctx.textAlign = align;
@@ -1604,11 +2398,16 @@ Trả về JSON đúng mẫu:
     if (tpl && tpl.bwFirst3s && seg.isHook) wCtx2d.filter = 'grayscale(100%)';
     wCtx2d.translate(W / 2 + fx.tx, H / 2 + fx.ty);
     if (fx.rotRad) wCtx2d.rotate(fx.rotRad);
-    wCtx2d.scale(fx.zoom, fx.zoom);
+    const antiReupZoom = seg.borrowedHook ? 1.04 : 1.0;
+    wCtx2d.scale(fx.zoom * antiReupZoom * (seg.flipX ? -1 : 1), fx.zoom * antiReupZoom);
     wCtx2d.translate(-W / 2, -H / 2);
     drawFn(wCtx2d, W, H);
     wCtx2d.restore();
 
+    if (seg.borrowedHook) {
+      wCtx2d.fillStyle = 'rgba(255, 244, 230, 0.045)';
+      wCtx2d.fillRect(0, 0, W, H);
+    }
     if (fx.introDarkness > 0.01) { wCtx2d.fillStyle = `rgba(0,0,0,${fx.introDarkness.toFixed(2)})`; wCtx2d.fillRect(0, 0, W, H); }
     if (fx.flashAlpha > 0.01 && !(tpl && tpl.bwFirst3s && seg.isHook)) {
       wCtx2d.fillStyle = `rgba(255,255,255,${Math.min(0.2, fx.flashAlpha).toFixed(2)})`; wCtx2d.fillRect(0, 0, W, H);
@@ -1626,7 +2425,6 @@ Trả về JSON đúng mẫu:
       if (seg.isHook && hookInfo) tpl.render(ctx, hookInfo.localT, W, H, getHookData(), hookInfo.groupDur, segInfo);
       else if (!seg.isHook && tpl.renderOnNonHook) tpl.render(ctx, t, W, H, getHookData(), 0, segInfo);
     }
-    // CHỈ vẽ subTitle ở các cảnh KHÔNG tick Hook (tránh đè lên chữ Hook!)
     if (!seg.isHook && seg.subTitle && (!tpl || !tpl.renderOnNonHook)) {
       drawPerBeatSubtitle(ctx, seg, dt, W, H);
     }
@@ -1731,7 +2529,6 @@ Trả về JSON đúng mẫu:
     return await off.startRendering();
   }
 
-  // GIẢI MÃ ĐÚNG ĐOẠN ÂM GỐC ASMR BẰNG AudioBufferSink (CHẠY MƯỢT TRÊN MỌI FILE .MOV / .MP4 IPHONE)
   async function extractClipAsmr48k(blobKey, trimStart, dur) {
     const startSec = Math.max(0, trimStart), endSec = startSec + Math.max(0.1, dur);
     const sr = 48000, targetLen = Math.max(1, Math.round(dur * sr));
@@ -1794,7 +2591,6 @@ Trả về JSON đúng mẫu:
             peak = Math.max(peak, Math.abs(cL[i]), Math.abs(cR[i]));
           }
           if (peak > 0.003) {
-            // Khuếch đại tự động tiếng nhỏ (bỏ đá/rót trà) lên tới 5.5x để rõ nét hòa cùng nhạc!
             autoBoost = Math.min(5.5, 0.88 / peak);
             hasRealAsmr = true;
             asmrMixedCount++;
@@ -1802,7 +2598,6 @@ Trả về JSON đúng mẫu:
         }
       }
 
-      // 1. Trộn nhạc nền (nếu có ASMR thật ở cảnh này và nhạc đang để >75%, tự nén nhẹ nhạc xuống 0.72 để tiếng ASMR nổi bật!)
       if (seg.playMusic && seg.musicStart !== null && seg.musicVol > 0) {
         let gain = seg.musicVol / 100;
         if (hasRealAsmr && gain > 0.65) gain *= 0.72;
@@ -1817,7 +2612,6 @@ Trả về JSON đúng mẫu:
         }
       }
 
-      // 2. Trộn âm thanh ASMR gốc đã khuếch đại rõ nét
       if (hasRealAsmr && cL) {
         const gain = (seg.origVol / 100) * autoBoost;
         for (let i = 0; i < Math.min(count, cL.length); i++) {
@@ -1829,7 +2623,6 @@ Trả về JSON đúng mẫu:
       }
     }
 
-    // Soft limiter tự nhiên tránh rè khi trộn lớn
     for (let i = 0; i < totalSamples; i++) {
       outL[i] = Math.tanh(outL[i]);
       outR[i] = Math.tanh(outR[i]);
@@ -1889,11 +2682,80 @@ Trả về JSON đúng mẫu:
 
   geminiKeyInput.value = localStorage.getItem('catamthanh_gemini_key') || '';
   if (localStorage.getItem('catamthanh_gemini_model')) geminiModelSelect.value = localStorage.getItem('catamthanh_gemini_model');
+  sheetUrlInput.value = localStorage.getItem('catamthanh_sheet_url') || '';
+
   geminiKeyInput.addEventListener('input', () => localStorage.setItem('catamthanh_gemini_key', geminiKeyInput.value.trim()));
   geminiModelSelect.addEventListener('change', () => localStorage.setItem('catamthanh_gemini_model', geminiModelSelect.value));
+  sheetUrlInput.addEventListener('input', () => localStorage.setItem('catamthanh_sheet_url', sheetUrlInput.value.trim()));
   bossIdeaInput.addEventListener('input', scheduleAutoSave);
+  borrowRefHookChk.addEventListener('change', scheduleAutoSave);
+
   document.getElementById('toggleKeyBtn').addEventListener('click', () => {
     geminiKeyInput.type = geminiKeyInput.type === 'password' ? 'text' : 'password';
+  });
+  document.getElementById('syncSheetBtn').addEventListener('click', () => syncFormulasFromSheet(false));
+  document.getElementById('toggleSheetGuideBtn').addEventListener('click', () => {
+    const b = document.getElementById('sheetGuideBox'); b.style.display = b.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('copyGasCodeBtn').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(GAS_TEMPLATE_CODE);
+      document.getElementById('sheetSyncStatus').textContent = '📋 Đã copy Code Apps Script vào bộ nhớ tạm!';
+    } catch {
+      alert(GAS_TEMPLATE_CODE);
+    }
+  });
+
+  document.getElementById('applyDnaJsonBtn').addEventListener('click', () => {
+    try {
+      const parsed = JSON.parse(document.getElementById('hookDnaJsonInput').value);
+      applyHookDnaToUi(parsed);
+      if (plan.length) drawMainPreview(previewTime || 0);
+      scheduleAutoSave();
+    } catch (e) {
+      alert('JSON Hook DNA chưa hợp lệ: ' + e.message);
+    }
+  });
+
+  // Upload ảnh mẫu kiểu chữ Hook
+  const sampleHookImgInput = document.getElementById('sampleHookImgInput');
+  document.getElementById('pickSampleHookImgBtn').addEventListener('click', () => sampleHookImgInput.click());
+  sampleHookImgInput.addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const { dataUrl, b64 } = await compressSampleImageToB64(f);
+      sampleHookImgB64 = b64; sampleHookImgDataUrl = dataUrl; sampleHookImgName = f.name || 'Ảnh mẫu Hook';
+      updateSampleHookImgUI();
+      sampleHookImgInput.value = '';
+      scheduleAutoSave();
+    } catch (err) {
+      alert('Không đọc được ảnh mẫu: ' + err.message);
+    }
+  });
+  document.getElementById('clearSampleHookImgBtn').addEventListener('click', () => {
+    sampleHookImgB64 = null; sampleHookImgDataUrl = null; sampleHookImgName = '';
+    updateSampleHookImgUI(); scheduleAutoSave();
+  });
+
+  // Upload video mẫu học cách dựng
+  const sampleRefVideoInput = document.getElementById('sampleRefVideoInput');
+  document.getElementById('pickSampleRefVideoBtn').addEventListener('click', () => sampleRefVideoInput.click());
+  sampleRefVideoInput.addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const key = `refvid_${Date.now()}`;
+    blobStore[key] = f;
+    sampleRefVideoMeta = { key, name: f.name || 'Video mẫu dựng', dur: 0, thumbUrl: '' };
+    updateSampleRefVideoUI();
+    const strip = await enqueueScanStrip(key);
+    sampleRefVideoMeta.dur = videoDurationCache[key] || 5;
+    if (strip && strip.length) sampleRefVideoMeta.thumbUrl = strip[0].dataUrl;
+    updateSampleRefVideoUI();
+    sampleRefVideoInput.value = '';
+    scheduleAutoSave();
+  });
+  document.getElementById('clearSampleRefVideoBtn').addEventListener('click', () => {
+    sampleRefVideoMeta = null; borrowRefHookChk.checked = false;
+    updateSampleRefVideoUI(); scheduleAutoSave();
   });
 
   document.getElementById('pasteTkBtn').addEventListener('click', async () => {
@@ -2021,6 +2883,7 @@ Trả về JSON đúng mẫu:
     plan.push({
       idx: newIdx, numStr: String(newIdx).padStart(2, '0'), start: 0, end: 0, dur: 2.5,
       musicStart: 0, energy: 0.7, isHook: false, playMusic: true, lockedDur: false,
+      flipX: false, borrowedHook: false,
       origVol: 0, musicVol: 100, subTitle: '',
       motionMode: 'gimbal-sway', transIn: 'fade', filterId: '4k-sharp', filterAmt: 65,
       blobKey: fallbackKey, trimStart: 0, hasPicked: false, customVideo: false, aiReason: '', thumbCanvas: null
@@ -2237,7 +3100,12 @@ Trả về JSON đúng mẫu:
 
   renderVideoQueueUI();
   initTemplates();
-  window.addEventListener('DOMContentLoaded', restoreDraftOnLoad);
+  updateKhoUi();
+  window.addEventListener('DOMContentLoaded', async () => {
+    await restoreDraftOnLoad();
+    if (sheetUrlInput.value.trim()) syncFormulasFromSheet(true);
+  });
 </script>
 </body>
 </html>
+
