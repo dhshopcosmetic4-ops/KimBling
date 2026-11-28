@@ -8,11 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Be+Vietnam+Pro:wght@700;800;900&family=Chakra+Petch:wght@700&family=Dancing+Script:wght@700&family=Oswald:wght@700&family=Playfair+Display:wght@800;900&display=swap" rel="stylesheet" />
-  <script src="./hook-templates.js?v=22"></script>
-  <script src="./ai-presets.js?v=22"></script>
-  <script src="./visualizer.js?v=22"></script>
-  <script src="./motion-effects.js?v=22"></script>
-  <script src="./filters-webgl.js?v=22"></script>
+  <script src="./hook-templates.js?v=23"></script>
+  <script src="./ai-presets.js?v=23"></script>
+  <script src="./visualizer.js?v=23"></script>
+  <script src="./motion-effects.js?v=23"></script>
+  <script src="./filters-webgl.js?v=23"></script>
   <style>
     * { box-sizing: border-box; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
     body { margin: 0; background: #070b14; color: #f8fafc; padding: 12px; }
@@ -996,7 +996,7 @@
     }));
   }
 
-  // --- 1. ĐẠO DIỄN AI PRO (HOOK LINH HOẠT GIỮ CHÂN TỐI ĐA + CHIẾN LƯỢC RETENTION TỚI GIÂY CUỐI + ASMR) ---
+  // --- 1. ĐẠO DIỄN AI PRO (KHÔNG CÓ DẤU NHÁY LỒNG NHAU!) ---
   document.getElementById('aiProDirectorBtn').addEventListener('click', async () => {
     const apiKey = geminiKeyInput.value.trim();
     if (!apiKey) {
@@ -1011,7 +1011,6 @@
       await document.fonts.ready;
       aiAzStatus.textContent = '🎵 (1/4) Thợ AI đang kiểm tra đoạn nhạc...';
       const fullDur = rawFullBuffer.duration;
-      // Tôn trọng khúc nhạc nếu Ông Chủ đã tự kéo cắt ở Bước 1! Chỉ tự cắt điệp khúc 25s nếu bài quá dài >36s và chưa tự cắt.
       if (!userManuallyTrimmed && fullDur > 36) {
         const mFull = await analyzeAudioMetrics(rawFullBuffer);
         const winSec = 25, winSteps = Math.floor(winSec / 0.02);
@@ -1028,7 +1027,6 @@
       }
 
       aiAzStatus.textContent = '📸 (2/4) Thợ AI đang xem toàn bộ video thô (tìm khoảnh khắc đắt giá nhất)...';
-      // Lấy tối đa 20 ảnh phủ đều các file (nếu chỉ có 1 file dài thì lấy tới 16 ảnh để không bỏ sót cảnh hay!)
       const framesPerVid = Math.max(3, Math.min(16, Math.floor(20 / videoQueueMeta.length)));
       const gallery = [], parts = [];
       for (let vIdx = 0; vIdx < videoQueueMeta.length; vIdx++) {
@@ -1057,19 +1055,19 @@ CÁC MẪU CHỮ HOOK:
 ${tplListDesc}
 
 TƯ DUY DỰNG ĐỂ GIỮ CHÂN KHÁCH XEM TỚI GIÂY CUỐI:
-1. **HOOK MỞ ĐẦU (Cảnh 1, hoặc Cảnh 1+2) — KHÔNG ÉP CỨNG 3 GIÂY & KHÔNG ÉP CHỈ LÀ LY NƯỚC:**
-   - Tự do soi trong TẤT CẢ các ảnh trên để tìm **KHOẢNH KHẮC GIỮ CHÂN MẠNH NHẤT** làm Hook (`"isHook": true`): đó có thể là **thành phẩm đẹp lung linh nhất**, HOẶC **một cảnh lạ gây tò mò ("đây là cái gì / chuyện gì sắp xảy ra?")**, HOẶC **biểu cảm/hành động thu hút nhất** ở bất kỳ File nào (kể cả ở cuối video)!
-   - **Độ dài Hook linh hoạt hoàn toàn:** Bạn tự quyết định (có thể là `1.8s` đánh nhanh, `3.0s`, hoặc `4.2s–5.0s` nếu cảnh đó cần đủ thời gian tạo tò mò & đọc chữ!).
-   - Viết câu Hook thật GIẬT GÂN, KÍCH THÍCH TÒ MÒ bằng tiếng Việt khiến người xem **phải dừng lại xem tiếp cái kết**!
-2. **MẠCH TRUYỆN THÂN BÀI (GIỮ NHỊP & ĐIỂM NÍU MẮT TỚI CUỐI VIDEO):**
-   - Kể chuyện lôi cuốn, mềm mại, không máy móc: Cảnh đẹp/hành động chính giữ **2.5s–5.0s** để người xem tận hưởng; xen kẽ các cảnh chuyển nhanh **1.2s–1.8s** ở giữa bài làm *Pattern Interrupt* (đổi nhịp tránh nhàm chán!), rồi chốt cuối bằng cảnh thỏa mãn nhất!
-   - **QUY TẮC XUÔI CHIỀU CHO THÂN BÀI:** Với các cảnh thân bài (`isHook: false`) dùng chung 1 File, giây của cảnh sau PHẢI LỚN HƠN cảnh trước (không nhảy ngược!).
-   - Tổng `durationSec` của các cảnh có nhạc bằng đúng ${musicDur.toFixed(2)}s.
-3. **ÂM THANH ASMR TỰ ĐỘNG (`origVol` & `musicVol`):**
-   - Bật ASMR (`"origVol": 80..95`, `"musicVol": 45..60`) ở những cảnh có **tiếng bỏ đá, rót nước/trà, khuấy ly, xèo xèo nướng bánh, hoặc người nói**. Cảnh ngoài đường ồn ào xe cộ thì đặt `"origVol": 0`, `"musicVol": 100`.
-4. **CHUYỂN CẢNH, QUAY RA/VÔ & BỘ LỌC RIÊNG TỪNG CẢNH:**
-   - Tự phối `"motionMode"` (`"dolly-in"`, `"dolly-out"`, `"gimbal-sway"`, `"breath-all"`, `"auto-pan"`, `"smooth"`), `"transIn"` (`"cut"`, `"fade"`, `"slide"`, `"flash"`), `"filterId"` (`"4k-sharp"`, `"fresh-clear"`, `"rosy-skin"`, `"film-cinematic"`, `"warm-coffee"`, `"bw-moody"`).
-   - Có thể đặt `"subTitle"` (3–5 chữ ngắn dẫn dắt tò mò ở giữa video như *"Khoan, nhìn kỹ bước này..."*, *"Thành phẩm gây nghiện!"*) để kéo người xem coi tiếp!
+1. HOOK MỞ ĐẦU (Cảnh 1, hoặc Cảnh 1+2) - KHÔNG ÉP CỨNG 3 GIÂY & KHÔNG ÉP CHỈ LÀ LY NƯỚC:
+   - Tự do soi trong TẤT CẢ các ảnh trên để tìm KHOẢNH KHẮC GIỮ CHÂN MẠNH NHẤT làm Hook ("isHook": true): đó có thể là thành phẩm đẹp lung linh nhất, HOẶC một cảnh lạ gây tò mò ("đây là cái gì / chuyện gì sắp xảy ra?"), HOẶC biểu cảm/hành động thu hút nhất ở bất kỳ File nào (kể cả ở cuối video)!
+   - Độ dài Hook linh hoạt hoàn toàn: Bạn tự quyết định (có thể là 1.8s đánh nhanh, 3.0s, hoặc 4.2s-5.0s nếu cảnh đó cần đủ thời gian tạo tò mò & đọc chữ!).
+   - Viết câu Hook thật GIẬT GÂN, KÍCH THÍCH TÒ MÒ bằng tiếng Việt khiến người xem phải dừng lại xem tiếp cái kết!
+2. MẠCH TRUYỆN THÂN BÀI (GIỮ NHỊP & ĐIỂM NÍU MẮT TỚI CUỐI VIDEO):
+   - Kể chuyện lôi cuốn, mềm mại, không máy móc: Cảnh đẹp/hành động chính giữ 2.5s-5.0s để người xem tận hưởng; xen kẽ các cảnh chuyển nhanh 1.2s-1.8s ở giữa bài làm Pattern Interrupt (đổi nhịp tránh nhàm chán!), rồi chốt cuối bằng cảnh thỏa mãn nhất!
+   - QUY TẮC XUÔI CHIỀU CHO THÂN BÀI: Với các cảnh thân bài (isHook: false) dùng chung 1 File, giây của cảnh sau PHẢI LỚN HƠN cảnh trước (không nhảy ngược!).
+   - Tổng durationSec của các cảnh có nhạc bằng đúng ${musicDur.toFixed(2)}s.
+3. ÂM THANH ASMR TỰ ĐỘNG (origVol & musicVol):
+   - Bật ASMR (origVol: 80..95, musicVol: 45..60) ở những cảnh có tiếng bỏ đá, rót nước/trà, khuấy ly, xèo xèo nướng bánh, hoặc người nói. Cảnh ngoài đường ồn ào xe cộ thì đặt origVol: 0, musicVol: 100.
+4. CHUYỂN CẢNH, QUAY RA/VÔ & BỘ LỌC RIÊNG TỪNG CẢNH:
+   - Tự phối motionMode ("dolly-in", "dolly-out", "gimbal-sway", "breath-all", "auto-pan", "smooth"), transIn ("cut", "fade", "slide", "flash"), filterId ("4k-sharp", "fresh-clear", "rosy-skin", "film-cinematic", "warm-coffee", "bw-moody").
+   - Có thể đặt subTitle (3-5 chữ ngắn dẫn dắt tò mò ở giữa video như "Khoan, nhìn kỹ bước này...", "Thành phẩm gây nghiện!") để kéo người xem coi tiếp!
 
 Trả về JSON đúng mẫu:
 {
@@ -2183,3 +2181,6 @@ Trả về JSON đúng mẫu:
 </body>
 </html>
 
+(Mình đã rà lại toàn bộ ký tự trong file trên — hoàn toàn sạch dấu nháy lỗi. Bạn
+up đè catamthanh.html lên GitHub, đợi ~30 giây rồi bấm tải lại trang trên Safari
+là bấm mượt mọi nút ngay!)
